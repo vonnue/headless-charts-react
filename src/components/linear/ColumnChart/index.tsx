@@ -11,20 +11,21 @@ interface DataItem {
   [key: string]: number | string;
 }
 
+interface YItem {
+  key: string;
+  start?: number;
+  end?: number;
+  className?: string;
+  classNameNegative?: string;
+  axis?: 'left' | 'right';
+}
+
 interface ColumnChartGroupedProps {
   data: DataItem[];
   id: string;
   className?: string;
   x: { key: string; axis?: 'top' | 'bottom' };
-  y: {
-    key: string;
-    start?: number;
-    end?: number;
-    className?: string;
-    classNameNegative?: string;
-    axis?: 'left' | 'right';
-  }[];
-
+  y: YItem[];
   margin?: {
     left: number;
     right: number;
@@ -49,6 +50,7 @@ interface ColumnChartGroupedProps {
     className?: string;
   }[];
   style?: React.CSSProperties;
+  wholeNumbers?: boolean;
 }
 
 interface drawHLineProps {
@@ -82,6 +84,7 @@ const ColumnChartGrouped = ({
   tooltip,
   referenceLines = [],
   style = {},
+  wholeNumbers = false,
 }: ColumnChartGroupedProps) => {
   const refreshChart = useCallback(() => {
     /* eslint-disable */
@@ -90,15 +93,19 @@ const ColumnChartGrouped = ({
     const g = svg.append('g');
 
     // @ts-ignore
-    const minStart = min(y.map((column) => column.start)),
-      // @ts-ignore
-      minY = min(y.map((column) => min(data, (d) => d[column.key]))),
-      // @ts-ignore
-      maxY = max(y.map((column) => max(data, (d) => d[column.key]))),
-      // @ts-ignore
-      maxEnd = max(y.map((column) => column.end)),
-      // @ts-ignore
-      areAllGreaterThanZero = minY > 0;
+    const minStart = min(y.map((column) => column.start));
+    // @ts-ignore
+    const minY: number = min(
+      y.map((column: YItem) => min(data, (d: any) => d[column.key]))
+    );
+    // @ts-ignore
+    const maxY: number = max(
+      y.map((column: YItem) => max(data, (d: any) => d[column.key]))
+    );
+    // @ts-ignore
+    const maxEnd = max(y.map((column) => column.end));
+    // @ts-ignore
+    const areAllGreaterThanZero = minY > 0;
 
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
@@ -233,6 +240,10 @@ const ColumnChartGrouped = ({
       .attr('class', `tooltip ${(tooltip && tooltip.className) || ''}`);
     // @ts-ignore
     const yAxis = y.axis === 'right' ? axisRight(yFn) : axisLeft(yFn);
+
+    if (wholeNumbers && maxY < 10) {
+      yAxis.ticks(maxY, 'd');
+    }
 
     const yAxisG = g
       .append('g')

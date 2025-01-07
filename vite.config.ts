@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), dts({ rollupTypes: true, copyDtsFiles: true })],
+  plugins: [react(), dts({ rollupTypes: false, copyDtsFiles: true })],
   test: {
     environment: 'jsdom',
     exclude: ['**/node_modules/**', '**/dist/**', '**/.stories.tsx'],

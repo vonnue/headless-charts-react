@@ -17,19 +17,6 @@ const meta: Meta<typeof AreaChart> = {
 export default meta;
 type Story = StoryObj<typeof AreaChart>;
 
-const generateTimeSeriesData = () => {
-  const startDate = DateTime.now().minus({ months: 6 });
-  return Array.from({ length: 12 }, (_, i) => {
-    const date = startDate.plus({ months: i });
-    return {
-      date: date.toFormat('yyyy-MM-dd'),
-      sales: Math.floor(Math.random() * 100),
-      revenue: Math.floor(Math.random() * 500),
-      profit: Math.floor(Math.random() * 200),
-    };
-  });
-};
-
 const timeSeriesData = data.map((d) => ({
   ...d,
   date: DateTime.fromFormat(`31-12-${d.year}`, 'dd-MM-yyyy').toFormat(

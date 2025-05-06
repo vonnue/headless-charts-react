@@ -103,7 +103,7 @@ const AreaChart = ({
   zooming,
   style = {},
 }: AreaChartProps) => {
-  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+  const { onMouseOver, onMouseLeave } = useTooltip({
     id,
     tooltip,
     defaultHtml: (d: any) => {
@@ -262,7 +262,7 @@ const AreaChart = ({
           )
         )
         .attr('clip-path', 'url(#clip)')
-        .on('mousemove', (event: MouseEvent, d: any) => {
+        .on('mousemove', (event: MouseEvent) => {
           const [mouseX] = d3.pointer(event);
           const x0 = xFn.invert(mouseX);
 

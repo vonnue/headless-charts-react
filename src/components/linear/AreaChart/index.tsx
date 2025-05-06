@@ -231,7 +231,9 @@ const AreaChart = ({
 
     const areaFn = area()
       .x((d: any) =>
-        x.scalingFunction === 'time' ? xFn(toDateTime(d)) : xFn(d.data[x.key])
+        x.scalingFunction === 'time'
+          ? xFn(toDateTime(d.data))
+          : xFn(d.data[x.key])
       )
       .y0((d: any) => yFn(d[0]))
       .y1((d: any) => yFn(d[1]));

@@ -29,7 +29,7 @@ export const DataRefresh = () => {
   const [pieData, setPieData] = useState(data);
   const refreshData = () => {
     setPieData(
-      pieData.map((d) => ({ ...d, USA: d['USA'] + Math.random() * 1000 }))
+      pieData.map((d) => ({ ...d, USA: d['USA'] + Math.random() * 1000 })),
     );
   };
   return (
@@ -51,7 +51,7 @@ export const DataRefreshWithDrawing = () => {
   const [pieData, setPieData] = useState(data);
   const refreshData = () => {
     setPieData(
-      pieData.map((d) => ({ ...d, USA: d['USA'] + Math.random() * 1000 }))
+      pieData.map((d) => ({ ...d, USA: d['USA'] + Math.random() * 1000 })),
     );
   };
   return (

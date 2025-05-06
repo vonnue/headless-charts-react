@@ -53,7 +53,7 @@ export const UpdatingData = () => {
       prevData.map((d) => ({
         ...d,
         score: Math.random() * 100,
-      }))
+      })),
     );
   }, []);
 

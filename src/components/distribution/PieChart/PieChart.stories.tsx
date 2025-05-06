@@ -135,7 +135,7 @@ export const PieChartRace = () => {
 
   const refreshData = useCallback(() => {
     setPieData((prevData) =>
-      prevData.map((d) => ({ ...d, USA: d['USA'] + Math.random() * 1000 })),
+      prevData.map((d) => ({ ...d, USA: d['USA'] + Math.random() * 1000 }))
     );
   }, []);
 
@@ -159,4 +159,12 @@ export const PieChartRace = () => {
       />
     </div>
   );
+};
+
+export const Unsorted: Story = {
+  args: {
+    ...Styled.args,
+    id: 'unsorted-pie-chart',
+    sort: false,
+  },
 };

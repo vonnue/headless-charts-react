@@ -36,6 +36,17 @@ export const Donut: Story = {
 };
 
 /**
+ * With outer radius
+ */
+export const OuterRadius: Story = {
+  args: {
+    ...Donut.args,
+    id: 'outer-radius-donut',
+    outerRadius: 0.9,
+  },
+};
+
+/**
  * The `labels` prop can be used to add labels to the slices.
  * */
 
@@ -93,5 +104,41 @@ export const CornerRadius: Story = {
     ...Drawing.args,
     id: 'corner-radius-donut',
     cornerRadius: 4,
+  },
+};
+
+/**
+ * The `title` prop can be used to add a title to the chart.
+ */
+export const Title: Story = {
+  args: {
+    ...Drawing.args,
+    id: 'title-donut',
+    title: {
+      text: '10%',
+      className: 'text-center text-base font-bold',
+    },
+    subtitle: {
+      text: 'of your property wealth',
+      className: 'text-center text-xs font-normal max-w-16',
+    },
+  },
+};
+
+/**
+ * Each individual arc can have it's own inner and outer radii.
+ */
+
+const innerOuterData = data.map((d, index) => ({
+  ...d,
+  outerRadius: index === 1 ? 1 : 0.9,
+}));
+
+export const ArcRadii: Story = {
+  args: {
+    ...Drawing.args,
+    id: 'arc-radii-donut',
+    innerRadius: 0.65,
+    data: innerOuterData,
   },
 };

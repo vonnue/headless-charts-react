@@ -14,6 +14,8 @@ import { twMerge } from 'tailwind-merge';
 interface DataItem {
   name: string;
   [key: string]: any;
+  innerRadius?: number;
+  outerRadius?: number;
 }
 
 interface ClassNameMap {
@@ -41,11 +43,21 @@ interface PieChartProps extends ChartProps {
   startAngle?: number;
   endAngle?: number;
   innerRadius?: number;
+  outerRadius?: number;
   nameKey: string;
   valueKey: string;
   drawing?: DrawingOptions;
   tooltip?: TooltipObjectType;
   labels?: LabelOptions;
+  title?: {
+    text?: string | null;
+    className?: string;
+  };
+  subtitle?: {
+    text?: string | null;
+    className?: string;
+  };
+  sort?: boolean;
 }
 
 const PieChart = ({
@@ -70,12 +82,22 @@ const PieChart = ({
     bottom: 40,
   },
   innerRadius = 0,
+  outerRadius = 1,
   nameKey = 'name',
   valueKey,
   drawing,
   tooltip,
   labels,
   style = {},
+  title = {
+    text: null,
+    className: 'text-center text-base font-bold',
+  },
+  subtitle = {
+    text: null,
+    className: 'text-center text-sm font-normal',
+  },
+  sort = true,
 }: PieChartProps) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
@@ -100,6 +122,10 @@ const PieChart = ({
       .padAngle(paddingAngle / 180)
       .value((d) => d[valueKey]);
 
+    if (!sort) {
+      pieFn.sort(null);
+    }
+
     const chartArea = [
       width - margin.left - margin.right,
       height - margin.top - margin.bottom,
@@ -113,8 +139,8 @@ const PieChart = ({
       ) || 0;
 
     const arcFn = arc<DataItem>()
-      .innerRadius(radius * innerRadius)
-      .outerRadius(radius)
+      .innerRadius((d) => (d.data.innerRadius || innerRadius) * radius)
+      .outerRadius((d) => (d.data.outerRadius || outerRadius) * radius)
       .padAngle((paddingAngle / 360) * (2 * Math.PI))
       .cornerRadius(cornerRadius);
 
@@ -149,7 +175,7 @@ const PieChart = ({
         twMerge('fill-black', classNameMap[d.data[nameKey]])
       )
       // @ts-ignore
-      .attr('d', arcFn)
+      .attr('d', (d) => arcFn(d))
       .on('mouseenter', onMouseOver)
       .on('mousemove', onMouseMove)
       .on('mouseleave', onMouseLeave)
@@ -202,6 +228,36 @@ const PieChart = ({
         .text((d: { data: DataItem }) =>
           labels.text ? labels.text(d.data) : deepValue(d.data, nameKey)
         );
+
+    title &&
+      title.text &&
+      g
+        .append('text')
+        .attr('class', title.className || 'text-center text-base font-bold')
+        .attr('x', width / 2)
+        .attr('y', height / 2 - 10)
+        .attr('text-anchor', 'middle')
+        .attr('opacity', 0)
+        .transition()
+        .duration(drawing?.duration || 0)
+        .attr('opacity', 1)
+        .text(title.text);
+
+    subtitle &&
+      subtitle.text &&
+      g
+        .append('text')
+        .attr('class', subtitle.className || 'text-center text-sm font-normal ')
+        .attr('x', width / 2)
+        .attr('y', height / 2 + 10)
+        .attr('text-anchor', 'middle')
+        .attr('font-weight', 'normal')
+        .attr('font-size', '12px')
+        .attr('opacity', 0)
+        .transition()
+        .duration(drawing?.duration || 0)
+        .attr('opacity', 1)
+        .text(subtitle.text);
 
     return () => {
       clearTimeout(timeOut);

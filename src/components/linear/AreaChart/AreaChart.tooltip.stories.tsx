@@ -20,7 +20,9 @@ export const Tooltip: Story = {
   args: {
     id: 'area-chart-tooltip',
     data,
-    tooltip: {},
+    tooltip: {
+      keys: ['year', 'iphone', 'macbook', 'ipad', 'wearables', 'services'],
+    },
     x: {
       key: 'year',
     },
@@ -47,5 +49,27 @@ export const Tooltip: Story = {
         className: 'text-purple-300',
       },
     ],
+  },
+};
+
+export const TooltipWithCustomStyle: Story = {
+  args: {
+    ...Tooltip.args,
+    tooltip: {
+      keys: ['year', 'iphone', 'macbook', 'ipad', 'wearables', 'services'],
+      className: 'text-purple-900 bg-white p-2 rounded-md shadow-md',
+    },
+  },
+};
+
+export const TooltipWithCustomHtml: Story = {
+  args: {
+    ...Tooltip.args,
+    tooltip: {
+      keys: ['year', 'iphone', 'macbook', 'ipad', 'wearables', 'services'],
+      html: (d: any) => {
+        return `<div>${d.year}</div>`;
+      },
+    },
   },
 };

@@ -14,11 +14,12 @@ import { useCallback, useEffect } from 'react';
 
 import { ChartProps } from '../../../types';
 import { DateTime } from 'luxon';
-import { TooltipObjectType } from '../../../hooks/useTooltip';
+import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
 import { area } from 'd3-shape';
 import { defaultChartClassNames } from '../../../utils';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
+import * as d3 from 'd3';
 
 interface XAxis {
   key: string;
@@ -85,7 +86,7 @@ const AreaChart = ({
   stacking = {
     type: 'normal',
   },
-  // tooltip,
+  tooltip,
 
   padding = {
     top: 0,
@@ -102,10 +103,26 @@ const AreaChart = ({
   zooming,
   style = {},
 }: AreaChartProps) => {
+  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+    id,
+    tooltip,
+    defaultHtml: (d: any) => {
+      console.log(d);
+      const xValue =
+        x.scalingFunction === 'time'
+          ? DateTime.fromFormat(d[x.key], x.format || 'yyyy-MM-dd').toFormat(
+              x.format || 'yyyy-MM-dd'
+            )
+          : d[x.key];
+      return `${xValue}<br/>${y
+        .map((column) => `${column.key}: ${d[column.key]}`)
+        .join('<br/>')}`;
+    },
+  });
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     // Clear svg
-
     svg.selectAll('*').remove();
 
     const width = +svg.style('width').split('px')[0],
@@ -128,24 +145,14 @@ const AreaChart = ({
       )
       .attr('height', height);
 
-    // const shapeMapping = {
-    //   circle: symbolCircle,
-    //   diamond: symbolDiamond,
-    //   triangle: symbolTriangle,
-    //   square: symbolSquare,
-    //   cross: symbolCross,
-    //   star: symbolStar,
-    //   wye: symbolWye,
-    //   default: symbolCircle,
-    // };
-
-    // const curveMapping = {
-    //   rounded: curveCatmullRom,
-    //   step: curveStep,
-    //   line: curveLinear,
-    //   bumpX: curveBumpX,
-    //   default: curveLinear,
-    // };
+    // Add invisible overlay for mouse tracking
+    const overlay = g
+      .append('rect')
+      .attr('class', 'overlay')
+      .attr('width', width)
+      .attr('height', height)
+      .style('fill', 'none')
+      .style('pointer-events', 'all');
 
     // @ts-ignore
     const toDateTime = (d) => DateTime.fromFormat(d[x.key], x.format);
@@ -245,7 +252,6 @@ const AreaChart = ({
         .selectAll('path')
         .data(dataStacked)
         .join('path')
-
         // @ts-ignore
         .attr('d', areaFn)
         .attr('class', (d: any, i) =>
@@ -255,9 +261,44 @@ const AreaChart = ({
             d?.className || ''
           )
         )
-        .attr('clip-path', 'url(#clip)');
+        .attr('clip-path', 'url(#clip)')
+        .on('mousemove', (event: MouseEvent, d: any) => {
+          const [mouseX] = d3.pointer(event);
+          const x0 = xFn.invert(mouseX);
+
+          // Find closest data point
+          const bisect = d3.bisector((d: any) =>
+            x.scalingFunction === 'time'
+              ? toDateTime(d).toMillis()
+              : Number(d[x.key])
+          ).left;
+
+          const i = bisect(data, x0, 1);
+          const d0 = data[i - 1];
+          const d1 = data[i];
+          const closestData =
+            Number(x0) -
+              (x.scalingFunction === 'time'
+                ? toDateTime(d0).toMillis()
+                : Number(d0[x.key])) >
+            (x.scalingFunction === 'time'
+              ? toDateTime(d1).toMillis()
+              : Number(d1[x.key])) -
+              Number(x0)
+              ? d1
+              : d0;
+
+          onMouseOver(event, closestData);
+        })
+        .on('mouseenter', (event: MouseEvent) => {
+          onMouseOver(event, data[0]);
+        })
+        .on('mouseleave', onMouseLeave);
     };
     redraw();
+
+    // Remove the overlay since we're handling events on the paths
+    overlay.remove();
 
     const extent = [
       [margin?.left || 0, margin?.top || 0],

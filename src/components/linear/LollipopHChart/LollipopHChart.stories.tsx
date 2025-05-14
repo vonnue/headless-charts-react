@@ -27,6 +27,7 @@ export const Default = {
 export const WithTooltip = {
   args: {
     ...Default.args,
+    id: 'lollipop-h-chart-with-tooltip',
     tooltip: {
       keys: ['name', 'value', 'reading'],
     },
@@ -36,6 +37,7 @@ export const WithTooltip = {
 export const WithCustomTooltip = {
   args: {
     ...Default.args,
+    id: 'lollipop-h-chart-with-custom-tooltip',
     tooltip: {
       html: (d: any) =>
         `<div class='bg-gray-800 text-white p-2 rounded'>${d.name} - ${d.value}</div>`,
@@ -46,6 +48,7 @@ export const WithCustomTooltip = {
 export const WithCustomShape = {
   args: {
     ...Default.args,
+    id: 'lollipop-h-chart-with-custom-shape',
     shape: 'diamond',
   },
 };

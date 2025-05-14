@@ -16,6 +16,11 @@ export default meta;
 
 type Story = StoryObj<typeof AreaChart>;
 
+/**
+ * AreaChart is normally used when you want to show both a trend and a split of the total.
+ * For example, you want to show the trend of a product and the split of the total product by category.
+ *
+ */
 export const Default: Story = {
   args: {
     id: 'area-chart',

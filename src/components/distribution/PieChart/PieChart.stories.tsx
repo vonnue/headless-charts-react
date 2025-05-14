@@ -4,19 +4,35 @@ import { useCallback, useEffect, useState } from 'react';
 import PieChart from '.';
 import data from './sample.json';
 
+const years = [
+  'Y2012',
+  'Y2013',
+  'Y2014',
+  'Y2015',
+  'Y2016',
+  'Y2017',
+  'Y2018',
+  'Y2019',
+  'Y2020',
+  'Y2021',
+  'Y2022',
+];
 /**
  * Pie charts can be used to show how much each category represents as part of a whole. They are useful for showing the distribution of a dataset.
  *
  * By default PieCharts are not styled. The following styles are passed by default
  *
+ * Default styles:
  * - all paddings = 0
  * - all margins = 40px
- * - no classNameMap or className
  * - padding given to each slice = 2 degrees (paddingAngle)
  * - innerRadius set to 0 (Pie and not a donut chart)
  * - cornerRadius set to 0 (no rounded corners)
  * - no animation, labels or tooltips
+ * - no donuts (innerRadius is 0, outerRadius is 1)
  * - startAngle = 0 and endAngle = 360 (Chart is drawn clockwise from top)
+ * - no title or subtitle
+ * - Sorting is enabled by default (highest first)
  */
 const meta: Meta<typeof PieChart> = {
   title: 'Distribution/PieChart/Intro',
@@ -28,9 +44,11 @@ export default meta;
 type Story = StoryObj<typeof PieChart>;
 
 const classNameMap = {
-  'Product A': 'fill-purple-700 dark:fill-purple-100',
-  'Product B': 'fill-purple-500 dark:fill-purple-300',
-  'Product C': 'fill-purple-300 dark:fill-purple-500',
+  macbook: 'fill-purple-300 dark:fill-purple-100',
+  services: 'fill-purple-400 dark:fill-purple-300',
+  wearables: 'fill-purple-500 dark:fill-purple-500',
+  ipad: 'fill-purple-600 dark:fill-purple-700',
+  iphone: 'fill-purple-800 dark:fill-purple-900',
 };
 /**
  * The default chart will iterate through the `data` prop and takes the `valueKey` prop as the value to be represented, and `nameKey` as the name of the category.
@@ -43,7 +61,7 @@ export const Default: Story = {
   args: {
     data,
     id: 'default-pie-chart',
-    valueKey: 'USA',
+    valueKey: 'Y2012',
     nameKey: 'name',
   },
 };
@@ -51,7 +69,7 @@ export const Default: Story = {
 /**
  * However, the default chart will not be styled. You can provide a `classNameMap` prop, with a list of possible values for the `nameKey` prop.
  *
- * In the example, nameKey = 'USA' has 3 possible values: 'Product A', 'Product B' and 'Product C'. The `classNameMap` prop takes a map of the possible values and the tailwind classes to be applied to each value.
+ * In the example, nameKey = 'Y2012' has 3 possible values: 'wearables', 'services' and 'wearables'. The `classNameMap` prop takes a map of the possible values and the tailwind classes to be applied to each value.
  */
 export const Styled: Story = {
   args: {
@@ -131,12 +149,10 @@ export const CustomStyle: Story = {
 };
 
 export const PieChartRace = () => {
-  const [pieData, setPieData] = useState(data);
+  const [currentYearIndex, setCurrentYearIndex] = useState(0);
 
   const refreshData = useCallback(() => {
-    setPieData((prevData) =>
-      prevData.map((d) => ({ ...d, USA: d['USA'] + Math.random() * 1000 }))
-    );
+    setCurrentYearIndex((prevIndex) => (prevIndex + 1) % years.length);
   }, []);
 
   useEffect(() => {
@@ -146,16 +162,18 @@ export const PieChartRace = () => {
 
   return (
     <div>
+      <span>{years[currentYearIndex]}</span>
       <PieChart
         id='pie-chart-detailed'
-        data={pieData}
-        valueKey='USA'
+        data={data}
+        valueKey={years[currentYearIndex]}
         nameKey='name'
         classNameMap={classNameMap}
         tooltip={{}}
         drawing={{
           duration: 800,
         }}
+        sort={false}
       />
     </div>
   );

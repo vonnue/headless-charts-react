@@ -1,12 +1,101 @@
 [
   {
-    "name": "Team A",
-    "value": 10,
-    "reading": 6
+    "year": 2012,
+    "macbook": 23.2,
+    "services": 12.8,
+    "ipad": 30.9,
+    "iphone": 78.6,
+    "wearables": 10.7,
+    "deltaMacbook": 0
   },
   {
-    "name": "Team B",
-    "value": 20,
-    "reading": 12
+    "year": 2013,
+    "macbook": 21.4,
+    "services": 16.0,
+    "ipad": 31.9,
+    "iphone": 91.2,
+    "wearables": 10.1,
+    "deltaMacbook": -1.8
+  },
+  {
+    "year": 2014,
+    "macbook": 24.0,
+    "services": 18.0,
+    "ipad": 30.2,
+    "iphone": 101.0,
+    "wearables": 8.3,
+    "deltaMacbook": 2.6
+  },
+  {
+    "year": 2015,
+    "macbook": 25.4,
+    "services": 19.9,
+    "ipad": 23.2,
+    "iphone": 155.0,
+    "wearables": 10.0,
+    "deltaMacbook": 1.4
+  },
+  {
+    "year": 2016,
+    "macbook": 22.8,
+    "services": 24.5,
+    "ipad": 20.6,
+    "iphone": 136.8,
+    "wearables": 11.1,
+    "deltaMacbook": -2.6
+  },
+  {
+    "year": 2017,
+    "macbook": 25.5,
+    "services": 29.9,
+    "ipad": 18.8,
+    "iphone": 141.2,
+    "wearables": 12.8,
+    "deltaMacbook": 2.7
+  },
+  {
+    "year": 2018,
+    "macbook": 25.1,
+    "services": 37.1,
+    "ipad": 18.3,
+    "iphone": 164.0,
+    "wearables": 17.3,
+    "deltaMacbook": -0.4
+  },
+  {
+    "year": 2019,
+    "macbook": 25.7,
+    "services": 46.3,
+    "ipad": 21.2,
+    "iphone": 142.3,
+    "wearables": 24.4,
+    "deltaMacbook": 0.6
+  },
+  {
+    "year": 2020,
+    "macbook": 28.6,
+    "services": 53.7,
+    "ipad": 23.7,
+    "iphone": 137.7,
+    "wearables": 30.6,
+    "deltaMacbook": 2.9
+  },
+  {
+    "year": 2021,
+    "macbook": 35.1,
+    "services": 68.4,
+    "ipad": 31.9,
+    "iphone": 191.9,
+    "wearables": 38.3,
+    "deltaMacbook": 9.4
+  },
+  {
+    "year": 2022,
+    "macbook": 40.1,
+    "services": 78.1,
+    "ipad": 29.2,
+    "iphone": 205.4,
+    "wearables": 41.2,
+    "deltaMacbook": 4.9
   }
 ]

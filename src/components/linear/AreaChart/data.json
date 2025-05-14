@@ -1,125 +1,90 @@
 [
   {
     "year": 2012,
-    "macbook": 23.22,
-    "services": 12.89,
-    "wearables": 10.76,
-    "ipad": 30.94,
-    "iphone": 78.69,
-    "deltaMacbook": 0,
-    "deltaServices": 0,
-    "deltaWearables": 0
+    "macbook": 23.2,
+    "services": 12.8,
+    "ipad": 30.9,
+    "iphone": 78.6,
+    "wearables": 10.7
   },
   {
     "year": 2013,
-    "macbook": 21.48,
-    "services": 16.05,
-    "wearables": 10.12,
-    "ipad": 31.98,
-    "iphone": 91.28,
-    "deltaMacbook": -1.74,
-    "deltaServices": 3.16,
-    "deltaWearables": -0.64
+    "macbook": 21.4,
+    "services": 16.0,
+    "ipad": 31.9,
+    "iphone": 91.2,
+    "wearables": 10.1
   },
   {
     "year": 2014,
-    "macbook": 24.08,
-    "services": 18.06,
-    "wearables": 8.379,
-    "ipad": 30.28,
-    "iphone": 101.99,
-    "deltaMacbook": 2.6,
-    "deltaServices": 2.01,
-    "deltaWearables": -1.74
+    "macbook": 24.0,
+    "services": 18.0,
+    "ipad": 30.2,
+    "iphone": 101.0,
+    "wearables": 8.3
   },
   {
     "year": 2015,
-    "macbook": 25.47,
-    "services": 19.91,
-    "wearables": 10.07,
-    "ipad": 23.23,
-    "iphone": 155.04,
-    "deltaMacbook": 1.39,
-    "deltaServices": 1.85,
-    "deltaWearables": 1.69
+    "macbook": 25.4,
+    "services": 19.9,
+    "ipad": 23.2,
+    "iphone": 155.0,
+    "wearables": 10.0
   },
   {
     "year": 2016,
-    "macbook": 22.83,
-    "services": 24.35,
-    "wearables": 11.13,
-    "ipad": 20.63,
-    "iphone": 136.7,
-    "deltaMacbook": -2.64,
-    "deltaServices": 4.44,
-    "deltaWearables": 1.06
+    "macbook": 22.8,
+    "services": 24.5,
+    "ipad": 20.6,
+    "iphone": 136.8,
+    "wearables": 11.1
   },
   {
     "year": 2017,
-    "macbook": 25.57,
-    "services": 32.7,
-    "wearables": 12.83,
+    "macbook": 25.5,
+    "services": 29.9,
     "ipad": 18.8,
-    "iphone": 139.34,
-    "deltaMacbook": 2.74,
-    "deltaServices": 8.35,
-    "deltaWearables": 1.7
+    "iphone": 141.2,
+    "wearables": 12.8
   },
-
   {
     "year": 2018,
-    "macbook": 25.2,
-    "services": 39.75,
-    "wearables": 17.38,
-    "ipad": 18.38,
-    "iphone": 164.89,
-    "deltaMacbook": -0.37,
-    "deltaServices": 7.05,
-    "deltaWearables": 4.55
+    "macbook": 25.1,
+    "services": 37.1,
+    "ipad": 18.3,
+    "iphone": 164.0,
+    "wearables": 17.3
   },
   {
     "year": 2019,
-    "macbook": 25.74,
-    "services": 46.29,
-    "wearables": 24.48,
-    "ipad": 21.28,
-    "iphone": 142.38,
-    "deltaMacbook": 0.54,
-    "deltaServices": 6.54,
-    "deltaWearables": 7.1
+    "macbook": 25.7,
+    "services": 46.3,
+    "ipad": 21.2,
+    "iphone": 142.3,
+    "wearables": 24.4
   },
   {
     "year": 2020,
-    "macbook": 28.62,
-    "services": 53.77,
-    "wearables": 30.62,
-    "ipad": 23.72,
-    "iphone": 137.78,
-    "deltaMacbook": 2.88,
-    "deltaServices": 7.48,
-    "deltaWearables": 6.14
+    "macbook": 28.6,
+    "services": 53.7,
+    "ipad": 23.7,
+    "iphone": 137.7,
+    "wearables": 30.6
   },
-
   {
     "year": 2021,
-    "macbook": 35.19,
-    "services": 68.42,
-    "wearables": 38.37,
-    "ipad": 31.86,
-    "iphone": 191.97,
-    "deltaMacbook": 6.57,
-    "deltaServices": 14.65,
-    "deltaWearables": 7.75
+    "macbook": 35.1,
+    "services": 68.4,
+    "ipad": 31.9,
+    "iphone": 191.9,
+    "wearables": 38.3
   },
   {
     "year": 2022,
-    "macbook": 40.18,
-    "services": 78.13,
-    "wearables": 41.24,
-    "ipad": 29.29,
-    "iphone": 205.49,
-    "deltaMacbook": 4.99,
-    "deltaServices": 9.71,
-    "deltaWearables": 2.87
+    "macbook": 40.1,
+    "services": 78.1,
+    "ipad": 29.2,
+    "iphone": 205.4,
+    "wearables": 41.2
   }
 ]

@@ -17,9 +17,9 @@ export default meta;
 type Story = StoryObj<typeof PieChart>;
 
 const classNameMap = {
-  'Product A': 'fill-purple-700 dark:fill-purple-100',
-  'Product B': 'fill-purple-500 dark:fill-purple-300',
-  'Product C': 'fill-purple-300 dark:fill-purple-500',
+  macbook: 'fill-purple-700 dark:fill-purple-100',
+  services: 'fill-purple-500 dark:fill-purple-300',
+  wearables: 'fill-purple-300 dark:fill-purple-500',
 };
 
 /**
@@ -29,7 +29,7 @@ export const SemiCircle: Story = {
   args: {
     id: 'tooltip',
     data,
-    valueKey: 'USA',
+    valueKey: 'Y2012',
     classNameMap,
     startAngle: -90,
     endAngle: 90,

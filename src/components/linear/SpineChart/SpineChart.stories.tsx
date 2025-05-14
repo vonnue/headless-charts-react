@@ -8,24 +8,30 @@ const meta: Meta<typeof SpineChart> = {
 };
 
 export default meta;
+/**
+ * There are cases where you want to split a normal bar chart into two different bars, but share the same axes.
+ * For example, you want to show the distribution of a product in two different categories.
+ * In this case, you can use the SpineChart component.
+ *
+ */
 
 export const Default = {
   args: {
     data: [
       {
-        name: 'Product A',
+        name: 'wearables',
         value2: 6,
         value3: 7,
         value4: 8,
       },
       {
-        name: 'Product B',
+        name: 'services',
         value2: 4,
         value3: 6,
         value4: 8,
       },
       {
-        name: 'Product C',
+        name: 'wearables',
         value2: 1,
         value3: 2,
         value4: 3,

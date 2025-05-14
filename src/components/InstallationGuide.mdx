@@ -1,0 +1,98 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title='Getting Started/Installation' />
+
+# Installation Guide
+
+This guide will help you get started with headless-charts in your project.
+
+## Prerequisites
+
+Before installing headless-charts, ensure you have:
+
+- Node.js 16.x or later
+- npm or yarn package manager
+- A React project (React 16.8 or later for hooks support)
+- TailwindCSS (optional but recommended for styling)
+
+## Installation Methods
+
+### Using npm
+
+```bash
+npm install @headless-charts/react
+```
+
+### Using yarn
+
+```bash
+yarn add @headless-charts/react
+```
+
+### Using pnpm
+
+```bash
+pnpm add @headless-charts/react
+```
+
+## Additional Dependencies
+
+headless-charts requires the following peer dependencies:
+
+```json
+{
+  "dependencies": {
+    "react": "^16.8.0",
+    "react-dom": "^16.8.0",
+    "d3": "^7.0.0"
+  }
+}
+```
+
+## TypeScript Support
+
+headless-charts is written in TypeScript and includes type definitions out of the box. No additional @types package is required.
+
+## Verifying Installation
+
+To verify your installation, you can create a simple test component:
+
+```tsx
+import { LineChart } from '@headless-charts/react';
+
+function TestChart() {
+  const data = [
+    { x: 0, y: 10 },
+    { x: 1, y: 20 },
+    { x: 2, y: 15 },
+  ];
+
+  return (
+    <LineChart
+      data={data}
+      x={{ key: 'x' }}
+      y={{ key: 'y' }}
+      className='w-full h-64'
+    />
+  );
+}
+```
+
+## Next Steps
+
+Now that you have headless-charts installed, you can:
+
+1. Check out the [Basic Usage](./?path=/docs/getting-started-basic-usage--docs) guide
+2. Explore the [Component Examples](./?path=/docs/examples--docs)
+3. Learn about [Customization](./?path=/docs/customization--docs)
+
+## Troubleshooting
+
+If you encounter any issues during installation:
+
+1. Ensure all peer dependencies are correctly installed
+2. Check your Node.js version is compatible
+3. Clear your package manager's cache and try reinstalling
+4. Check our [GitHub Issues](https://github.com/vonnue/headless-charts-react/issues) for known problems
+
+For additional help, please [open an issue](https://github.com/vonnue/headless-charts-react/issues/new) on our GitHub repository.

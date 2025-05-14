@@ -23,11 +23,14 @@ export const Default = {
     id: 'bar-chart-default',
     x: [
       {
-        key: 'reading',
+        key: 'macbook',
       },
-      { key: 'value' },
+      { key: 'services' },
+      { key: 'ipad' },
+      { key: 'iphone' },
+      { key: 'wearables' },
     ],
-    y: { key: 'name' },
+    y: { key: 'year' },
   },
 };
 
@@ -52,12 +55,15 @@ export const Styled = {
     },
     x: [
       {
-        key: 'reading',
+        key: 'macbook',
         className: 'fill-amber-500 dark:fill-amber-100 rounded',
       },
-      { key: 'value', className: 'fill-purple-400 dark:fill-purple-100' },
+      { key: 'services', className: 'fill-purple-400 dark:fill-purple-100' },
+      { key: 'ipad', className: 'fill-green-500 dark:fill-green-100' },
+      { key: 'iphone', className: 'fill-blue-500 dark:fill-blue-100' },
+      { key: 'wearables', className: 'fill-red-500 dark:fill-red-100' },
     ],
-    y: { key: 'name', className: 'text-red-500 dark:text-red-50', padding: 10 },
+    y: { key: 'year', className: 'text-red-500 dark:text-red-50', padding: 10 },
   },
 };
 
@@ -71,15 +77,14 @@ export const NegativeStyling = {
     id: 'bar-chart-negative-styling',
     x: [
       {
-        key: 'reading',
-        className: 'text-red-500 dark:text-red-400 rounded',
-        classNameNegative: 'text-green-500 rounded dark:text-green-200',
-        start: -25,
-        end: 25,
+        key: 'deltaMacbook',
+        className: 'text-green-500 dark:text-green-400 rounded',
+        classNameNegative: 'text-red-500 rounded dark:text-red-200',
+        start: -10,
+        end: 10,
       },
       { key: 'value', className: 'text-blue-500 dark:text-blue-400' },
     ],
-    data: [...data, { name: 'Negative', reading: -20, value: -1 }],
   },
 };
 
@@ -116,7 +121,7 @@ export const StyledYAxis = {
     ...Default.args,
     id: 'bar-chart-styled-y-axis',
     y: {
-      key: 'name',
+      key: 'year',
       className: 'text-red-500',
     },
   },
@@ -128,11 +133,14 @@ export const BorderRadius = {
     id: 'bar-chart-border-radius',
     x: [
       {
-        key: 'reading',
+        key: 'macbook',
         className: 'text-red-500 rounded-full',
         rx: 3,
       },
-      { key: 'value', className: 'text-blue-500', rx: 3 },
+      { key: 'services', className: 'text-blue-500', rx: 3 },
+      { key: 'ipad', className: 'text-green-500', rx: 3 },
+      { key: 'iphone', className: 'text-blue-500', rx: 3 },
+      { key: 'wearables', className: 'text-red-500', rx: 3 },
     ],
   },
 };
@@ -159,11 +167,23 @@ export const DifferentAxis = {
     id: 'bar-chart-different-axis',
     x: [
       {
-        key: 'reading',
+        key: 'macbook',
         axis: 'top',
       },
       {
-        key: 'value',
+        key: 'services',
+        axis: 'top',
+      },
+      {
+        key: 'ipad',
+        axis: 'bottom',
+      },
+      {
+        key: 'iphone',
+        axis: 'bottom',
+      },
+      {
+        key: 'wearables',
         axis: 'bottom',
       },
     ],
@@ -176,13 +196,13 @@ export const CustomAxisLabel = {
     id: 'bar-chart-custom-axis-label',
     x: [
       {
-        key: 'reading',
+        key: 'macbook',
         axis: 'top',
-        axisLabel: 'Reading',
+        axisLabel: 'Macbook',
       },
       {
-        key: 'value',
-        axisLabel: 'Value',
+        key: 'services',
+        axisLabel: 'Services',
       },
     ],
   },

@@ -4,9 +4,9 @@ import PieChart from '.';
 import data from './sample.json';
 
 const classNameMap = {
-  'Product A': 'fill-purple-700 dark:fill-purple-100',
-  'Product B': 'fill-purple-500 dark:fill-purple-300',
-  'Product C': 'fill-purple-300 dark:fill-purple-500',
+  macbook: 'fill-purple-700 dark:fill-purple-100',
+  services: 'fill-  purple-500 dark:fill-purple-300',
+  wearables: 'fill-purple-300 dark:fill-purple-500',
 };
 
 /**
@@ -18,7 +18,7 @@ const meta: Meta<typeof PieChart> = {
   tags: ['autodocs'],
   args: {
     data,
-    valueKey: 'USA',
+    valueKey: 'Y2012',
     classNameMap,
     tooltip: {},
   },
@@ -58,7 +58,7 @@ export const TooltipKeys: Story = {
     id: 'tooltip-custom',
     tooltip: {
       ...TooltipStyled.args?.tooltip,
-      keys: ['name', 'USA', 'Europe', 'Africa'],
+      keys: ['name', 'Y2012', 'Europe', 'Africa'],
     },
   },
 };
@@ -73,7 +73,7 @@ export const TooltipCustomHtml: Story = {
     tooltip: {
       ...TooltipStyled.args?.tooltip,
       html: (d: any) =>
-        `${d.data.name} sold ${d.value || 0} in USA , ${
+        `${d.data.name} sold ${d.value || 0} in Y2012 , ${
           d.data['Europe'] || 0
         } in Europe, ${d.data['Africa'] || 0} in Africa and ${
           d.data['APAC'] || 0

@@ -20,13 +20,18 @@ export const Tooltip = {
   args: {
     data,
     id: 'tooltip-default',
+    className: 'h-screen',
     x: [
       {
-        key: 'reading',
+        key: 'macbook',
+        className: 'fill-purple-500 dark:fill-purple-100 rounded',
       },
-      { key: 'value' },
+      { key: 'services', className: 'fill-purple-400 dark:fill-purple-100' },
+      { key: 'ipad', className: 'fill-green-500 dark:fill-green-100' },
+      { key: 'iphone', className: 'fill-purple-500 dark:fill-purple-100' },
+      { key: 'wearables', className: 'fill-purple-900 dark:fill-purple-100' },
     ],
-    y: { key: 'name' },
+    y: { key: 'year' },
     tooltip: {},
   },
 };
@@ -47,7 +52,7 @@ export const TooltipCustomKeys = {
     id: 'tooltip-custom-keys',
     tooltip: {
       ...Styled.args.tooltip,
-      keys: ['name', 'value'],
+      keys: ['year', 'macbook'],
     },
   },
 };

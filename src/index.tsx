@@ -27,6 +27,8 @@ export { default as RadarChart } from './components/gauges/RadarChart';
 export { default as SpeedometerChart } from './components/gauges/SpeedometerChart';
 export { default as PizzaChart } from './components/gauges/PizzaChart';
 
+export { default as Network } from './components/flow/Network';
+
 export const utils = {
   mergeTailwindClasses,
   convertToRanks,

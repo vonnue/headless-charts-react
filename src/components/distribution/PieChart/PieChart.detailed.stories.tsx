@@ -58,7 +58,7 @@ type DataPoint = {
 };
 
 export const DataRefresh = () => {
-  const [pieData, setPieData] = useState<DataPoint[]>(data);
+  const [pieData] = useState<DataPoint[]>(data);
   const [year, setYear] = useState('Y2012');
 
   const refreshData = () => {

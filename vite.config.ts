@@ -5,7 +5,17 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), dts({ rollupTypes: false, copyDtsFiles: true })],
+  plugins: [
+    react(),
+    dts({
+      rollupTypes: true,
+      copyDtsFiles: true,
+      // Ensure Next.js compatibility
+      compilerOptions: {
+        declarationMap: true,
+      },
+    }),
+  ],
   test: {
     environment: 'jsdom',
     exclude: ['**/node_modules/**', '**/dist/**', '**/.stories.tsx'],
@@ -25,7 +35,13 @@ export default defineConfig({
     },
     minify: true,
     rollupOptions: {
-      external: ['react', 'react-dom', '**/*/*.stories.tsx', '**/*/*.test.tsx'],
+      external: [
+        'react',
+        'react-dom',
+        'next',
+        '**/*/*.stories.tsx',
+        '**/*/*.test.tsx',
+      ],
       output: {
         globals: {
           react: 'React',

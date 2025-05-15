@@ -1,6 +1,6 @@
 {
   "name": "@headless-charts/react",
-  "version": "0.1.18",
+  "version": "0.1.20",
   "description": "React wrapper for headless-charts",
   "author": "Vonnue dev team",
   "keywords": [
@@ -16,9 +16,16 @@
     "url": "https://github.com/hacklehub/headless-charts.git"
   },
   "type": "module",
-  "main": "dist/index.es.js",
+  "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.cjs.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "packageManager": "yarn@4.0.2",
   "scripts": {
     "start": "tsc -w",

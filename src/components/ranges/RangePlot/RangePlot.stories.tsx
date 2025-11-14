@@ -1,16 +1,14 @@
-import { Meta } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 import RangePlot from '.';
 import data from './sample.json';
 
-const meta: Meta<typeof RangePlot> = {
+const meta = preview.meta({
   title: 'Ranges/RangePlot',
   component: RangePlot,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-export const Default = {
+export const Default = meta.story({
   args: {
     id: 'dot-plot-default',
     data,
@@ -24,29 +22,29 @@ export const Default = {
       maxKey: 'maxTemp',
     },
   },
-};
+});
 
-export const CustomShape = {
+export const CustomShape = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'dot-plot-custom-shape',
     shape: 'star',
   },
-};
+});
 
-export const CustomTooltip = {
+export const CustomTooltip = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'dot-plot-custom-tooltip',
     tooltip: {
       keys: ['minTemp', 'maxTemp'],
     },
   },
-};
+});
 
-export const CustomTooltipHtml = {
+export const CustomTooltipHtml = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'dot-plot-custom-tooltip-html',
     tooltip: {
       html: (d: any) => {
@@ -60,4 +58,4 @@ export const CustomTooltipHtml = {
       },
     },
   },
-};
+});

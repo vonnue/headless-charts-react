@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import React from 'react';
 import SpeedometerChart from '.';
@@ -9,17 +9,13 @@ import SpeedometerChart from '.';
  *
  */
 
-const meta: Meta<typeof SpeedometerChart> = {
+const meta = preview.meta({
   title: 'Gauge/Speedometer/Intro',
   component: SpeedometerChart,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof SpeedometerChart>;
-
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     data: 0.7,
     label: {
@@ -27,25 +23,25 @@ export const Default: Story = {
     },
     id: 'speedometer-default',
   },
-};
+});
 
-export const WithRadius: Story = {
+export const WithRadius = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'speedometer-with-radius',
     needleRadius: 0.5,
   },
-};
+});
 
-export const WithAxisTicks: Story = {
+export const WithAxisTicks = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'speedometer-with-axis-ticks',
     axisTicks: 10,
   },
-};
+});
 
-export const UpdatingData = () => {
+export const UpdatingData = meta.story(() => {
   const [speedometerData, setSpeedometerData] = React.useState(0.7);
   const updatingData = () => {
     setSpeedometerData(Math.random());
@@ -61,4 +57,4 @@ export const UpdatingData = () => {
       />
     </>
   );
-};
+});

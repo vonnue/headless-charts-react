@@ -13,16 +13,16 @@ interface DataItem {
   [key: string]: number | string;
 }
 
-interface ColumnChartStackedProps {
-  data: DataItem[];
+interface ColumnChartStackedProps<TData = any> {
+  data: TData[];
   id: string;
   className?: string;
   x: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     axis?: 'top' | 'bottom';
   };
   y: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     axis?: 'left' | 'right';
     className: string;
   }[];
@@ -64,7 +64,7 @@ interface drawHLineProps {
   dashed?: boolean;
 }
 
-const ColumnChartStacked = ({
+const ColumnChartStacked = <TData = any,>({
   data = [],
   id,
   className,
@@ -89,7 +89,7 @@ const ColumnChartStacked = ({
   tickFormat,
   drawing = undefined,
   style = {},
-}: ColumnChartStackedProps) => {
+}: ColumnChartStackedProps<TData>) => {
   const formatMapping = {
     '%': '.0%',
     $: '($.2f',

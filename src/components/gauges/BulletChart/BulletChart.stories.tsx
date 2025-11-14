@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import BulletChart from '.';
 import React from 'react';
@@ -10,20 +10,16 @@ const data = 85;
  *
  * Built in a headless fashion, you can apply individual styles to all elements
  */
-const meta: Meta<typeof BulletChart> = {
+const meta = preview.meta({
   title: 'Gauge/BulletChart/Intro',
   component: BulletChart,
   tags: ['autodocs'],
-} as Meta;
-
-export default meta;
-
-type Story = StoryObj<typeof BulletChart>;
+});
 
 /**
  * Default BulletChart (Headless and unstyled).
  */
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     data,
     label: 'Sales',
@@ -34,11 +30,11 @@ export const Default: Story = {
     threshold: 90,
     max: 100,
   },
-};
+});
 
-export const Styled: Story = {
+export const Styled = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bullet-chart-styled',
     className: 'bg-gray-100 rounded',
     classNameData: 'fill-slate-500',
@@ -47,9 +43,9 @@ export const Styled: Story = {
     classNameThreshold: 'fill-yellow-500',
     classNameBase: 'fill-green-500',
   },
-};
+});
 
-export const UpdatingData = () => {
+export const UpdatingData = meta.story(() => {
   const [data, setData] = React.useState(0);
   console.log(data, 'initial data');
   React.useEffect(() => {
@@ -70,4 +66,4 @@ export const UpdatingData = () => {
       />
     </>
   );
-};
+});

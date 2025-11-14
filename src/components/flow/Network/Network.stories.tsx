@@ -1,10 +1,10 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import Network from '.';
 import edges from './edges.json';
 import nodes from './nodes.json';
 
-const meta: Meta<typeof Network> = {
+const meta = preview.meta({
   title: 'Flow/Network/Intro',
   tags: ['autodocs'],
   component: Network,
@@ -13,13 +13,9 @@ const meta: Meta<typeof Network> = {
     nodes,
     edges,
   },
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof Network>;
-
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     id: 'simple-network',
     nodeDef: {
@@ -30,9 +26,9 @@ export const Default: Story = {
       targetKey: 'to',
     },
   },
-};
+});
 
-export const Styling: Story = {
+export const Styling = meta.story({
   args: {
     id: 'styled-network',
     className: 'bg-gray-100 rounded-lg',
@@ -54,14 +50,14 @@ export const Styling: Story = {
       },
     },
   },
-};
+});
 
-export const NodeSize: Story = {
+export const NodeSize = meta.story({
   args: {
-    ...Styling.args,
+    ...Styling.input.args,
     id: 'node-size-network',
     nodeDef: {
-      ...Styling?.args?.nodeDef,
+      ...Styling.input?.args?.nodeDef,
       idKey: 'name',
       size: {
         key: 'age',
@@ -70,11 +66,11 @@ export const NodeSize: Story = {
       },
     },
   },
-};
+});
 
-export const EdgeSize: Story = {
+export const EdgeSize = meta.story({
   args: {
-    ...NodeSize.args,
+    ...NodeSize.input.args,
     id: 'edge-size-network',
     edgeDef: {
       sourceKey: 'from',
@@ -87,11 +83,11 @@ export const EdgeSize: Story = {
       },
     },
   },
-};
+});
 
-export const WithZooming: Story = {
+export const WithZooming = meta.story({
   args: {
-    ...EdgeSize.args,
+    ...EdgeSize.input.args,
     id: 'zoom-network',
     zooming: {
       enabled: true,
@@ -99,14 +95,14 @@ export const WithZooming: Story = {
       max: 2,
     },
   },
-};
+});
 
-export const WithShapeMap: Story = {
+export const WithShapeMap = meta.story({
   args: {
-    ...EdgeSize.args,
+    ...EdgeSize.input.args,
     id: 'shape-map-network',
     nodeDef: {
-      ...EdgeSize.args?.nodeDef,
+      ...EdgeSize.input.args?.nodeDef,
       idKey: 'name',
       shape: {
         key: 'isMarried',
@@ -117,4 +113,4 @@ export const WithShapeMap: Story = {
       },
     },
   },
-};
+});

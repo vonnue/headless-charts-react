@@ -1,5 +1,5 @@
+import preview from '../../../../.storybook/preview';
 import BarChartStacked from '.';
-import { Meta } from '@storybook/react';
 import data from './sample.json';
 
 /**
@@ -8,15 +8,13 @@ import data from './sample.json';
  *
  * */
 
-const meta: Meta<typeof BarChartStacked> = {
+const meta = preview.meta({
   title: 'Linear/BarChartStacked/Waterfall',
   component: BarChartStacked,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-export const Waterfall = {
+export const Waterfall = meta.story({
   args: {
     data: data.filter((d) => d.year >= 2020),
     id: 'bar-chart-stacked-default',
@@ -40,11 +38,11 @@ export const Waterfall = {
     y: { key: 'year' },
     waterfall: true,
   },
-};
+});
 
-export const Styled = {
+export const Styled = meta.story({
   args: {
-    ...Waterfall.args,
+    ...Waterfall.input.args,
     id: 'bar-chart-stacked-styled',
     className: 'bg-gray-100 rounded',
     padding: {
@@ -84,25 +82,25 @@ export const Styled = {
     ],
     y: { key: 'year', className: 'text-red-500', padding: 10 },
   },
-};
+});
 
-export const WithDrawing = {
+export const WithDrawing = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'waterfall-drawing-styled',
     drawing: {
       duration: 1000,
     },
   },
-};
+});
 
-export const DrawingWithDelay = {
+export const DrawingWithDelay = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'waterfall-drawing-delay',
     drawing: {
       duration: 1000,
       delay: 200,
     },
   },
-};
+});

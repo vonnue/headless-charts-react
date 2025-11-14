@@ -11,14 +11,15 @@ import { defaultChartClassNames } from '../../../utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-export interface BoxPlotVProps extends ChartProps {
+export interface BoxPlotVProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
   classNameData?: string;
   y: {
-    minKey: string;
-    maxKey: string;
-    boxStart: string;
-    boxEnd: string;
-    midKey: string;
+    minKey: Extract<keyof TData, string> | string;
+    maxKey: Extract<keyof TData, string> | string;
+    boxStart: Extract<keyof TData, string> | string;
+    boxEnd: Extract<keyof TData, string> | string;
+    midKey: Extract<keyof TData, string> | string;
     min?: number;
     max?: number;
     axis?: 'right' | 'left';
@@ -28,13 +29,13 @@ export interface BoxPlotVProps extends ChartProps {
     classNameMap?: any;
   };
   x: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     axis?: 'top' | 'bottom';
   };
   tooltip?: TooltipObjectType;
 }
 
-const BoxPlotV = ({
+const BoxPlotV = <TData = any,>({
   className,
   classNameData,
   data,
@@ -59,7 +60,7 @@ const BoxPlotV = ({
     enabled: false,
   },
   style = {},
-}: BoxPlotVProps) => {
+}: BoxPlotVProps<TData>) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,

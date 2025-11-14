@@ -1,16 +1,14 @@
+import preview from '../../../../.storybook/preview';
 import LollipopVChart from '.';
-import { Meta } from '@storybook/react';
 import data from './sample.json';
 
-const meta: Meta<typeof LollipopVChart> = {
+const meta = preview.meta({
   title: 'Linear/LollipopVChart',
   component: LollipopVChart,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-export const Default = {
+export const Default = meta.story({
   args: {
     data,
     id: 'lollipop-v-chart-default',
@@ -26,19 +24,19 @@ export const Default = {
       start: 0,
     },
   },
-};
+});
 
-export const WithCustomShape = {
+export const WithCustomShape = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     shape: 'star',
   },
-};
+});
 
-export const WithCustomStyles = {
+export const WithCustomStyles = meta.story({
   args: {
-    ...WithCustomShape.args,
+    ...WithCustomShape.input.args,
     classNameLines: 'fill-red-500 stroke-red-500',
     classNameSymbols: 'fill-blue-500 stroke-blue-500',
   },
-};
+});

@@ -7,15 +7,16 @@ import { defaultChartClassNames } from '../../../utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-export interface RadarChartProps extends ChartProps {
-  metrics: { key: string }[];
+export interface RadarChartProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
+  metrics: { key: Extract<keyof TData, string> | string }[];
   classNameMap?: any;
-  label: { key: string };
+  label: { key: Extract<keyof TData, string> | string };
   min?: number;
   max?: number;
 }
 
-const RadarChart = ({
+const RadarChart = <TData = any,>({
   id,
   data,
   className,
@@ -29,7 +30,7 @@ const RadarChart = ({
   margin = { top: 20, bottom: 20, left: 20, right: 20 },
   drawing = undefined,
   style = {},
-}: RadarChartProps) => {
+}: RadarChartProps<TData>) => {
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 

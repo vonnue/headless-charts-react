@@ -1,18 +1,16 @@
+import preview from '../../../../.storybook/preview';
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import ColumnChartStacked from '.';
-import { Meta } from '@storybook/react';
 import data from './sample.json';
 
-const meta: Meta<typeof ColumnChartStacked> = {
+const meta = preview.meta({
   title: 'Linear/ColumnChartStacked',
   component: ColumnChartStacked,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-export const Default = {
+export const Default = meta.story({
   args: {
     data,
     id: 'column-chart-stack-default',
@@ -35,11 +33,11 @@ export const Default = {
     ],
     x: { key: 'year' },
   },
-};
+});
 
-export const Styled = {
+export const Styled = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'column-chart-stack-styled',
     className: 'bg-gray-100 rounded',
     padding: {
@@ -78,20 +76,20 @@ export const Styled = {
       },
     ],
   },
-};
+});
 
-export const WithTooltip = {
+export const WithTooltip = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     tooltip: {
       className: 'bg-gray-100 rounded p-2',
     },
   },
-};
+});
 
-export const WithCustomTooltip = {
+export const WithCustomTooltip = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     tooltip: {
       html: (data: any) => {
         return `
@@ -103,29 +101,29 @@ export const WithCustomTooltip = {
       },
     },
   },
-};
+});
 
-export const WithDrawing = {
+export const WithDrawing = meta.story({
   args: {
-    ...WithTooltip.args,
+    ...WithTooltip.input.args,
     drawing: {
       duration: 1000,
     },
   },
-};
-export const Waterfall = {
+});
+export const Waterfall = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'column-chart-stack-waterfall',
     waterfall: true,
   },
-};
+});
 
-export const WaterfallDrawing = {
+export const WaterfallDrawing = meta.story({
   args: {
-    ...Waterfall.args,
+    ...Waterfall.input.args,
     drawing: {
       duration: 1000,
     },
   },
-};
+});

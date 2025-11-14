@@ -1,27 +1,18 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import AreaChart from '.';
 import data from './data.json';
 
-const meta: Meta<typeof AreaChart> = {
+const meta = preview.meta({
   title: 'Linear/AreaChart/Intro',
   component: AreaChart,
-  parameters: {
-    controls: { expanded: true },
-  },
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-type Story = StoryObj<typeof AreaChart>;
-
+});
 /**
  * AreaChart is normally used when you want to show both a trend and a split of the total.
  * For example, you want to show the trend of a product and the split of the total product by category.
  *
  */
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     id: 'area-chart',
     data,
@@ -47,9 +38,9 @@ export const Default: Story = {
       },
     ],
   },
-};
+});
 
-export const Styled: Story = {
+export const Styled = meta.story({
   args: {
     id: 'area-chart-styled',
     data,
@@ -80,11 +71,10 @@ export const Styled: Story = {
       },
     ],
   },
-};
+});
 
-export const Padding: Story = {
+export const Padding = Styled.extend({
   args: {
-    ...Styled.args,
     id: 'area-chart-padding',
     padding: {
       top: 20,
@@ -93,34 +83,31 @@ export const Padding: Story = {
       left: 20,
     },
   },
-};
+});
 
-export const Zooming: Story = {
+export const Zooming = Styled.extend({
   args: {
-    ...Styled.args,
     id: 'area-chart-zooming',
     zooming: {
       enabled: true,
     },
   },
-};
+});
 
-export const StackedArea100Percent: Story = {
+export const StackedArea100Percent = Styled.extend({
   args: {
-    ...Styled.args,
     id: 'stacked-area-100',
     stacking: {
       type: '100%',
     },
   },
-};
+});
 
-export const Streamgraph: Story = {
+export const Streamgraph = Styled.extend({
   args: {
-    ...Styled.args,
     id: 'stacked-area-streamgraph',
     stacking: {
       type: 'streamgraph',
     },
   },
-};
+});

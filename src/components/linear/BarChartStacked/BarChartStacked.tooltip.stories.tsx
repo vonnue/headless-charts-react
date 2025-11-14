@@ -1,5 +1,5 @@
+import preview from '../../../../.storybook/preview';
 import BarChartStacked from '.';
-import { Meta } from '@storybook/react';
 import data from './sample.json';
 
 /**
@@ -8,18 +8,16 @@ import data from './sample.json';
  *
  * */
 
-const meta: Meta<typeof BarChartStacked> = {
+const meta = preview.meta({
   title: 'Linear/BarChartStacked/Tooltip',
   component: BarChartStacked,
   tags: ['autodocs'],
   args: {
     data,
   },
-};
+});
 
-export default meta;
-
-export const Tooltip = {
+export const Tooltip = meta.story({
   args: {
     id: 'bar-chart-tooltip-default',
     x: [
@@ -47,32 +45,32 @@ export const Tooltip = {
     y: { key: 'year' },
     tooltip: {},
   },
-};
+});
 
-export const TooltipStyled = {
+export const TooltipStyled = meta.story({
   args: {
-    ...Tooltip.args,
+    ...Tooltip.input.args,
     id: 'bar-chart-tooltip-styled',
     tooltip: {
       className: 'bg-gray-100 rounded p-2',
     },
   },
-};
+});
 
-export const TooltipCustomKeys = {
+export const TooltipCustomKeys = meta.story({
   args: {
-    ...Tooltip.args,
+    ...Tooltip.input.args,
     id: 'bar-chart-tooltip-custom-keys',
     tooltip: {
       className: 'bg-gray-100 rounded p-2',
       keys: ['year', 'macbook'],
     },
   },
-};
+});
 
-export const TooltipCustomHtml = {
+export const TooltipCustomHtml = meta.story({
   args: {
-    ...Tooltip.args,
+    ...Tooltip.input.args,
     id: 'bar-chart-tooltip-custom-html',
     tooltip: {
       className: 'bg-gray-100 rounded p-2',
@@ -80,4 +78,4 @@ export const TooltipCustomHtml = {
         `<p className="text-xl">${d.data.year}</p><p classname="text-xs"> macbooks sold $${d.data.macbook}B</p>`,
     },
   },
-};
+});

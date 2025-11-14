@@ -26,15 +26,15 @@ interface DrawingOptions {
   duration: number;
 }
 
-interface LabelOptions {
+interface LabelOptions<TData = any> {
   radius?: number;
-  text?: (data: DataItem) => string;
+  text?: (data: TData) => string;
   className?: string;
   classNameMap?: { [key: string]: string };
 }
 
-interface PieChartProps extends ChartProps {
-  data: DataItem[];
+interface PieChartProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
   id: string;
   className?: string;
   classNameMap?: ClassNameMap;
@@ -44,11 +44,11 @@ interface PieChartProps extends ChartProps {
   endAngle?: number;
   innerRadius?: number;
   outerRadius?: number;
-  nameKey: string;
-  valueKey: string;
+  nameKey: Extract<keyof TData, string> | string;
+  valueKey: Extract<keyof TData, string> | string;
   drawing?: DrawingOptions;
   tooltip?: TooltipObjectType;
-  labels?: LabelOptions;
+  labels?: LabelOptions<TData>;
   title?: {
     text?: string | null;
     className?: string;
@@ -60,7 +60,7 @@ interface PieChartProps extends ChartProps {
   sort?: boolean;
 }
 
-const PieChart = ({
+const PieChart = <TData = any,>({
   data,
   id,
   className = '',
@@ -98,7 +98,7 @@ const PieChart = ({
     className: 'text-center text-sm font-normal',
   },
   sort = true,
-}: PieChartProps) => {
+}: PieChartProps<TData>) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,

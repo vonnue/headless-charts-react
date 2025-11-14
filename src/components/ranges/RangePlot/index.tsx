@@ -21,25 +21,27 @@ import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 
-interface RangePlotProps extends ChartProps {
+interface RangePlotProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
   classNameData?: string;
   shape: 'circle';
   y: {
     [key: string]: string;
+    key: Extract<keyof TData, string> | string;
     axis: 'left' | 'right';
   };
   x: {
     start: number;
     end: number;
-    minKey: string;
-    maxKey: string;
+    minKey: Extract<keyof TData, string> | string;
+    maxKey: Extract<keyof TData, string> | string;
     axis: 'bottom' | 'top';
     axisTicks: number;
   };
   tooltip?: TooltipObjectType;
 }
 
-const RangePlot = ({
+const RangePlot = <TData = any,>({
   id,
   className,
   data = [],
@@ -62,7 +64,7 @@ const RangePlot = ({
   tooltip = {},
   zooming,
   style = {},
-}: RangePlotProps) => {
+}: RangePlotProps<TData>) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,

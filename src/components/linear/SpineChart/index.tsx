@@ -9,19 +9,15 @@ import { useCallback, useEffect } from 'react';
 import { TooltipObjectType } from '../../../hooks/useTooltip';
 import { transition } from 'd3-transition';
 
-interface Y {
-  key: string;
+interface Y<TData = any> {
+  key: Extract<keyof TData, string> | string;
   axis: 'left' | 'right' | 'middle';
   className: string;
   label?: string;
 }
 
-interface DataItem {
-  [key: string]: number | string;
-}
-
-interface SpineChartProps {
-  data: DataItem[];
+interface SpineChartProps<TData = any> {
+  data: TData[];
   id: string;
   className?: string;
   paddingBar?: number;
@@ -38,7 +34,7 @@ interface SpineChartProps {
     bottom: number;
     middle: number;
   };
-  y: Y;
+  y: Y<TData>;
   x: Array<any>;
   axisTicks?: number;
   xAxis?: 'top' | 'bottom';
@@ -46,7 +42,7 @@ interface SpineChartProps {
   style?: React.CSSProperties;
 }
 
-const SpineChart = ({
+const SpineChart = <TData = any,>({
   data = [],
   id,
   className,
@@ -74,7 +70,7 @@ const SpineChart = ({
   xAxis = 'bottom',
   tooltip = undefined,
   style = {},
-}: SpineChartProps) => {
+}: SpineChartProps<TData>) => {
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();

@@ -29,8 +29,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: 'src/index.tsx',
-      name: 'headless-charts',
-      formats: ['es', 'umd', 'cjs'],
+      name: '@headless-charts/react',
+      formats: ['es', 'cjs'],
       fileName: (format) => `index.${format}.js`,
     },
     minify: true,
@@ -47,6 +47,7 @@ export default defineConfig({
           react: 'React',
           'react-dom': 'ReactDOM',
         },
+        preserveModules: true,
       },
     },
   },

@@ -23,9 +23,10 @@ import { zoom } from 'd3-zoom';
 
 // import { brush } from 'd3-brush';
 
-export interface ScatterPlotProps extends ChartProps {
+export interface ScatterPlotProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
   x: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     start?: number;
     end?: number;
     axis?: 'top' | 'bottom';
@@ -33,7 +34,7 @@ export interface ScatterPlotProps extends ChartProps {
     convert?: (d: any) => number;
   };
   y: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     start?: number;
     end?: number;
     axis?: 'left' | 'right';
@@ -41,19 +42,19 @@ export interface ScatterPlotProps extends ChartProps {
     convert?: (d: any) => number;
   };
   color?: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     classNameMap?: {
       [key: string]: string;
     };
   };
   size?: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     min?: number;
     max?: number;
     default?: number;
   };
   shape?: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     shapeMap?: {
       [key: string]: any;
     };
@@ -74,7 +75,7 @@ export interface ScatterPlotProps extends ChartProps {
   };
 }
 
-const ScatterPlot = ({
+const ScatterPlot = <TData = any,>({
   data,
   id,
   className,
@@ -101,7 +102,7 @@ const ScatterPlot = ({
   drawing,
   connect = {},
   style = {},
-}: ScatterPlotProps) => {
+}: ScatterPlotProps<TData>) => {
   const defaultHtml = (d: any) =>
     `${x.key} ${d[x.key]}<br/>${y.key} ${d[y.key]}<br/>
     ${color?.key ? `${color.key} ${d[color.key]}<br/>` : ''}

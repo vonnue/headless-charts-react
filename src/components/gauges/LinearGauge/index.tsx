@@ -5,7 +5,7 @@ import { TooltipObjectType } from '../../../hooks/useTooltip';
 import { scaleLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
 
-interface LinearGaugeProps {
+interface LinearGaugeProps<TData = any> {
   id: string;
   className?: string;
   label:
@@ -14,7 +14,7 @@ interface LinearGaugeProps {
     | boolean
     | ValueFn<SVGTextElement, unknown, string | number | boolean | null>
     | null;
-  data?: number;
+  data?: TData extends number ? TData : number;
   max?: number;
   error?: { data: number; className?: string };
   gaugeHeight?: number;
@@ -31,11 +31,11 @@ interface LinearGaugeProps {
   style?: React.CSSProperties;
 }
 
-const LinearGauge = ({
+const LinearGauge = <TData = any,>({
   id,
   className,
   label,
-  data = 0,
+  data = 0 as any,
   max = 1,
   error,
   gaugeHeight = 6,
@@ -50,7 +50,7 @@ const LinearGauge = ({
   classNameGauge = '',
   classNameGaugeBg = '',
   style = {},
-}: LinearGaugeProps) => {
+}: LinearGaugeProps<TData>) => {
   const previousData = useRef(0);
 
   const setup = React.useCallback(() => {

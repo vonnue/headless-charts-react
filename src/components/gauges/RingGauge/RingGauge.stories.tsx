@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useCallback, useEffect, useState } from 'react';
 
@@ -10,19 +10,13 @@ import metrics from './sample.json';
  *
  * eg:- Apple Watch's activity app's Rings.
  */
-const meta: Meta<typeof RingGauge> = {
+const meta = preview.meta({
   title: 'Gauge/RingGauge/Intro',
   component: RingGauge,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-/** Default RingGauge Chart (Headless and unstyled). */
-
-type Story = StoryObj<typeof RingGauge>;
-
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     data: metrics.map(({ className, ...metric }: any) => metric),
     id: 'ring-chart-default',
@@ -30,22 +24,20 @@ export const Default: Story = {
     dataKey: 'score',
     targetKey: 'target',
   },
-};
+});
 
 /** Multiple styles can be applied on the chart background, or on each ring (/metric) */
 
-export const Styled: Story = {
+export const Styled = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     data: metrics,
     id: 'ring-chart-styled',
     className: 'bg-gray-100 rounded',
   },
-};
+});
 
-/** With custom start and end angle */
-
-export const UpdatingData = () => {
+export const UpdatingData = meta.story(() => {
   const [ringGaugeData, setRingGaugeData] = useState(metrics);
 
   const refreshData = useCallback(() => {
@@ -76,4 +68,4 @@ export const UpdatingData = () => {
       />
     </div>
   );
-};
+});

@@ -9,8 +9,8 @@ import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
 import { defaultChartClassNames } from '../../../utils';
 import { twMerge } from 'tailwind-merge';
 
-export interface PizzaChartProps {
-  data: { [key: string]: any };
+export interface PizzaChartProps<TData = any> {
+  data: TData;
   id: string;
   className?: string;
   margin?: {
@@ -29,15 +29,15 @@ export interface PizzaChartProps {
     delay?: number;
   };
   metrics: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     className?: string;
     classNameBackground?: string;
   }[];
   style?: React.CSSProperties;
 }
 
-const PizzaChart = ({
-  data = {},
+const PizzaChart = <TData = any,>({
+  data = {} as TData,
   className,
   id,
   margin = { top: 20, bottom: 20, left: 20, right: 20 },
@@ -49,7 +49,7 @@ const PizzaChart = ({
   metrics = [],
   tooltip,
   style = {},
-}: PizzaChartProps) => {
+}: PizzaChartProps<TData>) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,

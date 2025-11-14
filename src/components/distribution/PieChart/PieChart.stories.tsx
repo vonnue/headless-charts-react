@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 import { useCallback, useEffect, useState } from 'react';
 
 import PieChart from '.';
@@ -34,14 +34,11 @@ const years = [
  * - no title or subtitle
  * - Sorting is enabled by default (highest first)
  */
-const meta: Meta<typeof PieChart> = {
+const meta = preview.meta({
   title: 'Distribution/PieChart/Intro',
   component: PieChart,
   tags: ['autodocs'],
-} as Meta;
-
-export default meta;
-type Story = StoryObj<typeof PieChart>;
+});
 
 const classNameMap = {
   macbook: 'fill-purple-300 dark:fill-purple-100',
@@ -57,48 +54,48 @@ const classNameMap = {
  *
  * Note: the following chart will not be drawn in the docs because it shares the same id as the chart displayed with the Controls at the top
  * */
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     data,
     id: 'default-pie-chart',
     valueKey: 'Y2012',
     nameKey: 'name',
   },
-};
+});
 
 /**
  * However, the default chart will not be styled. You can provide a `classNameMap` prop, with a list of possible values for the `nameKey` prop.
  *
  * In the example, nameKey = 'Y2012' has 3 possible values: 'wearables', 'services' and 'wearables'. The `classNameMap` prop takes a map of the possible values and the tailwind classes to be applied to each value.
  */
-export const Styled: Story = {
+export const Styled = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'styled-pie-chart',
     classNameMap,
   },
-};
+});
 
 /**
  * Animating the chart can be animated by specifying a `duration` in milliseconds in `drawing` prop.
  */
-export const Drawing: Story = {
+export const Drawing = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'drawing-pie-chart',
     drawing: {
       duration: 1000,
     },
   },
-};
+});
 
 /**
  * You can add labels to the chart by specifying a `labels` prop. The `labels` prop takes a `radius` prop, which is the radius of the circle where the labels will be placed. The `key` prop is the name of the category. The `text` prop is a function that takes the data and returns the text to be displayed. The `className` prop is a string of tailwind classes to be applied to the labels (please use `text-` classes to style).
  */
 
-export const Labelled: Story = {
+export const Labelled = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'labelled-pie-chart',
     labels: {
       radius: 1.2,
@@ -106,38 +103,38 @@ export const Labelled: Story = {
       classNameMap,
     },
   },
-};
+});
 
 /**
  * You can add the `startAngle` prop to rotate the chart.
  */
-export const StartAngle90: Story = {
+export const StartAngle90 = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'pie-chart-start-angle',
     startAngle: 90,
   },
-};
+});
 
-export const PaddingAngle: Story = {
+export const PaddingAngle = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'pie-chart-padding-angle',
     paddingAngle: 1,
   },
-};
+});
 
-export const CornerRadius: Story = {
+export const CornerRadius = meta.story({
   args: {
-    ...PaddingAngle.args,
+    ...PaddingAngle.input.args,
     id: 'pie-chart-corner-radius',
     cornerRadius: 5,
   },
-};
+});
 
-export const CustomStyle: Story = {
+export const CustomStyle = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'pie-chart-custom-style',
     style: {
       width: '100%',
@@ -146,9 +143,9 @@ export const CustomStyle: Story = {
       backgroundColor: 'var(--color-bg)',
     },
   },
-};
+});
 
-export const PieChartRace = () => {
+export const PieChartRace = meta.story(() => {
   const [currentYearIndex, setCurrentYearIndex] = useState(0);
 
   const refreshData = useCallback(() => {
@@ -177,12 +174,12 @@ export const PieChartRace = () => {
       />
     </div>
   );
-};
+});
 
-export const Unsorted: Story = {
+export const Unsorted = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'unsorted-pie-chart',
     sort: false,
   },
-};
+});

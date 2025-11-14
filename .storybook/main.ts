@@ -1,26 +1,22 @@
-import type { StorybookConfig } from '@storybook/react-vite';
+import { defineMain } from '@storybook/react-vite/node';
 
-const config: StorybookConfig = {
+export default defineMain({
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
-
   addons: [
     '@storybook/addon-links',
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
     '@storybook/addon-themes',
-    '@storybook/theming',
     '@chromatic-com/storybook',
+    '@storybook/addon-docs',
   ],
-
   framework: {
     name: '@storybook/react-vite',
     options: {},
   },
-
   docs: {},
-
   typescript: {
     reactDocgen: 'react-docgen-typescript',
   },
-};
-export default config;
+  features: {
+    experimentalTestSyntax: true,
+  },
+});

@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import PizzaChart from '.';
 import data from './sample.json';
@@ -33,38 +31,34 @@ const metrics = [
  * Tooltips can be added to PizzaCharts to show additional information about each metric.
  */
 
-const meta: Meta<typeof PizzaChart> = {
+const meta = preview.meta({
   title: 'Gauge/PizzaChart/Tooltip',
   component: PizzaChart,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof PizzaChart>;
-
-export const WithTooltip: Story = {
+export const WithTooltip = meta.story({
   args: {
     id: 'pizza-chart-tooltip',
     data,
     tooltip: {},
     metrics,
   },
-};
+});
 
-export const WithCustomColors: Story = {
+export const WithCustomColors = meta.story({
   args: {
-    ...WithTooltip.args,
+    ...WithTooltip.input.args,
     id: 'pizza-chart-tooltip-custom-colors',
     tooltip: {
       className: 'bg-white border-2 border-purple-700 p-2 rounded',
     },
   },
-};
+});
 
-export const WithCustomHtml: Story = {
+export const WithCustomHtml = meta.story({
   args: {
-    ...WithTooltip.args,
+    ...WithTooltip.input.args,
     id: 'pizza-chart-tooltip-custom-html',
     tooltip: {
       html: (d: { index: number }) =>
@@ -76,4 +70,4 @@ export const WithCustomHtml: Story = {
         </div>`,
     },
   },
-};
+});

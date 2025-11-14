@@ -18,8 +18,8 @@ interface Label {
   className?: string;
 }
 
-interface SpeedometerChartProps {
-  data: number;
+interface SpeedometerChartProps<TData = any> {
+  data: TData extends number ? TData : number;
   label?: Label;
   id: string;
   className?: string;
@@ -35,7 +35,7 @@ interface SpeedometerChartProps {
   style?: React.CSSProperties;
 }
 
-const SpeedometerChart = ({
+const SpeedometerChart = <TData = any,>({
   data,
   label,
   id,
@@ -50,7 +50,7 @@ const SpeedometerChart = ({
   axisTicks = 5,
   needleRadius = 0.8,
   style = {},
-}: SpeedometerChartProps) => {
+}: SpeedometerChartProps<TData>) => {
   const PI = Math.PI;
   const MIN_ANGLE = -PI / 2;
   const MAX_ANGLE = PI / 2;

@@ -1,13 +1,29 @@
-/* TODO: update import to your tailwind styles file. If you're using Angular, inject this through your angular.json config instead */
+import addonDocs from '@storybook/addon-docs';
+import addonLinks from '@storybook/addon-links';
+import { definePreview } from '@storybook/react-vite';
+import type { Meta } from '@storybook/react';
 import '../src/index.css';
 import './styles.css';
 
-import type { Preview } from '@storybook/react';
 import { withThemeByClassName } from '@storybook/addon-themes';
 
-const preview: Preview = {
+const decorators = [
+  withThemeByClassName({
+    themes: {
+      light: 'light',
+      dark: 'dark',
+    },
+    defaultTheme: 'light',
+  }),
+];
+
+export default definePreview({
+  decorators,
+  tags: ['autodocs'],
   parameters: {
-    actions: { argTypesRegex: '^on[A-Z].*' },
+    controls: {
+      expanded: true,
+    },
     options: {
       storySort: {
         order: [
@@ -23,16 +39,6 @@ const preview: Preview = {
       },
     },
   },
-};
 
-export const decorators = [
-  withThemeByClassName({
-    themes: {
-      light: 'light',
-      dark: 'dark',
-    },
-    defaultTheme: 'light',
-  }),
-];
-
-export default preview;
+  addons: [addonLinks(), addonDocs()],
+});

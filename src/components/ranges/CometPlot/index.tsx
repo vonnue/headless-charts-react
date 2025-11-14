@@ -21,14 +21,15 @@ import { defaultChartClassNames } from '../../../utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-export interface RangePlotProps extends ChartProps {
+export interface RangePlotProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
   y: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     axis?: 'left' | 'right';
   };
   x: {
-    fromKey: string;
-    toKey: string;
+    fromKey: Extract<keyof TData, string> | string;
+    toKey: Extract<keyof TData, string> | string;
     start?: number;
     end?: number;
     axis?: 'top' | 'bottom';
@@ -50,7 +51,7 @@ export interface RangePlotProps extends ChartProps {
   tooltip?: TooltipObjectType;
 }
 
-const RangePlot = ({
+const RangePlot = <TData = any,>({
   id,
   className,
   data = [],
@@ -75,7 +76,7 @@ const RangePlot = ({
     enabled: false,
   },
   style = {},
-}: RangePlotProps) => {
+}: RangePlotProps<TData>) => {
   const { onMouseLeave, onMouseMove, onMouseOver } = useTooltip({
     id,
     tooltip,

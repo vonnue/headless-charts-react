@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import PieChart from '.';
 import data from './sample.json';
@@ -12,7 +12,7 @@ const classNameMap = {
 /**
  * Donut charts are a variant of pie charts. Simply specify an `innerRadius` prop
  */
-const meta: Meta<typeof PieChart> = {
+const meta = preview.meta({
   title: 'Distribution/PieChart/Tooltips',
   component: PieChart,
   tags: ['autodocs'],
@@ -22,56 +22,52 @@ const meta: Meta<typeof PieChart> = {
     classNameMap,
     tooltip: {},
   },
-};
-
-export default meta;
-
-type Story = StoryObj<typeof PieChart>;
+});
 
 /**
  * Tooltips can be enabled by adding a `tooltip` prop (`{}` will render default behaviour).
  */
-export const Tooltip: Story = {
+export const Tooltip = meta.story({
   args: {
     id: 'tooltip',
   },
-};
+});
 
 /**
  * Tooltip divs can be styled by passing a `tooltip` prop with a `className` property.
  * */
-export const TooltipStyled: Story = {
+export const TooltipStyled = meta.story({
   args: {
     id: 'tooltip-styled',
     tooltip: {
       className: 'bg-purple-700 text-white p-2 rounded',
     },
   },
-};
+});
 
 /**
  * The `tooltip.keys` prop can be used to specify which keys in the data array to show in the tooltip (Even those not used in creating the pie).
  * */
-export const TooltipKeys: Story = {
+export const TooltipKeys = meta.story({
   args: {
-    ...Tooltip.args,
+    ...Tooltip.input.args,
     id: 'tooltip-custom',
     tooltip: {
-      ...TooltipStyled.args?.tooltip,
+      ...TooltipStyled.input.args?.tooltip,
       keys: ['name', 'Y2012', 'Europe', 'Africa'],
     },
   },
-};
+});
 
 /**
  * The `tooltip.html` prop can be used to specify a custom text to show in the tooltip. The function will be passed the data object.
  * */
-export const TooltipCustomHtml: Story = {
+export const TooltipCustomHtml = meta.story({
   args: {
-    ...Tooltip.args,
+    ...Tooltip.input.args,
     id: 'tooltip-custom-html',
     tooltip: {
-      ...TooltipStyled.args?.tooltip,
+      ...TooltipStyled.input.args?.tooltip,
       html: (d: any) =>
         `${d.data.name} sold ${d.value || 0} in Y2012 , ${
           d.data['Europe'] || 0
@@ -80,4 +76,4 @@ export const TooltipCustomHtml: Story = {
         } in Asia/Pacific.`,
     },
   },
-};
+});

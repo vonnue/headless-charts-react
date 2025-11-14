@@ -12,18 +12,18 @@ import { twMerge } from 'tailwind-merge';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-export interface RingGaugeProps {
+export interface RingGaugeProps<TData = any> {
   id: string;
   className?: string;
-  labelKey: string;
-  targetKey: string;
-  dataKey: string;
-  errorKey?: string;
+  labelKey: Extract<keyof TData, string> | string;
+  targetKey: Extract<keyof TData, string> | string;
+  dataKey: Extract<keyof TData, string> | string;
+  errorKey?: Extract<keyof TData, string> | string;
   labels?: {
     position?: 'top' | 'bottom';
     className?: string;
   };
-  data?: any[];
+  data?: TData[];
   margin?: {
     top?: number;
     bottom?: number;
@@ -50,7 +50,7 @@ export interface RingGaugeProps {
   style?: React.CSSProperties;
 }
 
-const RingGauge = ({
+const RingGauge = <TData = any,>({
   className,
   id,
   labelKey,
@@ -75,7 +75,7 @@ const RingGauge = ({
   classNameGaugeBg = '',
   labels = { position: 'top' },
   style = {},
-}: RingGaugeProps) => {
+}: RingGaugeProps<TData>) => {
   const PI = Math.PI,
     numArcs = data.length;
 

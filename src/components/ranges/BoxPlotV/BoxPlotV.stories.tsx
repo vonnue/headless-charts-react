@@ -1,17 +1,15 @@
+import preview from '../../../../.storybook/preview';
 import BoxPlotV from '.';
-import { Meta } from '@storybook/react';
 import data from '../sample.json';
 
-const meta: Meta<typeof BoxPlotV> = {
+const meta = preview.meta({
   title: 'Ranges/BoxPlotV',
   component: BoxPlotV,
   tags: ['autodocs'],
-};
-
-export default meta;
+});
 
 /** Default BoxPlot (Grouped). */
-export const Default = {
+export const Default = meta.story({
   args: {
     data,
     id: 'box-plot-h-default',
@@ -25,26 +23,26 @@ export const Default = {
     },
     x: { key: 'name' },
   },
-};
+});
 
 /** BoxPlot (Grouped) with custom colors. */
-export const CustomColors = {
+export const CustomColors = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'box-plot-h-custom-colors',
     y: {
-      ...Default.args.y,
+      ...Default.input.args.y,
       classNameBoxes: 'text-blue-500 opacity-100',
     },
   },
-};
+});
 
-export const CustomColorMap = {
+export const CustomColorMap = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'box-plot-h-custom-color-map',
     y: {
-      ...Default.args.y,
+      ...Default.input.args.y,
     },
     data: data.map((d: any, idx: number) => ({
       ...d,
@@ -56,29 +54,29 @@ export const CustomColorMap = {
       ][idx],
     })),
   },
-};
+});
 
-export const DefaultTooltip = {
+export const DefaultTooltip = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'box-plot-h-default-tooltip',
     tooltip: {},
   },
-};
+});
 
-export const CustomStyleTooltip = {
+export const CustomStyleTooltip = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'box-plot-h-custom-tooltip',
     tooltip: {
       className: 'bg-gray-100 text-gray-900',
     },
   },
-};
+});
 
-export const CustomHtmlTooltip = {
+export const CustomHtmlTooltip = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'box-plot-h-custom-html-tooltip',
     tooltip: {
       html: (d: any) => {
@@ -90,11 +88,11 @@ export const CustomHtmlTooltip = {
       },
     },
   },
-};
+});
 
-export const Zooming = {
+export const Zooming = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'box-plot-h-zooming',
     zooming: {
       enabled: true,
@@ -102,4 +100,4 @@ export const Zooming = {
       max: 2,
     },
   },
-};
+});

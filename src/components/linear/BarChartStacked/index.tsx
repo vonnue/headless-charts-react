@@ -11,12 +11,8 @@ import { stack } from 'd3';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-interface DataItem {
-  [key: string]: any;
-}
-
-interface AxisItems {
-  key: string;
+interface AxisItems<TData = any> {
+  key: Extract<keyof TData, string> | string;
   className?: string;
   axis?: string;
   axisTicks?: number;
@@ -27,8 +23,8 @@ interface Drawing {
   delay?: number;
 }
 
-interface DataLabel {
-  text?: (data: DataItem, column: AxisItems) => string;
+interface DataLabel<TData = any> {
+  text?: (data: TData, column: AxisItems<TData>) => string;
 }
 
 interface ReferenceLines {
@@ -36,21 +32,21 @@ interface ReferenceLines {
   className?: string;
 }
 
-interface StackedArrayItem {
+interface StackedArrayItem<TData = any> {
   0: number;
   1: number;
-  data: DataItem;
+  data: TData;
 }
 
-interface StackedDataItem {
+interface StackedDataItem<TData = any> {
   start: number;
   end: number;
-  data: DataItem;
+  data: TData;
   index: number;
 }
 
-interface BarChartStackedProps {
-  data: DataItem[];
+interface BarChartStackedProps<TData = any> {
+  data: TData[];
   id: string;
   className?: string;
   direction?: string;
@@ -69,16 +65,16 @@ interface BarChartStackedProps {
   };
   referenceLines?: ReferenceLines[];
   waterfall?: boolean;
-  x: AxisItems[];
+  x: AxisItems<TData>[];
   tickFormat?: string;
-  y: AxisItems;
+  y: AxisItems<TData>;
   tooltip?: TooltipObjectType;
   drawing?: Drawing;
-  dataLabel?: DataLabel;
+  dataLabel?: DataLabel<TData>;
   style?: React.CSSProperties;
 }
 
-const BarChartStacked = ({
+const BarChartStacked = <TData = any,>({
   data = [],
   id,
   className,
@@ -105,7 +101,7 @@ const BarChartStacked = ({
   drawing = undefined,
   dataLabel,
   style = {},
-}: BarChartStackedProps) => {
+}: BarChartStackedProps<TData>) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,

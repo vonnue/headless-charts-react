@@ -1,5 +1,5 @@
+import preview from '../../../../.storybook/preview';
 import CometPlot from '.';
-import { Meta } from '@storybook/react';
 import data from '../sample.json';
 
 /**
@@ -13,18 +13,16 @@ import data from '../sample.json';
  * - Showing the influence of a yes/no state on a metric (eg:- How well does a team perform with and without a manager/member)
  */
 
-const meta: Meta<typeof CometPlot> = {
+const meta = preview.meta({
   title: 'Ranges/CometPlot',
   component: CometPlot,
   tags: ['autodocs'],
-};
-
-export default meta;
+});
 
 /**
  * Default CometPlot with no styling.
  */
-export const Default = {
+export const Default = meta.story({
   args: {
     data,
     id: 'comet-plot-h-default',
@@ -34,14 +32,14 @@ export const Default = {
     },
     y: { key: 'name' },
   },
-};
+});
 
 /**
  * CometPlot with custom styling. className styles the entire chart, x.className styles the comets. tooltip.className styles the tooltip.
  * */
-export const Styled = {
+export const Styled = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     className: 'bg-red-50 rounded h-56',
     id: 'comet-plot-h-styled',
     data: data,
@@ -58,49 +56,49 @@ export const Styled = {
       className: 'p-2 rounded bg-white shadow-md',
     },
   },
-};
+});
 
 /**
  * The size of the comet head can be varied (default 100)
  */
-export const CustomSize = {
+export const CustomSize = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'comet-plot-h-custom-size',
     size: 40,
   },
-};
+});
 
 /**
  * The shape of the comet head can be varied (default circle)
  */
-export const CustomShape = {
+export const CustomShape = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'comet-plot-h-custom-shape',
     shape: 'triangle',
   },
-};
+});
 
 /**
  * The tooltip keys can be customized
  */
-export const CustomTooltip = {
+export const CustomTooltip = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'comet-plot-h-custom-tooltip',
     tooltip: {
       keys: ['name', 'min', 'max'],
     },
   },
-};
+});
 
 /**
  * The tooltip can be customized with html
  */
-export const CustomTooltipHtml = {
+export const CustomTooltipHtml = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'comet-plot-h-custom-tooltip-html',
     tooltip: {
       html: (d: any) => {
@@ -113,14 +111,14 @@ export const CustomTooltipHtml = {
       },
     },
   },
-};
+});
 /**
  * Each comet can be styled individually, by adding a className to each item in the data object
  */
 
-export const CustomColorMap = {
+export const CustomColorMap = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'comet-plot-h-custom-color-map',
     data: data.map((d: any, idx: number) => ({
       ...d,
@@ -132,28 +130,28 @@ export const CustomColorMap = {
       ][idx],
     })),
   },
-};
+});
 
 /**
  * The chart can be zoomed in and out by scrolling (single axis). Default min zoom level is 1,  Max zoom level is 2
  */
-export const Zooming = {
+export const Zooming = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'comet-plot-h-zooming',
     zooming: {
       enabled: true,
     },
   },
-};
+});
 
 /**
  * Zooming can be done with custom min and max extents.
  */
 
-export const ZoomingCustom = {
+export const ZoomingCustom = meta.story({
   args: {
-    ...Zooming.args,
+    ...Zooming.input.args,
     id: 'comet-plot-h-zooming-custom',
     zooming: {
       enabled: true,
@@ -161,17 +159,17 @@ export const ZoomingCustom = {
       max: 4,
     },
   },
-};
+});
 
 /**
  * There are maybe times in which one value has decreased and others have increased and we need to highlight it.
  */
-export const Reverse = {
+export const Reverse = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'box-plot-h-reverse',
     x: {
-      ...Styled.args.x,
+      ...Styled.input.args.x,
       classNameNegative: 'fill-red-800 stroke-red-800',
     },
     data: [
@@ -183,4 +181,4 @@ export const Reverse = {
       },
     ],
   },
-};
+});

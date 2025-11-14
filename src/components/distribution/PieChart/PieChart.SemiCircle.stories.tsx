@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import PieChart from '.';
 import data from './sample.json';
@@ -6,15 +6,11 @@ import data from './sample.json';
 /**
  * SemiCircle charts are specifically useful for certain representations like political polls or seat shares, since they look like the seating arrangement in a parliament.
  */
-const meta: Meta<typeof PieChart> = {
+const meta = preview.meta({
   title: 'Distribution/PieChart/SemiCircle',
   component: PieChart,
   tags: ['autodocs'],
-};
-
-export default meta;
-
-type Story = StoryObj<typeof PieChart>;
+});
 
 const classNameMap = {
   macbook: 'fill-purple-700 dark:fill-purple-100',
@@ -25,7 +21,7 @@ const classNameMap = {
 /**
  * SemiCircle charts are a variant of pie charts. Simply specify `startAngle` and `endAngle` props and set it to -90 and 90.
  */
-export const SemiCircle: Story = {
+export const SemiCircle = meta.story({
   args: {
     id: 'tooltip',
     data,
@@ -34,18 +30,18 @@ export const SemiCircle: Story = {
     startAngle: -90,
     endAngle: 90,
   },
-};
+});
 
 /**
  * Drawing the chart can be animated by specifying a `duration` in milliseconds.
  */
 
-export const Drawing: Story = {
+export const Drawing = meta.story({
   args: {
-    ...SemiCircle.args,
+    ...SemiCircle.input.args,
     id: 'drawing-pie-chart',
     drawing: {
       duration: 1000,
     },
   },
-};
+});

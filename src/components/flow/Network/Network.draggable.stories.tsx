@@ -1,10 +1,10 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import Network from '.';
 import edges from './edges.json';
 import nodes from './nodes.json';
 
-const meta: Meta<typeof Network> = {
+const meta = preview.meta({
   title: 'Flow/Network/Draggable',
   tags: ['autodocs'],
   component: Network,
@@ -19,13 +19,9 @@ const meta: Meta<typeof Network> = {
       targetKey: 'to',
     },
   },
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof Network>;
-
-export const Draggable: Story = {
+export const Draggable = meta.story({
   args: {
     id: 'draggable-network',
     dragging: {
@@ -33,15 +29,15 @@ export const Draggable: Story = {
       snapToNewPosition: false,
     },
   },
-};
+});
 
-export const DraggableSnapsToNewPosition: Story = {
+export const DraggableSnapsToNewPosition = meta.story({
   args: {
-    ...Draggable.args,
+    ...Draggable.input.args,
     id: 'draggable-snap-network',
     dragging: {
       enabled: true,
       snapToNewPosition: true,
     },
   },
-};
+});

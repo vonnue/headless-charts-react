@@ -19,7 +19,8 @@ import { defaultChartClassNames } from '../../../utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-export interface LollipopHChartProps extends ChartProps {
+export interface LollipopHChartProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
   classNamePoints?: string;
   classNameLines?: string;
   classNameSymbols?: string;
@@ -37,19 +38,19 @@ export interface LollipopHChartProps extends ChartProps {
     | 'star'
     | 'wye';
   x?: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     start?: number;
     end?: number;
     axis?: 'top' | 'bottom';
     axisTicks?: number;
   };
   y?: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     axis?: 'left' | 'right';
   };
 }
 
-const LollipopHChart = ({
+const LollipopHChart = <TData = any,>({
   data = [],
   id,
   className,
@@ -73,7 +74,7 @@ const LollipopHChart = ({
   x = { key: 'x', axis: 'bottom', axisTicks: 2 },
   y = { key: 'y', axis: 'left' },
   style = {},
-}: LollipopHChartProps) => {
+}: LollipopHChartProps<TData>) => {
   const refreshChart = React.useCallback(() => {
     const svg = select(`#${id}`);
 

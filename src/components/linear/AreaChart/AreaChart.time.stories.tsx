@@ -1,37 +1,31 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 import AreaChart from './index';
 import { DateTime } from 'luxon';
 
 import data from './data.json';
-const meta: Meta<typeof AreaChart> = {
+const meta = preview.meta({
   title: 'Linear/AreaChart/Time Scaling',
   component: AreaChart,
-  parameters: {
-    layout: 'centered',
-  },
   argTypes: {
     data: { control: 'object' },
   },
-};
-
-export default meta;
-type Story = StoryObj<typeof AreaChart>;
+});
 
 const timeSeriesData = data.map((d) => ({
   ...d,
-  date: DateTime.fromFormat(`31-12-${d.year}`, 'dd-MM-yyyy').toFormat(
-    'yyyy-MM-dd'
-  ),
+  date: DateTime.fromFormat(`31-12-${d.year} 23:59:59`, 'dd-MM-yyyy HH:mm:ss')
+    .toUTC()
+    .toISO(),
 }));
 
-export const TimeScaledAreaChart: Story = {
+export const TimeScaledAreaChart = meta.story({
   args: {
     id: 'time-area-chart',
     data: timeSeriesData,
     x: {
       key: 'date',
       scalingFunction: 'time',
-      format: 'yyyy-MM-dd',
+      isISO: true,
     },
     y: [
       {
@@ -65,34 +59,84 @@ export const TimeScaledAreaChart: Story = {
         `Date: ${d.date}<br/>Macbook:${d.macbook}<br/>Iphone:${d.iphone}<br/>Ipad:${d.ipad}<br/>Wearables:${d.wearables}<br/>Services:${d.services}`,
     },
   },
-};
+});
 
-export const TimeScaledStreamgraphAreaChart: Story = {
+export const TimeScaledStreamgraphAreaChart = meta.story({
   args: {
-    ...TimeScaledAreaChart.args,
+    ...TimeScaledAreaChart.input.args,
     id: 'time-streamgraph-area-chart',
     stacking: {
       type: 'streamgraph',
     },
   },
-};
+});
 
-export const TimeScaledPercentAreaChart: Story = {
+export const TimeScaledPercentAreaChart = meta.story({
   args: {
-    ...TimeScaledAreaChart.args,
+    ...TimeScaledAreaChart.input.args,
     id: 'time-percent-area-chart',
     stacking: {
       type: '100%',
     },
   },
-};
+});
 
-export const TimeScaledDivergingAreaChart: Story = {
+export const TimeScaledDivergingAreaChart = meta.story({
   args: {
-    ...TimeScaledAreaChart.args,
+    ...TimeScaledAreaChart.input.args,
     id: 'time-diverging-area-chart',
     stacking: {
       type: 'diverging',
     },
   },
+});
+
+/**
+ * Example demonstrating type-safe key suggestions.
+ * Define your data type and TypeScript will provide autocomplete for keys.
+ */
+type MetricsData = {
+  time_bucket: string;
+  count: number;
+  totalViolation: number;
 };
+
+const metricsData: MetricsData[] = [
+  {
+    time_bucket: '2025-11-06T08:00:00.000Z',
+    count: 29871,
+    totalViolation: 17477,
+  },
+  {
+    time_bucket: '2025-11-06T07:00:00.000Z',
+    count: 10334,
+    totalViolation: 6010,
+  },
+  {
+    time_bucket: '2025-11-06T06:00:00.000Z',
+    count: 22403,
+    totalViolation: 12984,
+  },
+];
+
+export const TypedTimeSeries = meta.story({
+  args: {
+    id: 'typed-time-series',
+    data: metricsData,
+    x: {
+      key: 'time_bucket', // TypeScript autocomplete works here!
+      scalingFunction: 'time',
+      isISO: true,
+    },
+    y: [
+      {
+        key: 'count', // TypeScript autocomplete works here!
+        className: 'text-purple-900',
+      },
+      {
+        key: 'totalViolation', // TypeScript autocomplete works here!
+        className: 'text-purple-700',
+      },
+    ],
+  },
+});

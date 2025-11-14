@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import PizzaChart from '.';
 import data from './sample.json';
@@ -7,17 +7,13 @@ import data from './sample.json';
  * Pizza charts are used to show the distribution of a single metric across multiple categories.
  *
  *  */
-const meta: Meta<typeof PizzaChart> = {
+const meta = preview.meta({
   title: 'Gauge/PizzaChart',
   component: PizzaChart,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof PizzaChart>;
-
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     id: 'pizza-chart',
     data,
@@ -45,11 +41,11 @@ export const Default: Story = {
       },
     ],
   },
-};
+});
 
-export const WithCustomColors: Story = {
+export const WithCustomColors = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'pizza-chart-custom-colors',
     metrics: [
       {
@@ -89,25 +85,25 @@ export const WithCustomColors: Story = {
       },
     ],
   },
-};
+});
 
-export const Drawing: Story = {
+export const Drawing = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'pizza-chart-drawing',
     drawing: {
       duration: 1000,
     },
   },
-};
+});
 
-export const DrawingWithDelay: Story = {
+export const DrawingWithDelay = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'pizza-chart-drawing-delay',
     drawing: {
       duration: 1000,
       delay: 50,
     },
   },
-};
+});

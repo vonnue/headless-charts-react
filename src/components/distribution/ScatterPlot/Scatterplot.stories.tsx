@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 import ScatterPlot from '.';
 import data from './sample.json';
 
@@ -7,17 +7,16 @@ import data from './sample.json';
  *
  * Essentially you can encode 2 categorical values(shape & color) & 3 numerical values(x,y & size).
  */
-const meta: Meta<typeof ScatterPlot> = {
+const meta = preview.meta({
   title: 'Distribution/ScatterPlot/Intro',
   component: ScatterPlot,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
 /**
  * This is the default rendering of the scatterplot with no additional attributes. The x & y axis are automatically generated based on the data provided.
  */
-export const Default = {
+export const Default = meta.story({
   args: {
     id: 'scatterplot-default',
     data,
@@ -28,14 +27,14 @@ export const Default = {
       key: 'purchasing_power',
     },
   },
-};
+});
 
 /**
  * You can additionally style each dot based on a categorical value. In this example, the dots are colored based on the continent.
  */
-export const WithColor = {
+export const WithColor = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'scatterplot-color',
     color: {
       key: 'continent',
@@ -54,15 +53,15 @@ export const WithColor = {
       },
     },
   },
-};
+});
 
 /**
  * You can additionally style each dot based on a numerical value. In this example, the dots are sized based on the population.
  */
 
-export const WithSizeAndColor = {
+export const WithSizeAndColor = meta.story({
   args: {
-    ...WithColor.args,
+    ...WithColor.input.args,
     id: 'scatterplot-size',
     size: {
       key: 'population',
@@ -71,15 +70,15 @@ export const WithSizeAndColor = {
       default: 10,
     },
   },
-};
+});
 
 /**
  * You can additionally style each dot based on a categorical value. In this example, the dots are shaped based on the system of government.
  */
 
-export const WithSizeAndShape = {
+export const WithSizeAndShape = meta.story({
   args: {
-    ...WithSizeAndColor.args,
+    ...WithSizeAndColor.input.args,
     id: 'scatterplot-shape',
     shape: {
       key: 'system',
@@ -89,28 +88,28 @@ export const WithSizeAndShape = {
       },
     },
   },
-};
+});
 
 /**
  * You can additionally animate the rendering of the scatterplot. In this example, the dots are animated as they are rendered.
  */
 
-export const Animated = {
+export const Animated = meta.story({
   args: {
-    ...WithSizeAndShape.args,
+    ...WithSizeAndShape.input.args,
     id: 'scatterplot-animated',
     drawing: {
       delay: 300,
     },
   },
-};
+});
 
 /**
  * Two axis zooming is also supported. In this example, the user can zoom in and out of the scatterplot.
  */
-export const WithZoom = {
+export const WithZoom = meta.story({
   args: {
-    ...Animated.args,
+    ...Animated.input.args,
     id: 'scatterplot-zoom',
     zooming: {
       enabled: true,
@@ -118,4 +117,4 @@ export const WithZoom = {
       max: 4,
     },
   },
-};
+});

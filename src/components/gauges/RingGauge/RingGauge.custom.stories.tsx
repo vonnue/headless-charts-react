@@ -1,21 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import RingGauge from '.';
 import metrics from './sample.json';
 
-const meta: Meta<typeof RingGauge> = {
+const meta = preview.meta({
   title: 'Gauge/RingGauge/Customized',
   component: RingGauge,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof RingGauge>;
-
-export const WithCustomStartAndEndAngle: Story = {
+export const WithCustomStartAndEndAngle = meta.story({
   args: {
     data: metrics.map(({ className, ...metric }: any) => metric),
     id: 'ring-chart-custom-start-end-angle',
@@ -25,12 +19,12 @@ export const WithCustomStartAndEndAngle: Story = {
     startAngle: 45,
     endAngle: 180,
   },
-};
+});
 
 /** labels at bottom position */
-export const WithLabelsAtBottom: Story = {
+export const WithLabelsAtBottom = meta.story({
   args: {
-    ...WithCustomStartAndEndAngle.args,
+    ...WithCustomStartAndEndAngle.input.args,
     id: 'ring-chart-labels-bottom',
     startAngle: -90,
     endAngle: 180,
@@ -38,4 +32,4 @@ export const WithLabelsAtBottom: Story = {
       position: 'bottom',
     },
   },
-};
+});

@@ -1,6 +1,5 @@
+import preview from '../../../../.storybook/preview';
 import './index.css';
-
-import { Meta, StoryObj } from '@storybook/react';
 
 import LineChart from '.';
 import { convertToRanks } from '../../../utils';
@@ -10,13 +9,11 @@ import data from '../AreaChart/data.json';
 /**
  * Bump charts are used to compare the rank of a set of data points over time.
  */
-const meta: Meta<typeof LineChart> = {
+const meta = preview.meta({
   title: 'Linear/LineChart/Ranked',
   component: LineChart,
   tags: ['autodocs'],
-};
-
-export default meta;
+});
 
 const x = { key: 'year' };
 
@@ -68,13 +65,11 @@ const y = [
   },
 ];
 
-type Story = StoryObj<typeof LineChart>;
-
 /**
  * Rather than using the default data, we convert the data to ranks
  */
 
-export const RankedLine: Story = {
+export const RankedLine = meta.story({
   args: {
     data: convertToRanks(data, y, x),
     x,
@@ -92,16 +87,16 @@ export const RankedLine: Story = {
     yLeftLabel: 'rank',
     reverse: true,
   },
-};
+});
 /**
  * curve can be set to bumpX to make the lines more horizontal
  */
 
-export const bumpX: Story = {
+export const bumpX = meta.story({
   args: {
-    ...RankedLine.args,
+    ...RankedLine.input.args,
     id: 'bump-ranked-chart',
     x: { key: 'year', axisTicks: 3 },
     y: y.map((d) => ({ ...d, curve: 'bumpX' })),
   },
-};
+});

@@ -18,12 +18,8 @@ import { ChartProps } from '../../../types';
 import { defaultChartClassNames } from '../../../utils';
 import { twMerge } from 'tailwind-merge';
 
-interface DataItem {
-  [key: string]: any;
-}
-
-interface LollipopVChartProps extends ChartProps {
-  data: DataItem[];
+interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
   valueMin?: number;
   valueMax?: number;
   id: string;
@@ -51,16 +47,16 @@ interface LollipopVChartProps extends ChartProps {
     | 'cross'
     | 'star'
     | 'wye';
-  x?: { axis: 'bottom' | 'top'; axisTicks: number; key: string };
+  x?: { axis: 'bottom' | 'top'; axisTicks: number; key: Extract<keyof TData, string> | string };
   y?: {
     axis?: 'left' | 'right';
     axisTicks?: number;
-    key: string;
+    key: Extract<keyof TData, string> | string;
     start?: number;
   };
 }
 
-const LollipopVChart = ({
+const LollipopVChart = <TData = any,>({
   data = [],
   //   valueMin,
   valueMax,
@@ -85,7 +81,7 @@ const LollipopVChart = ({
   x = { axis: 'bottom', axisTicks: 0, key: 'x' },
   y = { axis: 'left', key: 'y' },
   style = {},
-}: LollipopVChartProps) => {
+}: LollipopVChartProps<TData>) => {
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     // Clear svg

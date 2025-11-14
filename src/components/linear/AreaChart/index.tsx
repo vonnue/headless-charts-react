@@ -21,12 +21,13 @@ import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 import * as d3 from 'd3';
 
-interface XAxis {
-  key: string;
+interface XAxis<TData = any> {
+  key: Extract<keyof TData, string> | string;
   scalingFunction?: 'linear' | 'time';
   convert?: (d: any) => any;
   axis?: 'bottom' | 'top';
   format?: string;
+  isISO?: boolean;
   axisTicks?: number;
   axisLabel?: string;
   axisLabelPosition?: 'right' | 'bottom';
@@ -34,13 +35,13 @@ interface XAxis {
   end?: object | number;
 }
 
-interface AreaChartProps extends ChartProps {
-  data: any[];
+interface AreaChartProps<TData = any> extends ChartProps<TData> {
+  data: TData[];
   id: string;
   className?: string;
-  x: XAxis;
+  x: XAxis<TData>;
   y: Array<{
-    key: string;
+    key: Extract<keyof TData, string> | string;
     axis?: 'left' | 'right';
     start?: number;
     end?: number;
@@ -77,7 +78,7 @@ interface AreaChartProps extends ChartProps {
   };
 }
 
-const AreaChart = ({
+const AreaChart = <TData = any,>({
   data = [],
   id,
   className,
@@ -102,17 +103,18 @@ const AreaChart = ({
   },
   zooming,
   style = {},
-}: AreaChartProps) => {
+}: AreaChartProps<TData>) => {
   const { onMouseOver, onMouseLeave } = useTooltip({
     id,
     tooltip,
     defaultHtml: (d: any) => {
-      console.log(d);
       const xValue =
         x.scalingFunction === 'time'
-          ? DateTime.fromFormat(d[x.key], x.format || 'yyyy-MM-dd').toFormat(
-              x.format || 'yyyy-MM-dd'
-            )
+          ? x.isISO
+            ? DateTime.fromISO(d[x.key]).toFormat(x.format || 'yyyy-MM-dd')
+            : DateTime.fromFormat(d[x.key], x.format || 'yyyy-MM-dd').toFormat(
+                x.format || 'yyyy-MM-dd'
+              )
           : d[x.key];
       return `${xValue}<br/>${y
         .map((column) => `${column.key}: ${d[column.key]}`)
@@ -143,19 +145,13 @@ const AreaChart = ({
           (margin?.right || 0) -
           (margin?.left || 0)
       )
-      .attr('height', height);
-
-    // Add invisible overlay for mouse tracking
-    const overlay = g
-      .append('rect')
-      .attr('class', 'overlay')
-      .attr('width', width)
-      .attr('height', height)
-      .style('fill', 'none')
-      .style('pointer-events', 'all');
+      .attr('height', height - (margin?.top || 0) - (margin?.bottom || 0));
 
     // @ts-ignore
-    const toDateTime = (d) => DateTime.fromFormat(d[x.key], x.format);
+    const toDateTime = (d) =>
+      x.isISO
+        ? DateTime.fromISO(d[x.key])
+        : DateTime.fromFormat(d[x.key], x.format || 'yyyy-MM-dd');
 
     const xFn =
       x.scalingFunction === 'time' ? scaleTime().nice() : scaleLinear();
@@ -177,7 +173,7 @@ const AreaChart = ({
               ? min(data.map((d: any) => d[x.key]))
               : // @ts-ignore
                 min(data.map((d: any) => x.convert(d))),
-            Number.isFinite(x.start)
+            Number.isFinite(x.end)
               ? x.end
               : x.convert
               ? // @ts-ignore
@@ -217,7 +213,7 @@ const AreaChart = ({
     stacking?.type === 'diverging' &&
       stackerFn.offset(stackOffsetDiverging).order(stackOrderReverse);
 
-    const dataStacked = stackerFn(data);
+    const dataStacked = stackerFn(data as Iterable<{ [key: string]: number }>);
 
     const yFn = scaleLinear()
       // @ts-ignore
@@ -280,10 +276,10 @@ const AreaChart = ({
             Number(x0) -
               (x.scalingFunction === 'time'
                 ? toDateTime(d0).toMillis()
-                : Number(d0[x.key])) >
+                : Number((d0 as any)[x.key])) >
             (x.scalingFunction === 'time'
               ? toDateTime(d1).toMillis()
-              : Number(d1[x.key])) -
+              : Number((d1 as any)[x.key])) -
               Number(x0)
               ? d1
               : d0;
@@ -296,9 +292,6 @@ const AreaChart = ({
         .on('mouseleave', onMouseLeave);
     };
     redraw();
-
-    // Remove the overlay since we're handling events on the paths
-    overlay.remove();
 
     const extent = [
       [margin?.left || 0, margin?.top || 0],
@@ -340,6 +333,7 @@ const AreaChart = ({
 
   return (
     <svg
+      data-testid={id}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}

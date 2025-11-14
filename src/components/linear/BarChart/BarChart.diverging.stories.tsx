@@ -1,5 +1,5 @@
+import preview from '../../../../.storybook/preview';
 import BarChart from '.';
-import { Meta } from '@storybook/react';
 
 import data from './sample.json';
 /**
@@ -8,15 +8,13 @@ import data from './sample.json';
  * To create a bar chart, use the `<BarChart />` component.
  *
  * */
-const meta: Meta<typeof BarChart> = {
+const meta = preview.meta({
   title: 'Linear/BarChart/Diverging',
   component: BarChart,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-export const DivergingBarChart = {
+export const DivergingBarChart = meta.story({
   args: {
     data,
     id: 'bar-chart-diverging',
@@ -32,11 +30,11 @@ export const DivergingBarChart = {
     ],
     y: { key: 'year', padding: 10 },
   },
-};
+});
 
-export const DrawingDivergingBarChart = {
+export const DrawingDivergingBarChart = meta.story({
   args: {
-    ...DivergingBarChart.args,
+    ...DivergingBarChart.input.args,
     id: 'bar-chart-diverging-drawing',
     drawing: {
       enabled: true,
@@ -44,4 +42,4 @@ export const DrawingDivergingBarChart = {
       delay: 100,
     },
   },
-};
+});

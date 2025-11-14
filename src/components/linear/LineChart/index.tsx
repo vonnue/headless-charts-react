@@ -25,12 +25,13 @@ import { easeLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 
-interface XAxis {
-  key: string;
+interface XAxis<TData = any> {
+  key: Extract<keyof TData, string> | string;
   scalingFunction?: 'linear' | 'time';
   convert?: (d: any) => any;
   axis?: 'bottom' | 'top';
   format?: string;
+  isISO?: boolean;
   axisTicks?: number;
   axisLabel?: string;
   axisLabelPosition?: 'right' | 'bottom';
@@ -38,13 +39,13 @@ interface XAxis {
   end?: object | number;
 }
 
-interface LineChartProps {
-  data: Array<object>;
+interface LineChartProps<TData = any> {
+  data: TData[];
   id: string;
   className?: string;
-  x: XAxis;
+  x: XAxis<TData>;
   y: Array<{
-    key: string;
+    key: Extract<keyof TData, string> | string;
     axis?: 'left' | 'right';
     start?: number;
     end?: number;
@@ -108,7 +109,7 @@ interface LineChartProps {
   style?: React.CSSProperties;
 }
 
-const LineChart = ({
+const LineChart = <TData = any,>({
   data = [],
   id,
   className,
@@ -134,7 +135,7 @@ const LineChart = ({
   yRightLabel,
   style = {},
   reverse = false,
-}: LineChartProps) => {
+}: LineChartProps<TData>) => {
   const refreshChart = useCallback(() => {
     const shapeMapping = {
       circle: symbolCircle,
@@ -188,7 +189,10 @@ const LineChart = ({
     const allLeftY = y.filter((column) => column.axis !== 'right'),
       allRightY = y.filter((column) => column.axis === 'right');
     // @ts-ignore
-    const toDateTime = (d) => DateTime.fromFormat(d[x.key], x.format);
+    const toDateTime = (d) =>
+      x.isISO
+        ? DateTime.fromISO(d[x.key])
+        : DateTime.fromFormat(d[x.key], x.format || 'yyyy-MM-dd');
     const svg = select(`#${id}`);
     // Clear svg
 
@@ -522,6 +526,10 @@ const LineChart = ({
           selectAll('.right-circles').remove();
         })();
       allRightY.map((column) => {
+        const columnCurve =
+          //@ts-ignore
+          curveMapping[column.curve] || curveMapping['default'];
+
         const newLine = line()
           .x((d: any) =>
             x.scalingFunction === 'time' ? xFn(toDateTime(d)) : xFn(d[x.key])
@@ -530,8 +538,7 @@ const LineChart = ({
             // @ts-ignore
             yRightFn(d[column.key] || (column.unknown === 'zero' && 0))
           )
-          // @ts-ignore
-          .curve(column.curve || curveLinear);
+          .curve(columnCurve || curveLinear);
 
         const columnG = rightG.append('g').attr('class', 'group');
 

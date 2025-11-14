@@ -1,10 +1,10 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import Network from '.';
 import edges from './edges.json';
 import nodes from './nodes.json';
 
-const meta: Meta<typeof Network> = {
+const meta = preview.meta({
   title: 'Flow/Network/Tooltip',
   tags: ['autodocs'],
   component: Network,
@@ -12,13 +12,9 @@ const meta: Meta<typeof Network> = {
     nodes,
     edges,
   },
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof Network>;
-
-export const NodeTooltip: Story = {
+export const NodeTooltip = meta.story({
   args: {
     id: 'tooltip-only-for-nodes',
     nodeDef: {
@@ -31,11 +27,11 @@ export const NodeTooltip: Story = {
       tooltip: {},
     },
   },
-};
+});
 
-export const StyleNodeTooltip: Story = {
+export const StyleNodeTooltip = meta.story({
   args: {
-    ...NodeTooltip.args,
+    ...NodeTooltip.input.args,
     id: `style-node-tooltip-with-classname-prop`,
     nodeDef: {
       idKey: 'id',
@@ -44,9 +40,9 @@ export const StyleNodeTooltip: Story = {
       },
     },
   },
-};
+});
 
-export const NodeTooltipCustomKeys: Story = {
+export const NodeTooltipCustomKeys = meta.story({
   args: {
     id: 'node-tooltip-custom-keys',
     nodeDef: {
@@ -57,9 +53,9 @@ export const NodeTooltipCustomKeys: Story = {
       },
     },
   },
-};
+});
 
-export const NodeTooltipCustomHTML: Story = {
+export const NodeTooltipCustomHTML = meta.story({
   args: {
     id: `node-tooltip-custom-html`,
     nodeDef: {
@@ -75,9 +71,9 @@ export const NodeTooltipCustomHTML: Story = {
       },
     },
   },
-};
+});
 
-export const EdgeTooltip: Story = {
+export const EdgeTooltip = meta.story({
   args: {
     id: 'edge-tooltip',
     nodeDef: {
@@ -90,9 +86,9 @@ export const EdgeTooltip: Story = {
       tooltip: {},
     },
   },
-};
+});
 
-export const EdgeTooltipStyleWithClassName: Story = {
+export const EdgeTooltipStyleWithClassName = meta.story({
   args: {
     id: 'edge-tooltip-style-with-classname',
     nodeDef: {
@@ -107,9 +103,9 @@ export const EdgeTooltipStyleWithClassName: Story = {
       },
     },
   },
-};
+});
 
-export const EdgeTooltipCustomKeys: Story = {
+export const EdgeTooltipCustomKeys = meta.story({
   args: {
     id: 'edge-tooltip-custom-keys',
     nodeDef: {
@@ -124,11 +120,11 @@ export const EdgeTooltipCustomKeys: Story = {
       },
     },
   },
-};
+});
 
-export const EdgeTooltipCustomHTML: Story = {
+export const EdgeTooltipCustomHTML = meta.story({
   args: {
-    ...NodeTooltipCustomHTML,
+    ...NodeTooltipCustomHTML.input,
     nodes,
     edges,
     id: 'edge-tooltip-custom-html',
@@ -150,4 +146,4 @@ export const EdgeTooltipCustomHTML: Story = {
       },
     },
   },
-};
+});

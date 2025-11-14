@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 import PieChart from '.';
 import data from './sample.json';
 import { useState } from 'react';
@@ -7,12 +7,10 @@ import { twMerge } from 'tailwind-merge';
 /**
  * SemiCircle charts are specifically useful for certain representations like political polls or seat shares, since they look like the seating arrangement in a parliament.
  */
-const meta: Meta<typeof PieChart> = {
+const meta = preview.meta({
   title: 'Distribution/PieChart/Detailed',
   tags: ['autodocs'],
-};
-
-export default meta;
+});
 
 // type Story = StoryObj<typeof PieChart>;
 
@@ -42,23 +40,8 @@ const years = [
   'Y2022',
 ] as const;
 
-type DataPoint = {
-  name: string;
-  Y2012: number;
-  Y2013: number;
-  Y2014: number;
-  Y2015: number;
-  Y2016: number;
-  Y2017: number;
-  Y2018: number;
-  Y2019: number;
-  Y2020: number;
-  Y2021: number;
-  Y2022: number;
-};
-
-export const DataRefresh = () => {
-  const [pieData] = useState<DataPoint[]>(data);
+export const DataRefresh = meta.story(() => {
+  const [pieData] = useState(data);
   const [year, setYear] = useState('Y2012');
 
   const refreshData = () => {
@@ -81,9 +64,9 @@ export const DataRefresh = () => {
       />
     </div>
   );
-};
+});
 
-export const DataRefreshWithDrawing = () => {
+export const DataRefreshWithDrawing = meta.story(() => {
   const [year, setYear] = useState('Y2012');
   const refreshData = () => {
     const currentIndex = years.indexOf(year as (typeof years)[number]);
@@ -109,9 +92,9 @@ export const DataRefreshWithDrawing = () => {
       />
     </div>
   );
-};
+});
 
-export const AddOrRemoveNewDataPoint = () => {
+export const AddOrRemoveNewDataPoint = meta.story(() => {
   const [pieData, setPieData] = useState(data);
   const [disableAddDataPoint, setDisableAddDataPoint] = useState(false);
   const addDataPoint = () => {
@@ -180,4 +163,4 @@ export const AddOrRemoveNewDataPoint = () => {
       />
     </div>
   );
-};
+});

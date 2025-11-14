@@ -1,18 +1,14 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import SpeedometerChart from '.';
 
-const meta: Meta<typeof SpeedometerChart> = {
+const meta = preview.meta({
   title: 'Gauge/Speedometer/customized',
   component: SpeedometerChart,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof SpeedometerChart>;
-
-export const WithRegions: Story = {
+export const WithRegions = meta.story({
   args: {
     data: 0.7,
     label: {
@@ -38,4 +34,4 @@ export const WithRegions: Story = {
       },
     ],
   },
-};
+});

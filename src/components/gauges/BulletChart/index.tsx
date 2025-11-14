@@ -7,10 +7,10 @@ import { select } from 'd3-selection';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-export interface BulletChartProps {
+export interface BulletChartProps<TData = any> {
   id: string;
   className?: string;
-  data: number;
+  data: TData extends number ? TData : number;
   classNameData?: string;
   label?: string;
   min?: number;
@@ -33,10 +33,10 @@ export interface BulletChartProps {
   style?: React.CSSProperties;
 }
 
-const BulletChart = ({
+const BulletChart = <TData = any,>({
   id,
   className,
-  data = 0,
+  data = 0 as any,
   classNameData = 'fill-blue-500 stroke-blue-500',
   label = '',
   min = 0,
@@ -57,7 +57,7 @@ const BulletChart = ({
   style = {},
   axisHeight = 20,
   height = 50,
-}: BulletChartProps) => {
+}: BulletChartProps<TData>) => {
   const previousData = useRef(0);
   const refreshData = React.useCallback(() => {
     const svg = select(`#${id}`);

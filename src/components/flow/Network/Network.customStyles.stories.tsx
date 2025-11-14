@@ -1,12 +1,11 @@
+import preview from '../../../../.storybook/preview';
 import './style.css';
-
-import { Meta, StoryObj } from '@storybook/react';
 
 import Network from '.';
 import edges from './edges.json';
 import nodes from './nodes.json';
 
-const meta: Meta<typeof Network> = {
+const meta = preview.meta({
   title: 'Flow/Network/CustomStyles',
   component: Network,
   tags: ['autodocs'],
@@ -14,13 +13,9 @@ const meta: Meta<typeof Network> = {
     nodes,
     edges,
   },
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof Network>;
-
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     id: 'custom-styles-network',
     nodeDef: {
@@ -32,9 +27,9 @@ export const Default: Story = {
       className: 'running',
     },
   },
-};
+});
 
-export const CurvedEdges: Story = {
+export const CurvedEdges = meta.story({
   args: {
     id: 'curved-network',
     nodeDef: {
@@ -47,4 +42,4 @@ export const CurvedEdges: Story = {
       curve: 1,
     },
   },
-};
+});

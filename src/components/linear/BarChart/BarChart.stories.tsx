@@ -1,5 +1,5 @@
+import preview from '../../../../.storybook/preview';
 import BarChart from '.';
-import { Meta } from '@storybook/react';
 import data from './sample.json';
 
 /**
@@ -8,16 +8,14 @@ import data from './sample.json';
  * To create a bar chart, use the `<BarChart />` component.
  *
  * */
-const meta: Meta<typeof BarChart> = {
+const meta = preview.meta({
   title: 'Linear/BarChart/Intro',
   component: BarChart,
   tags: ['autodocs'],
-};
-
-export default meta;
+});
 
 /** Default Bar Chart (Grouped). */
-export const Default = {
+export const Default = meta.story({
   args: {
     data,
     id: 'bar-chart-default',
@@ -32,12 +30,12 @@ export const Default = {
     ],
     y: { key: 'year' },
   },
-};
+});
 
 /** Styled bar charts (padding, margin, classNames) */
-export const Styled = {
+export const Styled = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-styled',
     className: 'bg-gray-100 rounded',
     padding: {
@@ -65,15 +63,15 @@ export const Styled = {
     ],
     y: { key: 'year', className: 'text-red-500 dark:text-red-50', padding: 10 },
   },
-};
+});
 
 /**
  * You can specially style the bars by using the `className` and `classNameNegative` props. classNameNegative is used when the value is negative.
  */
 
-export const NegativeStyling = {
+export const NegativeStyling = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-negative-styling',
     x: [
       {
@@ -86,14 +84,14 @@ export const NegativeStyling = {
       { key: 'value', className: 'text-blue-500 dark:text-blue-400' },
     ],
   },
-};
+});
 
 /**
  * You can animate the bars by using the `drawing` prop.
  */
-export const Drawing = {
+export const Drawing = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-drawing',
     drawing: {
       enabled: true,
@@ -101,35 +99,35 @@ export const Drawing = {
       delay: 100,
     },
   },
-};
+});
 
 /**
  * You can add a data label to the bars by using the `dataLabel` prop. You can style the data label by using the `className` prop.
  */
-export const DataLabel = {
+export const DataLabel = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-data-label',
     dataLabel: {
       className: 'text-white dark:text-gray-900',
     },
   },
-};
+});
 
-export const StyledYAxis = {
+export const StyledYAxis = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-styled-y-axis',
     y: {
       key: 'year',
       className: 'text-red-500',
     },
   },
-};
+});
 
-export const BorderRadius = {
+export const BorderRadius = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-border-radius',
     x: [
       {
@@ -143,27 +141,27 @@ export const BorderRadius = {
       { key: 'wearables', className: 'text-red-500', rx: 3 },
     ],
   },
-};
+});
 
-export const LeftDirection = {
+export const LeftDirection = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-left-direction',
     direction: 'left',
   },
-};
+});
 
-export const LeftDrawing = {
+export const LeftDrawing = meta.story({
   args: {
-    ...LeftDirection.args,
-    ...Drawing.args,
+    ...LeftDirection.input.args,
+    ...Drawing.input.args,
     id: 'bar-chart-left-drawing',
   },
-};
+});
 
-export const DifferentAxis = {
+export const DifferentAxis = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-different-axis',
     x: [
       {
@@ -188,11 +186,11 @@ export const DifferentAxis = {
       },
     ],
   },
-};
+});
 
-export const CustomAxisLabel = {
+export const CustomAxisLabel = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-custom-axis-label',
     x: [
       {
@@ -206,4 +204,43 @@ export const CustomAxisLabel = {
       },
     ],
   },
+});
+
+/**
+ * Example demonstrating type-safe key suggestions.
+ * Define your data type and TypeScript will provide autocomplete for keys.
+ */
+type SalesData = {
+  product: string;
+  revenue: number;
+  profit: number;
+  expenses: number;
 };
+
+const salesData: SalesData[] = [
+  { product: 'Product A', revenue: 12000, profit: 3000, expenses: 9000 },
+  { product: 'Product B', revenue: 8000, profit: 2000, expenses: 6000 },
+  { product: 'Product C', revenue: 15000, profit: 4500, expenses: 10500 },
+];
+
+export const TypedBarChart = meta.story({
+  args: {
+    id: 'typed-bar-chart',
+    data: salesData,
+    x: [
+      {
+        key: 'revenue', // TypeScript autocomplete works here!
+        className: 'text-green-500',
+      },
+      {
+        key: 'profit', // TypeScript autocomplete works here!
+        className: 'text-blue-500',
+      },
+      {
+        key: 'expenses', // TypeScript autocomplete works here!
+        className: 'text-red-500',
+      },
+    ],
+    y: { key: 'product' }, // TypeScript autocomplete works here!
+  },
+});

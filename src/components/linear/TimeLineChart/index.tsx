@@ -7,30 +7,30 @@ import { ChartProps } from '../../../types';
 import { defaultChartClassNames } from '../../../utils';
 import { twMerge } from 'tailwind-merge';
 
-interface TimeLineChartProps extends ChartProps {
+interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
   y?: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     className?: string;
   };
   events: {
     isTime?: boolean;
 
-    shapeKey?: string;
+    shapeKey?: Extract<keyof TData, string> | string;
     shapeMapping?: {
       [key: string]: 'circle' | 'rect' | 'line';
     };
     // Only for rects
-    startKey: string;
-    endKey?: string;
+    startKey: Extract<keyof TData, string> | string;
+    endKey?: Extract<keyof TData, string> | string;
 
-    classNameKey?: string;
+    classNameKey?: Extract<keyof TData, string> | string;
     classNameMapping?: object;
     // only for circles
-    sizeKey?: string;
+    sizeKey?: Extract<keyof TData, string> | string;
   };
 }
 
-const TimeLineChart = ({
+const TimeLineChart = <TData = any,>({
   id,
   data,
   className,
@@ -52,7 +52,7 @@ const TimeLineChart = ({
   },
   y,
   style = {},
-}: TimeLineChartProps) => {
+}: TimeLineChartProps<TData>) => {
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
@@ -120,13 +120,24 @@ const TimeLineChart = ({
       const shape = events?.shapeMapping
         ? // @ts-ignore
           events?.shapeMapping[d[events?.shapeKey]]
+        : events?.endKey
+        ? 'rect'
         : 'circle';
 
       // @ts-ignore
-      const width =
-        shape === 'rect'
+      const eventWidth =
+        shape === 'rect' && events?.endKey
           ? // @ts-ignore
-            xFn(d[events?.endKey]) - xFn(d[events?.startKey])
+            xFn(
+              events.isTime
+                ? new Date((d as any)[events.endKey])
+                : (d as any)[events.endKey]
+            ) -
+            xFn(
+              events.isTime
+                ? new Date((d as any)[events.startKey])
+                : (d as any)[events.startKey]
+            )
           : 0;
 
       const className = events?.classNameMapping
@@ -141,11 +152,49 @@ const TimeLineChart = ({
         shape,
         className,
         size,
-        width,
+        eventWidth,
       };
     });
 
-    console.log(augmentedDataWithShapeClassNameAndSize);
+    // Render events (circles or rects)
+    g.selectAll('.event')
+      .data(augmentedDataWithShapeClassNameAndSize)
+      .enter()
+      .append((d: any) => {
+        return d.shape === 'rect'
+          ? document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+          : document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      })
+      .attr('class', (d: any) => `event fill-current ${d.className}`)
+      .attr('x', (d: any) =>
+        d.shape === 'rect'
+          ? xFn(
+              events.isTime ? new Date(d[events.startKey]) : d[events.startKey]
+            )
+          : null
+      )
+      .attr('cx', (d: any) =>
+        d.shape === 'circle'
+          ? xFn(
+              events.isTime ? new Date(d[events.startKey]) : d[events.startKey]
+            )
+          : null
+      )
+      .attr('cy', (d: any) =>
+        d.shape === 'circle'
+          ? (yFn(d[y?.key || 1]) || 0) + yFn.bandwidth() / 2
+          : null
+      )
+      .attr('y', (d: any) =>
+        d.shape === 'rect'
+          ? (yFn(d[y?.key || 1]) || 0) + yFn.bandwidth() / 4
+          : null
+      )
+      .attr('r', (d: any) => (d.shape === 'circle' ? d.size : null))
+      .attr('width', (d: any) => (d.shape === 'rect' ? d.eventWidth : null))
+      .attr('height', (d: any) =>
+        d.shape === 'rect' ? yFn.bandwidth() / 2 : null
+      );
 
     const xAxis = axisBottom(xFn);
 

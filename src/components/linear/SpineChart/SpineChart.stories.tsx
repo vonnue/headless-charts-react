@@ -1,13 +1,12 @@
-import { Meta } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 import SpineChart from '.';
 
-const meta: Meta<typeof SpineChart> = {
+const meta = preview.meta({
   title: 'Linear/SpineChart',
   component: SpineChart,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
 /**
  * There are cases where you want to split a normal bar chart into two different bars, but share the same axes.
  * For example, you want to show the distribution of a product in two different categories.
@@ -15,7 +14,7 @@ export default meta;
  *
  */
 
-export const Default = {
+export const Default = meta.story({
   args: {
     data: [
       {
@@ -47,11 +46,11 @@ export const Default = {
       { key: 'value4', direction: 'left' },
     ],
   },
-};
+});
 
-export const WithStyle = {
+export const WithStyle = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'spine-chart-with-style',
     x: [
       { key: 'value2', direction: 'left', className: 'fill-purple-700' },
@@ -59,11 +58,11 @@ export const WithStyle = {
       { key: 'value4', direction: 'left', className: 'fill-orange-300' },
     ],
   },
-};
+});
 
-export const WithYAxisToLeft = {
+export const WithYAxisToLeft = meta.story({
   args: {
-    ...WithStyle.args,
+    ...WithStyle.input.args,
     id: 'spine-chart-y-direction-left',
     y: {
       key: 'name',
@@ -77,11 +76,11 @@ export const WithYAxisToLeft = {
       middle: 0,
     },
   },
-};
+});
 
-export const YAxisRight = {
+export const YAxisRight = meta.story({
   args: {
-    ...WithStyle.args,
+    ...WithStyle.input.args,
     id: 'spine-chart-y-axis-middle',
     margin: {
       top: 20,
@@ -95,19 +94,19 @@ export const YAxisRight = {
       axis: 'right',
     },
   },
-};
+});
 
-export const WithCustomPaddingBar = {
+export const WithCustomPaddingBar = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'spine-chart-with-padding-bar',
     paddingBar: 0.1,
   },
-};
+});
 
-export const XAxisTop = {
+export const XAxisTop = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'spine-chart-x-axis-top',
     x: [
       {
@@ -120,22 +119,22 @@ export const XAxisTop = {
     ],
     xAxis: 'top',
   },
-};
+});
 
-export const WithTooltip = {
+export const WithTooltip = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'spine-chart-with-tooltip',
     tooltip: {
       keys: ['value2', 'value3', 'value4'],
       className: 'bg-gray-800 text-white p-2 rounded-md shadow-md',
     },
   },
-};
+});
 
-export const WithCustomTooltip = {
+export const WithCustomTooltip = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'spine-chart-with-custom-tooltip',
     tooltip: {
       html: (d: any) => `
@@ -148,14 +147,14 @@ export const WithCustomTooltip = {
       `,
     },
   },
-};
+});
 
-export const WithCustomStyleAttribute = {
+export const WithCustomStyleAttribute = meta.story({
   args: {
-    ...WithStyle.args,
+    ...WithStyle.input.args,
     id: 'spine-chart-with-custom-style-attribute',
     style: {
       width: 2048,
     },
   },
-};
+});

@@ -1,5 +1,5 @@
+import preview from '../../../../.storybook/preview';
 import BarChartStacked from '.';
-import { Meta } from '@storybook/react';
 import data from './sample.json';
 
 /**
@@ -8,7 +8,7 @@ import data from './sample.json';
  *
  * */
 
-const meta: Meta<typeof BarChartStacked> = {
+const meta = preview.meta({
   title: 'Linear/BarChartStacked/Intro',
   component: BarChartStacked,
   tags: ['autodocs'],
@@ -32,20 +32,18 @@ const meta: Meta<typeof BarChartStacked> = {
     ],
     y: { key: 'year' },
   },
-};
+});
 
-export default meta;
-
-export const Default = {
+export const Default = meta.story({
   args: {
     data,
     id: 'bar-chart-stacked-default',
   },
-};
+});
 
-export const Styled = {
+export const Styled = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'bar-chart-stacked-styled',
     className: 'bg-gray-100 rounded',
     padding: {
@@ -85,36 +83,36 @@ export const Styled = {
     ],
     y: { key: 'year', className: 'text-red-500', padding: 10 },
   },
-};
+});
 
-export const WithDrawing = {
+export const WithDrawing = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'bar-chart-stacked-drawing',
     drawing: {
       duration: 1000,
     },
   },
-};
+});
 
-export const WithDrawingDelay = {
+export const WithDrawingDelay = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'bar-chart-stacked-drawing-delay',
     drawing: {
       duration: 1000,
       delay: 100,
     },
   },
-};
+});
 
-export const CustomStyle = {
+export const CustomStyle = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'bar-chart-stacked-custom-style',
     style: {
       width: '1024px',
       height: '768px',
     },
   },
-};
+});

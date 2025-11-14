@@ -10,23 +10,23 @@ import { defaultChartClassNames } from '../../../utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-interface ColumnType {
+interface ColumnType<TData = any> {
   axis?: 'top' | 'bottom';
   axisTicks?: number;
   axisLabel?: string;
   className?: string;
   classNameNegative?: string;
-  key: string;
+  key: Extract<keyof TData, string> | string;
   start?: number;
   end?: number;
   rx?: number;
 }
 
-export interface BarChartProps extends ChartProps {
-  x: ColumnType[] | [];
+export interface BarChartProps<TData = any> extends ChartProps<TData> {
+  x: ColumnType<TData>[] | [];
   direction?: 'left' | 'right';
   y: {
-    key: string;
+    key: Extract<keyof TData, string> | string;
     className?: string;
     padding?: number;
   };
@@ -36,7 +36,7 @@ export interface BarChartProps extends ChartProps {
   tooltip?: TooltipObjectType;
 }
 
-const BarChart = ({
+const BarChart = <TData = any,>({
   data,
   id,
   className,
@@ -62,7 +62,7 @@ const BarChart = ({
   dataLabel,
   tooltip,
   style = {},
-}: BarChartProps) => {
+}: BarChartProps<TData>) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,

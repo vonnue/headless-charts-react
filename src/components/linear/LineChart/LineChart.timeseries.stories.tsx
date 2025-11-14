@@ -1,15 +1,13 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import { DateTime } from 'luxon';
 import LineChart from '.';
 
-const meta: Meta<typeof LineChart> = {
+const meta = preview.meta({
   title: 'Linear/LineChart/TimeSeries',
   component: LineChart,
   tags: ['autodocs'],
-};
-
-export default meta;
+});
 
 const randBetween = (x: number, y: number) => x + Math.random() * (y - x);
 
@@ -25,9 +23,8 @@ const dataForTimeSeriesChart = new Array(arrayLength)
     value: randBetween(1000, 1004),
     reading: randBetween(1000, 996),
   }));
-type Story = StoryObj<typeof LineChart>;
 
-export const TimeSeriesForLineChart: Story = {
+export const TimeSeriesForLineChart = meta.story({
   args: {
     data: dataForTimeSeriesChart,
     id: 'time-series',
@@ -56,4 +53,51 @@ export const TimeSeriesForLineChart: Story = {
       { yLeft: 1000, className: 'text-gray-200 dashed', showText: true },
     ],
   },
-};
+});
+
+const dataForISOChart = new Array(arrayLength)
+  .fill('')
+  .map((_, index) => ({
+    date: DateTime.now()
+      .startOf('day')
+      .minus({ days: arrayLength - index })
+      .toISO(),
+    temperature: randBetween(15, 25),
+    humidity: randBetween(40, 80),
+  }));
+
+export const TimeSeriesWithISODates = meta.story({
+  args: {
+    data: dataForISOChart,
+    id: 'time-series-iso',
+    x: {
+      key: 'date',
+      scalingFunction: 'time',
+      isISO: true,
+      format: 'yyyy-MM-dd',
+      axisLabel: 'Date',
+    },
+    y: [
+      {
+        key: 'temperature',
+        axis: 'left',
+        className: 'text-orange-500 dark:text-orange-400 stroke-current',
+        curve: 'rounded',
+        symbol: 'circle',
+        size: 20,
+      },
+      {
+        key: 'humidity',
+        className: 'text-blue-500 dark:text-blue-400',
+        axis: 'right',
+        curve: 'rounded',
+        symbol: 'none',
+      },
+    ],
+    yLeftLabel: 'Temperature (°C)',
+    yRightLabel: 'Humidity (%)',
+    tooltip: {
+      keys: ['date', 'temperature', 'humidity'],
+    },
+  },
+});

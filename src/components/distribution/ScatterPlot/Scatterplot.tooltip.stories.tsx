@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 import ScatterPlot from '.';
 import data from './sample.json';
 
@@ -7,19 +7,17 @@ import data from './sample.json';
  *
  * Essentially you can encode 2 categorical values(shape & color) & 3 numerical values(x,y & size).
  */
-const meta: Meta<typeof ScatterPlot> = {
+const meta = preview.meta({
   title: 'Distribution/ScatterPlot/Tooltip',
   component: ScatterPlot,
   tags: ['autodocs'],
-};
-
-export default meta;
+});
 
 /**
  * This is the default rendering of the scatterplot with no additional attributes. The x & y axis are automatically generated based on the data provided.
  */
 
-export const Default = {
+export const Default = meta.story({
   args: {
     id: 'scatterplot-tooltip',
     data,
@@ -31,47 +29,47 @@ export const Default = {
     },
     tooltip: {},
   },
-};
+});
 
 /**
  * Style tooltip
  */
 
-export const Styled = {
+export const Styled = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'scatterplot-tooltip-styled',
     tooltip: {
       className: 'bg-gray-100 text-gray-900 p-2 rounded',
     },
   },
-};
+});
 
 /**
  * Change keys to be shown in tooltip
  */
 
-export const ChangeKeys = {
+export const ChangeKeys = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     id: 'scatterplot-tooltip-keys',
     tooltip: {
-      ...Styled.args.tooltip,
+      ...Styled.input.args.tooltip,
       keys: ['country', 'continent', 'gdp', 'purchasing_power'],
     },
   },
-};
+});
 
 /**
  * Customize the html inside the tooltip
  */
 
-export const CustomHtml = {
+export const CustomHtml = meta.story({
   args: {
-    ...ChangeKeys.args,
+    ...ChangeKeys.input.args,
     id: 'scatterplot-tooltip-html',
     tooltip: {
-      ...ChangeKeys.args.tooltip,
+      ...ChangeKeys.input.args.tooltip,
       html: (d: any) => {
         return `<div class="flex flex-col">
           <div class="text-lg font-bold">${d.country}</div>
@@ -82,4 +80,4 @@ export const CustomHtml = {
       },
     },
   },
-};
+});

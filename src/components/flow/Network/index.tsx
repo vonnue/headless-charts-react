@@ -38,15 +38,15 @@ interface NodeType {
   [key: string]: any;
 }
 
-interface SizeType {
-  key?: string;
+interface SizeType<TData = any> {
+  key?: Extract<keyof TData, string> | string;
   min?: number;
   max?: number;
   default?: number;
 }
 
-interface ShapeType {
-  key?: string;
+interface ShapeType<TData = any> {
+  key?: Extract<keyof TData, string> | string;
   map?: {
     [key: string]:
       | 'circle'
@@ -60,10 +60,10 @@ interface ShapeType {
   default?: string;
 }
 
-export interface NetworkProps extends ChartProps {
+export interface NetworkProps<TData = any> extends ChartProps<TData> {
   id: string;
   className?: string;
-  nodes: Array<NodeType>; // Data of actual nodes
+  nodes: TData[]; // Data of actual nodes
   edges: Array<EdgeType>; // Data of edges connecting the nodes
   dragging?: {
     enabled?: boolean;
@@ -75,30 +75,30 @@ export interface NetworkProps extends ChartProps {
     max?: number;
   };
   nodeDef: {
-    idKey: string;
-    weightKey?: string;
+    idKey: Extract<keyof TData, string> | string;
+    weightKey?: Extract<keyof TData, string> | string;
     className?: string; // tailwindClass, Applies to all nodes
-    classNameKey?: string; // Style by this key
+    classNameKey?: Extract<keyof TData, string> | string; // Style by this key
     classNameMap?: object; // Provide mapping for styling by this key
     x?: {
-      key: string;
+      key: Extract<keyof TData, string> | string;
       ticks?: number;
       axis?: 'top' | 'bottom';
       className?: string;
     };
     y?: {
-      key: string;
+      key: Extract<keyof TData, string> | string;
       ticks?: number;
       axis?: 'left' | 'right';
     };
-    size?: SizeType;
+    size?: SizeType<TData>;
     tooltip?: TooltipObjectType;
-    shape?: ShapeType;
+    shape?: ShapeType<TData>;
   };
   edgeDef: {
     sourceKey: string;
     targetKey: string;
-    size?: SizeType;
+    size?: SizeType<any>;
     curve?: number;
     className?: string; // tailwindClass, Applies to all edges
     classNameKey?: string; // style by this key
@@ -107,7 +107,7 @@ export interface NetworkProps extends ChartProps {
   };
 }
 
-const Network: React.FC<NetworkProps> = ({
+const Network = <TData = any,>({
   id,
   className,
   nodes,
@@ -137,7 +137,7 @@ const Network: React.FC<NetworkProps> = ({
   },
   zooming = {},
   ...props
-}) => {
+}: NetworkProps<TData>) => {
   const refreshData = React.useCallback(() => {
     const svg = select(`#${id}`);
 

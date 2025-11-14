@@ -1,18 +1,14 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import LinearGauge from '.';
 
-const meta: Meta<typeof LinearGauge> = {
+const meta = preview.meta({
   title: 'Gauge/LinearGauge/Tooltips',
   component: LinearGauge,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof LinearGauge>;
-
-export const ToolTip: Story = {
+export const ToolTip = meta.story({
   args: {
     id: 'linear-gauge-with-tooltip',
     className: '',
@@ -24,11 +20,11 @@ export const ToolTip: Story = {
       className: 'bg-gray-800 text-white p-2 rounded',
     },
   },
-};
+});
 
-export const ToolTipWithCustomHtml: Story = {
+export const ToolTipWithCustomHtml = meta.story({
   args: {
-    ...ToolTip.args,
+    ...ToolTip.input.args,
     id: 'linear-gauge-with-tooltip-custom-html',
     error: { data: 2 },
     tooltip: {
@@ -36,4 +32,4 @@ export const ToolTipWithCustomHtml: Story = {
         `<div class='bg-gray-800 text-white p-2 rounded'>67% with 2% error</div>`,
     },
   },
-};
+});

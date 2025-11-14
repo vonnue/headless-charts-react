@@ -1,22 +1,16 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import RingGauge from '.';
 import metrics from './sample.json';
 
-const meta: Meta<typeof RingGauge> = {
+const meta = preview.meta({
   title: 'Gauge/RingGauge/Tooltips',
   component: RingGauge,
   tags: ['autodocs'],
-};
-
-export default meta;
-
-type Story = StoryObj<typeof RingGauge>;
+});
 
 /** Ring gauge with tooltip */
-export const WithTooltip: Story = {
+export const WithTooltip = meta.story({
   args: {
     data: metrics.map(({ className, ...metric }: any) => metric),
     id: 'ring-chart-tooltip',
@@ -27,12 +21,12 @@ export const WithTooltip: Story = {
       className: `bg-gray-800 text-white px-4 py-2 rounded-md shadow-md`,
     },
   },
-};
+});
 
 /** Ring gauge with custom tooltip */
-export const WithCustomTooltip: Story = {
+export const WithCustomTooltip = meta.story({
   args: {
-    ...WithTooltip.args,
+    ...WithTooltip.input.args,
     id: 'ring-chart-custom-tooltip',
     tooltip: {
       className: `bg-gray-800 text-white px-4 py-2 rounded-md shadow-md`,
@@ -42,4 +36,4 @@ export const WithCustomTooltip: Story = {
             </div>`,
     },
   },
-};
+});

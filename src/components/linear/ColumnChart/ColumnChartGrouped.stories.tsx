@@ -1,18 +1,16 @@
+import preview from '../../../../.storybook/preview';
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import ColumnChartGrouped from '.';
-import { Meta } from '@storybook/react';
 import data from './sample.json';
 
-const meta: Meta<typeof ColumnChartGrouped> = {
+const meta = preview.meta({
   title: 'Linear/ColumnChartGrouped',
   component: ColumnChartGrouped,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-export const Default = {
+export const Default = meta.story({
   args: {
     data,
     id: 'column-chart-group-default',
@@ -35,9 +33,9 @@ export const Default = {
       },
     ],
   },
-};
+});
 
-export const Styled = {
+export const Styled = meta.story({
   args: {
     data,
     id: 'column-chart-group-styled',
@@ -79,27 +77,27 @@ export const Styled = {
       },
     ],
   },
-};
+});
 
-export const Animated = {
+export const Animated = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     drawing: { duration: 1000 },
   },
-};
+});
 
-export const WithTooltip = {
+export const WithTooltip = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     tooltip: {
       className: 'bg-gray-100 rounded p-2',
     },
   },
-};
+});
 
-export const WithCustomTooltip = {
+export const WithCustomTooltip = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     tooltip: {
       html: (data: any) => {
         return `
@@ -111,11 +109,11 @@ export const WithCustomTooltip = {
       },
     },
   },
-};
+});
 
-export const EdgeCase = {
+export const EdgeCase = meta.story({
   args: {
-    ...Styled.args,
+    ...Styled.input.args,
     wholeNumbers: true,
     data: [
       {
@@ -209,4 +207,4 @@ export const EdgeCase = {
       },
     ],
   },
-};
+});

@@ -1,10 +1,10 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import Network from '.';
 import edges from './edges.json';
 import nodes from './nodes.json';
 
-const meta: Meta<typeof Network> = {
+const meta = preview.meta({
   title: 'Flow/Network/Fixed',
   tags: ['autodocs'],
   component: Network,
@@ -19,13 +19,9 @@ const meta: Meta<typeof Network> = {
       targetKey: 'to',
     },
   },
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof Network>;
-
-export const FixingPosition: Story = {
+export const FixingPosition = meta.story({
   args: {
     id: 'fixed-network',
     nodeDef: {
@@ -42,9 +38,9 @@ export const FixingPosition: Story = {
       targetKey: 'to',
     },
   },
-};
+});
 
-export const FixingOnlyXPosition: Story = {
+export const FixingOnlyXPosition = meta.story({
   args: {
     id: 'fixed-x-network',
     nodeDef: {
@@ -58,9 +54,9 @@ export const FixingOnlyXPosition: Story = {
       targetKey: 'to',
     },
   },
-};
+});
 
-export const FixingOnlyYPosition: Story = {
+export const FixingOnlyYPosition = meta.story({
   args: {
     id: 'fixed-y-network',
     nodeDef: {
@@ -74,9 +70,9 @@ export const FixingOnlyYPosition: Story = {
       targetKey: 'to',
     },
   },
-};
+});
 
-export const ShowAxis: Story = {
+export const ShowAxis = meta.story({
   args: {
     id: 'fixed-network-show-axis',
     nodeDef: {
@@ -95,9 +91,9 @@ export const ShowAxis: Story = {
       targetKey: 'to',
     },
   },
-};
+});
 
-export const ShowXAxisTop: Story = {
+export const ShowXAxisTop = meta.story({
   args: {
     id: 'fixed-network-show-axis-top',
     nodeDef: {
@@ -117,9 +113,9 @@ export const ShowXAxisTop: Story = {
       targetKey: 'to',
     },
   },
-};
+});
 
-export const ShowYAxisRight: Story = {
+export const ShowYAxisRight = meta.story({
   args: {
     id: 'fixed-network-show-axis-right',
     nodeDef: {
@@ -138,4 +134,4 @@ export const ShowYAxisRight: Story = {
       targetKey: 'to',
     },
   },
-};
+});

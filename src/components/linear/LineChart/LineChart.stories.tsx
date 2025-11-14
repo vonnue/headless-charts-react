@@ -1,16 +1,13 @@
+import preview from '../../../../.storybook/preview';
 import './index.css';
-
-import { Meta, StoryObj } from '@storybook/react';
 
 import LineChart from '.';
 
-const meta: Meta<typeof LineChart> = {
+const meta = preview.meta({
   title: 'Linear/LineChart/Intro',
   component: LineChart,
   tags: ['autodocs'],
-};
-
-export default meta;
+});
 
 const data = [
   { id: 1, value: 1311, reading: 1500 },
@@ -21,20 +18,18 @@ const data = [
   { id: 6, value: 1451, reading: 1200 },
 ];
 
-type Story = StoryObj<typeof LineChart>;
-
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     data,
     x: { key: 'id' },
     y: [{ key: 'value' }, { key: 'reading' }],
     id: 'default-line-chart',
   },
-};
+});
 
-export const WithStyleChart = {
+export const WithStyleChart = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'with-style-chart',
     y: [
       { key: 'value', className: 'text-green-500' },
@@ -43,11 +38,11 @@ export const WithStyleChart = {
     className:
       'bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900 dark:to-blue-900',
   },
-};
+});
 
-export const WithInsidePadding = {
+export const WithInsidePadding = meta.story({
   args: {
-    ...Default.args,
+    ...Default.input.args,
     id: 'padding-for-line-chart',
     y: [
       { key: 'value', className: 'text-green-500' },
@@ -56,9 +51,9 @@ export const WithInsidePadding = {
     className: '',
     paddingLeft: 15,
   },
-};
+});
 
-export const TwoAxes = {
+export const TwoAxes = meta.story({
   args: {
     data,
     id: 'two-axes-for-line-chart',
@@ -69,9 +64,9 @@ export const TwoAxes = {
     ],
     marginRight: 40,
   },
-};
+});
 
-export const Drawing = {
+export const Drawing = meta.story({
   args: {
     data,
     id: 'drawing-line-chart',
@@ -83,9 +78,9 @@ export const Drawing = {
     className: '',
     drawing: { duration: 2000 },
   },
-};
+});
 
-export const Zooming = {
+export const Zooming = meta.story({
   args: {
     data,
     id: 'line-chart-with-zooming',
@@ -101,9 +96,9 @@ export const Zooming = {
     className: '',
     zooming: true,
   },
-};
+});
 
-export const WithTooltip = {
+export const WithTooltip = meta.story({
   args: {
     data,
     id: 'line-chart-with-tooltip',
@@ -119,10 +114,10 @@ export const WithTooltip = {
     },
     showGuideLines: true,
   },
-};
+});
 /* eslint-enable */
 
-export const XAxisLabel = {
+export const XAxisLabel = meta.story({
   args: {
     data,
     id: 'line-chart-with-x-axis-label',
@@ -133,9 +128,9 @@ export const XAxisLabel = {
     ],
     className: '',
   },
-};
+});
 
-export const WithXAxisCustomStart = {
+export const WithXAxisCustomStart = meta.story({
   args: {
     data,
     id: 'line-chart-with-x-axis-custom-start',
@@ -146,8 +141,8 @@ export const WithXAxisCustomStart = {
     ],
     className: '',
   },
-};
-export const WithXAxisAtTop = {
+});
+export const WithXAxisAtTop = meta.story({
   args: {
     data,
     id: 'x-axis-at-top',
@@ -162,9 +157,9 @@ export const WithXAxisAtTop = {
     ],
     className: '',
   },
-};
+});
 
-export const WithXAxisTicks = {
+export const WithXAxisTicks = meta.story({
   args: {
     data,
     id: 'x-axis-ticks',
@@ -175,9 +170,9 @@ export const WithXAxisTicks = {
     ],
     className: '',
   },
-};
+});
 
-export const YAxisCustomStart = {
+export const YAxisCustomStart = meta.story({
   args: {
     data,
     id: 'y-axis-custom-start',
@@ -194,9 +189,9 @@ export const YAxisCustomStart = {
     ],
     className: '',
   },
-};
+});
 
-export const YAxisCustomSymbolChart = {
+export const YAxisCustomSymbolChart = meta.story({
   args: {
     data,
     id: 'y-axis-custom-label-chart',
@@ -219,9 +214,9 @@ export const YAxisCustomSymbolChart = {
     ],
     className: '',
   },
-};
+});
 
-export const YAxisUnknown = {
+export const YAxisUnknown = meta.story({
   args: {
     data,
     id: 'y-axis-unknown-chart',
@@ -246,9 +241,9 @@ export const YAxisUnknown = {
     ],
     className: '',
   },
-};
+});
 
-export const YAxisLabel = {
+export const YAxisLabel = meta.story({
   args: {
     data,
     id: 'y-axis-custom-label-chart',
@@ -273,9 +268,9 @@ export const YAxisLabel = {
     ],
     className: '',
   },
-};
+});
 
-export const YAxisCurve = {
+export const YAxisCurve = meta.story({
   args: {
     data,
     id: 'y-axis-custom-curve-chart',
@@ -299,9 +294,9 @@ export const YAxisCurve = {
     ],
     className: '',
   },
-};
+});
 
-export const LineChartVertical = {
+export const LineChartVertical = meta.story({
   args: {
     data,
     id: 'horizontal-line-chart',
@@ -315,9 +310,9 @@ export const LineChartVertical = {
       { x: 4, className: 'stroke-current text-blue-200 stroke-2 dashed' },
     ],
   },
-};
+});
 
-export const LineChartHorizontal = {
+export const LineChartHorizontal = meta.story({
   args: {
     data,
     id: 'vertical-line-chart',
@@ -334,9 +329,9 @@ export const LineChartHorizontal = {
       },
     ],
   },
-};
+});
 
-export const SeriesLabel = {
+export const SeriesLabel = meta.story({
   args: {
     data,
     id: 'line-chart-with-series-label',
@@ -362,4 +357,4 @@ export const SeriesLabel = {
     ],
     className: '',
   },
-};
+});

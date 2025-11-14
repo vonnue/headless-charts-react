@@ -1,28 +1,26 @@
-import { Meta, StoryObj } from '@storybook/react';
+import preview from '../../../../.storybook/preview';
 
 import TimeLineChart from '.';
 import data from './sample.json';
 
-const meta: Meta<typeof TimeLineChart> = {
+const meta = preview.meta({
   title: 'Linear/TimeLineChart/Intro',
   component: TimeLineChart,
   tags: ['autodocs'],
-};
+});
 
-export default meta;
-
-type Story = StoryObj<typeof TimeLineChart>;
-
-export const Default: Story = {
+export const Default = meta.story({
   args: {
     id: 'timeline-chart',
     data,
     y: {
       key: 'exophoneNumber',
-      className: 'fill-gray-500',
+      className: 'fill-gray-100',
     },
     events: {
       startKey: 'callStartTime',
+      endKey: 'callEndTime',
+      isTime: true,
     },
   },
-};
+});

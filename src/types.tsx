@@ -1,6 +1,6 @@
-export interface ChartProps {
+export interface ChartProps<TData = any> {
   id: string;
-  data: object[];
+  data: TData[];
   className?: string;
   padding?: {
     top?: number;

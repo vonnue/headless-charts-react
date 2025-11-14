@@ -11,8 +11,8 @@ interface DataItem {
   [key: string]: number | string;
 }
 
-interface YItem {
-  key: string;
+interface YItem<TData = any> {
+  key: Extract<keyof TData, string> | string;
   start?: number;
   end?: number;
   className?: string;
@@ -20,12 +20,12 @@ interface YItem {
   axis?: 'left' | 'right';
 }
 
-interface ColumnChartGroupedProps {
-  data: DataItem[];
+interface ColumnChartGroupedProps<TData = any> {
+  data: TData[];
   id: string;
   className?: string;
-  x: { key: string; axis?: 'top' | 'bottom' };
-  y: YItem[];
+  x: { key: Extract<keyof TData, string> | string; axis?: 'top' | 'bottom' };
+  y: YItem<TData>[];
   margin?: {
     left: number;
     right: number;
@@ -61,7 +61,7 @@ interface drawHLineProps {
   dashed?: boolean;
 }
 
-const ColumnChartGrouped = ({
+const ColumnChartGrouped = <TData = any,>({
   data = [],
   id,
   className,
@@ -85,7 +85,7 @@ const ColumnChartGrouped = ({
   referenceLines = [],
   style = {},
   wholeNumbers = false,
-}: ColumnChartGroupedProps) => {
+}: ColumnChartGroupedProps<TData>) => {
   const refreshChart = useCallback(() => {
     /* eslint-disable */
     const svg = select(`#${id}`);

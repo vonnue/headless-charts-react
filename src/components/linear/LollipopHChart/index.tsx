@@ -64,10 +64,10 @@ const LollipopHChart = <TData = any,>({
     bottom: 40,
   },
   padding = {
-    left: 10,
+    left: 0,
     right: 0,
     top: 0,
-    bottom: 20,
+    bottom: 0,
   },
   tooltip = undefined,
   shape = 'circle',
@@ -109,11 +109,11 @@ const LollipopHChart = <TData = any,>({
 
     const yFn = scalePoint()
       .domain(data.map((d: any) => d[y.key]))
-      // .range([height + (margin.top ||0) - (padding.bottom ||0), (margin.top ||0) + (padding.top ||0)])
       .range([
         (margin.top || 0) + (padding.top || 0),
         height - (margin.bottom || 0) - (padding.bottom || 0),
-      ]);
+      ])
+      .padding(0.5);
 
     const g = svg.append('g');
 

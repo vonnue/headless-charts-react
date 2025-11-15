@@ -55,7 +55,7 @@ const PizzaChart = <TData = any,>({
     tooltip,
     defaultHtml: (d: any) =>
       `<div class="text-gray-800">${metrics[d.index].key} = ${
-        data[metrics[d.index].key]
+        (data as any)[metrics[d.index].key]
       }</div>`,
   });
   const refreshChart = useCallback(() => {
@@ -122,7 +122,7 @@ const PizzaChart = <TData = any,>({
         arc()
           .innerRadius(0)
           .outerRadius((metric: any) =>
-            drawing?.duration ? 0 : radiusScale(data[metrics[metric.index].key])
+            drawing?.duration ? 0 : radiusScale((data as any)[metrics[metric.index].key])
           )
           .padAngle((paddingAngle / 360) * (2 * Math.PI))
           .cornerRadius(cornerRadius)(d)
@@ -145,7 +145,7 @@ const PizzaChart = <TData = any,>({
         .attrTween('d', (d: any) => {
           const interpolationFn = interpolateNumber(
             0,
-            radiusScale(data[metrics[d.index].key])
+            radiusScale((data as any)[metrics[d.index].key])
           );
 
           return (t: any) =>

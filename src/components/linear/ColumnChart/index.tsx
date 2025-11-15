@@ -7,10 +7,6 @@ import { useCallback, useEffect } from 'react';
 import { defaultChartClassNames } from '../../../utils';
 import { twMerge } from 'tailwind-merge';
 
-interface DataItem {
-  [key: string]: number | string;
-}
-
 interface YItem<TData = any> {
   key: Extract<keyof TData, string> | string;
   start?: number;
@@ -112,7 +108,7 @@ const ColumnChartGrouped = <TData = any,>({
 
     const xFn = scaleBand()
       // @ts-ignore
-      .domain(data.map((d) => d[x.key]))
+      .domain(data.map((d) => (d as any)[x.key]))
       .range([margin.left + padding.left, width - margin.right - padding.right])
       .padding(paddingBar);
 
@@ -140,24 +136,30 @@ const ColumnChartGrouped = <TData = any,>({
           (d) =>
             `fill-current ${
               // @ts-ignore
-              column.classNameNegative && d[column.key] < 0
+              column.classNameNegative && (d as any)[column.key] < 0
                 ? column.classNameNegative
                 : column.className
             }`
         )
         // @ts-ignore
-        .attr('x', (d) => xFn(d[x.key]) + (i * xFn.bandwidth()) / y.length)
+        .attr(
+          'x',
+          (d) => (xFn((d as any)[x.key]) || 0) + (i * xFn.bandwidth()) / y.length
+        )
         .attr('y', (d) =>
           // @ts-ignore
-          drawing && drawing.duration ? yFn(0) : yFn(d[column.key])
+          drawing && drawing.duration ? yFn(0) : yFn((d as any)[column.key])
         )
         .attr('width', xFn.bandwidth() / y.length)
         .attr('height', (d) =>
           drawing && drawing.duration
             ? 0
-            : d[column.key]
+            : (d as any)[column.key]
             ? // @ts-ignore
-              height - margin.bottom - padding.bottom - yFn(d[column.key])
+              height -
+              margin.bottom -
+              padding.bottom -
+              yFn((d as any)[column.key])
             : 0
         )
         .on('mouseenter', function (event, d) {
@@ -172,9 +174,11 @@ const ColumnChartGrouped = <TData = any,>({
                 ? tooltip.html(d)
                 : tooltip.keys
                 ? tooltip.keys
-                    .map((key) => `${key}: ${d[key] || ''}`)
+                    .map((key) => `${key}: ${(d as any)[key] || ''}`)
                     .join('<br/>')
-                : `${d[x.key]} <br/> ${column.key} ${d[column.key]}`
+                : `${(d as any)[x.key]} <br/> ${column.key} ${
+                    (d as any)[column.key]
+                  }`
             );
           }
         })
@@ -195,11 +199,14 @@ const ColumnChartGrouped = <TData = any,>({
           .transition()
           .duration(drawing.duration)
           // @ts-ignore
-          .attr('y', (d) => yFn(d[column.key]))
+          .attr('y', (d) => yFn((d as any)[column.key]))
           .attr('height', (d) =>
-            Number.isFinite(d[column.key])
+            Number.isFinite((d as any)[column.key])
               ? // @ts-ignore
-                height - margin.bottom - padding.bottom - yFn(d[column.key])
+                height -
+                margin.bottom -
+                padding.bottom -
+                yFn((d as any)[column.key])
               : 0
           );
     });

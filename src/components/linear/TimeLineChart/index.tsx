@@ -54,6 +54,8 @@ const TimeLineChart = <TData = any,>({
   style = {},
 }: TimeLineChartProps<TData>) => {
   const refreshChart = useCallback(() => {
+    if (!data || data.length === 0) return;
+
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
 
@@ -62,20 +64,23 @@ const TimeLineChart = <TData = any,>({
 
     const xFn = events?.isTime ? scaleTime() : scaleLinear();
 
+    const minVal = min(data, (d: any) => d[events.startKey]);
+    const maxVal = max(data, (d: any) => events?.endKey ? d[events.endKey] : d[events.startKey]);
+
     xFn
       .domain([
         // @ts-ignore
         events?.isTime
           ? // @ts-ignore
-            new Date(min(data, (d) => d[events.startKey]))
+            new Date(minVal)
           : // @ts-ignore
-            min(data, (d) => d[events.startKey]),
+            minVal ?? 0,
         // @ts-ignore
         events?.isTime
           ? // @ts-ignore
-            new Date(max(data, (d) => d[events?.endKey]))
+            new Date(maxVal)
           : // @ts-ignore
-            max(data, (d) => d[events?.startKey]),
+            maxVal ?? 0,
       ])
       // @ts-ignore
       .range([
@@ -116,7 +121,7 @@ const TimeLineChart = <TData = any,>({
       )
       .attr('height', yFn.bandwidth());
 
-    const augmentedDataWithShapeClassNameAndSize = data.map((d) => {
+    const augmentedDataWithShapeClassNameAndSize = (data || []).map((d) => {
       const shape = events?.shapeMapping
         ? // @ts-ignore
           events?.shapeMapping[d[events?.shapeKey]]

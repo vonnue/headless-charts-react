@@ -1,6 +1,6 @@
 export interface ChartProps<TData = any> {
   id: string;
-  data: TData[];
+  data?: TData[];
   className?: string;
   padding?: {
     top?: number;

@@ -28,15 +28,15 @@ export const Donut = meta.story({
     valueKey: 'Y2012',
     classNameMap,
     innerRadius: 0.65,
+    nameKey: 'name',
   },
 });
 
 /**
  * With outer radius
  */
-export const OuterRadius = meta.story({
+export const OuterRadius = Donut.extend({
   args: {
-    ...Donut.input.args,
     id: 'outer-radius-donut',
     outerRadius: 0.9,
   },
@@ -46,9 +46,8 @@ export const OuterRadius = meta.story({
  * The `labels` prop can be used to add labels to the slices.
  * */
 
-export const Labelled = meta.story({
+export const Labelled = Donut.extend({
   args: {
-    ...Donut.input.args,
     id: 'labelled-donut',
     labels: {
       radius: 1.2,
@@ -60,9 +59,8 @@ export const Labelled = meta.story({
  * The `drawing` prop can be used to animate the drawing of the slices.
  */
 
-export const Drawing = meta.story({
+export const Drawing = Donut.extend({
   args: {
-    ...Donut.input.args,
     id: 'drawing-donut',
     drawing: {
       duration: 1000,
@@ -73,20 +71,20 @@ export const Drawing = meta.story({
 /**
  * Props like `drawing` and `labels` can be used together.
  */
-export const DrawingWithLabels = meta.story({
+export const DrawingWithLabels = Labelled.extend({
   args: {
     id: 'drawing-with-labels-donut',
-    ...Labelled.input.args,
-    ...Drawing.input.args,
+    drawing: {
+      duration: 1000,
+    },
   },
 });
 
 /**
  * The paddingAngle prop is used to add padding between slices (in degrees).
  */
-export const PaddingAngle = meta.story({
+export const PaddingAngle = Drawing.extend({
   args: {
-    ...Drawing.input.args,
     id: 'padding-angle-donut',
     paddingAngle: 1,
   },
@@ -95,9 +93,8 @@ export const PaddingAngle = meta.story({
 /**
  * The cornerRadius prop is used to add rounded corners to the slices.
  */
-export const CornerRadius = meta.story({
+export const CornerRadius = Drawing.extend({
   args: {
-    ...Drawing.input.args,
     id: 'corner-radius-donut',
     cornerRadius: 4,
   },
@@ -106,9 +103,8 @@ export const CornerRadius = meta.story({
 /**
  * The `title` prop can be used to add a title to the chart.
  */
-export const Title = meta.story({
+export const Title = Drawing.extend({
   args: {
-    ...Drawing.input.args,
     id: 'title-donut',
     title: {
       text: '10%',
@@ -130,9 +126,8 @@ const innerOuterData = data.map((d, index) => ({
   outerRadius: index === 1 ? 1 : 0.9,
 }));
 
-export const ArcRadii = meta.story({
+export const ArcRadii = Drawing.extend({
   args: {
-    ...Drawing.input.args,
     id: 'arc-radii-donut',
     innerRadius: 0.65,
     data: innerOuterData,

@@ -20,12 +20,13 @@ const meta = preview.meta({
     data,
     valueKey: 'Y2012',
     classNameMap,
+    nameKey: 'name',
     tooltip: {},
   },
 });
 
 /**
- * Tooltips can be enabled by adding a `tooltip` prop (`{}` will render default behaviour).
+ * Tooltips can be enabled by adding a `tooltip` prop (`{}` will render Styled behaviour).
  */
 export const Tooltip = meta.story({
   args: {

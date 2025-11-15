@@ -11,6 +11,13 @@ const meta = preview.meta({
   args: {
     nodes,
     edges,
+    nodeDef: {
+      idKey: 'name',
+    },
+    edgeDef: {
+      sourceKey: 'source',
+      targetKey: 'target',
+    },
   },
 });
 

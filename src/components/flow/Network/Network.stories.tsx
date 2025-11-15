@@ -52,13 +52,16 @@ export const Styling = meta.story({
   },
 });
 
-export const NodeSize = meta.story({
+export const NodeSize = Styling.extend({
   args: {
-    ...Styling.input.args,
     id: 'node-size-network',
     nodeDef: {
-      ...Styling.input?.args?.nodeDef,
       idKey: 'name',
+      classNameKey: 'gender',
+      classNameMap: {
+        male: 'fill-blue-800',
+        female: 'fill-pink-400',
+      },
       size: {
         key: 'age',
         min: 40,

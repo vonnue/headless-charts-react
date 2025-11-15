@@ -69,6 +69,8 @@ const BarChart = <TData = any,>({
   });
 
   const refreshData = React.useCallback(() => {
+    if (!data || data.length === 0) return;
+
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
 
@@ -78,12 +80,12 @@ const BarChart = <TData = any,>({
     const minStart = min(x.map((column: ColumnType) => column.start || 0)),
       minX = min(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        x.map((column: ColumnType) => min(data, (d: any) => d[column.key]))
+        x.map((column: ColumnType) => min(data, (d: any) => d[column.key])).filter((v): v is number => v !== undefined)
       ),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      maxX = max(x.map((column) => max(data, (d: any) => d[column.key]))),
-      maxEnd = max(x.map((column: ColumnType) => column.end || maxX)),
-      areAllGreaterThanZero = minX > 0;
+      maxX = max(x.map((column) => max(data, (d: any) => d[column.key])).filter((v): v is number => v !== undefined)),
+      maxEnd = max(x.map((column: ColumnType) => column.end || maxX).filter((v): v is number => v !== undefined)),
+      areAllGreaterThanZero = (minX ?? 0) > 0;
 
     const xFnRange =
       direction === 'left'
@@ -98,8 +100,8 @@ const BarChart = <TData = any,>({
 
     const xFn = scaleLinear()
       .domain([
-        Number.isFinite(minStart) ? minStart : areAllGreaterThanZero ? 0 : minX,
-        Number.isFinite(maxEnd) ? maxEnd : maxX,
+        Number.isFinite(minStart) ? minStart! : areAllGreaterThanZero ? 0 : (minX ?? 0),
+        Number.isFinite(maxEnd) ? maxEnd! : (maxX ?? 0),
       ])
       .range(xFnRange);
 

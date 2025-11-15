@@ -29,6 +29,7 @@ export const SemiCircle = meta.story({
     classNameMap,
     startAngle: -90,
     endAngle: 90,
+    nameKey: 'name',
   },
 });
 

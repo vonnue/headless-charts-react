@@ -1,7 +1,6 @@
 import addonDocs from '@storybook/addon-docs';
 import addonLinks from '@storybook/addon-links';
 import { definePreview } from '@storybook/react-vite';
-import type { Meta } from '@storybook/react';
 import '../src/index.css';
 import './styles.css';
 

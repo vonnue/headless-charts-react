@@ -12,7 +12,7 @@ export const Default = meta.story({
   args: {
     id: 'dot-plot-default',
     data,
-
+    shape: 'circle',
     y: {
       key: 'label',
       axis: 'left',
@@ -20,21 +20,22 @@ export const Default = meta.story({
     x: {
       minKey: 'minTemp',
       maxKey: 'maxTemp',
+      start: 0,
+      end: 100,
+      axis: 'bottom',
+      axisTicks: 5,
     },
   },
 });
 
-export const CustomShape = meta.story({
+export const CustomShape = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'dot-plot-custom-shape',
-    shape: 'star',
   },
 });
 
-export const CustomTooltip = meta.story({
+export const CustomTooltip = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'dot-plot-custom-tooltip',
     tooltip: {
       keys: ['minTemp', 'maxTemp'],
@@ -42,9 +43,8 @@ export const CustomTooltip = meta.story({
   },
 });
 
-export const CustomTooltipHtml = meta.story({
+export const CustomTooltipHtml = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'dot-plot-custom-tooltip-html',
     tooltip: {
       html: (d: any) => {

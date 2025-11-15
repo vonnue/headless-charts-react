@@ -90,7 +90,7 @@ const LollipopVChart = <TData = any,>({
     const width = +svg.style('width').split('px')[0];
     const height = +svg.style('height').split('px')[0];
 
-    data.sort((a, b) => b[y.key] - a[y.key]);
+    data.sort((a, b) => (b as any)[y.key] - (a as any)[y.key]);
 
     const shapeMapping = {
       circle: symbolCircle,
@@ -104,13 +104,13 @@ const LollipopVChart = <TData = any,>({
 
     const minValue = Number.isFinite(y.start)
       ? y.start
-      : min(data, (d) => d[y.key]);
+      : min(data, (d) => (d as any)[y.key]);
     const maxValue = Number.isFinite(valueMax)
       ? valueMax
-      : max(data, (d) => d[y.key]);
+      : max(data, (d) => (d as any)[y.key]);
 
     const xFn = scaleBand()
-      .domain(data.map((d) => d[x.key]))
+      .domain(data.map((d) => (d as any)[x.key]))
       .range([
         margin.left + padding.left,
         width - margin.right - padding.right,
@@ -189,14 +189,14 @@ const LollipopVChart = <TData = any,>({
           `line stroke-current ${classNamePoints || ''} ${classNameLines || ''}`
         )
         // @ts-ignore
-        .attr('x1', (d) => xFn(d[x.key]) + xFn.bandwidth() / 2)
+        .attr('x1', (d) => xFn((d as any)[x.key]) + xFn.bandwidth() / 2)
         .attr('y1', () => yFn(minValue))
         // @ts-ignore
-        .attr('x2', (d) => xFn(d[x.key]) + xFn.bandwidth() / 2)
+        .attr('x2', (d) => xFn((d as any)[x.key]) + xFn.bandwidth() / 2)
         .attr('y2', () => yFn(minValue))
         .transition()
         .duration(1000)
-        .attr('y1', (d) => yFn(d[y.key]));
+        .attr('y1', (d) => yFn((d as any)[y.key]));
 
       pointGroup
         .append('path')
@@ -211,7 +211,7 @@ const LollipopVChart = <TData = any,>({
           'transform',
           (d) =>
             //@ts-ignore
-            `translate(${xFn(d[x.key]) + xFn.bandwidth() / 2},${yFn(minValue)})`
+            `translate(${xFn((d as any)[x.key]) + xFn.bandwidth() / 2},${yFn(minValue)})`
         )
         .transition()
         .duration(1000)
@@ -219,8 +219,8 @@ const LollipopVChart = <TData = any,>({
           'transform',
           (d) =>
             // @ts-ignore
-            `translate(${xFn(d[x.key]) + xFn.bandwidth() / 2},${yFn(
-              d[y.key]
+            `translate(${xFn((d as any)[x.key]) + xFn.bandwidth() / 2},${yFn(
+              (d as any)[y.key]
             )} )`
         );
     };

@@ -150,7 +150,7 @@ const PieChart = <TData = any,>({
         .innerRadius(radius * labels.radius)
         .outerRadius(radius * labels.radius);
 
-    const arcs = pieFn(data);
+    const arcs = pieFn(data as any);
 
     const pathsG = g
       .append('g')
@@ -226,7 +226,7 @@ const PieChart = <TData = any,>({
         )
         // @ts-ignore
         .text((d: { data: DataItem }) =>
-          labels.text ? labels.text(d.data) : deepValue(d.data, nameKey)
+          labels.text ? labels.text(d.data as any) : deepValue(d.data, nameKey)
         );
 
     title &&

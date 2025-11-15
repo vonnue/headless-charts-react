@@ -12,6 +12,7 @@ export const Default = meta.story({
   args: {
     data,
     id: 'lollipop-v-chart-default',
+    shape: 'circle',
     x: {
       axis: 'bottom',
       axisTicks: 2,
@@ -26,16 +27,14 @@ export const Default = meta.story({
   },
 });
 
-export const WithCustomShape = meta.story({
+export const WithCustomShape = Default.extend({
   args: {
-    ...Default.input.args,
     shape: 'star',
   },
 });
 
-export const WithCustomStyles = meta.story({
+export const WithCustomStyles = WithCustomShape.extend({
   args: {
-    ...WithCustomShape.input.args,
     classNameLines: 'fill-red-500 stroke-red-500',
     classNameSymbols: 'fill-blue-500 stroke-blue-500',
   },

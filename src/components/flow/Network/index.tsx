@@ -34,9 +34,6 @@ interface EdgeType {
   target: string;
   [key: string]: any;
 }
-interface NodeType {
-  [key: string]: any;
-}
 
 interface SizeType<TData = any> {
   key?: Extract<keyof TData, string> | string;
@@ -371,7 +368,7 @@ const Network = <TData = any,>({
       .selectAll('circle')
       .data(nodes)
       .join('path')
-      .attr('class', (d) =>
+      .attr('class', (d: any) =>
         twMerge(
           'fill-black stroke-none',
           d.className,

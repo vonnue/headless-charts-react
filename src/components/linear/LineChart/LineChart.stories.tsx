@@ -94,7 +94,10 @@ export const Zooming = meta.story({
       },
     ],
     className: '',
-    zooming: true,
+    zooming: {
+      min: 1,
+      max: 4,
+    },
   },
 });
 

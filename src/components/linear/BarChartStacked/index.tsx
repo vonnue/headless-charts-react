@@ -129,7 +129,7 @@ const BarChartStacked = <TData = any,>({
     const g = svg.append('g');
 
     const yFn = scaleBand()
-      .domain(data.map((d) => d[y.key]))
+      .domain(data.map((d) => (d as any)[y.key]))
       .range([
         margin.top + padding.top,
         height - margin.bottom - padding.bottom,
@@ -148,7 +148,7 @@ const BarChartStacked = <TData = any,>({
 
     x.reverse();
 
-    const dataStacked = stack().keys(x.map((column) => column.key))(data);
+    const dataStacked = stack().keys(x.map((column) => column.key))(data as Iterable<{ [key: string]: number }>);
 
     transition();
     // @ts-ignore

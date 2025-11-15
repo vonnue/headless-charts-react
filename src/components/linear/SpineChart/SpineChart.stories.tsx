@@ -39,6 +39,8 @@ export const Default = meta.story({
     id: 'spine-chart-default',
     y: {
       key: 'name',
+      axis: 'middle',
+      className: '',
     },
     x: [
       { key: 'value2', direction: 'left' },
@@ -48,9 +50,8 @@ export const Default = meta.story({
   },
 });
 
-export const WithStyle = meta.story({
+export const WithStyle = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'spine-chart-with-style',
     x: [
       { key: 'value2', direction: 'left', className: 'fill-purple-700' },
@@ -60,12 +61,12 @@ export const WithStyle = meta.story({
   },
 });
 
-export const WithYAxisToLeft = meta.story({
+export const WithYAxisToLeft = WithStyle.extend({
   args: {
-    ...WithStyle.input.args,
     id: 'spine-chart-y-direction-left',
     y: {
       key: 'name',
+      className: '',
       axis: 'left',
     },
     margin: {
@@ -78,9 +79,8 @@ export const WithYAxisToLeft = meta.story({
   },
 });
 
-export const YAxisRight = meta.story({
+export const YAxisRight = WithStyle.extend({
   args: {
-    ...WithStyle.input.args,
     id: 'spine-chart-y-axis-middle',
     margin: {
       top: 20,
@@ -92,21 +92,20 @@ export const YAxisRight = meta.story({
     y: {
       key: 'name',
       axis: 'right',
+      className: '',
     },
   },
 });
 
-export const WithCustomPaddingBar = meta.story({
+export const WithCustomPaddingBar = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'spine-chart-with-padding-bar',
     paddingBar: 0.1,
   },
 });
 
-export const XAxisTop = meta.story({
+export const XAxisTop = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'spine-chart-x-axis-top',
     x: [
       {
@@ -132,9 +131,8 @@ export const WithTooltip = meta.story({
   },
 });
 
-export const WithCustomTooltip = meta.story({
+export const WithCustomTooltip = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'spine-chart-with-custom-tooltip',
     tooltip: {
       html: (d: any) => `
@@ -149,9 +147,8 @@ export const WithCustomTooltip = meta.story({
   },
 });
 
-export const WithCustomStyleAttribute = meta.story({
+export const WithCustomStyleAttribute = WithStyle.extend({
   args: {
-    ...WithStyle.input.args,
     id: 'spine-chart-with-custom-style-attribute',
     style: {
       width: 2048,

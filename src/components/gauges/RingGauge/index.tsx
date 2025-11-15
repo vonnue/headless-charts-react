@@ -172,7 +172,7 @@ const RingGauge = <TData = any,>({
           .html(
             tooltip?.html
               ? tooltip.html(d)
-              : `${d[labelKey]} <br/>${d[dataKey]}/${d[targetKey]}`
+              : `${(d as any)[labelKey]} <br/>${(d as any)[dataKey]}/${(d as any)[targetKey]}`
           );
       })
       .on('mousemove', function (event) {

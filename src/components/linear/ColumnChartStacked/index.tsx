@@ -9,9 +9,6 @@ import { format } from 'd3-format';
 import { transition } from 'd3';
 import { twMerge } from 'tailwind-merge';
 
-interface DataItem {
-  [key: string]: number | string;
-}
 
 interface ColumnChartStackedProps<TData = any> {
   data: TData[];
@@ -24,7 +21,7 @@ interface ColumnChartStackedProps<TData = any> {
   y: {
     key: Extract<keyof TData, string> | string;
     axis?: 'left' | 'right';
-    className: string;
+    className?: string;
   }[];
   margin?: {
     left: number;
@@ -109,7 +106,7 @@ const ColumnChartStacked = <TData = any,>({
 
     const xFn = scaleBand()
       // @ts-ignore
-      .domain(data.map((d) => d[x.key]))
+      .domain(data.map((d) => (d as any)[x.key]))
       .range([margin.left + padding.left, width - margin.right - padding.right])
       .padding(paddingBar);
 
@@ -138,7 +135,7 @@ const ColumnChartStacked = <TData = any,>({
           'x',
           (d) =>
             // @ts-ignore
-            xFn(d[x.key]) + (waterfall ? (xFn.bandwidth() / y.length) * i : 0)
+            (xFn((d as any)[x.key]) || 0) + (waterfall ? (xFn.bandwidth() / y.length) * i : 0)
         )
         .attr('y', (d: any) => yFn(sum(beforeColumns.map((c: any) => d[c]))))
         .style('z-index', 10 + i)
@@ -149,7 +146,7 @@ const ColumnChartStacked = <TData = any,>({
             : xFn.bandwidth()
         )
         .attr('height', (d: any) =>
-          drawing?.duration ? 0 : yFn(0) - yFn(d[column.key])
+          drawing?.duration ? 0 : yFn(0) - yFn((d as any)[column.key])
         )
         .on('mouseenter', function (event, d) {
           if (tooltip) {
@@ -163,16 +160,16 @@ const ColumnChartStacked = <TData = any,>({
                 ? tooltip.html(d)
                 : tooltip.keys
                 ? tooltip.keys
-                    .map((key) => `${key}: ${d[key] || ''}`)
+                    .map((key) => `${key}: ${(d as any)[key] || ''}`)
                     .join('<br/>')
-                : `${d[x.key]} <br/> ${column.key} ${
+                : `${(d as any)[x.key]} <br/> ${column.key} ${
                     tickFormat
                       ? // @ts-ignore
                         formatMapping[tickFormat]
                         ? // @ts-ignore
-                          format(formatMapping[tickFormat])(d[column.key])
+                          format(formatMapping[tickFormat])((d as any)[column.key])
                         : format(tickFormat)
-                      : d[column.key]
+                      : (d as any)[column.key]
                   }`
             );
           }

@@ -43,10 +43,12 @@ export interface LollipopHChartProps<TData = any> extends ChartProps<TData> {
     end?: number;
     axis?: 'top' | 'bottom';
     axisTicks?: number;
+    axisLabel?: string;
   };
   y?: {
     key: Extract<keyof TData, string> | string;
     axis?: 'left' | 'right';
+    axisLabel?: string;
   };
 }
 
@@ -133,6 +135,15 @@ const LollipopHChart = <TData = any,>({
       )
       .call(xAxis);
 
+    x.axisLabel &&
+      xAxisG
+        .append('text')
+        .text(x.axisLabel)
+        .attr('fill', 'currentColor')
+        .attr('x', width / 2)
+        .attr('y', x.axis === 'top' ? -10 : 30)
+        .style('font-size', '1.1em');
+
     const yAxis = y.axis === 'right' ? axisRight(yFn) : axisLeft(yFn);
 
     const yAxisG = g
@@ -164,6 +175,21 @@ const LollipopHChart = <TData = any,>({
         .attr('stroke', 'currentColor');
 
     yAxisG.call(yAxis);
+
+    y.axisLabel &&
+      yAxisG
+        .append('text')
+        .text(y.axisLabel)
+        .attr('fill', 'currentColor')
+        .attr('text-anchor', 'middle')
+        .attr('x', 0)
+        .attr(
+          'y',
+          x.axis === 'top'
+            ? height - (margin.bottom || 0) + 20
+            : (margin.top || 0) - 15
+        )
+        .style('font-size', '1.1em');
 
     const dataGroup = g.append('g');
 

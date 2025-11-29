@@ -50,3 +50,31 @@ export const WithCustomShape = meta.story({
     shape: 'diamond',
   },
 });
+
+export const WithAxisLabel = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'lollipop-h-chart-with-axis-label',
+    x: {
+      key: 'value',
+      start: 0,
+      axisLabel: 'Value (Units)',
+    },
+  },
+});
+
+export const WithBothAxisLabels = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'lollipop-h-chart-with-both-axis-labels',
+    x: {
+      key: 'value',
+      start: 0,
+      axisLabel: 'Value (Units)',
+    },
+    y: {
+      key: 'name',
+      axisLabel: 'Categories',
+    },
+  },
+});

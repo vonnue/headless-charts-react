@@ -1,20 +1,20 @@
 import { PieArcDatum, arc } from 'd3-shape';
-import React, { useEffect, useRef } from 'react';
-import { pointer, select, selectAll } from 'd3-selection';
+import { useCallback, useEffect, useRef } from 'react';
+import { select, selectAll } from 'd3-selection';
 
-import { defaultChartClassNames } from '../../../utils';
-// import { axisBottom } from 'd3-axis';
+import { defaultChartClassNames } from '@/utils';
+import { GaugeProps } from '@/types';
 import { interpolateNumber } from 'd3-interpolate';
 import { min } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
+import useTooltip from '@/hooks/useTooltip';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-export interface RingGaugeProps<TData = any> {
-  id: string;
-  className?: string;
+export interface RingGaugeProps<TData = any> extends Omit<GaugeProps<TData>, 'data'> {
+  data?: TData[];
   labelKey: Extract<keyof TData, string> | string;
   targetKey: Extract<keyof TData, string> | string;
   dataKey: Extract<keyof TData, string> | string;
@@ -23,13 +23,6 @@ export interface RingGaugeProps<TData = any> {
     position?: 'top' | 'bottom';
     className?: string;
   };
-  data?: TData[];
-  margin?: {
-    top?: number;
-    bottom?: number;
-    left?: number;
-    right?: number;
-  };
   padding?: {
     arc?: number;
   };
@@ -37,17 +30,8 @@ export interface RingGaugeProps<TData = any> {
   startAngle?: number;
   endAngle?: number;
   cornerRadius?: number;
-  drawing?: {
-    duration?: number;
-    delay?: number;
-  };
-  tooltip?: {
-    className?: string;
-    html?: (d: any) => string;
-  };
   classNameGauge?: string;
   classNameGaugeBg?: string;
-  style?: React.CSSProperties;
 }
 
 const RingGauge = <TData = any,>({
@@ -81,20 +65,17 @@ const RingGauge = <TData = any,>({
 
   const previousData = useRef<any[]>([]);
 
-  const refreshChart = React.useCallback(() => {
+  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+    id,
+    tooltip,
+    defaultHtml: (d: any) =>
+      `${d[labelKey]} <br/>${d[dataKey]}/${d[targetKey]}`,
+  });
+
+  const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
     svg.selectAll('*').remove();
-
-    const tooltipDiv =
-      tooltip && select('#tooltip').node()
-        ? select('#tooltip')
-        : select('body')
-            .append('div')
-            .attr('id', `tooltip-${id}`)
-            .style('position', 'absolute')
-            .style('opacity', '0')
-            .attr('class', twMerge(tooltip?.className));
 
     const g = svg.append('g');
 
@@ -163,28 +144,9 @@ const RingGauge = <TData = any,>({
           i
         );
       })
-      .on('mouseenter', function (_event, d) {
-        tooltipDiv.attr('class', twMerge(tooltip?.className, 'tooltip'));
-        tooltipDiv
-          .style('opacity', 1)
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          .html(
-            tooltip?.html
-              ? tooltip.html(d)
-              : `${(d as any)[labelKey]} <br/>${(d as any)[dataKey]}/${(d as any)[targetKey]}`
-          );
-      })
-      .on('mousemove', function (event) {
-        const [bX, bY] = pointer(event, select('body'));
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        tooltipDiv.style('left', `${bX + 10}px`).style('top', `${bY + 10}px`);
-      })
-      .on('mouseleave', function () {
-        tooltipDiv.style('opacity', 0);
-        tooltipDiv.html('');
-      })
+      .on('mouseenter', onMouseOver)
+      .on('mousemove', onMouseMove)
+      .on('mouseleave', onMouseLeave)
       .transition()
       .duration(drawing?.duration || 1000)
       .delay(drawing?.delay || 0)
@@ -252,7 +214,9 @@ const RingGauge = <TData = any,>({
     startAngle,
     cornerRadius,
     targetKey,
-    tooltip,
+    onMouseOver,
+    onMouseMove,
+    onMouseLeave,
   ]);
 
   useEffect(() => {
@@ -260,11 +224,7 @@ const RingGauge = <TData = any,>({
     return () => {
       selectAll(`#tooltip-${id}`).remove();
     };
-
-    return () => {
-      selectAll('#tooltip').remove();
-    };
-  }, [data, refreshChart]);
+  }, [data, refreshChart, id]);
   return (
     <svg
       id={id}

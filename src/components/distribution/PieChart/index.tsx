@@ -2,11 +2,11 @@
 import { arc, pie } from 'd3';
 import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect, useRef } from 'react';
-import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
+import useTooltip from '@/hooks/useTooltip';
 
-import { ChartProps } from '../../../types';
-import { deepValue } from '../../../utils/';
-import { defaultChartClassNames } from '../../../utils';
+import { ChartProps, TooltipConfig } from '@/types';
+import { deepValue } from '@/utils';
+import { defaultChartClassNames } from '@/utils';
 import { interpolate } from 'd3-interpolate';
 import { min } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
@@ -33,7 +33,7 @@ interface LabelOptions<TData = any> {
   classNameMap?: { [key: string]: string };
 }
 
-interface PieChartProps<TData = any> extends ChartProps<TData> {
+export interface PieChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   id: string;
   className?: string;
@@ -47,7 +47,7 @@ interface PieChartProps<TData = any> extends ChartProps<TData> {
   nameKey: Extract<keyof TData, string> | string;
   valueKey: Extract<keyof TData, string> | string;
   drawing?: DrawingOptions;
-  tooltip?: TooltipObjectType;
+  tooltip?: TooltipConfig;
   labels?: LabelOptions<TData>;
   title?: {
     text?: string | null;
@@ -127,8 +127,8 @@ const PieChart = <TData = any,>({
     }
 
     const chartArea = [
-      width - margin.left - margin.right,
-      height - margin.top - margin.bottom,
+      width - (margin.left ?? 0) - (margin.right ?? 0),
+      height - (margin.top ?? 0) - (margin.bottom ?? 0),
     ];
 
     const radius =
@@ -156,10 +156,12 @@ const PieChart = <TData = any,>({
       .append('g')
       .attr(
         'transform',
-        `translate(${(padding.left ?? 0) + margin.left + chartArea[0] / 2},${
+        `translate(${
+          (padding.left ?? 0) + (margin.left ?? 0) + chartArea[0] / 2
+        },${
           endAngle - startAngle <= 180
-            ? height - margin.bottom - (padding.bottom ?? 0)
-            : margin.top + (padding.top || 0) + chartArea[1] / 2
+            ? height - (margin.bottom ?? 0) - (padding.bottom ?? 0)
+            : (margin.top ?? 0) + (padding.top || 0) + chartArea[1] / 2
         })`
       );
 

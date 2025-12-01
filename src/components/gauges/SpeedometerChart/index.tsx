@@ -4,7 +4,8 @@ import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { Axis } from 'd3-axis';
-import { defaultChartClassNames } from '../../../utils';
+import { defaultChartClassNames } from '@/utils';
+import { GaugeProps } from '@/types';
 import { max } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
 
@@ -18,21 +19,11 @@ interface Label {
   className?: string;
 }
 
-interface SpeedometerChartProps<TData = any> {
-  data: TData extends number ? TData : number;
+export interface SpeedometerChartProps<TData = any> extends GaugeProps<TData> {
   label?: Label;
-  id: string;
-  className?: string;
-  margin?: {
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
-  };
   regions?: Region[];
   axisTicks?: number;
   needleRadius?: number;
-  style?: React.CSSProperties;
 }
 
 const SpeedometerChart = <TData = any,>({
@@ -69,9 +60,9 @@ const SpeedometerChart = <TData = any,>({
     const width = +svg.style('width').split('px')[0];
     const height = +svg.style('height').split('px')[0];
 
-    g.attr('transform', `translate(${width / 2},${margin.top + width / 2})`);
+    g.attr('transform', `translate(${width / 2},${(margin.top ?? 0) + width / 2})`);
 
-    const innerWidth = width - margin.left - margin.right;
+    const innerWidth = width - (margin.left ?? 0) - (margin.right ?? 0);
     const chartRadius = innerWidth / 2;
 
     const scale: ScaleLinear<number, number> = scaleLinear()
@@ -138,7 +129,10 @@ const SpeedometerChart = <TData = any,>({
         .attr('text-anchor', 'middle')
         .attr('class', `fill-current ${label?.className}`)
         .attr('x', 0)
-        .attr('y', height - margin.bottom - margin.top - width / 2)
+        .attr(
+          'y',
+          height - (margin.bottom ?? 0) - (margin.top ?? 0) - width / 2
+        )
         .text(label.text);
     // @ts-ignore
     const xAxis: Axis<number> = (g) =>
@@ -180,7 +174,8 @@ const SpeedometerChart = <TData = any,>({
     g.call(xAxis);
   }, [id, margin, needleRadius]);
 
-  const currentAngle = ((data / maxValue) * (MAX_ANGLE - MIN_ANGLE) * 180) / PI;
+  const dataValue = typeof data === 'number' ? data : 0;
+  const currentAngle = ((dataValue / maxValue) * (MAX_ANGLE - MIN_ANGLE) * 180) / PI;
   const previousAngle =
     ((previousData.current / maxValue) * (MAX_ANGLE - MIN_ANGLE) * 180) / PI;
 
@@ -191,7 +186,7 @@ const SpeedometerChart = <TData = any,>({
       .transition()
       .duration(1000)
       .attr('transform', `rotate(${currentAngle})`); // Transition to the new value
-    previousData.current = data;
+    previousData.current = dataValue;
   }, [data, max]);
 
   useEffect(() => {
@@ -202,10 +197,6 @@ const SpeedometerChart = <TData = any,>({
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();
-    };
-
-    return () => {
-      selectAll<SVGGElement, unknown>('.tooltip').remove();
     };
   }, [data, max, refreshChart]);
   /* eslint-enable */

@@ -1,12 +1,10 @@
 // import React from 'react';
-import { deepValue, mergeTailwindClasses } from '../utils';
+import { deepValue, mergeTailwindClasses } from '@/utils';
 import { pointer, select } from 'd3-selection';
+import { TooltipConfig } from '@/types';
 
-export interface TooltipObjectType {
-  className?: string;
-  html?: (d: any) => string;
-  keys?: string[];
-}
+/** @deprecated Use TooltipConfig from '../types' instead */
+export type TooltipObjectType = TooltipConfig;
 
 export interface TooltipProps {
   tooltip?: TooltipObjectType;

@@ -1,51 +1,23 @@
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { max, min } from 'd3-array';
-import { pointer, select, selectAll } from 'd3-selection';
+import { select, selectAll } from 'd3-selection';
+import useTooltip from '@/hooks/useTooltip';
+import { drawAxis } from '@/hooks/useAxis';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { useCallback, useEffect } from 'react';
 
-import { defaultChartClassNames } from '../../../utils';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 
-interface YItem<TData = any> {
-  key: Extract<keyof TData, string> | string;
-  start?: number;
-  end?: number;
-  className?: string;
-  classNameNegative?: string;
-  axis?: 'left' | 'right';
-}
-
-interface ColumnChartGroupedProps<TData = any> {
-  data: TData[];
-  id: string;
-  className?: string;
-  x: { key: Extract<keyof TData, string> | string; axis?: 'top' | 'bottom' };
-  y: YItem<TData>[];
-  margin?: {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-  };
-  padding?: {
-    left: number;
-    right: number;
-    bottom: number;
-    top: number;
-  };
+export interface ColumnChartGroupedProps<TData = any> extends ChartProps<TData> {
+  x: AxisConfig<TData>;
+  y: AxisConfig<TData>[];
   paddingBar?: number;
-  drawing?: { duration?: number };
-  tooltip?: {
-    html?: (data: any) => string;
-    className?: string;
-    keys?: string[];
-  };
+  tooltip?: TooltipConfig;
   referenceLines?: {
     y?: number;
     className?: string;
   }[];
-  style?: React.CSSProperties;
   wholeNumbers?: boolean;
 }
 
@@ -82,6 +54,13 @@ const ColumnChartGrouped = <TData = any,>({
   style = {},
   wholeNumbers = false,
 }: ColumnChartGroupedProps<TData>) => {
+  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+    id,
+    tooltip,
+    defaultHtml: (d: any) =>
+      `${d[x.key]} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`,
+  });
+
   const refreshChart = useCallback(() => {
     /* eslint-disable */
     const svg = select(`#${id}`);
@@ -92,11 +71,11 @@ const ColumnChartGrouped = <TData = any,>({
     const minStart = min(y.map((column) => column.start));
     // @ts-ignore
     const minY: number = min(
-      y.map((column: YItem) => min(data, (d: any) => d[column.key]))
+      y.map((column: AxisConfig) => min(data, (d: any) => d[column.key]))
     );
     // @ts-ignore
     const maxY: number = max(
-      y.map((column: YItem) => max(data, (d: any) => d[column.key]))
+      y.map((column: AxisConfig) => max(data, (d: any) => d[column.key]))
     );
     // @ts-ignore
     const maxEnd = max(y.map((column) => column.end));
@@ -109,7 +88,10 @@ const ColumnChartGrouped = <TData = any,>({
     const xFn = scaleBand()
       // @ts-ignore
       .domain(data.map((d) => (d as any)[x.key]))
-      .range([margin.left + padding.left, width - margin.right - padding.right])
+      .range([
+        (margin.left ?? 0) + (padding.left ?? 0),
+        width - (margin.right ?? 0) - (padding.right ?? 0),
+      ])
       .padding(paddingBar);
 
     const yFn = scaleLinear()
@@ -119,8 +101,8 @@ const ColumnChartGrouped = <TData = any,>({
         maxEnd || maxY,
       ])
       .range([
-        height - margin.bottom - padding.bottom,
-        margin.top + padding.top,
+        height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
+        (margin.top ?? 0) + (padding.top ?? 0),
       ]);
 
     y.map((column, i) => {
@@ -144,7 +126,8 @@ const ColumnChartGrouped = <TData = any,>({
         // @ts-ignore
         .attr(
           'x',
-          (d) => (xFn((d as any)[x.key]) || 0) + (i * xFn.bandwidth()) / y.length
+          (d) =>
+            (xFn((d as any)[x.key]) || 0) + (i * xFn.bandwidth()) / y.length
         )
         .attr('y', (d) =>
           // @ts-ignore
@@ -157,42 +140,14 @@ const ColumnChartGrouped = <TData = any,>({
             : (d as any)[column.key]
             ? // @ts-ignore
               height -
-              margin.bottom -
-              padding.bottom -
+              (margin.bottom ?? 0) -
+              (padding.bottom ?? 0) -
               yFn((d as any)[column.key])
             : 0
         )
-        .on('mouseenter', function (event, d) {
-          if (tooltip) {
-            tooltipDiv.style('opacity', 1);
-            const [bX, bY] = pointer(event, select('body'));
-            tooltipDiv
-              .style('left', `${bX + 10}px`)
-              .style('top', `${bY + 10}px`);
-            tooltipDiv.html(
-              tooltip && tooltip.html
-                ? tooltip.html(d)
-                : tooltip.keys
-                ? tooltip.keys
-                    .map((key) => `${key}: ${(d as any)[key] || ''}`)
-                    .join('<br/>')
-                : `${(d as any)[x.key]} <br/> ${column.key} ${
-                    (d as any)[column.key]
-                  }`
-            );
-          }
-        })
-        .on('mousemove', function (event) {
-          const [bX, bY] = pointer(event, select('body'));
-          tooltipDiv.style('left', `${bX + 10}px`).style('top', `${bY + 10}px`);
-        })
-        .on('mouseleave', function () {
-          tooltip &&
-            tooltipDiv
-              .style('opacity', '0')
-              .style('left', `0px`)
-              .style('top', `0px`);
-        });
+        .on('mouseenter', onMouseOver)
+        .on('mousemove', onMouseMove)
+        .on('mouseleave', onMouseLeave);
 
       drawing?.duration &&
         bars
@@ -204,8 +159,8 @@ const ColumnChartGrouped = <TData = any,>({
             Number.isFinite((d as any)[column.key])
               ? // @ts-ignore
                 height -
-                margin.bottom -
-                padding.bottom -
+                (margin.bottom ?? 0) -
+                (padding.bottom ?? 0) -
                 yFn((d as any)[column.key])
               : 0
           );
@@ -221,8 +176,8 @@ const ColumnChartGrouped = <TData = any,>({
       const horizontalLine = g
         .append('line')
         .attr('class', twMerge(className, 'line stroke-current'))
-        .attr('x1', direction === 'left' ? margin.left : x)
-        .attr('x2', direction === 'left' ? x : width + margin.left)
+        .attr('x1', direction === 'left' ? margin.left ?? 0 : x)
+        .attr('x2', direction === 'left' ? x : width + (margin.left ?? 0))
         .attr('y1', y)
         .attr('y2', y)
         .attr('clip-path', 'url(#clip)')
@@ -233,54 +188,54 @@ const ColumnChartGrouped = <TData = any,>({
     referenceLines.map((object) => {
       object.y &&
         drawHLine({
-          x: width - margin.right,
+          x: width - (margin.right ?? 0),
           y: yFn(object.y),
           className: `${object.className || ''} reference-line`,
         });
     });
 
-    const tooltipDiv = select('body')
-      .append('div')
-      .attr('id', `tooltip-${id}`)
-      .style('position', 'absolute')
-      .style('opacity', '0')
-      .attr('class', `tooltip ${(tooltip && tooltip.className) || ''}`);
-    // @ts-ignore
-    const yAxis = y.axis === 'right' ? axisRight(yFn) : axisLeft(yFn);
+    // Determine y-axis location
+    const yAxisLocation = y.find((col) => col.axis?.location)?.axis?.location || 'left';
+    const yAxisLabel = y.map((column) => column.axis?.label || column.key || '').join(', ');
 
-    if (wholeNumbers && maxY < 10) {
-      yAxis.ticks(maxY, 'd');
-    }
+    // Create y-axis config
+    const yAxisConfig: AxisConfig = {
+      key: y[0]?.key || '',
+      axis: {
+        location: yAxisLocation as 'left' | 'right',
+        ticks: y[0]?.axis?.ticks || (wholeNumbers && maxY < 10 ? maxY : 5),
+        label: yAxisLabel,
+      },
+    };
 
-    const yAxisG = g
-      .append('g')
-      .attr('class', 'yAxis axis')
-      .attr(
-        'transform',
-        // @ts-ignore
-        `translate(${y.axis === 'right' ? margin.left + width : margin.left},0)`
-      );
-    yAxisG.call(yAxis);
+    // Draw x-axis using shared utility
+    drawAxis({
+      g,
+      scale: xFn,
+      config: x,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+    });
 
-    const xAxis = x.axis === 'top' ? axisTop(xFn) : axisBottom(xFn);
-
-    const xAxisG = g.append('g').attr('class', 'axis--x axis');
-
-    xAxisG
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin.top : height - margin.bottom
-        })`
-      )
-      .call(xAxis);
-  }, [data]);
+    // Draw y-axis using shared utility
+    drawAxis({
+      g,
+      scale: yFn,
+      config: yAxisConfig,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'vertical',
+    });
+  }, [data, onMouseOver, onMouseMove, onMouseLeave]);
   useEffect(() => {
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();
     };
-  }, [data]);
+  }, [data, refreshChart, id]);
   /* eslint-enable */
   return (
     <svg

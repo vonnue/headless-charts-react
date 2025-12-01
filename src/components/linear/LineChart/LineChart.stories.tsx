@@ -27,9 +27,8 @@ export const Default = meta.story({
   },
 });
 
-export const WithStyleChart = meta.story({
+export const WithStyleChart = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'with-style-chart',
     y: [
       { key: 'value', className: 'text-green-500' },
@@ -40,9 +39,8 @@ export const WithStyleChart = meta.story({
   },
 });
 
-export const WithInsidePadding = meta.story({
+export const WithInsidePadding = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'padding-for-line-chart',
     y: [
       { key: 'value', className: 'text-green-500' },
@@ -53,45 +51,35 @@ export const WithInsidePadding = meta.story({
   },
 });
 
-export const TwoAxes = meta.story({
+export const TwoAxes = Default.extend({
   args: {
-    data,
     id: 'two-axes-for-line-chart',
-    x: { key: 'id' },
     y: [
       { key: 'value', className: 'text-green-500' },
-      { key: 'reading', className: 'text-blue-500', axis: 'right' },
+      { key: 'reading', className: 'text-blue-500', axis: { location: 'right' } },
     ],
     marginRight: 40,
   },
 });
 
-export const Drawing = meta.story({
+export const Drawing = Default.extend({
   args: {
-    data,
     id: 'drawing-line-chart',
-    x: { key: 'id' },
     y: [
       { key: 'value', className: 'text-green-500' },
-      { key: 'reading', className: 'text-blue-500', axis: 'right' },
+      { key: 'reading', className: 'text-blue-500', axis: { location: 'right' } },
     ],
     className: '',
     drawing: { duration: 2000 },
   },
 });
 
-export const Zooming = meta.story({
+export const Zooming = Default.extend({
   args: {
-    data,
     id: 'line-chart-with-zooming',
-    x: { key: 'id' },
     y: [
       { key: 'value', className: 'text-green-500' },
-      {
-        key: 'reading',
-        className: 'text-blue-500',
-        axis: 'right',
-      },
+      { key: 'reading', className: 'text-blue-500', axis: { location: 'right' } },
     ],
     className: '',
     zooming: {
@@ -101,11 +89,9 @@ export const Zooming = meta.story({
   },
 });
 
-export const WithTooltip = meta.story({
+export const WithTooltip = Default.extend({
   args: {
-    data,
     id: 'line-chart-with-tooltip',
-    x: { key: 'id' },
     y: [
       { key: 'value', className: 'text-green-500' },
       { key: 'reading', className: 'text-blue-500' },
@@ -118,13 +104,11 @@ export const WithTooltip = meta.story({
     showGuideLines: true,
   },
 });
-/* eslint-enable */
 
-export const XAxisLabel = meta.story({
+export const XAxisLabel = Default.extend({
   args: {
-    data,
     id: 'line-chart-with-x-axis-label',
-    x: { key: 'id', axisLabel: 'Some Index' },
+    x: { key: 'id', axis: { label: 'Some Index' } },
     y: [
       { key: 'value', className: 'text-green-500' },
       { key: 'reading', className: 'text-blue-500' },
@@ -133,40 +117,34 @@ export const XAxisLabel = meta.story({
   },
 });
 
-export const WithXAxisCustomStart = meta.story({
+export const WithXAxisCustomStart = Default.extend({
   args: {
-    data,
     id: 'line-chart-with-x-axis-custom-start',
-    x: { key: 'id', axisLabel: 'Some Index', start: 0, end: 7 },
+    x: { key: 'id', axis: { label: 'Some Index' }, start: 0, end: 7 },
     y: [
       { key: 'value', className: 'text-green-500' },
-      { key: 'reading', axis: 'right', className: 'text-blue-500' },
-    ],
-    className: '',
-  },
-});
-export const WithXAxisAtTop = meta.story({
-  args: {
-    data,
-    id: 'x-axis-at-top',
-    x: { key: 'id', axisLabel: 'Some Index', axis: 'top' },
-    y: [
-      { key: 'value', className: 'text-green-500' },
-      {
-        key: 'reading',
-        axis: 'right',
-        className: 'text-blue-500',
-      },
+      { key: 'reading', axis: { location: 'right' }, className: 'text-blue-500' },
     ],
     className: '',
   },
 });
 
-export const WithXAxisTicks = meta.story({
+export const WithXAxisAtTop = Default.extend({
   args: {
-    data,
+    id: 'x-axis-at-top',
+    x: { key: 'id', axis: { label: 'Some Index', location: 'top' } },
+    y: [
+      { key: 'value', className: 'text-green-500' },
+      { key: 'reading', axis: { location: 'right' }, className: 'text-blue-500' },
+    ],
+    className: '',
+  },
+});
+
+export const WithXAxisTicks = Default.extend({
+  args: {
     id: 'x-axis-ticks',
-    x: { key: 'id', axisLabel: 'Some Index', axisTicks: 15 },
+    x: { key: 'id', axis: { label: 'Some Index', ticks: 15 } },
     y: [
       { key: 'value', className: 'text-green-500' },
       { key: 'reading', className: 'text-blue-500' },
@@ -175,30 +153,27 @@ export const WithXAxisTicks = meta.story({
   },
 });
 
-export const YAxisCustomStart = meta.story({
+export const YAxisCustomStart = Default.extend({
   args: {
-    data,
     id: 'y-axis-custom-start',
-    x: { key: 'id', axisLabel: 'Some Index' },
+    x: { key: 'id', axis: { label: 'Some Index' } },
     y: [
       { key: 'value', className: 'text-green-500', start: 0 },
       {
         key: 'reading',
         className: 'text-blue-500',
-        axis: 'right',
+        axis: { location: 'right', ticks: 3 },
         start: 0,
-        ticks: 3,
       },
     ],
     className: '',
   },
 });
 
-export const YAxisCustomSymbolChart = meta.story({
+export const YAxisCustomSymbolChart = Default.extend({
   args: {
-    data,
     id: 'y-axis-custom-label-chart',
-    x: { key: 'id', axisLabel: 'Some Index' },
+    x: { key: 'id', axis: { label: 'Some Index' } },
     y: [
       {
         key: 'value',
@@ -210,20 +185,18 @@ export const YAxisCustomSymbolChart = meta.story({
         key: 'reading',
         symbol: 'circle',
         className: 'text-blue-500',
-        axis: 'right',
+        axis: { location: 'right', ticks: 3 },
         start: 0,
-        ticks: 3,
       },
     ],
     className: '',
   },
 });
 
-export const YAxisUnknown = meta.story({
+export const YAxisUnknown = Default.extend({
   args: {
-    data,
     id: 'y-axis-unknown-chart',
-    x: { key: 'id', axisLabel: 'Some Index' },
+    x: { key: 'id', axis: { label: 'Some Index' } },
     y: [
       {
         key: 'value',
@@ -236,48 +209,43 @@ export const YAxisUnknown = meta.story({
         key: 'reading',
         symbol: 'circle',
         className: 'text-blue-500',
-        axis: 'right',
+        axis: { location: 'right', ticks: 3 },
         unknown: 'zero',
         start: 0,
-        ticks: 3,
       },
     ],
     className: '',
   },
 });
 
-export const YAxisLabel = meta.story({
+export const YAxisLabel = Default.extend({
   args: {
-    data,
     id: 'y-axis-custom-label-chart',
-    x: { key: 'id', axisLabel: 'Some Index' },
+    x: { key: 'id', axis: { label: 'Some Index' } },
     y: [
       {
         key: 'value',
         className: 'text-green-500',
         start: 0,
         symbol: 'diamond',
-        axisLabel: 'Volume',
+        axis: { label: 'Volume' },
       },
       {
         key: 'value',
         symbol: 'circle',
-        axisLabel: 'Pressure',
         className: 'text-blue-500',
-        axis: 'right',
+        axis: { location: 'right', label: 'Pressure', ticks: 3 },
         start: 0,
-        ticks: 3,
       },
     ],
     className: '',
   },
 });
 
-export const YAxisCurve = meta.story({
+export const YAxisCurve = Default.extend({
   args: {
-    data,
     id: 'y-axis-custom-curve-chart',
-    x: { key: 'id', axisLabel: 'Some Index' },
+    x: { key: 'id', axis: { label: 'Some Index' } },
     y: [
       {
         key: 'value',
@@ -290,20 +258,17 @@ export const YAxisCurve = meta.story({
         key: 'reading',
         symbol: 'circle',
         className: 'text-blue-500',
-        axis: 'right',
+        axis: { location: 'right', ticks: 3 },
         start: 0,
-        ticks: 3,
       },
     ],
     className: '',
   },
 });
 
-export const LineChartVertical = meta.story({
+export const LineChartVertical = Default.extend({
   args: {
-    data,
     id: 'horizontal-line-chart',
-    x: { key: 'id' },
     y: [
       { key: 'value', className: 'text-green-500' },
       { key: 'reading', className: 'text-blue-500' },
@@ -315,11 +280,9 @@ export const LineChartVertical = meta.story({
   },
 });
 
-export const LineChartHorizontal = meta.story({
+export const LineChartHorizontal = Default.extend({
   args: {
-    data,
     id: 'vertical-line-chart',
-    x: { key: 'id' },
     y: [
       { key: 'value', className: 'text-green-500' },
       { key: 'reading', className: 'text-blue-500' },
@@ -334,12 +297,10 @@ export const LineChartHorizontal = meta.story({
   },
 });
 
-export const SeriesLabel = meta.story({
+export const SeriesLabel = Default.extend({
   args: {
-    data,
     id: 'line-chart-with-series-label',
     padding: { top: 10, right: 50, bottom: 10, left: 10 },
-    x: { key: 'id' },
     y: [
       {
         key: 'value',

@@ -3,15 +3,12 @@ import { max, min } from 'd3-array';
 import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
 
-import { ChartProps } from '../../../types';
-import { defaultChartClassNames } from '../../../utils';
+import { AxisConfig, ChartProps } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 
-interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
-  y?: {
-    key: Extract<keyof TData, string> | string;
-    className?: string;
-  };
+export interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
+  y?: AxisConfig<TData>;
   events: {
     isTime?: boolean;
 
@@ -65,7 +62,9 @@ const TimeLineChart = <TData = any,>({
     const xFn = events?.isTime ? scaleTime() : scaleLinear();
 
     const minVal = min(data, (d: any) => d[events.startKey]);
-    const maxVal = max(data, (d: any) => events?.endKey ? d[events.endKey] : d[events.startKey]);
+    const maxVal = max(data, (d: any) =>
+      events?.endKey ? d[events.endKey] : d[events.startKey]
+    );
 
     xFn
       .domain([
@@ -84,8 +83,8 @@ const TimeLineChart = <TData = any,>({
       ])
       // @ts-ignore
       .range([
-        (padding.left || 0) + margin.left,
-        width - (padding.right || 0) - margin.right,
+        (padding.left || 0) + (margin.left ?? 0),
+        width - (padding.right || 0) - (margin.right ?? 0),
       ]);
 
     const g = svg.append('g');
@@ -98,8 +97,8 @@ const TimeLineChart = <TData = any,>({
     const yFn = scaleBand()
       .domain(listOfYValues)
       .range([
-        (padding.top || 0) + margin.top,
-        height - (padding.bottom || 0) - margin.bottom,
+        (padding.top || 0) + (margin.top ?? 0),
+        height - (padding.bottom || 0) - (margin.bottom ?? 0),
       ])
       .padding(padding.bar || 0.1);
 
@@ -109,15 +108,15 @@ const TimeLineChart = <TData = any,>({
       .enter()
       .append('rect')
       .attr('class', `track ${y?.className || ''}`)
-      .attr('x', (padding.left || 0) + margin.left)
+      .attr('x', (padding.left || 0) + (margin.left ?? 0))
       .attr('y', (d) => yFn(d) || 0)
       .attr(
         'width',
         width -
           (padding.right || 0) -
-          margin.right -
+          (margin.right ?? 0) -
           (padding.left || 0) -
-          margin.left
+          (margin.left ?? 0)
       )
       .attr('height', yFn.bandwidth());
 
@@ -204,7 +203,7 @@ const TimeLineChart = <TData = any,>({
     const xAxis = axisBottom(xFn);
 
     g.append('g')
-      .attr('transform', `translate(0, ${height - margin.bottom})`)
+      .attr('transform', `translate(0, ${height - (margin.bottom ?? 0)})`)
       .call(xAxis);
   }, []);
 

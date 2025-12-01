@@ -1,5 +1,5 @@
 import preview from '../../../../.storybook/preview';
-import BarChart from '.';
+import BarChart, { BarChartProps } from '.';
 import data from './sample.json';
 
 /**
@@ -20,16 +20,14 @@ export const Default = meta.story({
     data,
     id: 'bar-chart-default',
     x: [
-      {
-        key: 'macbook',
-      },
+      { key: 'macbook' },
       { key: 'services' },
       { key: 'ipad' },
       { key: 'iphone' },
       { key: 'wearables' },
     ],
     y: { key: 'year' },
-  },
+  } as any,
 });
 
 /** Styled bar charts (padding, margin, classNames) */
@@ -62,13 +60,12 @@ export const Styled = meta.story({
       { key: 'wearables', className: 'fill-red-500 dark:fill-red-100' },
     ],
     y: { key: 'year', className: 'text-red-500 dark:text-red-50', padding: 10 },
-  },
+  } as any,
 });
 
 /**
  * You can specially style the bars by using the `className` and `classNameNegative` props. classNameNegative is used when the value is negative.
  */
-
 export const NegativeStyling = meta.story({
   args: {
     ...Default.input.args,
@@ -83,7 +80,7 @@ export const NegativeStyling = meta.story({
       },
       { key: 'value', className: 'text-blue-500 dark:text-blue-400' },
     ],
-  },
+  } as any,
 });
 
 /**
@@ -94,11 +91,10 @@ export const Drawing = meta.story({
     ...Default.input.args,
     id: 'bar-chart-drawing',
     drawing: {
-      enabled: true,
       duration: 1000,
       delay: 100,
     },
-  },
+  } as any,
 });
 
 /**
@@ -111,9 +107,10 @@ export const DataLabel = meta.story({
     dataLabel: {
       className: 'text-white dark:text-gray-900',
     },
-  },
+  } as any,
 });
 
+/** Styled Y Axis with custom className */
 export const StyledYAxis = meta.story({
   args: {
     ...Default.input.args,
@@ -122,125 +119,68 @@ export const StyledYAxis = meta.story({
       key: 'year',
       className: 'text-red-500',
     },
-  },
+  } as any,
 });
 
+/** Add border radius to bars using the `rx` prop */
 export const BorderRadius = meta.story({
   args: {
     ...Default.input.args,
     id: 'bar-chart-border-radius',
     x: [
-      {
-        key: 'macbook',
-        className: 'text-red-500 rounded-full',
-        rx: 3,
-      },
+      { key: 'macbook', className: 'text-red-500 rounded-full', rx: 3 },
       { key: 'services', className: 'text-blue-500', rx: 3 },
       { key: 'ipad', className: 'text-green-500', rx: 3 },
       { key: 'iphone', className: 'text-blue-500', rx: 3 },
       { key: 'wearables', className: 'text-red-500', rx: 3 },
     ],
-  },
+  } as any,
 });
 
+/** Bar chart with left direction */
 export const LeftDirection = meta.story({
   args: {
     ...Default.input.args,
     id: 'bar-chart-left-direction',
     direction: 'left',
-  },
+  } as any,
 });
 
+/** Left direction with drawing animation */
 export const LeftDrawing = meta.story({
   args: {
     ...LeftDirection.input.args,
-    ...Drawing.input.args,
     id: 'bar-chart-left-drawing',
-  },
+    drawing: {
+      duration: 1000,
+      delay: 100,
+    },
+  } as any,
 });
 
+/** Different axis locations for different series */
 export const DifferentAxis = meta.story({
   args: {
     ...Default.input.args,
     id: 'bar-chart-different-axis',
     x: [
-      {
-        key: 'macbook',
-        axis: 'top',
-      },
-      {
-        key: 'services',
-        axis: 'top',
-      },
-      {
-        key: 'ipad',
-        axis: 'bottom',
-      },
-      {
-        key: 'iphone',
-        axis: 'bottom',
-      },
-      {
-        key: 'wearables',
-        axis: 'bottom',
-      },
+      { key: 'macbook', axis: { location: 'top' } },
+      { key: 'services', axis: { location: 'top' } },
+      { key: 'ipad', axis: { location: 'bottom' } },
+      { key: 'iphone', axis: { location: 'bottom' } },
+      { key: 'wearables', axis: { location: 'bottom' } },
     ],
-  },
+  } as BarChartProps<any>,
 });
 
+/** Custom axis labels */
 export const CustomAxisLabel = meta.story({
   args: {
     ...Default.input.args,
     id: 'bar-chart-custom-axis-label',
     x: [
-      {
-        key: 'macbook',
-        axis: 'top',
-        axisLabel: 'Macbook',
-      },
-      {
-        key: 'services',
-        axisLabel: 'Services',
-      },
+      { key: 'macbook', axis: { location: 'top', label: 'Macbook' } },
+      { key: 'services', axis: { label: 'Services' } },
     ],
-  },
-});
-
-/**
- * Example demonstrating type-safe key suggestions.
- * Define your data type and TypeScript will provide autocomplete for keys.
- */
-type SalesData = {
-  product: string;
-  revenue: number;
-  profit: number;
-  expenses: number;
-};
-
-const salesData: SalesData[] = [
-  { product: 'Product A', revenue: 12000, profit: 3000, expenses: 9000 },
-  { product: 'Product B', revenue: 8000, profit: 2000, expenses: 6000 },
-  { product: 'Product C', revenue: 15000, profit: 4500, expenses: 10500 },
-];
-
-export const TypedBarChart = meta.story({
-  args: {
-    id: 'typed-bar-chart',
-    data: salesData,
-    x: [
-      {
-        key: 'revenue', // TypeScript autocomplete works here!
-        className: 'text-green-500',
-      },
-      {
-        key: 'profit', // TypeScript autocomplete works here!
-        className: 'text-blue-500',
-      },
-      {
-        key: 'expenses', // TypeScript autocomplete works here!
-        className: 'text-red-500',
-      },
-    ],
-    y: { key: 'product' }, // TypeScript autocomplete works here!
-  },
+  } as any,
 });

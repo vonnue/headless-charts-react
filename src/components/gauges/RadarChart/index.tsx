@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { line, scaleLinear } from 'd3';
 import { select, selectAll } from 'd3-selection';
 
-import { ChartProps } from '../../../types';
-import { defaultChartClassNames } from '../../../utils';
+import { ChartProps } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -41,8 +41,8 @@ const RadarChart = <TData = any,>({
 
     const radius =
       Math.min(
-        width - margin.left - margin.right,
-        height - margin.top - margin.bottom
+        width - (margin.left ?? 0) - (margin.right ?? 0),
+        height - (margin.top ?? 0) - (margin.bottom ?? 0)
       ) / 2;
 
     const g = svg.append('g');
@@ -144,7 +144,7 @@ const RadarChart = <TData = any,>({
         });
   }, [classNameMap, data, id, label, margin, max, metrics, min, drawing]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();

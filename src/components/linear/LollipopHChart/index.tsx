@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
+import { useCallback, useEffect } from 'react';
 import { max, min } from 'd3-array';
-import { pointer, select, selectAll } from 'd3-selection';
+import { select, selectAll } from 'd3-selection';
 import { scaleLinear, scalePoint } from 'd3-scale';
 import {
   symbol,
@@ -14,21 +13,23 @@ import {
   symbolWye,
 } from 'd3-shape';
 
-import { ChartProps } from '../../../types';
-import { defaultChartClassNames } from '../../../utils';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
+import useTooltip from '@/hooks/useTooltip';
+import { drawAxis } from '@/hooks/useAxis';
+
+export interface LollipopChartClassNames {
+  points?: string;
+  lines?: string;
+  symbols?: string;
+}
 
 export interface LollipopHChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
-  classNamePoints?: string;
-  classNameLines?: string;
-  classNameSymbols?: string;
-  tooltip?: {
-    className?: string;
-    html?: (d: any) => string;
-    keys?: string[];
-  };
+  classNames?: LollipopChartClassNames;
+  tooltip?: TooltipConfig;
   shape?:
     | 'circle'
     | 'diamond'
@@ -37,28 +38,15 @@ export interface LollipopHChartProps<TData = any> extends ChartProps<TData> {
     | 'cross'
     | 'star'
     | 'wye';
-  x?: {
-    key: Extract<keyof TData, string> | string;
-    start?: number;
-    end?: number;
-    axis?: 'top' | 'bottom';
-    axisTicks?: number;
-    axisLabel?: string;
-  };
-  y?: {
-    key: Extract<keyof TData, string> | string;
-    axis?: 'left' | 'right';
-    axisLabel?: string;
-  };
+  x?: AxisConfig<TData>;
+  y?: AxisConfig<TData>;
 }
 
 const LollipopHChart = <TData = any,>({
   data = [],
   id,
   className,
-  classNamePoints,
-  classNameLines,
-  classNameSymbols,
+  classNames,
   margin = {
     left: 80,
     right: 40,
@@ -73,11 +61,17 @@ const LollipopHChart = <TData = any,>({
   },
   tooltip = undefined,
   shape = 'circle',
-  x = { key: 'x', axis: 'bottom', axisTicks: 2 },
-  y = { key: 'y', axis: 'left' },
+  x = { key: 'x', axis: { location: 'bottom', ticks: 2 } },
+  y = { key: 'y', axis: { location: 'left' } },
   style = {},
 }: LollipopHChartProps<TData>) => {
-  const refreshChart = React.useCallback(() => {
+  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+    id,
+    tooltip,
+    defaultHtml: (d: any) => `${d[y.key]}: ${d[x.key]}`,
+  });
+
+  const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
     // Clear svg
@@ -119,77 +113,27 @@ const LollipopHChart = <TData = any,>({
 
     const g = svg.append('g');
 
-    const xAxis =
-      x.axis === 'top'
-        ? axisTop(xFn).ticks(x.axisTicks || 2)
-        : axisBottom(xFn).ticks(x.axisTicks || 2);
+    // Draw x-axis using shared utility
+    drawAxis({
+      g,
+      scale: xFn,
+      config: x,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+    });
 
-    const xAxisG = g.append('g').attr('class', 'axis--x axis ');
-
-    xAxisG
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin.top || 0 : height - (margin.bottom || 0)
-        })`
-      )
-      .call(xAxis);
-
-    x.axisLabel &&
-      xAxisG
-        .append('text')
-        .text(x.axisLabel)
-        .attr('fill', 'currentColor')
-        .attr('x', width / 2)
-        .attr('y', x.axis === 'top' ? -10 : 30)
-        .style('font-size', '1.1em');
-
-    const yAxis = y.axis === 'right' ? axisRight(yFn) : axisLeft(yFn);
-
-    const yAxisG = g
-      .append('g')
-      .attr('class', 'yAxis axis')
-      .attr(
-        'transform',
-        `translate(${
-          y.axis === 'right' ? (margin.left || 0) + width : margin.left || 0
-        },0)`
-      );
-
-    (padding.left || 0) &&
-      xAxisG
-        .append('line')
-        .attr('x1', margin.left || 0)
-        .attr('x2', (margin.left || 0) + (padding.left || 0))
-        .attr('y1', 0)
-        .attr('y2', 0)
-        .attr('stroke', 'currentColor');
-
-    (padding.bottom || 0) &&
-      yAxisG
-        .append('line')
-        .attr('x1', 0)
-        .attr('x2', 0)
-        .attr('y1', (margin.top || 0) + height - (padding.bottom || 0))
-        .attr('y2', (margin.top || 0) + height)
-        .attr('stroke', 'currentColor');
-
-    yAxisG.call(yAxis);
-
-    y.axisLabel &&
-      yAxisG
-        .append('text')
-        .text(y.axisLabel)
-        .attr('fill', 'currentColor')
-        .attr('text-anchor', 'middle')
-        .attr('x', 0)
-        .attr(
-          'y',
-          x.axis === 'top'
-            ? height - (margin.bottom || 0) + 20
-            : (margin.top || 0) - 15
-        )
-        .style('font-size', '1.1em');
+    // Draw y-axis using shared utility
+    drawAxis({
+      g,
+      scale: yFn,
+      config: y,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'vertical',
+    });
 
     const dataGroup = g.append('g');
 
@@ -199,23 +143,9 @@ const LollipopHChart = <TData = any,>({
         .data(data)
         .enter()
         .append('g')
-        .on('mouseover', function (event, d: any) {
-          tooltip && tooltipDiv.style('opacity', 1);
-          const [bX, bY] = pointer(event, select('body'));
-          tooltipDiv.style('left', `${bX + 10}px`).style('top', `${bY + 10}px`);
-          tooltipDiv.html(
-            tooltip && tooltip.html
-              ? tooltip.html(d)
-              : tooltip?.keys
-              ? tooltip?.keys
-                  .map((key) => `${key}: ${d[key] || ''}`)
-                  .join('<br/>')
-              : `${d[y.key]}: ${d[x.key]}`
-          );
-        })
-        .on('mouseleave', function () {
-          tooltip && tooltipDiv.style('opacity', '0');
-        });
+        .on('mouseenter', onMouseOver)
+        .on('mousemove', onMouseMove)
+        .on('mouseleave', onMouseLeave);
 
       transition();
 
@@ -224,9 +154,9 @@ const LollipopHChart = <TData = any,>({
         .attr(
           'class',
           twMerge(
-            `stroke-2 stroke-current`,
-            classNamePoints || '',
-            classNameLines || ''
+            'stroke-2 stroke-current',
+            classNames?.points,
+            classNames?.lines
           )
         )
         .attr('x1', (margin.left || 0) + (padding.left || 0))
@@ -239,7 +169,7 @@ const LollipopHChart = <TData = any,>({
 
       pointGroup
         .append('path')
-        .attr('class', twMerge(classNamePoints || '', classNameSymbols || ``))
+        .attr('class', twMerge(classNames?.points, classNames?.symbols))
         .attr('d', () => symbol(shapeMapping[shape], 100)())
         .attr(
           'transform',
@@ -257,25 +187,18 @@ const LollipopHChart = <TData = any,>({
     };
 
     drawLinesAndCircles();
-
-    const tooltipDiv = select('body')
-      .append('div')
-      .attr('id', `tooltip-${id}`)
-      .style('position', 'absolute')
-      .style('opacity', '0')
-      .attr('class', twMerge(`tooltip`, tooltip?.className || ''));
   }, [
-    classNameLines,
-    classNamePoints,
-    classNameSymbols,
+    classNames,
     data,
     id,
     margin,
     padding,
     shape,
-    tooltip,
     x,
     y,
+    onMouseOver,
+    onMouseMove,
+    onMouseLeave,
   ]);
 
   useEffect(() => {
@@ -283,13 +206,13 @@ const LollipopHChart = <TData = any,>({
     return () => {
       selectAll(`#tooltip-${id}`).remove();
     };
-  }, [data, refreshChart]);
+  }, [data, refreshChart, id]);
   return (
     <svg
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}
-      data-testid='bar-chart'
+      data-testid='lollipop-h-chart'
     />
   );
 };

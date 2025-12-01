@@ -4,36 +4,23 @@
 import { arc, interpolateNumber, pie, scaleLinear, transition } from 'd3';
 import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
-import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
+import useTooltip from '@/hooks/useTooltip';
 
-import { defaultChartClassNames } from '../../../utils';
+import { GaugeProps } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 
-export interface PizzaChartProps<TData = any> {
+export interface PizzaChartProps<TData = any> extends Omit<GaugeProps<TData>, 'data'> {
   data: TData;
-  id: string;
-  className?: string;
-  margin?: {
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
-  };
   max?: number;
   min?: number;
   paddingAngle?: number;
   cornerRadius?: number;
-  tooltip?: TooltipObjectType;
-  drawing?: {
-    duration?: number;
-    delay?: number;
-  };
   metrics: {
     key: Extract<keyof TData, string> | string;
     className?: string;
     classNameBackground?: string;
   }[];
-  style?: React.CSSProperties;
 }
 
 const PizzaChart = <TData = any,>({
@@ -67,22 +54,22 @@ const PizzaChart = <TData = any,>({
     const height = +svg.style('height').split('px')[0];
 
     const chartArea = [
-      width - margin.left - margin.right,
-      height - margin.top - margin.bottom,
+      width - (margin.left ?? 0) - (margin.right ?? 0),
+      height - (margin.top ?? 0) - (margin.bottom ?? 0),
     ];
 
     const maxRadius =
       Math.min(
-        width - margin.left - margin.right,
-        height - margin.top - margin.bottom
+        width - (margin.left ?? 0) - (margin.right ?? 0),
+        height - (margin.top ?? 0) - (margin.bottom ?? 0)
       ) / 2;
 
     const g = svg
       .append('g')
       .attr(
         'transform',
-        `translate(${margin.left + chartArea[0] / 2},${
-          margin.top + chartArea[1] / 2
+        `translate(${(margin.left ?? 0) + chartArea[0] / 2},${
+          (margin.top ?? 0) + chartArea[1] / 2
         })`
       );
 
@@ -122,7 +109,9 @@ const PizzaChart = <TData = any,>({
         arc()
           .innerRadius(0)
           .outerRadius((metric: any) =>
-            drawing?.duration ? 0 : radiusScale((data as any)[metrics[metric.index].key])
+            drawing?.duration
+              ? 0
+              : radiusScale((data as any)[metrics[metric.index].key])
           )
           .padAngle((paddingAngle / 360) * (2 * Math.PI))
           .cornerRadius(cornerRadius)(d)

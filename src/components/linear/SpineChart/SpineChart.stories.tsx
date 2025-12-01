@@ -39,7 +39,7 @@ export const Default = meta.story({
     id: 'spine-chart-default',
     y: {
       key: 'name',
-      axis: 'middle',
+      axis: { location: 'middle' },
       className: '',
     },
     x: [
@@ -67,7 +67,7 @@ export const WithYAxisToLeft = WithStyle.extend({
     y: {
       key: 'name',
       className: '',
-      axis: 'left',
+      axis: { location: 'left' },
     },
     margin: {
       top: 20,
@@ -91,7 +91,7 @@ export const YAxisRight = WithStyle.extend({
     },
     y: {
       key: 'name',
-      axis: 'right',
+      axis: { location: 'right' },
       className: '',
     },
   },

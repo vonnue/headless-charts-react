@@ -1,6 +1,6 @@
 import preview from '../../../../.storybook/preview';
 import AreaChart from './index';
-import { DateTime } from 'luxon';
+import { timeParse, timeFormat } from 'd3-time-format';
 
 import data from './data.json';
 const meta = preview.meta({
@@ -11,11 +11,12 @@ const meta = preview.meta({
   },
 });
 
-const timeSeriesData = data.map((d) => ({
+const parseDate = timeParse('%d-%m-%Y %H:%M:%S');
+const formatISO = timeFormat('%Y-%m-%dT%H:%M:%S.000Z');
+
+const timeSeriesData = data.map((d: any) => ({
   ...d,
-  date: DateTime.fromFormat(`31-12-${d.year} 23:59:59`, 'dd-MM-yyyy HH:mm:ss')
-    .toUTC()
-    .toISO(),
+  date: formatISO(parseDate(`31-12-${d.year} 23:59:59`) as Date),
 }));
 
 export const TimeScaledAreaChart = meta.story({

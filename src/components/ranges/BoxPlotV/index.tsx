@@ -1,43 +1,44 @@
 import { ZoomTransform, zoom } from 'd3-zoom';
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { max, min } from 'd3-array';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { select, selectAll } from 'd3-selection';
-import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
+import useTooltip from '@/hooks/useTooltip';
+import useAxis from '@/hooks/useAxis';
 
-import { ChartProps } from '../../../types';
-import React from 'react';
-import { defaultChartClassNames } from '../../../utils';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import { useCallback, useEffect } from 'react';
+import { defaultChartClassNames } from '@/utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
+interface BoxPlotYConfig<TData = any> extends AxisConfig<TData> {
+  minKey: Extract<keyof TData, string> | string;
+  maxKey: Extract<keyof TData, string> | string;
+  boxStart: Extract<keyof TData, string> | string;
+  boxEnd: Extract<keyof TData, string> | string;
+  midKey: Extract<keyof TData, string> | string;
+  min?: number;
+  max?: number;
+  classNameMap?: any;
+}
+
+export interface BoxPlotClassNames {
+  boxes?: string;
+  lines?: string;
+  data?: string;
+}
+
 export interface BoxPlotVProps<TData = any> extends ChartProps<TData> {
   data: TData[];
-  classNameData?: string;
-  y: {
-    minKey: Extract<keyof TData, string> | string;
-    maxKey: Extract<keyof TData, string> | string;
-    boxStart: Extract<keyof TData, string> | string;
-    boxEnd: Extract<keyof TData, string> | string;
-    midKey: Extract<keyof TData, string> | string;
-    min?: number;
-    max?: number;
-    axis?: 'right' | 'left';
-    axisTicks?: number;
-    classNameBoxes?: string;
-    classNameLines?: string;
-    classNameMap?: any;
-  };
-  x: {
-    key: Extract<keyof TData, string> | string;
-    axis?: 'top' | 'bottom';
-  };
-  tooltip?: TooltipObjectType;
+  classNames?: BoxPlotClassNames;
+  y: BoxPlotYConfig<TData>;
+  x: AxisConfig<TData>;
+  tooltip?: TooltipConfig;
 }
 
 const BoxPlotV = <TData = any,>({
   className,
-  classNameData,
+  classNames,
   data,
   id,
   margin = {
@@ -71,7 +72,8 @@ const BoxPlotV = <TData = any,>({
         0
       )} <br/> max: ${d[y.maxKey].toFixed(0)} `,
   });
-  const refreshChart = React.useCallback(() => {
+  const { drawAxis } = useAxis();
+  const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
 
@@ -83,8 +85,8 @@ const BoxPlotV = <TData = any,>({
     const xFn: any = scaleBand()
       .domain(data.map((d: any) => d[x.key]))
       .range([
-        margin.left + (padding.left || 0),
-        width - margin.right - (padding.right || 0),
+        (margin.left ?? 0) + (padding.left || 0),
+        width - (margin.right ?? 0) - (padding.right || 0),
       ])
       .padding(padding.bar || 0.2);
 
@@ -94,18 +96,18 @@ const BoxPlotV = <TData = any,>({
         Number.isFinite(y.max) ? y.max : max(data.map((d: any) => d[y.maxKey])),
       ])
       .range([
-        height - margin.bottom - (padding.bottom || 0),
-        (padding.top || 0) + margin.top,
+        height - (margin.bottom ?? 0) - (padding.bottom || 0),
+        (padding.top || 0) + (margin.top ?? 0),
       ]);
 
     svg
       .append('clipPath')
       .attr('id', 'clip')
       .append('rect')
-      .attr('x', margin.left)
-      .attr('y', margin.top - (padding.top || 0))
+      .attr('x', margin.left ?? 0)
+      .attr('y', (margin.top ?? 0) - (padding.top || 0))
       .attr('width', width)
-      .attr('height', height - margin.bottom - margin.top);
+      .attr('height', height - (margin.bottom ?? 0) - (margin.top ?? 0));
 
     const dataG = g
       .append('g')
@@ -130,7 +132,7 @@ const BoxPlotV = <TData = any,>({
       .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
       .attr('y1', (d: any) => yFn(d[y.minKey]))
       .attr('y2', (d: any) => yFn(d[y.minKey]))
-      .attr('class', `box-plot-line stroke-current ${classNameData || ``}`)
+      .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
       .attr('y2', (d: any) => yFn(d[y.maxKey]));
@@ -159,7 +161,7 @@ const BoxPlotV = <TData = any,>({
       .attr('y2', (d: any) => yFn(d[y.midKey]))
       .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
       .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('class', `box-plot-line stroke-current ${classNameData || ``}`)
+      .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
       .attr('x1', (d: any) => xFn(d[x.key]))
@@ -173,7 +175,7 @@ const BoxPlotV = <TData = any,>({
       .attr('y2', (d: any) => yFn(d[y.maxKey]))
       .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
       .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('class', `box-plot-line stroke-current ${classNameData || ``}`)
+      .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
       .attr('x1', (d: any) => xFn(d[x.key]))
@@ -185,12 +187,12 @@ const BoxPlotV = <TData = any,>({
       .attr(
         'class',
         twMerge(
-          'box-plot-box stroke-current fill-current opacity-50 ',
-          y.classNameBoxes
+          'box-plot-box stroke-current fill-current opacity-50',
+          classNames?.boxes
         )
       )
       .attr('clip-path', 'url(#clip)')
-      .attr('y', () => height - margin.bottom - (padding.bottom || 0))
+      .attr('y', () => height - (margin.bottom ?? 0) - (padding.bottom || 0))
       .attr('x', (d: any) => xFn(d[x.key]))
       .attr('width', xFn.bandwidth())
       .transition()
@@ -198,29 +200,27 @@ const BoxPlotV = <TData = any,>({
       .attr('y', (d: any) => yFn(d[y.boxEnd]))
       .attr('height', (d: any) => yFn(d[y.boxStart]) - yFn(d[y.boxEnd]));
 
-    const yAxis = y.axis === 'right' ? axisRight(yFn) : axisLeft(yFn);
+    const { axis: yAxis, axisG: yAxisG } = drawAxis({
+      g,
+      scale: yFn,
+      config: y,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'vertical',
+      className: 'yAxis axis',
+    });
 
-    const yAxisG = g
-      .append('g')
-      .attr('class', 'yAxis axis')
-      .attr(
-        'transform',
-        `translate(${y.axis === 'right' ? margin.left + width : margin.left},0)`
-      );
-    yAxisG.call(yAxis);
-
-    const xAxis = x.axis === 'top' ? axisTop(xFn) : axisBottom(xFn);
-
-    const xAxisG = g.append('g').attr('class', 'axis--x axis');
-
-    xAxisG
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin.top : height - margin.bottom
-        })`
-      )
-      .call(xAxis);
+    drawAxis({
+      g,
+      scale: xFn,
+      config: x,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+      className: 'axis--x axis',
+    });
 
     if (zooming?.enabled) {
       const zoomed = ({ transform }: { transform: ZoomTransform }) => {
@@ -243,7 +243,7 @@ const BoxPlotV = <TData = any,>({
       svg.call(zoomFn);
     }
   }, [
-    classNameData,
+    classNames,
     data,
     id,
     margin,
@@ -254,9 +254,10 @@ const BoxPlotV = <TData = any,>({
     onMouseLeave,
     onMouseMove,
     onMouseOver,
+    drawAxis,
   ]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();

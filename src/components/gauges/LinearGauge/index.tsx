@@ -1,34 +1,23 @@
-import React, { useEffect, useRef } from 'react';
-import { ValueFn, pointer, select, selectAll } from 'd3';
+import { useCallback, useEffect, useRef } from 'react';
+import { ValueFn, select, selectAll } from 'd3';
 
-import { TooltipObjectType } from '../../../hooks/useTooltip';
+import { GaugeProps } from '@/types';
 import { scaleLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
+import useTooltip from '@/hooks/useTooltip';
 
-interface LinearGaugeProps<TData = any> {
-  id: string;
-  className?: string;
+export interface LinearGaugeProps<TData = any> extends GaugeProps<TData> {
   label:
     | string
     | number
     | boolean
     | ValueFn<SVGTextElement, unknown, string | number | boolean | null>
     | null;
-  data?: TData extends number ? TData : number;
   max?: number;
   error?: { data: number; className?: string };
   gaugeHeight?: number;
-  margin?: {
-    left?: number;
-    right?: number;
-    top?: number;
-    bottom?: number;
-  };
-  drawing?: { duration: number };
-  tooltip?: TooltipObjectType;
   classNameGauge?: string;
   classNameGaugeBg?: string;
-  style?: React.CSSProperties;
 }
 
 const LinearGauge = <TData = any,>({
@@ -53,7 +42,13 @@ const LinearGauge = <TData = any,>({
 }: LinearGaugeProps<TData>) => {
   const previousData = useRef(0);
 
-  const setup = React.useCallback(() => {
+  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+    id,
+    tooltip,
+    defaultHtml: () => `Data: ${data} <br/> Error: ${error?.data || 0}`,
+  });
+
+  const setup = useCallback(() => {
     const svg = select(`#${id}`);
 
     svg.selectAll('*').remove();
@@ -95,25 +90,9 @@ const LinearGauge = <TData = any,>({
       .attr('width', width - (margin.left || 0) - (margin.right || 0))
       .attr('height', gaugeHeight)
       .attr('ry', gaugeHeight / 2)
-      .on('mouseenter', function () {
-        tooltip &&
-          tooltipDiv
-            .style('opacity', 1)
-            .html(
-              tooltip?.html || `Data: ${data} <br/> Error: ${error?.data || 0} `
-            );
-      })
-      .on('mousemove', function (event) {
-        const [bX, bY] = pointer(event, select('body'));
-        tooltipDiv.style('left', `${bX + 10}px`).style('top', `${bY + 10}px`);
-      })
-      .on('mouseleave', function () {
-        tooltip &&
-          tooltipDiv
-            .style('opacity', '0')
-            .style('left', `0px`)
-            .style('top', `0px`);
-      });
+      .on('mouseenter', onMouseOver)
+      .on('mousemove', onMouseMove)
+      .on('mouseleave', onMouseLeave);
 
     gaugeG
       .append('rect')
@@ -127,7 +106,7 @@ const LinearGauge = <TData = any,>({
       .attr('height', gaugeHeight)
       .attr('ry', gaugeHeight / 2)
       .transition()
-      .duration(drawing.duration)
+      .duration(drawing.duration ?? 0)
       .attr('width', xFn(data) - xFn(0));
 
     error &&
@@ -147,18 +126,11 @@ const LinearGauge = <TData = any,>({
         .attr('width', 0)
         .attr('height', gaugeHeight)
         .transition()
-        .duration(drawing.duration)
+        .duration(drawing.duration ?? 0)
         .attr('x', () => xFn(max - (error.data || 0)))
         .attr('width', () => {
           return xFn(max) - xFn(max - (error.data || 0));
         });
-
-    const tooltipDiv = select('body')
-      .append('div')
-      .attr('id', `tooltip-${id}`)
-      .style('position', 'absolute')
-      .style('opacity', '0')
-      .attr('class', twMerge('tooltip ', tooltip && tooltip.className));
 
     previousData.current = data;
   }, [
@@ -172,10 +144,12 @@ const LinearGauge = <TData = any,>({
     label,
     margin,
     max,
-    tooltip,
+    onMouseOver,
+    onMouseMove,
+    onMouseLeave,
   ]);
 
-  const refreshChart = React.useCallback(() => {
+  const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     const width = +svg.style('width').split('px')[0];
     /* eslint-disable */
@@ -187,7 +161,7 @@ const LinearGauge = <TData = any,>({
 
     select('.data-rect')
       .transition()
-      .duration(drawing.duration)
+      .duration(drawing.duration ?? 0)
       .attr('width', xFn(data) - xFn(0));
   }, [data, drawing, id, margin, max]);
 
@@ -200,11 +174,7 @@ const LinearGauge = <TData = any,>({
     return () => {
       selectAll(`#tooltip-${id}`).remove();
     };
-
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
-  }, [data, max, refreshChart]);
+  }, [data, max, refreshChart, id]);
 
   return (
     <svg

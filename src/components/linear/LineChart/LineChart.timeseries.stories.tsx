@@ -1,6 +1,7 @@
 import preview from '../../../../.storybook/preview';
 
-import { DateTime } from 'luxon';
+import { timeFormat } from 'd3-time-format';
+import { timeDay } from 'd3-time';
 import LineChart from '.';
 
 const meta = preview.meta({
@@ -13,13 +14,16 @@ const randBetween = (x: number, y: number) => x + Math.random() * (y - x);
 
 const arrayLength = 200;
 
+const formatDateTime = timeFormat('%Y-%m-%d %H:%M:%S');
+const formatISO = timeFormat('%Y-%m-%dT%H:%M:%S.000Z');
+
+const today = new Date();
+today.setHours(0, 0, 0, 0); // Start of day
+
 const dataForTimeSeriesChart = new Array(arrayLength)
   .fill('')
   .map((_, index) => ({
-    date: DateTime.now()
-      .startOf('day')
-      .minus({ days: arrayLength - index })
-      .toFormat('yyyy-MM-dd hh:mm:ss'),
+    date: formatDateTime(timeDay.offset(today, -(arrayLength - index))),
     value: randBetween(1000, 1004),
     reading: randBetween(1000, 996),
   }));
@@ -31,21 +35,22 @@ export const TimeSeriesForLineChart = meta.story({
     x: {
       key: 'date',
       scalingFunction: 'time',
-      format: 'yyyy-MM-dd hh:mm:ss',
-      axisLabel: 'Date',
+      time: {
+        format: '%Y-%m-%d %H:%M:%S',
+      },
+      axis: { label: 'Date' },
     },
     y: [
       {
         key: 'value',
-        axis: 'left',
+        axis: { location: 'left' },
         className: 'text-red-200 dark:text-red-700 stroke-current',
         curve: 'rounded',
-        // circleFill: true,
       },
       {
         key: 'reading',
         className: 'text-blue-200 dark:text-red-700',
-        axis: 'left',
+        axis: { location: 'left' },
         symbol: 'none',
       },
     ],
@@ -55,16 +60,11 @@ export const TimeSeriesForLineChart = meta.story({
   },
 });
 
-const dataForISOChart = new Array(arrayLength)
-  .fill('')
-  .map((_, index) => ({
-    date: DateTime.now()
-      .startOf('day')
-      .minus({ days: arrayLength - index })
-      .toISO(),
-    temperature: randBetween(15, 25),
-    humidity: randBetween(40, 80),
-  }));
+const dataForISOChart = new Array(arrayLength).fill('').map((_, index) => ({
+  date: formatISO(timeDay.offset(today, -(arrayLength - index))),
+  temperature: randBetween(15, 25),
+  humidity: randBetween(40, 80),
+}));
 
 export const TimeSeriesWithISODates = meta.story({
   args: {
@@ -73,14 +73,16 @@ export const TimeSeriesWithISODates = meta.story({
     x: {
       key: 'date',
       scalingFunction: 'time',
-      isISO: true,
-      format: 'yyyy-MM-dd',
-      axisLabel: 'Date',
+      time: {
+        isISO: true,
+        format: '%Y-%m-%d',
+      },
+      axis: { label: 'Date' },
     },
     y: [
       {
         key: 'temperature',
-        axis: 'left',
+        axis: { location: 'left' },
         className: 'text-orange-500 dark:text-orange-400 stroke-current',
         curve: 'rounded',
         symbol: 'circle',
@@ -89,7 +91,7 @@ export const TimeSeriesWithISODates = meta.story({
       {
         key: 'humidity',
         className: 'text-blue-500 dark:text-blue-400',
-        axis: 'right',
+        axis: { location: 'right' },
         curve: 'rounded',
         symbol: 'none',
       },

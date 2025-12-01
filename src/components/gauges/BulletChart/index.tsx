@@ -1,53 +1,52 @@
-import React, { useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { axisBottom } from 'd3-axis';
-import { defaultChartClassNames } from '../../../utils';
+import { defaultChartClassNames } from '@/utils';
 import { scaleLinear } from 'd3-scale';
 import { select } from 'd3-selection';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
+import { GaugeProps } from '@/types';
 
-export interface BulletChartProps<TData = any> {
-  id: string;
-  className?: string;
-  data: TData extends number ? TData : number;
-  classNameData?: string;
+export interface BulletChartClassNames {
+  data?: string;
+  base?: string;
+  target?: string;
+  threshold?: string;
+  max?: string;
+}
+
+export interface BulletChartProps<TData = any> extends GaugeProps<TData> {
+  classNames?: BulletChartClassNames;
   label?: string;
   min?: number;
-  classNameBase?: string;
   base: number;
-  classNameTarget?: string;
   target: number;
   threshold: number;
-  classNameThreshold?: string;
   max: number;
-  classNameMax?: string;
-  margin?: {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-  };
   axisHeight?: number;
   height?: number;
-  style?: React.CSSProperties;
 }
+
+const defaultClassNames: BulletChartClassNames = {
+  data: 'fill-blue-500 stroke-blue-500',
+  base: 'fill-gray-300 dark:fill-gray-500 dark:stroke-gray-500',
+  target: 'fill-black stroke-black dark:fill-white dark:stroke-white',
+  threshold: 'fill-gray-200 stroke-gray-200 dark:fill-gray-600 dark:stroke-gray-600',
+  max: 'fill-gray-100 stroke-grey-100 dark:fill-gray-700 dark:stroke-gray-700',
+};
 
 const BulletChart = <TData = any,>({
   id,
   className,
   data = 0 as any,
-  classNameData = 'fill-blue-500 stroke-blue-500',
+  classNames,
   label = '',
   min = 0,
-  classNameBase = 'fill-gray-300 dark:fill-gray-500 dark:stroke-gray-500',
   base,
-  classNameTarget = 'fill-black stroke-black dark:fill-white dark:stroke-white',
   target,
   threshold,
-  classNameThreshold = `fill-gray-200 stroke-gray-200 dark:fill-gray-600 dark:stroke-gray-600`,
   max,
-  classNameMax = `fill-gray-100 stroke-grey-100 dark:fill-gray-700 dark:stroke-gray-700`,
   margin = {
     left: 120,
     top: 10,
@@ -58,8 +57,9 @@ const BulletChart = <TData = any,>({
   axisHeight = 20,
   height = 50,
 }: BulletChartProps<TData>) => {
+  const mergedClassNames = { ...defaultClassNames, ...classNames };
   const previousData = useRef(0);
-  const refreshData = React.useCallback(() => {
+  const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
     svg.selectAll('*').remove();
@@ -68,7 +68,7 @@ const BulletChart = <TData = any,>({
 
     const xFn = scaleLinear()
       .domain([min, max])
-      .range([0, width - margin.left - margin.right]);
+      .range([0, width - (margin.left ?? 0) - (margin.right ?? 0)]);
 
     const g = svg.append('g');
 
@@ -77,7 +77,7 @@ const BulletChart = <TData = any,>({
       .attr('class', twMerge(`fill-current stroke-current `, className))
       .attr('text-anchor', 'end')
       .attr('font-size', '0.8em')
-      .attr('x', margin.left - 10)
+      .attr('x', (margin.left ?? 0) - 10)
       .attr('y', height - axisHeight - 5);
 
     const bulletG = g
@@ -86,7 +86,7 @@ const BulletChart = <TData = any,>({
 
     bulletG
       .append('rect')
-      .attr('class', twMerge('fill-current stroke-current ', classNameMax))
+      .attr('class', twMerge('fill-current stroke-current ', mergedClassNames.max))
       .attr('x', xFn(min))
       .attr('y', 0)
       .attr('width', xFn(max))
@@ -96,7 +96,7 @@ const BulletChart = <TData = any,>({
       .append('rect')
       .attr(
         'class',
-        twMerge(`fill-current stroke-current `, classNameThreshold)
+        twMerge('fill-current stroke-current ', mergedClassNames.threshold)
       )
       .attr('x', xFn(min))
       .attr('y', 0)
@@ -105,7 +105,7 @@ const BulletChart = <TData = any,>({
 
     bulletG
       .append('rect')
-      .attr('class', twMerge(`fill-current stroke-current `, classNameBase))
+      .attr('class', twMerge('fill-current stroke-current ', mergedClassNames.base))
       .attr('x', xFn(min))
       .attr('y', 0)
       .attr('width', xFn(base))
@@ -117,17 +117,17 @@ const BulletChart = <TData = any,>({
       .attr('y2', height - axisHeight - 5)
       .attr('x1', xFn(target))
       .attr('x2', xFn(target))
-      .attr('class', twMerge(`stroke-1 stroke-current `, classNameTarget));
+      .attr('class', twMerge('stroke-1 stroke-current ', mergedClassNames.target));
 
     transition();
 
     bulletG
       .append('rect')
-      .attr('class', twMerge(`fill-current stroke-current `, classNameData))
+      .attr('class', twMerge('fill-current stroke-current ', mergedClassNames.data))
       .attr('x', xFn(min))
-      .attr('y', margin.top)
+      .attr('y', margin.top ?? 0)
       .attr('width', xFn(previousData.current) - xFn(min))
-      .attr('height', height - axisHeight - margin.top * 2)
+      .attr('height', height - axisHeight - (margin.top ?? 0) * 2)
       .transition()
       .duration(1000)
       .attr('width', xFn(data) - xFn(min));
@@ -145,11 +145,7 @@ const BulletChart = <TData = any,>({
     axisHeight,
     base,
     className,
-    classNameBase,
-    classNameData,
-    classNameMax,
-    classNameTarget,
-    classNameThreshold,
+    mergedClassNames,
     data,
     height,
     id,
@@ -162,9 +158,9 @@ const BulletChart = <TData = any,>({
     target,
     threshold,
   ]);
-  React.useEffect(() => {
-    refreshData();
-  }, [data, refreshData]);
+  useEffect(() => {
+    refreshChart();
+  }, [data, refreshChart]);
 
   return (
     <svg

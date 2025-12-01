@@ -1,4 +1,3 @@
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { max, min } from 'd3-array';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { select, selectAll } from 'd3-selection';
@@ -13,32 +12,27 @@ import {
   symbolWye,
 } from 'd3-shape';
 import { useCallback, useEffect } from 'react';
-import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
+import useTooltip from '@/hooks/useTooltip';
+import useAxis from '@/hooks/useAxis';
 
-import { ChartProps } from '../../../types';
-import { defaultChartClassNames } from '../../../utils';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 
-interface RangePlotProps<TData = any> extends ChartProps<TData> {
+interface RangePlotXConfig<TData = any> extends AxisConfig<TData> {
+  minKey: Extract<keyof TData, string> | string;
+  maxKey: Extract<keyof TData, string> | string;
+}
+
+export interface RangePlotProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   classNameData?: string;
   shape: 'circle';
-  y: {
-    [key: string]: string;
-    key: Extract<keyof TData, string> | string;
-    axis: 'left' | 'right';
-  };
-  x: {
-    start: number;
-    end: number;
-    minKey: Extract<keyof TData, string> | string;
-    maxKey: Extract<keyof TData, string> | string;
-    axis: 'bottom' | 'top';
-    axisTicks: number;
-  };
-  tooltip?: TooltipObjectType;
+  y: AxisConfig<TData>;
+  x: RangePlotXConfig<TData>;
+  tooltip?: TooltipConfig;
 }
 
 const RangePlot = <TData = any,>({
@@ -46,7 +40,7 @@ const RangePlot = <TData = any,>({
   className,
   data = [],
   classNameData,
-  y = { key: 'label', axis: 'left' },
+  y = { key: 'label', axis: { location: 'left' } },
   x,
   margin = {
     top: 40,
@@ -70,6 +64,7 @@ const RangePlot = <TData = any,>({
     tooltip,
     defaultHtml: (d: any) => `${d[y.key]}: ${d[x.minKey]} to ${d[x.maxKey]}`,
   });
+  const { drawAxis } = useAxis();
   const refreshChart = useCallback(() => {
     const shapeMapping = {
       circle: symbolCircle,
@@ -99,28 +94,28 @@ const RangePlot = <TData = any,>({
         Number.isFinite(x.end) ? x.end : max(data.map((d) => d[x.maxKey])),
       ])
       // @ts-ignore
-      .range([margin.left, width - padding.right - margin.right]);
+      .range([(margin.left ?? 0), width - (padding.right ?? 0) - (margin.right ?? 0)]);
 
     const yFn = scaleBand()
       // @ts-ignore
       .domain(data.map((d) => d[y.key]))
       .range([
         // @ts-ignore
-        margin.top + padding.top,
+        (margin.top ?? 0) + (padding.top ?? 0),
         // @ts-ignore
-        height - margin.bottom - padding.bottom,
+        height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
       ]);
 
     svg
       .append('clipPath')
       .attr('id', 'clip')
       .append('rect')
-      .attr('x', margin.left)
+      .attr('x', margin.left ?? 0)
       // @ts-ignore
-      .attr('y', margin.top - padding.top - 10)
+      .attr('y', (margin.top ?? 0) - (padding.top ?? 0) - 10)
       .attr('width', width)
       // @ts-ignore
-      .attr('height', height + padding.bottom + 8);
+      .attr('height', height + (padding.bottom ?? 0) + 8);
 
     const dataG = g
       .append('g')
@@ -221,46 +216,31 @@ const RangePlot = <TData = any,>({
       );
     };
 
-    const yAxis = y.axis === 'right' ? axisRight(yFn) : axisLeft(yFn);
+    drawAxis({
+      g,
+      scale: yFn,
+      config: y,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'vertical',
+      className: 'yAxis axis',
+    });
 
-    const yAxisG = g
-      .append('g')
-      .attr('class', 'yAxis axis')
-      .attr(
-        'transform',
-        `translate(${y.axis === 'right' ? margin.left + width : margin.left},0)`
-      );
-
-    yAxisG.call(yAxis);
-
-    padding.bottom &&
-      yAxisG
-        .append('line')
-        .attr('x1', 0)
-        .attr('x2', 0)
-        .attr('y1', margin.top + height - padding.bottom)
-        .attr('y2', margin.top + height)
-        .attr('stroke', 'currentColor');
-
-    const xAxis =
-      x.axis === 'top'
-        ? axisTop(xFn).ticks(x.axisTicks || 5)
-        : axisBottom(xFn).ticks(x.axisTicks || 5);
-
-    const xAxisG = g.append('g').attr('class', 'axis--x axis ');
-
-    xAxisG
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin.top : height - margin.bottom
-        })`
-      )
-      .call(xAxis);
+    const { axisG: xAxisG, axis: xAxis } = drawAxis({
+      g,
+      scale: xFn,
+      config: x,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+      className: 'axis--x axis',
+    });
 
     if (zooming) {
       const extent = [
-        [margin.left, margin.top],
+        [margin.left, margin.top ?? 0],
         [width, height],
       ];
 
@@ -276,8 +256,8 @@ const RangePlot = <TData = any,>({
       function zoomed(event) {
         xFn.range(
           // @ts-ignore
-          [margin.left, width - padding.right - margin.right].map((d) =>
-            event.transform.applyX(d)
+          [margin.left, width - (padding.right ?? 0) - (margin.right ?? 0)].map(
+            (d) => event.transform.applyX(d)
           )
         );
         xAxisG.call(xAxis);
@@ -299,6 +279,7 @@ const RangePlot = <TData = any,>({
     onMouseLeave,
     onMouseMove,
     onMouseOver,
+    drawAxis,
   ]);
 
   useEffect(() => {

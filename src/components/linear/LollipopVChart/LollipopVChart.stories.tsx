@@ -14,13 +14,11 @@ export const Default = meta.story({
     id: 'lollipop-v-chart-default',
     shape: 'circle',
     x: {
-      axis: 'bottom',
-      axisTicks: 2,
+      axis: { location: 'bottom', ticks: 2 },
       key: 'name',
     },
     y: {
-      axis: 'left',
-      axisTicks: 4,
+      axis: { location: 'left', ticks: 4 },
       key: 'reading',
       start: 0,
     },

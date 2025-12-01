@@ -1,4 +1,3 @@
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import {
   curveBumpX,
   curveCatmullRom,
@@ -19,84 +18,20 @@ import { pointer, select, selectAll } from 'd3-selection';
 import { scaleLinear, scaleTime } from 'd3';
 import { useCallback, useEffect } from 'react';
 
-import { DateTime } from 'luxon';
-import { defaultChartClassNames } from '../../../utils';
+import { timeParse, isoParse } from 'd3-time-format';
+import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { easeLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
+import { drawAxis } from '@/hooks/useAxis';
 
-interface XAxis<TData = any> {
-  key: Extract<keyof TData, string> | string;
-  scalingFunction?: 'linear' | 'time';
-  convert?: (d: any) => any;
-  axis?: 'bottom' | 'top';
-  format?: string;
-  isISO?: boolean;
-  axisTicks?: number;
-  axisLabel?: string;
-  axisLabelPosition?: 'right' | 'bottom';
-  start?: object | number;
-  end?: object | number;
-}
-
-interface LineChartProps<TData = any> {
-  data: TData[];
-  id: string;
-  className?: string;
-  x: XAxis<TData>;
-  y: Array<{
-    key: Extract<keyof TData, string> | string;
-    axis?: 'left' | 'right';
-    start?: number;
-    end?: number;
-    ticks?: number;
-    className?: string;
-    curve?: 'rounded' | 'step' | 'line' | 'bumpX' | undefined;
-    symbol?:
-      | 'none'
-      | 'circle'
-      | 'square'
-      | 'star'
-      | 'triangle'
-      | 'wye'
-      | 'cross'
-      | 'diamond';
-    size?: number;
-    label?: {
-      show?: boolean;
-      position?: 'left' | 'right';
-      className?: string;
-    };
-    unknown?: any;
-  }>;
-  tooltip?: {
-    keys?: Array<string>;
-    className?: string;
-    html?: (row: any) => string;
-    style?: any;
-  };
-  drawing?: {
-    duration?: number;
-  };
-  zooming?: {
-    min: number;
-    max: number;
-  };
+export interface LineChartProps<TData = any> extends ChartProps<TData> {
+  x: AxisConfig<TData>;
+  y: Array<SeriesAxisConfig<TData>>;
+  tooltip?: TooltipConfig;
   yLeftLabel?: string;
   yRightLabel?: string;
-  padding?: {
-    top?: number;
-    bottom?: number;
-    left?: number;
-    right?: number;
-  };
-  margin?: {
-    top?: number;
-    bottom?: number;
-    left?: number;
-    right?: number;
-  };
-
   showGuideLines?: boolean;
   reverse?: boolean;
   referenceLines?: Array<{
@@ -106,7 +41,6 @@ interface LineChartProps<TData = any> {
     className?: string;
     showText?: boolean;
   }>;
-  style?: React.CSSProperties;
 }
 
 const LineChart = <TData = any,>({
@@ -135,7 +69,11 @@ const LineChart = <TData = any,>({
   yRightLabel,
   style = {},
   reverse = false,
+  showGuideLines = false,
 }: LineChartProps<TData>) => {
+  const d3Format = x.time?.format || '%Y-%m-%d';
+  const parseDate = timeParse(d3Format);
+
   const refreshChart = useCallback(() => {
     const shapeMapping = {
       circle: symbolCircle,
@@ -155,6 +93,11 @@ const LineChart = <TData = any,>({
       bumpX: curveBumpX,
       default: curveLinear,
     };
+
+    const toDateTime = (d: any): Date =>
+      x.time?.isISO
+        ? (isoParse(d[x.key]) as Date)
+        : (parseDate(d[x.key]) as Date);
 
     /**
      *
@@ -186,13 +129,8 @@ const LineChart = <TData = any,>({
           ]);
     };
 
-    const allLeftY = y.filter((column) => column.axis !== 'right'),
-      allRightY = y.filter((column) => column.axis === 'right');
-    // @ts-ignore
-    const toDateTime = (d) =>
-      x.isISO
-        ? DateTime.fromISO(d[x.key])
-        : DateTime.fromFormat(d[x.key], x.format || 'yyyy-MM-dd');
+    const allLeftY = y.filter((column) => column.axis?.location !== 'right'),
+      allRightY = y.filter((column) => column.axis?.location === 'right');
     const svg = select(`#${id}`);
     // Clear svg
 
@@ -206,14 +144,9 @@ const LineChart = <TData = any,>({
 
     setDefaultXDomain(xFn);
     xFn.range([
-      (margin?.left || 0) + (padding?.left || 0),
-      width - (margin?.right || 0) - (padding?.right || 0),
+      (margin?.left ?? 0) + (padding?.left ?? 0),
+      width - (margin?.right ?? 0) - (padding?.right ?? 0),
     ]);
-
-    const xAxis =
-      x.axis === 'top'
-        ? axisTop(xFn).ticks(x.axisTicks || 5)
-        : axisBottom(xFn).ticks(x.axisTicks || 5);
 
     const g = svg.append('g');
 
@@ -237,17 +170,17 @@ const LineChart = <TData = any,>({
             ]),
       minTicksLeft =
         allLeftY.length > 0 &&
-        min(allLeftY.map((column: any) => column.axisTicks));
+        min(allLeftY.map((column: any) => column.axis?.ticks));
 
     const yRange =
-      x.axis === 'top'
+      x.axis?.location === 'top'
         ? [
-            (margin?.top || 0) + (padding.top || 0),
-            height - (margin?.bottom || 0) - (padding?.bottom || 0),
+            (margin?.top ?? 0) + (padding?.top ?? 0),
+            height - (margin?.bottom ?? 0) - (padding?.bottom ?? 0),
           ]
         : [
-            height - (margin?.bottom || 0) - (padding?.bottom || 0),
-            (margin?.top || 0) + (padding.top || 0),
+            height - (margin?.bottom ?? 0) - (padding?.bottom ?? 0),
+            (margin?.top ?? 0) + (padding?.top ?? 0),
           ];
 
     const yLeftFn =
@@ -255,10 +188,6 @@ const LineChart = <TData = any,>({
       scaleLinear()
         .domain(reverse ? [maxLeftYs, minLeftYs] : [minLeftYs, maxLeftYs])
         .range(yRange);
-
-    const yLeftAxis =
-      // @ts-ignore
-      allLeftY.length > 0 && axisLeft(yLeftFn).ticks(minTicksLeft || 5);
 
     const minRightYs =
         allRightY.length > 0 &&
@@ -282,138 +211,99 @@ const LineChart = <TData = any,>({
         scaleLinear().domain([minRightYs, maxRightYs]).range(yRange),
       minTicksRight =
         allRightY.length > 0 &&
-        min(allRightY.map((column: any) => column.axisTicks));
-
-    const yRightAxis =
-      // @ts-ignore
-      allRightY.length > 0 && axisRight(yRightFn).ticks(minTicksRight || 5);
+        min(allRightY.map((column: any) => column.axis?.ticks));
 
     const yLeftLabels =
       allLeftY.length > 0 &&
-      allLeftY.map((column: any) => column.axisLabel || column.key);
+      allLeftY.map((column: any) => column.axis?.label || column.key);
 
     const yRightLabels =
       allRightY.length > 0 &&
-      allRightY.map((column: any) => column.axisLabel || column.key);
+      allRightY.map((column: any) => column.axis?.label || column.key);
 
-    const xAxisG = g.append('g').attr('class', 'axis--x axis ');
+    // Calculate Y-axis label position based on X-axis location
+    const yAxisLabelY =
+      x.axis?.location === 'top'
+        ? height - (margin?.bottom ?? 0) + 20
+        : (margin?.top ?? 0) - 15;
 
-    xAxisG
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin?.top || 0 : height - (margin?.bottom || 0)
-        })`
-      )
-      .call(xAxis);
+    // Draw X-axis using shared utility
+    const { axisG: xAxisG, axis: xAxis } = drawAxis({
+      g,
+      scale: xFn,
+      config: {
+        ...x,
+        axis: {
+          ...x.axis,
+          location: x.axis?.location || 'bottom',
+          ticks: x.axis?.ticks || 5,
+        },
+      },
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+      className: 'axis--x axis',
+    });
 
-    (padding?.left || 0) &&
-      xAxisG
-        .append('line')
-        .attr('x1', margin?.left || 0)
-        .attr('x2', (margin?.left || 0) + width)
-        .attr('y1', 0)
-        .attr('y2', 0)
-        .attr('stroke', 'currentColor');
+    // Draw Y-left axis using shared utility
+    if (allLeftY.length > 0 && yLeftFn) {
+      drawAxis({
+        g,
+        scale: yLeftFn,
+        config: {
+          key: allLeftY[0].key,
+          axis: {
+            location: 'left',
+            ticks: minTicksLeft || 5,
+          },
+        },
+        dimensions: { width, height },
+        margin,
+        padding,
+        orientation: 'vertical',
+        labelText:
+          yLeftLabels && yLeftLabels.length > 0
+            ? yLeftLabel || yLeftLabels.join(', ')
+            : undefined,
+        labelY: yAxisLabelY,
+        className: 'axis axis--left-y',
+      });
+    }
 
-    (padding?.right || 0) &&
-      xAxisG
-        .append('line')
-        .attr('x1', (margin?.left || 0) + width)
-        .attr('x2', (margin?.left || 0) + width + (padding?.right || 0))
-        .attr('y1', 0)
-        .attr('y2', 0)
-        .attr('stroke', 'currentColor');
-
-    x.axisLabel &&
-      xAxisG
-        .append('text')
-        .text(x.axisLabel)
-        .attr('fill', 'currentColor')
-        .attr('x', width / 2)
-        .attr('y', x.axis === 'top' ? -10 : 30)
-        .style('font-size', '1.1em');
-
-    const yLeftAxisG =
-      yLeftAxis &&
-      g
-        .append('g')
-        .attr('class', 'axis axis--left-y')
-        .attr('transform', `translate(${margin?.left || 0},0)`);
-    // @ts-ignore
-    yLeftAxisG.call(yLeftAxis);
-
-    (padding?.bottom || 0) &&
-      yLeftAxisG
-        //@ts-ignore
-        .append('line')
-        .attr('x1', 0)
-        .attr('x2', 0)
-        .attr('y1', (margin?.top || 0) + height - (padding?.bottom || 0))
-        .attr('y2', (margin?.top || 0) + height)
-        .attr('stroke', 'currentColor');
-
-    const yRightAxisG =
-      yRightAxis &&
-      g
-        .append('g')
-        .attr('class', 'axis axis--right-y')
-        .attr('transform', `translate(${width - (margin?.right || 0)},0)`);
-
-    yRightAxisG && yRightAxisG.call(yRightAxis);
-
-    (padding?.bottom || 0) &&
-      yRightAxisG &&
-      yRightAxisG
-        .append('line')
-        .attr('x1', 0)
-        .attr('x2', 0)
-        .attr('y1', (margin?.top || 0) + height - (padding?.bottom || 0))
-        .attr('y2', (margin?.top || 0) + height)
-        .attr('stroke', 'currentColor');
-
-    yLeftLabels &&
-      yLeftLabels.length > 0 &&
-      yLeftAxisG
-        // @ts-ignore
-        .append('text')
-        .text(yLeftLabel || yLeftLabels.join(', '))
-        .attr('fill', 'currentColor')
-        .attr('text-anchor', 'middle')
-        .attr('x', 0)
-        .attr(
-          'y',
-          x.axis === 'top'
-            ? height - (margin?.bottom || 0) + 20
-            : (margin?.top || 0) - 15
-        )
-        .style('font-size', '1.1em');
-
-    yRightLabels &&
-      yRightLabels.length > 0 &&
-      yRightAxisG
-        // @ts-ignore
-        .append('text')
-        .text(yRightLabel || yRightLabels.join(', '))
-        .attr('fill', 'currentColor')
-        .attr('text-anchor', 'middle')
-        .attr('x', 0)
-        .attr(
-          'y',
-          x.axis === 'top'
-            ? height - (margin?.bottom || 0) + 20
-            : (margin?.top || 0) - 15
-        )
-        .style('font-size', '1.1em');
+    // Draw Y-right axis using shared utility
+    if (allRightY.length > 0 && yRightFn) {
+      drawAxis({
+        g,
+        scale: yRightFn,
+        config: {
+          key: allRightY[0].key,
+          axis: {
+            location: 'right',
+            ticks: minTicksRight || 5,
+          },
+        },
+        dimensions: { width, height },
+        margin,
+        padding,
+        orientation: 'vertical',
+        labelText:
+          yRightLabels && yRightLabels.length > 0
+            ? yRightLabel || yRightLabels.join(', ')
+            : undefined,
+        labelY: yAxisLabelY,
+        className: 'axis axis--right-y',
+      });
+    }
 
     svg
       .append('clipPath')
       .attr('id', 'clip')
       .append('rect')
-      .attr('x', margin?.left || 0)
-      .attr('y', margin?.top || 0)
-      .attr('width', width - (margin?.right || 0) - (margin?.left || 0))
-      .attr('height', height - (margin?.bottom || 0) - (margin?.top || 0));
+      .attr('x', margin?.left ?? 0)
+      .attr('y', margin?.top ?? 0)
+      .attr('width', width - (margin?.right ?? 0) - (margin?.left ?? 0))
+      .attr('height', height - (margin?.bottom ?? 0) - (margin?.top ?? 0));
 
     const leftG = g
       .append('g')
@@ -466,7 +356,7 @@ const LineChart = <TData = any,>({
             .append('text')
             .attr('class', `y-line-labels ${column.label.className || ''}`)
             .text(column.key)
-            .attr('x', width - (padding?.right || 0 - 10))
+            .attr('x', width - (padding?.right ?? 0) - 10)
             .attr(
               'y',
               // @ts-ignore
@@ -565,7 +455,7 @@ const LineChart = <TData = any,>({
             .text(column.key)
             .attr(
               'x',
-              width - (margin?.right || 0) - (padding?.right || 0 - 10)
+              width - (margin?.right ?? 0) - (padding?.right ?? 0) - 10
             )
             .attr(
               'y',
@@ -635,7 +525,7 @@ const LineChart = <TData = any,>({
             drawHLine({
               // @ts-ignore
               y: yLeftFn(object.yLeft),
-              x: margin?.left || 0,
+              x: margin?.left ?? 0,
               className: `stroke-current ${object.className} reference-line`,
               direction: 'right',
             });
@@ -646,7 +536,7 @@ const LineChart = <TData = any,>({
                 .attr('class', `stroke-current ${object.className}`)
                 .attr(
                   'x',
-                  (margin?.left || 0) + (padding?.left || 0) + width - 10
+                  (margin?.left ?? 0) + (padding?.left ?? 0) + width - 10
                 )
                 // @ts-ignore
                 .attr('y', yLeftFn(object.yLeft) - 5)
@@ -659,7 +549,7 @@ const LineChart = <TData = any,>({
           drawHLine({
             // @ts-ignore
             y: yRightFn(object.yRight),
-            x: margin?.left || 0,
+            x: margin?.left ?? 0,
             className: `${object.className || ''} reference-line`,
             direction: 'right',
           });
@@ -714,8 +604,8 @@ const LineChart = <TData = any,>({
       const horizontalLine = g
         .append('line')
         .attr('class', className || 'axis-point-line')
-        .attr('x1', direction === 'left' ? margin?.left || 0 : x)
-        .attr('x2', direction === 'left' ? x : width + (margin?.left || 0))
+        .attr('x1', direction === 'left' ? margin?.left ?? 0 : x)
+        .attr('x2', direction === 'left' ? x : width + (margin?.left ?? 0))
         .attr('y1', y)
         .attr('y2', y)
         .attr('clip-path', 'url(#clip)')
@@ -739,7 +629,7 @@ const LineChart = <TData = any,>({
         .attr('x1', x)
         .attr('x2', x)
         .attr('y1', y)
-        .attr('y2', height + (margin?.top || 0))
+        .attr('y2', height + (margin?.top ?? 0))
         .attr('stroke', 'currentColor')
         .attr('clip-path', 'url(#clip)')
         .style('stroke-width', 1);
@@ -759,8 +649,7 @@ const LineChart = <TData = any,>({
       // @ts-ignore
       const dataRight = allRightY.map((column) => dataClosest[column.key]);
 
-      // @ts-ignore
-      if (showGuidelines) {
+      if (showGuideLines) {
         drawVLine({
           x: xValue(dataClosest),
           y: min([
@@ -827,7 +716,7 @@ const LineChart = <TData = any,>({
     //Todo Zoom
 
     const extent = [
-      [margin?.left || 0, margin?.top || 0],
+      [margin?.left ?? 0, margin?.top ?? 0],
       [width, height],
     ];
 
@@ -843,8 +732,8 @@ const LineChart = <TData = any,>({
       function zoomed(event: MouseEvent) {
         xFn.range(
           [
-            (margin?.left || 0) + (padding?.left || 0),
-            width - (margin?.right || 0) - (padding?.right || 0),
+            (margin?.left ?? 0) + (padding?.left ?? 0),
+            width - (margin?.right ?? 0) - (padding?.right ?? 0),
           ].map(
             // @ts-ignore
             (d: any) => event.transform.applyX(d)

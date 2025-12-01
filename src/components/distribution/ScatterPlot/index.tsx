@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
+import { useCallback, useEffect } from 'react';
 import {
   line,
   symbol,
@@ -13,34 +12,19 @@ import {
 } from 'd3-shape';
 import { max, min } from 'd3-array';
 import { select, selectAll } from 'd3-selection';
-import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
+import useTooltip from '@/hooks/useTooltip';
+import useAxis from '@/hooks/useAxis';
 
-import { ChartProps } from '../../../types';
-import { defaultChartClassNames } from '../../../utils';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { scaleLinear } from 'd3-scale';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 
-// import { brush } from 'd3-brush';
-
 export interface ScatterPlotProps<TData = any> extends ChartProps<TData> {
   data: TData[];
-  x: {
-    key: Extract<keyof TData, string> | string;
-    start?: number;
-    end?: number;
-    axis?: 'top' | 'bottom';
-    axisTicks?: number;
-    convert?: (d: any) => number;
-  };
-  y: {
-    key: Extract<keyof TData, string> | string;
-    start?: number;
-    end?: number;
-    axis?: 'left' | 'right';
-    axisTicks?: number;
-    convert?: (d: any) => number;
-  };
+  x: AxisConfig<TData>;
+  y: AxisConfig<TData>;
   color?: {
     key: Extract<keyof TData, string> | string;
     classNameMap?: {
@@ -59,7 +43,7 @@ export interface ScatterPlotProps<TData = any> extends ChartProps<TData> {
       [key: string]: any;
     };
   };
-  tooltip?: TooltipObjectType;
+  tooltip?: TooltipConfig;
   onClick?: (event: any, d: any) => void;
   connect?: {
     enabled?: boolean;
@@ -114,7 +98,8 @@ const ScatterPlot = <TData = any,>({
     tooltip,
     defaultHtml,
   });
-  const refreshChart = React.useCallback(() => {
+  const { drawAxis } = useAxis();
+  const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     // Clear svg
 
@@ -126,8 +111,8 @@ const ScatterPlot = <TData = any,>({
     const g = svg.append('g');
 
     const xFn = scaleLinear().range([
-      margin.left + (padding.left || 0),
-      width - margin.right,
+      (margin?.left ?? 0) + (padding?.left ?? 0),
+      width - (margin?.right ?? 0),
     ]);
 
     const setDefaultDomain = (xFn: any, yFn: any) => {
@@ -159,67 +144,37 @@ const ScatterPlot = <TData = any,>({
       ]);
     };
 
-    const xAxis = (x.axis === 'top' ? axisTop(xFn) : axisBottom(xFn)).ticks(
-      x.axisTicks || 5
-    );
-
     const yFn = scaleLinear().range([
-      height - margin.bottom - (padding.top || 0) - (padding.bottom || 0),
-      margin.top + (padding.top || 0),
+      height -
+        (margin?.bottom ?? 0) -
+        (padding?.top ?? 0) -
+        (padding?.bottom ?? 0),
+      (margin?.top ?? 0) + (padding?.top ?? 0),
     ]);
 
     setDefaultDomain(xFn, yFn);
-    const yAxis = (y.axis === 'right' ? axisRight(yFn) : axisLeft(yFn)).ticks(
-      y.axisTicks || 5
-    );
 
-    const xAxisG = g
-      .append('g')
-      .attr('class', 'xAxis axis')
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin.top : height - margin.bottom
-        })`
-      );
+    const { axisG: xAxisG, axis: xAxis } = drawAxis({
+      g,
+      scale: xFn,
+      config: x,
+      dimensions: { width, height },
+      margin: margin ?? {},
+      padding: padding ?? {},
+      orientation: 'horizontal',
+      className: 'xAxis axis',
+    });
 
-    xAxisG.transition().duration(400).call(xAxis);
-
-    padding.left &&
-      xAxisG
-        .append('line')
-        .attr('x1', margin.left)
-        .attr('x2', margin.left + padding.left)
-        .attr('y1', 0)
-        .attr('y2', 0)
-        .attr('stroke', 'currentColor');
-
-    padding.right &&
-      xAxisG
-        .append('line')
-        .attr('x1', margin.left + width)
-        .attr('x2', margin.left + width + padding.right)
-        .attr('y1', 0)
-        .attr('y2', 0)
-        .attr('stroke', 'currentColor');
-
-    const yAxisG = g
-      .append('g')
-      .attr('class', 'yAxis axis')
-      .attr(
-        'transform',
-        `translate(${y.axis === 'right' ? margin.left + width : margin.left},0)`
-      );
-
-    yAxisG.transition().duration(400).call(yAxis);
-    padding.bottom &&
-      yAxisG
-        .append('line')
-        .attr('x1', 0)
-        .attr('x2', 0)
-        .attr('y1', margin.top + height - padding.bottom)
-        .attr('y2', margin.top + height)
-        .attr('stroke', 'currentColor');
+    const { axisG: yAxisG, axis: yAxis } = drawAxis({
+      g,
+      scale: yFn,
+      config: y,
+      dimensions: { width, height },
+      margin: margin ?? {},
+      padding: padding ?? {},
+      orientation: 'vertical',
+      className: 'yAxis axis',
+    });
 
     const sizeScale =
       size &&
@@ -257,10 +212,10 @@ const ScatterPlot = <TData = any,>({
       .append('clipPath')
       .attr('id', 'clip')
       .append('rect')
-      .attr('x', margin.left)
-      .attr('y', margin.top - (padding.top || 0) - 10)
-      .attr('width', width - margin.left)
-      .attr('height', height + (padding.bottom || 0) + 8);
+      .attr('x', margin?.left ?? 0)
+      .attr('y', (margin?.top ?? 0) - (padding?.top ?? 0) - 10)
+      .attr('width', width - (margin?.left ?? 0))
+      .attr('height', height + (padding?.bottom ?? 0) + 8);
 
     // Drawing
     const pointsGroup = g.append('g').attr('clip-path', 'url(#clip)');
@@ -399,6 +354,10 @@ const ScatterPlot = <TData = any,>({
     drawing,
     connect,
     data,
+    drawAxis,
+    onMouseLeave,
+    onMouseMove,
+    onMouseOver,
   ]);
 
   useEffect(() => {

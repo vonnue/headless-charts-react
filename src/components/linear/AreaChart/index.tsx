@@ -1,4 +1,3 @@
-import { axisBottom, axisLeft, axisTop } from 'd3-axis';
 import { max, min } from 'd3-array';
 import { scaleLinear, scaleTime } from 'd3';
 import { select, selectAll } from 'd3-selection';
@@ -12,54 +11,27 @@ import {
 } from 'd3';
 import { useCallback, useEffect } from 'react';
 
-import { ChartProps } from '../../../types';
-import { DateTime } from 'luxon';
-import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
+import {
+  AxisConfig,
+  ChartProps,
+  SeriesAxisConfig,
+  TooltipConfig,
+} from '@/types';
+import { timeFormat, timeParse, isoParse } from 'd3-time-format';
+import useTooltip from '@/hooks/useTooltip';
 import { area } from 'd3-shape';
-import { defaultChartClassNames } from '../../../utils';
+import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 import * as d3 from 'd3';
+import { drawAxis } from '@/hooks/useAxis';
 
-interface XAxis<TData = any> {
-  key: Extract<keyof TData, string> | string;
-  scalingFunction?: 'linear' | 'time';
-  convert?: (d: any) => any;
-  axis?: 'bottom' | 'top';
-  format?: string;
-  isISO?: boolean;
-  axisTicks?: number;
-  axisLabel?: string;
-  axisLabelPosition?: 'right' | 'bottom';
-  start?: object | number;
-  end?: object | number;
-}
-
-interface AreaChartProps<TData = any> extends ChartProps<TData> {
+export interface AreaChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   id: string;
   className?: string;
-  x: XAxis<TData>;
-  y: Array<{
-    key: Extract<keyof TData, string> | string;
-    axis?: 'left' | 'right';
-    start?: number;
-    end?: number;
-    ticks?: number;
-    className?: string;
-    curve?: 'rounded' | 'step' | 'line' | 'bumpX' | undefined;
-    symbol?:
-      | 'none'
-      | 'circle'
-      | 'square'
-      | 'star'
-      | 'triangle'
-      | 'wye'
-      | 'cross'
-      | 'diamond';
-    size?: number;
-    unknown?: any;
-  }>;
+  x: AxisConfig<TData>;
+  y: Array<SeriesAxisConfig<TData>>;
   stacking?: {
     type?: 'normal' | '100%' | 'streamgraph' | 'diverging';
   };
@@ -70,7 +42,7 @@ interface AreaChartProps<TData = any> extends ChartProps<TData> {
     bottom?: number;
     left?: number;
   };
-  tooltip?: TooltipObjectType;
+  tooltip?: TooltipConfig;
   zooming?: {
     enabled: boolean;
     min?: number;
@@ -104,17 +76,19 @@ const AreaChart = <TData = any,>({
   zooming,
   style = {},
 }: AreaChartProps<TData>) => {
+  const d3Format = x.time?.format || '%Y-%m-%d';
+  const formatDate = timeFormat(d3Format);
+  const parseDate = timeParse(d3Format);
+
   const { onMouseOver, onMouseLeave } = useTooltip({
     id,
     tooltip,
     defaultHtml: (d: any) => {
       const xValue =
         x.scalingFunction === 'time'
-          ? x.isISO
-            ? DateTime.fromISO(d[x.key]).toFormat(x.format || 'yyyy-MM-dd')
-            : DateTime.fromFormat(d[x.key], x.format || 'yyyy-MM-dd').toFormat(
-                x.format || 'yyyy-MM-dd'
-              )
+          ? x.time?.isISO
+            ? formatDate(isoParse(d[x.key]) as Date)
+            : formatDate(parseDate(d[x.key]) as Date)
           : d[x.key];
       return `${xValue}<br/>${y
         .map((column) => `${column.key}: ${d[column.key]}`)
@@ -136,22 +110,21 @@ const AreaChart = <TData = any,>({
       .append('clipPath')
       .attr('id', 'clip')
       .append('rect')
-      .attr('x', margin?.left || 0)
-      .attr('y', (margin?.top || 0) - (padding.top || 0))
+      .attr('x', margin?.left ?? 0)
+      .attr('y', (margin?.top ?? 0) - (padding?.top ?? 0))
       .attr(
         'width',
         width -
-          (padding?.right || 0) -
-          (margin?.right || 0) -
-          (margin?.left || 0)
+          (padding?.right ?? 0) -
+          (margin?.right ?? 0) -
+          (margin?.left ?? 0)
       )
-      .attr('height', height - (margin?.top || 0) - (margin?.bottom || 0));
+      .attr('height', height - (margin?.top ?? 0) - (margin?.bottom ?? 0));
 
-    // @ts-ignore
-    const toDateTime = (d) =>
-      x.isISO
-        ? DateTime.fromISO(d[x.key])
-        : DateTime.fromFormat(d[x.key], x.format || 'yyyy-MM-dd');
+    const toDateTime = (d: any): Date =>
+      x.time?.isISO
+        ? (isoParse(d[x.key]) as Date)
+        : (parseDate(d[x.key]) as Date);
 
     const xFn =
       x.scalingFunction === 'time' ? scaleTime().nice() : scaleLinear();
@@ -184,24 +157,28 @@ const AreaChart = <TData = any,>({
 
     setDefaultXDomain(xFn);
     xFn.range([
-      (margin?.left || 0) + (padding?.left || 0),
-      width - (margin?.right || 0) - (padding?.right || 0),
+      (margin?.left ?? 0) + (padding?.left ?? 0),
+      width - (margin?.right ?? 0) - (padding?.right ?? 0),
     ]);
 
-    const xAxis =
-      x.axis === 'top'
-        ? axisTop(xFn).ticks(x.axisTicks || 5)
-        : axisBottom(xFn).ticks(x.axisTicks || 5);
-
-    const xAxisG = g.append('g').attr('class', 'axis--x axis ');
-    xAxisG
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin?.top || 0 : height - (margin?.bottom || 0)
-        })`
-      )
-      .call(xAxis);
+    // Draw X-axis using shared utility
+    const { axisG: xAxisG, axis: xAxis } = drawAxis({
+      g,
+      scale: xFn,
+      config: {
+        ...x,
+        axis: {
+          ...x.axis,
+          location: x.axis?.location || 'bottom',
+          ticks: x.axis?.ticks || 5,
+        },
+      },
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+      className: 'axis--x axis',
+    });
 
     const stackerFn = stack().keys(y.map((column) => column.key));
 
@@ -218,19 +195,38 @@ const AreaChart = <TData = any,>({
     const yFn = scaleLinear()
       // @ts-ignore
       .domain([
-        min(dataStacked, (d) => min(d, (d) => d[0])),
-        max(dataStacked, (d) => max(d, (d) => d[1])),
+        min(dataStacked, (d) => min(d, (d) => d[0])) ?? 0,
+        max(dataStacked, (d) => max(d, (d) => d[1])) ?? 0,
       ])
       .range([
-        height - (margin?.bottom || 0) - (padding?.bottom || 0),
-        (margin?.top || 0) + (padding?.top || 0),
+        height - (margin?.bottom ?? 0) - (padding?.bottom ?? 0),
+        (margin?.top ?? 0) + (padding?.top ?? 0),
       ]);
 
-    const yAxis = axisLeft(yFn).ticks(y[0].ticks || 5);
+    // Get combined Y-axis label from series
+    const yLabels = y
+      .map((column) => column.axis?.label)
+      .filter(Boolean)
+      .join(', ');
 
-    const yAxisG = g.append('g').attr('class', 'axis--y axis ');
-
-    yAxisG.attr('transform', `translate(${margin?.left || 0}, 0)`).call(yAxis);
+    // Draw Y-axis using shared utility
+    drawAxis({
+      g,
+      scale: yFn,
+      config: {
+        key: y[0].key,
+        axis: {
+          location: 'left',
+          ticks: y[0].axis?.ticks || 5,
+        },
+      },
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'vertical',
+      labelText: yLabels || undefined,
+      className: 'axis--y axis',
+    });
 
     const areaFn = area()
       .x((d: any) =>
@@ -265,7 +261,7 @@ const AreaChart = <TData = any,>({
           // Find closest data point
           const bisect = d3.bisector((d: any) =>
             x.scalingFunction === 'time'
-              ? toDateTime(d).toMillis()
+              ? toDateTime(d).getTime()
               : Number(d[x.key])
           ).left;
 
@@ -275,10 +271,10 @@ const AreaChart = <TData = any,>({
           const closestData =
             Number(x0) -
               (x.scalingFunction === 'time'
-                ? toDateTime(d0).toMillis()
+                ? toDateTime(d0).getTime()
                 : Number((d0 as any)[x.key])) >
             (x.scalingFunction === 'time'
-              ? toDateTime(d1).toMillis()
+              ? toDateTime(d1).getTime()
               : Number((d1 as any)[x.key])) -
               Number(x0)
               ? d1
@@ -294,7 +290,7 @@ const AreaChart = <TData = any,>({
     redraw();
 
     const extent = [
-      [margin?.left || 0, margin?.top || 0],
+      [margin?.left ?? 0, margin?.top ?? 0],
       [width, height],
     ];
 
@@ -310,8 +306,8 @@ const AreaChart = <TData = any,>({
       function zoomed(event: MouseEvent) {
         xFn.range(
           [
-            (margin?.left || 0) + (padding?.left || 0),
-            width - (margin?.right || 0) - (padding?.right || 0),
+            (margin?.left ?? 0) + (padding?.left ?? 0),
+            width - (margin?.right ?? 0) - (padding?.right ?? 0),
           ].map(
             // @ts-ignore
             (d: any) => event.transform.applyX(d)

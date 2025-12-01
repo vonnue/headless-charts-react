@@ -1,30 +1,18 @@
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { max, sum } from 'd3-array';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
-import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
+import useTooltip from '@/hooks/useTooltip';
+import { drawAxis } from '@/hooks/useAxis';
 
-import { defaultChartClassNames } from '../../../utils';
-import { format } from 'd3-format';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { stack } from 'd3';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-interface AxisItems<TData = any> {
-  key: Extract<keyof TData, string> | string;
-  className?: string;
-  axis?: string;
-  axisTicks?: number;
-}
-
-interface Drawing {
-  duration?: number;
-  delay?: number;
-}
-
 interface DataLabel<TData = any> {
-  text?: (data: TData, column: AxisItems<TData>) => string;
+  text?: (data: TData, column: AxisConfig<TData>) => string;
 }
 
 interface ReferenceLines {
@@ -45,33 +33,15 @@ interface StackedDataItem<TData = any> {
   index: number;
 }
 
-interface BarChartStackedProps<TData = any> {
-  data: TData[];
-  id: string;
-  className?: string;
-  direction?: string;
-  padding?: {
-    left: number;
-    right: number;
-    bottom: number;
-    top: number;
-    bar: number;
-  };
-  margin?: {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-  };
+export interface BarChartStackedProps<TData = any> extends ChartProps<TData> {
+  direction?: 'left' | 'right';
   referenceLines?: ReferenceLines[];
   waterfall?: boolean;
-  x: AxisItems<TData>[];
+  x: AxisConfig<TData>[];
   tickFormat?: string;
-  y: AxisItems<TData>;
-  tooltip?: TooltipObjectType;
-  drawing?: Drawing;
+  y: AxisConfig<TData>;
+  tooltip?: TooltipConfig;
   dataLabel?: DataLabel<TData>;
-  style?: React.CSSProperties;
 }
 
 const BarChartStacked = <TData = any,>({
@@ -110,14 +80,6 @@ const BarChartStacked = <TData = any,>({
         .map((field) => `${field.key}: ${d.data[field.key]}`)
         .join('<br/>')}`,
   });
-  /* eslint-disable */
-  const formatMapping = {
-    '%': '.0%',
-    $: '($.2f',
-    tri: ',.2r',
-    hex: '#x',
-    SI: '.2s',
-  };
 
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
@@ -131,15 +93,21 @@ const BarChartStacked = <TData = any,>({
     const yFn = scaleBand()
       .domain(data.map((d) => (d as any)[y.key]))
       .range([
-        margin.top + padding.top,
-        height - margin.bottom - padding.bottom,
+        (margin.top ?? 0) + (padding.top ?? 0),
+        height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
       ])
-      .padding(padding.bar);
+      .padding(padding.bar ?? 0.3);
 
     const xFnRange =
       direction === 'left'
-        ? [width - margin.right - padding.right, margin.left + padding.left]
-        : [margin.left + padding.left, width - margin.right - padding.right];
+        ? [
+            width - (margin.right ?? 0) - (padding.right ?? 0),
+            (margin.left ?? 0) + (padding.left ?? 0),
+          ]
+        : [
+            (margin.left ?? 0) + (padding.left ?? 0),
+            width - (margin.right ?? 0) - (padding.right ?? 0),
+          ];
 
     const xFn = scaleLinear()
       // @ts-ignore
@@ -148,7 +116,9 @@ const BarChartStacked = <TData = any,>({
 
     x.reverse();
 
-    const dataStacked = stack().keys(x.map((column) => column.key))(data as Iterable<{ [key: string]: number }>);
+    const dataStacked = stack().keys(x.map((column) => column.key))(
+      data as Iterable<{ [key: string]: number }>
+    );
 
     transition();
     // @ts-ignore
@@ -192,41 +162,50 @@ const BarChartStacked = <TData = any,>({
       .attr('x', (d: StackedDataItem) => xFn(d.start))
       .attr('width', (d: StackedDataItem) => xFn(d.end) - xFn(d.start));
 
-    const xAxis = x.some((column) => column.axis === 'top')
-      ? // @ts-ignore
-        axisTop(xFn).ticks(x.axisTicks || 5)
-      : // @ts-ignore
-        axisBottom(xFn).ticks(x.axisTicks || 5);
+    // Determine x-axis location
+    const xAxisLocation = x.find((col) => col.axis?.location)?.axis?.location || 'bottom';
+    const xAxisLabel = x.map((column) => column.axis?.label || column.key || '').join(', ');
 
-    tickFormat &&
-      xAxis.tickFormat(
-        // @ts-ignore
-        formatMapping[tickFormat]
-          ? // @ts-ignore
-            format(formatMapping[tickFormat])
-          : format(tickFormat)
-      );
+    // Create x-axis config
+    const xAxisConfig: AxisConfig = {
+      key: x[0]?.key || '',
+      axis: {
+        location: xAxisLocation as 'top' | 'bottom',
+        ticks: x[0]?.axis?.ticks || 5,
+        label: xAxisLabel,
+      },
+    };
 
-    const xAxisG = g.append('g').attr('class', 'axis--x axis ');
+    // Create y-axis config
+    const yAxisConfig: AxisConfig = {
+      ...y,
+      axis: {
+        ...y.axis,
+        location: direction === 'left' ? 'right' : 'left',
+      },
+    };
 
-    const yAxis = direction === 'left' ? axisRight(yFn) : axisLeft(yFn);
-    const yAxisG = g
-      .append('g')
-      .attr('class', 'yAxis axis')
-      .attr(
-        'transform',
-        `translate(${direction === 'left' ? width : margin.left},0)`
-      );
+    // Draw x-axis using shared utility
+    drawAxis({
+      g,
+      scale: xFn,
+      config: xAxisConfig,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+    });
 
-    xAxisG
-      .attr(
-        'transform',
-        // @ts-ignore
-        `translate(0, ${x.axis === 'top' ? marginTop : height - margin.bottom})`
-      )
-      .call(xAxis);
-
-    yAxisG.call(yAxis);
+    // Draw y-axis using shared utility
+    drawAxis({
+      g,
+      scale: yFn,
+      config: yAxisConfig,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'vertical',
+    });
   }, [
     data,
     id,

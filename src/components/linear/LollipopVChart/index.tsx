@@ -1,4 +1,3 @@
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { max, min } from 'd3-array';
 import { scaleBand, scaleLinear } from 'd3';
 import { select, selectAll } from 'd3-selection';
@@ -14,30 +13,35 @@ import {
 } from 'd3';
 import { useCallback, useEffect } from 'react';
 
-import { ChartProps } from '../../../types';
-import { defaultChartClassNames } from '../../../utils';
+import { AxisConfig, ChartProps } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
+import { drawAxis } from '@/hooks/useAxis';
 
-interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
+export interface LollipopChartClassNames {
+  points?: string;
+  lines?: string;
+  symbols?: string;
+}
+
+export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   valueMin?: number;
   valueMax?: number;
   id: string;
   className?: string;
-  classNamePoints?: string;
-  classNameLines?: string;
-  classNameSymbols?: string;
+  classNames?: LollipopChartClassNames;
   margin?: {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
+    left?: number;
+    right?: number;
+    top?: number;
+    bottom?: number;
   };
   padding?: {
-    left: number;
-    right: number;
-    bottom: number;
-    top: number;
+    left?: number;
+    right?: number;
+    bottom?: number;
+    top?: number;
   };
   shape:
     | 'circle'
@@ -47,13 +51,8 @@ interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
     | 'cross'
     | 'star'
     | 'wye';
-  x?: { axis: 'bottom' | 'top'; axisTicks: number; key: Extract<keyof TData, string> | string };
-  y?: {
-    axis?: 'left' | 'right';
-    axisTicks?: number;
-    key: Extract<keyof TData, string> | string;
-    start?: number;
-  };
+  x?: AxisConfig<TData>;
+  y?: AxisConfig<TData>;
 }
 
 const LollipopVChart = <TData = any,>({
@@ -62,9 +61,7 @@ const LollipopVChart = <TData = any,>({
   valueMax,
   id,
   className,
-  classNamePoints,
-  classNameLines,
-  classNameSymbols,
+  classNames,
   margin = {
     left: 40,
     right: 40,
@@ -78,8 +75,8 @@ const LollipopVChart = <TData = any,>({
     top: 0,
   },
   shape = 'circle',
-  x = { axis: 'bottom', axisTicks: 0, key: 'x' },
-  y = { axis: 'left', key: 'y' },
+  x = { key: 'x', axis: { location: 'bottom', ticks: 0 } },
+  y = { key: 'y', axis: { location: 'left' } },
   style = {},
 }: LollipopVChartProps<TData>) => {
   const refreshChart = useCallback(() => {
@@ -112,66 +109,40 @@ const LollipopVChart = <TData = any,>({
     const xFn = scaleBand()
       .domain(data.map((d) => (d as any)[x.key]))
       .range([
-        margin.left + padding.left,
-        width - margin.right - padding.right,
+        (margin.left ?? 0) + (padding.left ?? 0),
+        width - (margin.right ?? 0) - (padding.right ?? 0),
       ]);
 
     const yFn = scaleLinear()
       .domain([minValue, maxValue])
       .range([
-        height - margin.bottom - padding.bottom,
-        margin.top + padding.top,
+        height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
+        (margin.top ?? 0) + (padding.top ?? 0),
       ]);
 
     const g = svg.append('g');
 
-    const xAxis = x.axis === 'top' ? axisTop(xFn) : axisBottom(xFn);
+    // Draw x-axis using shared utility
+    drawAxis({
+      g,
+      scale: xFn,
+      config: x,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+    });
 
-    const xAxisG = g.append('g').attr('class', 'axis--x axis');
-
-    xAxisG
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin.top : height - margin.bottom
-        })`
-      )
-      .transition()
-      .duration(1000)
-      .call(xAxis);
-
-    const yAxis =
-      y.axis === 'right'
-        ? axisRight(yFn).ticks(y.axisTicks || 2)
-        : axisLeft(yFn).ticks(y.axisTicks || 2);
-
-    const yAxisG = g
-      .append('g')
-      .attr('class', 'yAxis axis')
-      .attr(
-        'transform',
-        `translate(${y.axis === 'right' ? margin.left + width : margin.left},0)`
-      );
-
-    padding.left &&
-      xAxisG
-        .append('line')
-        .attr('x1', 0)
-        .attr('x2', padding.left)
-        .attr('y1', 0)
-        .attr('y2', 0)
-        .attr('stroke', 'currentColor');
-
-    padding.bottom &&
-      yAxisG
-        .append('line')
-        .attr('x1', 0)
-        .attr('x2', 0)
-        .attr('y1', margin.top + height - padding.bottom)
-        .attr('y2', margin.top + height)
-        .attr('stroke', 'currentColor');
-
-    yAxisG.transition().duration(1000).call(yAxis);
+    // Draw y-axis using shared utility
+    drawAxis({
+      g,
+      scale: yFn,
+      config: y,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'vertical',
+    });
 
     const dataGroup = g.append('g');
     const drawLinesAndCircles = () => {
@@ -186,7 +157,7 @@ const LollipopVChart = <TData = any,>({
         .append('line')
         .attr(
           'class',
-          `line stroke-current ${classNamePoints || ''} ${classNameLines || ''}`
+          twMerge('line stroke-current', classNames?.points, classNames?.lines)
         )
         // @ts-ignore
         .attr('x1', (d) => xFn((d as any)[x.key]) + xFn.bandwidth() / 2)
@@ -202,16 +173,16 @@ const LollipopVChart = <TData = any,>({
         .append('path')
         .attr(
           'class',
-          `symbols fill-current ${classNamePoints || ''} ${
-            classNameSymbols || ''
-          }`
+          twMerge('symbols fill-current', classNames?.points, classNames?.symbols)
         )
         .attr('d', () => symbol(shapeMapping[shape], 100)())
         .attr(
           'transform',
           (d) =>
             //@ts-ignore
-            `translate(${xFn((d as any)[x.key]) + xFn.bandwidth() / 2},${yFn(minValue)})`
+            `translate(${xFn((d as any)[x.key]) + xFn.bandwidth() / 2},${yFn(
+              minValue
+            )})`
         )
         .transition()
         .duration(1000)
@@ -227,9 +198,7 @@ const LollipopVChart = <TData = any,>({
     /* eslint-enable */
     drawLinesAndCircles();
   }, [
-    classNameLines,
-    classNamePoints,
-    classNameSymbols,
+    classNames,
     data,
     id,
     shape,

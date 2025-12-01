@@ -1,5 +1,5 @@
 import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
-import { defaultChartClassNames } from '../../../utils';
+import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 import { extent, max, min } from 'd3-array';
 import {
@@ -20,10 +20,10 @@ import {
   symbolTriangle,
   symbolWye,
 } from 'd3-shape';
-import useTooltip, { TooltipObjectType } from '../../../hooks/useTooltip';
+import useTooltip from '@/hooks/useTooltip';
 
-import { ChartProps } from '../../../types';
-import React from 'react';
+import { ChartProps, TooltipConfig } from '@/types';
+import { useCallback, useEffect } from 'react';
 import { drag } from 'd3';
 import { scaleLinear } from 'd3-scale';
 import { select } from 'd3-selection';
@@ -89,7 +89,7 @@ export interface NetworkProps<TData = any> extends ChartProps<TData> {
       axis?: 'left' | 'right';
     };
     size?: SizeType<TData>;
-    tooltip?: TooltipObjectType;
+    tooltip?: TooltipConfig;
     shape?: ShapeType<TData>;
   };
   edgeDef: {
@@ -100,7 +100,7 @@ export interface NetworkProps<TData = any> extends ChartProps<TData> {
     className?: string; // tailwindClass, Applies to all edges
     classNameKey?: string; // style by this key
     classNameMap?: object; // Provide mapping to style by this key
-    tooltip?: TooltipObjectType;
+    tooltip?: TooltipConfig;
   };
 }
 
@@ -135,7 +135,7 @@ const Network = <TData = any,>({
   zooming = {},
   ...props
 }: NetworkProps<TData>) => {
-  const refreshData = React.useCallback(() => {
+  const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
     const {
@@ -191,7 +191,7 @@ const Network = <TData = any,>({
           'transform',
           `translate(0,${
             nodeDef?.x?.axis === 'top'
-              ? margin.top
+              ? margin.top ?? 0
               : height - (margin?.bottom || 0)
           })`
         )
@@ -440,9 +440,9 @@ const Network = <TData = any,>({
     }
   }, []);
 
-  React.useEffect(() => {
-    refreshData();
-  }, [refreshData]);
+  useEffect(() => {
+    refreshChart();
+  }, [refreshChart]);
 
   return (
     <svg

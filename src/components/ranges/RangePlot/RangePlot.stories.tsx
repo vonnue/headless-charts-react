@@ -15,15 +15,14 @@ export const Default = meta.story({
     shape: 'circle',
     y: {
       key: 'label',
-      axis: 'left',
+      axis: { location: 'left' },
     },
     x: {
       minKey: 'minTemp',
       maxKey: 'maxTemp',
       start: 0,
       end: 100,
-      axis: 'bottom',
-      axisTicks: 5,
+      axis: { location: 'bottom', ticks: 5 },
     },
   },
 });

@@ -1,56 +1,25 @@
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { max, sum } from 'd3-array';
-import { pointer, select, selectAll } from 'd3-selection';
+import { select, selectAll } from 'd3-selection';
+import useTooltip from '@/hooks/useTooltip';
+import { drawAxis } from '@/hooks/useAxis';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { useCallback, useEffect } from 'react';
 
-import { defaultChartClassNames } from '../../../utils';
-import { format } from 'd3-format';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import { defaultChartClassNames } from '@/utils';
 import { transition } from 'd3';
 import { twMerge } from 'tailwind-merge';
 
-
-interface ColumnChartStackedProps<TData = any> {
-  data: TData[];
-  id: string;
-  className?: string;
-  x: {
-    key: Extract<keyof TData, string> | string;
-    axis?: 'top' | 'bottom';
-  };
-  y: {
-    key: Extract<keyof TData, string> | string;
-    axis?: 'left' | 'right';
-    className?: string;
-  }[];
-  margin?: {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-  };
-  padding?: {
-    left: number;
-    right: number;
-    bottom: number;
-    top: number;
-  };
+export interface ColumnChartStackedProps<TData = any> extends ChartProps<TData> {
+  x: AxisConfig<TData>;
+  y: AxisConfig<TData>[];
   paddingBar?: number;
   waterfall?: boolean;
-  tooltip?: {
-    className?: string;
-    html?: (data: any) => string;
-    keys?: string[];
-  };
+  tooltip?: TooltipConfig;
   referenceLines?: {
     y: number;
     className?: string;
   }[];
-  tickFormat?: string;
-  drawing?: {
-    duration?: number;
-  };
-  style?: React.CSSProperties;
 }
 
 interface drawHLineProps {
@@ -83,17 +52,15 @@ const ColumnChartStacked = <TData = any,>({
   waterfall,
   tooltip,
   referenceLines = [],
-  tickFormat,
   drawing = undefined,
   style = {},
 }: ColumnChartStackedProps<TData>) => {
-  const formatMapping = {
-    '%': '.0%',
-    $: '($.2f',
-    tri: ',.2r',
-    hex: '#x',
-    SI: '.2s',
-  };
+  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+    id,
+    tooltip,
+    defaultHtml: (d: any) =>
+      `${d[x.key]} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`,
+  });
 
   const refreshChart = useCallback(() => {
     /* eslint-disable */
@@ -107,12 +74,15 @@ const ColumnChartStacked = <TData = any,>({
     const xFn = scaleBand()
       // @ts-ignore
       .domain(data.map((d) => (d as any)[x.key]))
-      .range([margin.left + padding.left, width - margin.right - padding.right])
+      .range([
+        (margin.left ?? 0) + (padding.left ?? 0),
+        width - (margin.right ?? 0) - (padding.right ?? 0),
+      ])
       .padding(paddingBar);
 
     const yFnRange = [
-      height - margin.bottom - padding.bottom,
-      margin.top + padding.top,
+      height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
+      (margin.top ?? 0) + (padding.top ?? 0),
     ];
 
     const yFn = scaleLinear()
@@ -135,7 +105,8 @@ const ColumnChartStacked = <TData = any,>({
           'x',
           (d) =>
             // @ts-ignore
-            (xFn((d as any)[x.key]) || 0) + (waterfall ? (xFn.bandwidth() / y.length) * i : 0)
+            (xFn((d as any)[x.key]) || 0) +
+            (waterfall ? (xFn.bandwidth() / y.length) * i : 0)
         )
         .attr('y', (d: any) => yFn(sum(beforeColumns.map((c: any) => d[c]))))
         .style('z-index', 10 + i)
@@ -148,43 +119,9 @@ const ColumnChartStacked = <TData = any,>({
         .attr('height', (d: any) =>
           drawing?.duration ? 0 : yFn(0) - yFn((d as any)[column.key])
         )
-        .on('mouseenter', function (event, d) {
-          if (tooltip) {
-            tooltipDiv.style('opacity', 1);
-            const [bX, bY] = pointer(event, select('body'));
-            tooltipDiv
-              .style('left', `${bX + 10}px`)
-              .style('top', `${bY + 10}px`);
-            tooltipDiv.html(
-              tooltip && tooltip.html
-                ? tooltip.html(d)
-                : tooltip.keys
-                ? tooltip.keys
-                    .map((key) => `${key}: ${(d as any)[key] || ''}`)
-                    .join('<br/>')
-                : `${(d as any)[x.key]} <br/> ${column.key} ${
-                    tickFormat
-                      ? // @ts-ignore
-                        formatMapping[tickFormat]
-                        ? // @ts-ignore
-                          format(formatMapping[tickFormat])((d as any)[column.key])
-                        : format(tickFormat)
-                      : (d as any)[column.key]
-                  }`
-            );
-          }
-        })
-        .on('mousemove', function (event) {
-          const [bX, bY] = pointer(event, select('body'));
-          tooltipDiv.style('left', `${bX + 10}px`).style('top', `${bY + 10}px`);
-        })
-        .on('mouseleave', function () {
-          tooltip &&
-            tooltipDiv
-              .style('opacity', '0')
-              .style('left', `0px`)
-              .style('top', `0px`);
-        });
+        .on('mouseenter', onMouseOver)
+        .on('mousemove', onMouseMove)
+        .on('mouseleave', onMouseLeave);
 
       transition();
 
@@ -206,8 +143,8 @@ const ColumnChartStacked = <TData = any,>({
       const horizontalLine = g
         .append('line')
         .attr('class', twMerge(className, 'line stroke-current'))
-        .attr('x1', direction === 'left' ? margin.left : x)
-        .attr('x2', direction === 'left' ? x : width + margin.left)
+        .attr('x1', direction === 'left' ? margin.left ?? 0 : x)
+        .attr('x2', direction === 'left' ? x : width + (margin.left ?? 0))
         .attr('y1', y)
         .attr('y2', y)
         .attr('clip-path', 'url(#clip)')
@@ -218,61 +155,55 @@ const ColumnChartStacked = <TData = any,>({
     referenceLines.map((object) => {
       object.y &&
         drawHLine({
-          x: width - margin.right,
+          x: width - (margin.right ?? 0),
           y: yFn(object.y),
           className: `${object.className || ''} reference-line`,
         });
     });
 
-    const tooltipDiv = select('body')
-      .append('div')
-      .attr('id', `tooltip-${id}`)
-      .style('position', 'absolute')
-      .style('opacity', '0')
-      .attr('class', `tooltip ${(tooltip && tooltip.className) || ''}`);
+    // Determine y-axis location
+    const yAxisLocation = y.find((col) => col.axis?.location)?.axis?.location || 'left';
+    const yAxisLabel = y.map((column) => column.axis?.label || column.key || '').join(', ');
 
-    // @ts-ignore
-    const yAxis = y.axis === 'right' ? axisRight(yFn) : axisLeft(yFn);
+    // Create y-axis config
+    const yAxisConfig: AxisConfig = {
+      key: y[0]?.key || '',
+      axis: {
+        location: yAxisLocation as 'left' | 'right',
+        ticks: y[0]?.axis?.ticks || 5,
+        label: yAxisLabel,
+      },
+    };
 
-    tickFormat &&
-      yAxis.tickFormat(
-        // @ts-ignore
-        formatMapping[tickFormat]
-          ? // @ts-ignore
-            format(formatMapping[tickFormat])
-          : format(tickFormat)
-      );
+    // Draw x-axis using shared utility
+    drawAxis({
+      g,
+      scale: xFn,
+      config: x,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+    });
 
-    const yAxisG = g
-      .append('g')
-      .attr('class', 'yAxis axis')
-      .attr(
-        'transform',
-        // @ts-ignore
-        `translate(${y.axis === 'right' ? margin.left + width : margin.left},0)`
-      );
-    yAxisG.call(yAxis);
-
-    const xAxis = x.axis === 'top' ? axisTop(xFn) : axisBottom(xFn);
-
-    const xAxisG = g.append('g').attr('class', 'axis--x axis');
-
-    xAxisG
-      .attr(
-        'transform',
-        `translate(0, ${
-          x.axis === 'top' ? margin.top : height - margin.bottom
-        })`
-      )
-      .call(xAxis);
-  }, [data]);
+    // Draw y-axis using shared utility
+    drawAxis({
+      g,
+      scale: yFn,
+      config: yAxisConfig,
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'vertical',
+    });
+  }, [data, onMouseOver, onMouseMove, onMouseLeave]);
 
   useEffect(() => {
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();
     };
-  }, [data]);
+  }, [data, refreshChart, id]);
   /* eslint-enable */
   return (
     <svg

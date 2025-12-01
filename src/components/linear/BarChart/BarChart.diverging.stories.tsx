@@ -23,7 +23,7 @@ export const DivergingBarChart = meta.story({
         key: 'deltaMacbook',
         className: 'text-green-500 rounded',
         classNameNegative: 'text-red-500 rounded',
-        axis: 'top',
+        axis: { location: 'top' },
         start: -10,
         end: 10,
       },
@@ -32,12 +32,10 @@ export const DivergingBarChart = meta.story({
   },
 });
 
-export const DrawingDivergingBarChart = meta.story({
+export const DrawingDivergingBarChart = DivergingBarChart.extend({
   args: {
-    ...DivergingBarChart.input.args,
     id: 'bar-chart-diverging-drawing',
     drawing: {
-      enabled: true,
       duration: 1000,
       delay: 100,
     },

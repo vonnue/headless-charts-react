@@ -14,21 +14,11 @@ const meta = preview.meta({
   tags: ['autodocs'],
   args: {
     x: [
-      {
-        key: 'macbook',
-      },
-      {
-        key: 'iphone',
-      },
-      {
-        key: 'ipad',
-      },
-      {
-        key: 'wearables',
-      },
-      {
-        key: 'services',
-      },
+      { key: 'macbook' },
+      { key: 'iphone' },
+      { key: 'ipad' },
+      { key: 'wearables' },
+      { key: 'services' },
     ],
     y: { key: 'year' },
   },
@@ -41,9 +31,8 @@ export const Default = meta.story({
   },
 });
 
-export const Styled = meta.story({
+export const Styled = Default.extend({
   args: {
-    ...Default.input.args,
     id: 'bar-chart-stacked-styled',
     className: 'bg-gray-100 rounded',
     padding: {
@@ -60,34 +49,18 @@ export const Styled = meta.story({
       left: 60,
     },
     x: [
-      {
-        key: 'macbook',
-        className: 'fill-purple-800',
-      },
-      {
-        key: 'iphone',
-        className: 'fill-purple-600',
-      },
-      {
-        key: 'ipad',
-        className: 'fill-purple-400',
-      },
-      {
-        key: 'wearables',
-        className: 'fill-purple-300',
-      },
-      {
-        key: 'services',
-        className: 'fill-purple-200',
-      },
+      { key: 'macbook', className: 'fill-purple-800' },
+      { key: 'iphone', className: 'fill-purple-600' },
+      { key: 'ipad', className: 'fill-purple-400' },
+      { key: 'wearables', className: 'fill-purple-300' },
+      { key: 'services', className: 'fill-purple-200' },
     ],
     y: { key: 'year', className: 'text-red-500', padding: 10 },
   },
 });
 
-export const WithDrawing = meta.story({
+export const WithDrawing = Styled.extend({
   args: {
-    ...Styled.input.args,
     id: 'bar-chart-stacked-drawing',
     drawing: {
       duration: 1000,
@@ -95,9 +68,8 @@ export const WithDrawing = meta.story({
   },
 });
 
-export const WithDrawingDelay = meta.story({
+export const WithDrawingDelay = Styled.extend({
   args: {
-    ...Styled.input.args,
     id: 'bar-chart-stacked-drawing-delay',
     drawing: {
       duration: 1000,
@@ -106,9 +78,8 @@ export const WithDrawingDelay = meta.story({
   },
 });
 
-export const CustomStyle = meta.story({
+export const CustomStyle = Styled.extend({
   args: {
-    ...Styled.input.args,
     id: 'bar-chart-stacked-custom-style',
     style: {
       width: '1024px',

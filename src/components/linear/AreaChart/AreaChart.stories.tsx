@@ -73,6 +73,51 @@ export const Styled = meta.story({
   },
 });
 
+/** AreaChart with axis labels */
+export const AxisLabels = meta.story({
+  args: {
+    id: 'area-chart-axis-labels',
+    data,
+    x: {
+      key: 'year',
+      axis: {
+        label: 'Year',
+      },
+    },
+    y: [
+      {
+        key: 'iphone',
+        className: 'text-purple-900',
+        axis: {
+          label: 'Sales ',
+        },
+      },
+      {
+        key: 'macbook',
+        className: 'text-purple-700',
+      },
+      {
+        key: 'ipad',
+        className: 'text-purple-500',
+      },
+      {
+        key: 'wearables',
+        className: 'text-pink-700',
+      },
+      {
+        key: 'services',
+        className: 'text-purple-300',
+      },
+    ],
+    margin: {
+      top: 30,
+      right: 20,
+      bottom: 40,
+      left: 40,
+    },
+  } as any,
+});
+
 export const Padding = Styled.extend({
   args: {
     id: 'area-chart-padding',

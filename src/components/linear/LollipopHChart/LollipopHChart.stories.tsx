@@ -58,7 +58,9 @@ export const WithAxisLabel = meta.story({
     x: {
       key: 'value',
       start: 0,
-      axisLabel: 'Value (Units)',
+      axis: {
+        label: 'Value (Units)',
+      },
     },
   },
 });
@@ -70,11 +72,15 @@ export const WithBothAxisLabels = meta.story({
     x: {
       key: 'value',
       start: 0,
-      axisLabel: 'Value (Units)',
+      axis: {
+        label: 'Value (Units)',
+      },
     },
     y: {
       key: 'name',
-      axisLabel: 'Categories',
+      axis: {
+        label: 'Categories',
+      },
     },
   },
 });

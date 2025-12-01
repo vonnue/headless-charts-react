@@ -118,3 +118,27 @@ export const WithZoom = meta.story({
     },
   },
 });
+
+/**
+ * You can add labels to the axes to provide context for the data. In this example, the x-axis is labeled "GDP (USD)" and the y-axis is labeled "Purchasing Power".
+ */
+export const WithAxisLabels = meta.story({
+  args: {
+    ...WithColor.input.args,
+    id: 'scatterplot-axis-labels',
+    x: {
+      key: 'gdp',
+      axis: {
+        label: 'GDP (USD)',
+        ticks: 5,
+      },
+    },
+    y: {
+      key: 'purchasing_power',
+      axis: {
+        label: 'Purchasing Power',
+        ticks: 5,
+      },
+    },
+  },
+});

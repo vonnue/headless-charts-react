@@ -8,6 +8,7 @@ import { defaultChartClassNames } from '@/utils';
 import { GaugeProps } from '@/types';
 import { max } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
+import useTooltip from '@/hooks/useTooltip';
 
 interface Region {
   limit: number;
@@ -41,6 +42,7 @@ const SpeedometerChart = <TData = any,>({
   axisTicks = 5,
   needleRadius = 0.8,
   style = {},
+  tooltip,
 }: SpeedometerChartProps<TData>) => {
   const PI = Math.PI;
   const MIN_ANGLE = -PI / 2;
@@ -49,6 +51,14 @@ const SpeedometerChart = <TData = any,>({
 
   const previousData = useRef(0);
   regions.sort((a, b) => b.limit - a.limit);
+
+  const dataValue = typeof data === 'number' ? data : 0;
+
+  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+    id,
+    tooltip,
+    defaultHtml: () => `Value: ${dataValue}`,
+  });
 
   const setup = useCallback(() => {
     const svg = select<SVGSVGElement, unknown>(`#${id}`);
@@ -121,6 +131,13 @@ const SpeedometerChart = <TData = any,>({
       )
       .attr('class', 'fill-current stroke-current stroke-2');
 
+    // Add tooltip events to the needle group
+    dataG
+      .style('cursor', 'pointer')
+      .on('mouseenter', (event: any) => onMouseOver(event, { value: dataValue }))
+      .on('mousemove', onMouseMove)
+      .on('mouseleave', onMouseLeave);
+
     refreshChart();
 
     label &&
@@ -172,9 +189,8 @@ const SpeedometerChart = <TData = any,>({
       );
 
     g.call(xAxis);
-  }, [id, margin, needleRadius]);
+  }, [id, margin, needleRadius, onMouseOver, onMouseMove, onMouseLeave, dataValue]);
 
-  const dataValue = typeof data === 'number' ? data : 0;
   const currentAngle = ((dataValue / maxValue) * (MAX_ANGLE - MIN_ANGLE) * 180) / PI;
   const previousAngle =
     ((previousData.current / maxValue) * (MAX_ANGLE - MIN_ANGLE) * 180) / PI;

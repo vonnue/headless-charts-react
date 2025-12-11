@@ -15,6 +15,7 @@ exports[`SpeedometerChart > renders speedometer component 1`] = `
     />
     <g
       class="data-group"
+      style="cursor: pointer;"
       transform="rotate(0)"
     >
       <circle

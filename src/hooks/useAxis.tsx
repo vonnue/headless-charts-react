@@ -100,10 +100,12 @@ export function drawAxis<TData = any>({
 
   const axisClassName =
     className ?? `axis axis--${orientation === 'horizontal' ? 'x' : 'y'}`;
+  const testId = orientation === 'horizontal' ? 'x-axis' : 'y-axis';
 
   const axisG = g
     .append('g')
     .attr('class', axisClassName)
+    .attr('data-testid', testId)
     .attr('transform', transform);
 
   axisG.call(axis);

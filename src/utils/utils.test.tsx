@@ -49,13 +49,13 @@ describe('convertToRanks', () => {
   const y = [{ key: 'john' }, { key: 'walter' }, { key: 'shane' }];
   const x = { key: 'name' };
 
-  it(`Convert an array of object to ranks based on a series of Y`, () => {});
+  it(`Convert an array of object to ranks based on a series of Y`, () => {
+    const rankedData = convertToRanks(data, y, x);
 
-  const rankedData = convertToRanks(data, y, x);
-
-  expect(rankedData).toEqual([
-    { name: 'calories', john: 2, walter: 1, shane: 3 },
-  ]);
+    expect(rankedData).toEqual([
+      { name: 'calories', john: 2, walter: 1, shane: 3 },
+    ]);
+  });
 
   it(`Convert an array of object to ranks based on a series of Y in ascending order`, () => {
     const rankedData2 = convertToRanks(data, y, x, true);
@@ -209,8 +209,8 @@ describe('deepValue', () => {
     expect(deepValue(data, 'nested.name')).toBe('calories');
   });
 
-  it(`Get the value of a nested object`, () => {
-    expect(deepValue(data, 'name')).toBe('calories');
-    expect(deepValue(data, 'nested.name')).toBe('calories');
+  it(`Returns undefined for non-existent keys`, () => {
+    expect(deepValue(data, 'nonexistent')).toBeUndefined();
+    expect(deepValue(data, 'nested.nonexistent')).toBeUndefined();
   });
 });

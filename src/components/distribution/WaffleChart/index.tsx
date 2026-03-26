@@ -7,8 +7,6 @@ import { deepValue } from '@/utils';
 import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 
-type CellShape = 'square' | 'rounded' | 'circle';
-
 interface ClassNameMap {
   [key: string]: string;
 }
@@ -22,12 +20,12 @@ export interface WaffleChartProps<TData = any> extends ChartProps<TData> {
   id: string;
   className?: string;
   classNameMap?: ClassNameMap;
+  classNameCell?: string;
   nameKey: Extract<keyof TData, string> | string;
   valueKey: Extract<keyof TData, string> | string;
   rows?: number;
   columns?: number;
   gap?: number;
-  cellShape?: CellShape;
   drawing?: DrawingOptions;
   tooltip?: TooltipConfig;
 }
@@ -64,7 +62,7 @@ const WaffleChart = <TData = any,>({
   rows = 10,
   columns = 10,
   gap = 2,
-  cellShape = 'rounded',
+  classNameCell = '',
   drawing,
   tooltip,
   style = {},
@@ -167,61 +165,28 @@ const WaffleChart = <TData = any,>({
         `translate(${(margin.left ?? 0) + offsetX}, ${(margin.top ?? 0) + offsetY})`
       );
 
-    if (cellShape === 'circle') {
-      g.selectAll('circle')
-        .data(cellData)
-        .join('circle')
-        .attr(
-          'cx',
-          (d) => d.col * (cellSize + gap) + cellSize / 2
-        )
-        .attr(
-          'cy',
-          (d) => d.row * (cellSize + gap) + cellSize / 2
-        )
-        .attr('r', 0)
-        .attr('class', (d) =>
-          twMerge('fill-black', classNameMap[d.name])
-        )
-        .on('mouseenter', onMouseOver)
-        .on('mousemove', onMouseMove)
-        .on('mouseleave', onMouseLeave)
-        .transition()
-        .duration(drawing?.duration || 0)
-        .delay((_, i) =>
-          drawing?.duration
-            ? (drawing.duration * i) / cellData.length
-            : 0
-        )
-        .attr('r', cellSize / 2);
-    } else {
-      const rx = cellShape === 'rounded' ? cellSize * 0.2 : 0;
-
-      g.selectAll('rect')
-        .data(cellData)
-        .join('rect')
-        .attr('x', (d) => d.col * (cellSize + gap))
-        .attr('y', (d) => d.row * (cellSize + gap))
-        .attr('width', 0)
-        .attr('height', 0)
-        .attr('rx', rx)
-        .attr('ry', rx)
-        .attr('class', (d) =>
-          twMerge('fill-black', classNameMap[d.name])
-        )
-        .on('mouseenter', onMouseOver)
-        .on('mousemove', onMouseMove)
-        .on('mouseleave', onMouseLeave)
-        .transition()
-        .duration(drawing?.duration || 0)
-        .delay((_, i) =>
-          drawing?.duration
-            ? (drawing.duration * i) / cellData.length
-            : 0
-        )
-        .attr('width', cellSize)
-        .attr('height', cellSize);
-    }
+    g.selectAll('rect')
+      .data(cellData)
+      .join('rect')
+      .attr('x', (d) => d.col * (cellSize + gap))
+      .attr('y', (d) => d.row * (cellSize + gap))
+      .attr('width', 0)
+      .attr('height', 0)
+      .attr('class', (d) =>
+        twMerge('fill-black', classNameCell, classNameMap[d.name])
+      )
+      .on('mouseenter', onMouseOver)
+      .on('mousemove', onMouseMove)
+      .on('mouseleave', onMouseLeave)
+      .transition()
+      .duration(drawing?.duration || 0)
+      .delay((_, i) =>
+        drawing?.duration
+          ? (drawing.duration * i) / cellData.length
+          : 0
+      )
+      .attr('width', cellSize)
+      .attr('height', cellSize);
   }, [
     id,
     data,
@@ -232,7 +197,7 @@ const WaffleChart = <TData = any,>({
     rows,
     columns,
     gap,
-    cellShape,
+    classNameCell,
     drawing,
     classNameMap,
     onMouseOver,

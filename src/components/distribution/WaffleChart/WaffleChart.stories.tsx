@@ -10,9 +10,9 @@ import data from './sample.json';
  * Default settings:
  * - 10x10 grid (100 cells)
  * - gap between cells = 2px
- * - cell shape = 'rounded' (rounded squares)
  * - no animation or tooltips
  * - all margins = 40px
+ * - cell shape controlled via `classNameCell` (e.g. `rounded-full` for circles, `rounded-lg` for rounded squares)
  */
 const meta = preview.meta({
   title: 'Distribution/WaffleChart/Intro',
@@ -67,24 +67,24 @@ export const Drawing = meta.story({
 });
 
 /**
- * Set `cellShape` to `'circle'` to render circular cells.
+ * Use `classNameCell` with `rounded-full` to render circular cells.
  */
 export const CircleCells = meta.story({
   args: {
     ...Styled.input.args,
     id: 'circle-waffle-chart',
-    cellShape: 'circle',
+    classNameCell: 'rounded-full',
   },
 });
 
 /**
- * Set `cellShape` to `'square'` for sharp-cornered squares (the default is `'rounded'`).
+ * Use `classNameCell` with `rounded-lg` for rounded squares.
  */
-export const SquareCells = meta.story({
+export const RoundedCells = meta.story({
   args: {
     ...Styled.input.args,
-    id: 'square-waffle-chart',
-    cellShape: 'square',
+    id: 'rounded-waffle-chart',
+    classNameCell: 'rounded-lg',
   },
 });
 

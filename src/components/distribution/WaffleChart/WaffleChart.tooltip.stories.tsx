@@ -1,5 +1,4 @@
 import preview from '../../../../.storybook/preview';
-import { interpolateRdYlGn } from 'd3-scale-chromatic';
 
 import WaffleChart from '.';
 import data from './sample.json';
@@ -10,19 +9,24 @@ const meta = preview.meta({
   tags: ['autodocs'],
 });
 
+const classNameMap = {
+  macbook: 'fill-purple-300 dark:fill-purple-100',
+  services: 'fill-purple-400 dark:fill-purple-300',
+  wearables: 'fill-purple-500 dark:fill-purple-500',
+  ipad: 'fill-purple-600 dark:fill-purple-700',
+  iphone: 'fill-purple-800 dark:fill-purple-900',
+};
+
 /**
- * Enable tooltips by passing an empty `tooltip` object. The default tooltip shows the x, y, and color values.
+ * Enable tooltips by passing an empty `tooltip` object. The default tooltip shows the category name, value, and percentage.
  */
 export const Tooltip = meta.story({
   args: {
     data,
     id: 'tooltip-waffle-chart',
-    x: { key: 'year' },
-    y: { key: 'month' },
-    color: {
-      key: 'temperature',
-      scale: interpolateRdYlGn,
-    },
+    valueKey: 'Y2012',
+    nameKey: 'name',
+    classNameMap,
     tooltip: {},
   },
 });
@@ -35,7 +39,7 @@ export const TooltipKeys = meta.story({
     ...Tooltip.input.args,
     id: 'tooltip-keys-waffle-chart',
     tooltip: {
-      keys: ['year', 'month', 'temperature'],
+      keys: ['name', 'Y2012'],
     },
   },
 });
@@ -49,7 +53,7 @@ export const TooltipCustomHtml = meta.story({
     id: 'tooltip-html-waffle-chart',
     tooltip: {
       html: (d: any) =>
-        `<strong>${d.data.month} ${d.data.year}</strong><br/>${d.data.temperature}°C`,
+        `<strong>${d.name}</strong><br/>Revenue: $${d.value}B`,
     },
   },
 });

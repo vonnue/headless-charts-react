@@ -1,46 +1,44 @@
 import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
 import useTooltip from '@/hooks/useTooltip';
-import { scaleSequential } from 'd3-scale';
-import { min as d3min, max as d3max } from 'd3-array';
 
-import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import { ChartProps, TooltipConfig } from '@/types';
 import { deepValue } from '@/utils';
 import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 
-interface DrawingOptions {
-  duration: number;
+type CellShape = 'square' | 'rounded' | 'circle';
+
+interface ClassNameMap {
+  [key: string]: string;
 }
 
-export interface WaffleChartColorConfig {
-  key: string;
-  scale?: (t: number) => string;
-  domain?: [number, number];
-  classNameMap?: {
-    [key: string]: string;
-  };
+interface DrawingOptions {
+  duration: number;
 }
 
 export interface WaffleChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   id: string;
   className?: string;
-  classNameCell?: string;
-  x: AxisConfig<TData>;
-  y: AxisConfig<TData>;
-  color: WaffleChartColorConfig;
+  classNameMap?: ClassNameMap;
+  nameKey: Extract<keyof TData, string> | string;
+  valueKey: Extract<keyof TData, string> | string;
+  rows?: number;
+  columns?: number;
   gap?: number;
-  rx?: number;
+  cellShape?: CellShape;
   drawing?: DrawingOptions;
   tooltip?: TooltipConfig;
 }
 
 interface CellDatum {
-  xValue: any;
-  yValue: any;
+  name: string;
+  value: number;
+  cellCount: number;
   row: number;
   col: number;
+  index: number;
   data: any;
 }
 
@@ -48,7 +46,7 @@ const WaffleChart = <TData = any,>({
   data,
   id,
   className = '',
-  classNameCell = '',
+  classNameMap = {},
   padding = {
     left: 0,
     top: 0,
@@ -61,11 +59,12 @@ const WaffleChart = <TData = any,>({
     top: 40,
     bottom: 40,
   },
-  x,
-  y,
-  color,
+  nameKey = 'name',
+  valueKey,
+  rows = 10,
+  columns = 10,
   gap = 2,
-  rx = 0,
+  cellShape = 'rounded',
   drawing,
   tooltip,
   style = {},
@@ -74,9 +73,9 @@ const WaffleChart = <TData = any,>({
     id,
     tooltip,
     defaultHtml: (d: any) => {
-      const datum = d.data;
-      if (!datum) return '';
-      return `${x.key}: ${deepValue(datum, x.key)}<br/>${y.key}: ${deepValue(datum, y.key)}<br/>${color.key}: ${deepValue(datum, color.key)}`;
+      const totalCells = rows * columns;
+      const percentage = ((d.cellCount / totalCells) * 100).toFixed(1);
+      return `${d.name}: ${d.value} (${percentage}%)`;
     },
   });
 
@@ -94,66 +93,59 @@ const WaffleChart = <TData = any,>({
     const chartHeight =
       height - (margin.top ?? 0) - (margin.bottom ?? 0);
 
-    // Extract unique categorical values preserving data order
-    const xValues: any[] = [];
-    const yValues: any[] = [];
-    const xSeen = new Set();
-    const ySeen = new Set();
+    const totalCells = rows * columns;
 
-    data.forEach((d) => {
-      const xVal = deepValue(d, x.key);
-      const yVal = deepValue(d, y.key);
-      if (!xSeen.has(xVal)) {
-        xSeen.add(xVal);
-        xValues.push(xVal);
-      }
-      if (!ySeen.has(yVal)) {
-        ySeen.add(yVal);
-        yValues.push(yVal);
-      }
+    // Cell allocation using largest remainder method
+    const total = data.reduce(
+      (sum, d) => sum + (Number(deepValue(d, valueKey)) || 0),
+      0
+    );
+
+    if (total === 0) return;
+
+    const categories = data.map((d, i) => {
+      const value = Number(deepValue(d, valueKey)) || 0;
+      const exact = (value / total) * totalCells;
+      return {
+        name: String(deepValue(d, nameKey)),
+        value,
+        exact,
+        floor: Math.floor(exact),
+        remainder: exact - Math.floor(exact),
+        originalIndex: i,
+        data: d,
+      };
     });
 
-    const columns = xValues.length;
-    const rows = yValues.length;
+    let allocated = categories.reduce((sum, c) => sum + c.floor, 0);
+    let remaining = totalCells - allocated;
 
-    if (columns === 0 || rows === 0) return;
-
-    // Build lookup map
-    const dataMap = new Map<string, TData>();
-    data.forEach((d) => {
-      const key = `${deepValue(d, x.key)}__${deepValue(d, y.key)}`;
-      dataMap.set(key, d);
-    });
-
-    // Build color scale
-    let colorFn: ((datum: TData) => string) | null = null;
-    if (color.scale) {
-      const colorValues = data.map(
-        (d) => Number(deepValue(d, color.key)) || 0
-      );
-      const domainMin = color.domain?.[0] ?? d3min(colorValues) ?? 0;
-      const domainMax = color.domain?.[1] ?? d3max(colorValues) ?? 1;
-      const seq = scaleSequential(color.scale).domain([domainMin, domainMax]);
-      colorFn = (d: TData) => seq(Number(deepValue(d, color.key)) || 0);
+    // Distribute remaining cells to highest-remainder categories
+    const sorted = [...categories].sort(
+      (a, b) => b.remainder - a.remainder
+    );
+    for (let i = 0; i < remaining && i < sorted.length; i++) {
+      sorted[i].floor += 1;
     }
 
-    // Build cell data array
+    // Build flat cell array
     const cellData: CellDatum[] = [];
-    yValues.forEach((yVal, rowIdx) => {
-      xValues.forEach((xVal, colIdx) => {
-        const key = `${xVal}__${yVal}`;
-        const datum = dataMap.get(key);
-        if (datum) {
-          cellData.push({
-            xValue: xVal,
-            yValue: yVal,
-            row: rowIdx,
-            col: colIdx,
-            data: datum,
-          });
-        }
-      });
-    });
+    for (const cat of categories) {
+      for (let c = 0; c < cat.floor; c++) {
+        const idx = cellData.length;
+        const col = idx % columns;
+        const row = Math.floor(idx / columns);
+        cellData.push({
+          name: cat.name,
+          value: cat.value,
+          cellCount: cat.floor,
+          row,
+          col,
+          index: idx,
+          data: cat.data,
+        });
+      }
+    }
 
     // Calculate cell size (keep cells square)
     const cellWidth =
@@ -175,144 +167,74 @@ const WaffleChart = <TData = any,>({
         `translate(${(margin.left ?? 0) + offsetX}, ${(margin.top ?? 0) + offsetY})`
       );
 
-    // Scale label font size to cell size, capped to stay readable
-    const labelFontSize = Math.min(Math.max(cellSize * 0.45, 8), 13);
-    const titleFontSize = labelFontSize + 1;
-    const labelGap = Math.max(cellSize * 0.4, 6);
+    if (cellShape === 'circle') {
+      g.selectAll('circle')
+        .data(cellData)
+        .join('circle')
+        .attr(
+          'cx',
+          (d) => d.col * (cellSize + gap) + cellSize / 2
+        )
+        .attr(
+          'cy',
+          (d) => d.row * (cellSize + gap) + cellSize / 2
+        )
+        .attr('r', 0)
+        .attr('class', (d) =>
+          twMerge('fill-black', classNameMap[d.name])
+        )
+        .on('mouseenter', onMouseOver)
+        .on('mousemove', onMouseMove)
+        .on('mouseleave', onMouseLeave)
+        .transition()
+        .duration(drawing?.duration || 0)
+        .delay((_, i) =>
+          drawing?.duration
+            ? (drawing.duration * i) / cellData.length
+            : 0
+        )
+        .attr('r', cellSize / 2);
+    } else {
+      const rx = cellShape === 'rounded' ? cellSize * 0.2 : 0;
 
-    // Pick evenly-spaced tick indices including first and last
-    const pickTickIndices = (count: number, ticks: number): Set<number> => {
-      if (ticks <= 0 || count === 0) return new Set();
-      if (ticks === 1) return new Set([0]);
-      if (ticks >= count) return new Set(Array.from({ length: count }, (_, i) => i));
-      const indices = new Set<number>();
-      for (let i = 0; i < ticks; i++) {
-        indices.add(Math.round((i * (count - 1)) / (ticks - 1)));
-      }
-      return indices;
-    };
-
-    // Draw x-axis labels (column headers) when x.axis is configured
-    if (x.axis) {
-      const isBottom = x.axis.location !== 'top';
-      const xLabelY = isBottom
-        ? gridHeight + labelGap
-        : -labelGap;
-      const xTicks = x.axis.ticks ?? columns;
-      const xTickSet = pickTickIndices(columns, xTicks);
-
-      g.append('g')
-        .attr('class', 'axis axis--x')
-        .attr('data-testid', 'x-axis')
-        .selectAll('text')
-        .data(xValues)
-        .join('text')
-        .text((d, i) => xTickSet.has(i) ? String(d) : '')
-        .attr('x', (_, i) => i * (cellSize + gap) + cellSize / 2)
-        .attr('y', xLabelY)
-        .attr('text-anchor', 'middle')
-        .attr('dominant-baseline', isBottom ? 'hanging' : 'auto')
-        .attr('fill', 'currentColor')
-        .style('font-size', `${labelFontSize}px`)
-        .style('opacity', 0.55);
-
-      if (x.axis.label) {
-        g.append('text')
-          .text(x.axis.label)
-          .attr('x', gridWidth / 2)
-          .attr('y', isBottom ? gridHeight + labelGap + labelFontSize + titleFontSize : -labelGap - labelFontSize - 4)
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', isBottom ? 'hanging' : 'auto')
-          .attr('fill', 'currentColor')
-          .style('font-size', `${titleFontSize}px`)
-          .style('font-weight', '500')
-          .style('opacity', 0.7);
-      }
+      g.selectAll('rect')
+        .data(cellData)
+        .join('rect')
+        .attr('x', (d) => d.col * (cellSize + gap))
+        .attr('y', (d) => d.row * (cellSize + gap))
+        .attr('width', 0)
+        .attr('height', 0)
+        .attr('rx', rx)
+        .attr('ry', rx)
+        .attr('class', (d) =>
+          twMerge('fill-black', classNameMap[d.name])
+        )
+        .on('mouseenter', onMouseOver)
+        .on('mousemove', onMouseMove)
+        .on('mouseleave', onMouseLeave)
+        .transition()
+        .duration(drawing?.duration || 0)
+        .delay((_, i) =>
+          drawing?.duration
+            ? (drawing.duration * i) / cellData.length
+            : 0
+        )
+        .attr('width', cellSize)
+        .attr('height', cellSize);
     }
-
-    // Draw y-axis labels (row headers) when y.axis is configured
-    if (y.axis) {
-      const isLeft = y.axis.location !== 'right';
-      const yLabelX = isLeft
-        ? -labelGap
-        : gridWidth + labelGap;
-      const yTicks = y.axis.ticks ?? rows;
-      const yTickSet = pickTickIndices(rows, yTicks);
-
-      g.append('g')
-        .attr('class', 'axis axis--y')
-        .attr('data-testid', 'y-axis')
-        .selectAll('text')
-        .data(yValues)
-        .join('text')
-        .text((d, i) => yTickSet.has(i) ? String(d) : '')
-        .attr('x', yLabelX)
-        .attr('y', (_, i) => i * (cellSize + gap) + cellSize / 2)
-        .attr('text-anchor', isLeft ? 'end' : 'start')
-        .attr('dominant-baseline', 'central')
-        .attr('fill', 'currentColor')
-        .style('font-size', `${labelFontSize}px`)
-        .style('opacity', 0.55);
-
-      if (y.axis.label) {
-        const labelX = isLeft ? -labelGap - 28 : gridWidth + labelGap + 28;
-        g.append('text')
-          .text(y.axis.label)
-          .attr('x', labelX)
-          .attr('y', gridHeight / 2)
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', 'central')
-          .attr('fill', 'currentColor')
-          .attr('transform', `rotate(-90, ${labelX}, ${gridHeight / 2})`)
-          .style('font-size', `${titleFontSize}px`)
-          .style('font-weight', '500')
-          .style('opacity', 0.7);
-      }
-    }
-
-    g.selectAll('rect')
-      .data(cellData)
-      .join('rect')
-      .attr('x', (d) => d.col * (cellSize + gap))
-      .attr('y', (d) => d.row * (cellSize + gap))
-      .attr('width', 0)
-      .attr('height', 0)
-      .attr('class', (d) => {
-        const catClass =
-          color.classNameMap?.[String(deepValue(d.data, color.key))] ?? '';
-        return twMerge(classNameCell, catClass);
-      })
-      .attr('rx', rx)
-      .attr('style', (d) => {
-        if (colorFn) {
-          return `fill: ${colorFn(d.data)}`;
-        }
-        return '';
-      })
-      .on('mouseenter', onMouseOver)
-      .on('mousemove', onMouseMove)
-      .on('mouseleave', onMouseLeave)
-      .transition()
-      .duration(drawing?.duration || 0)
-      .delay((_, i) =>
-        drawing?.duration
-          ? (drawing.duration * i) / cellData.length
-          : 0
-      )
-      .attr('width', cellSize)
-      .attr('height', cellSize);
   }, [
     id,
     data,
     margin,
     padding,
-    x,
-    y,
-    color,
+    nameKey,
+    valueKey,
+    rows,
+    columns,
     gap,
-    rx,
-    classNameCell,
+    cellShape,
     drawing,
+    classNameMap,
     onMouseOver,
     onMouseMove,
     onMouseLeave,

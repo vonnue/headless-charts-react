@@ -1,20 +1,18 @@
 import preview from '../../../../.storybook/preview';
-import { interpolateRdYlGn, interpolateBlues } from 'd3-scale-chromatic';
 
 import WaffleChart from '.';
 import data from './sample.json';
 
 /**
- * Waffle charts display data as a categorical heatmap grid.
- * Each cell represents a data point at the intersection of two categorical axes,
- * with color encoding a continuous value via a D3 color scale.
+ * Waffle charts display part-to-whole relationships using a grid of cells.
+ * Each cell represents a proportion of the total, colored by category.
  *
  * Default settings:
- * - grid dimensions derived from unique x and y values in the data
+ * - 10x10 grid (100 cells)
  * - gap between cells = 2px
+ * - cell shape = 'rounded' (rounded squares)
  * - no animation or tooltips
  * - all margins = 40px
- * - cell border radius controlled via `rx` (e.g. `rx={4}` for rounded squares)
  */
 const meta = preview.meta({
   title: 'Distribution/WaffleChart/Intro',
@@ -22,73 +20,45 @@ const meta = preview.meta({
   tags: ['autodocs'],
 });
 
+const classNameMap = {
+  macbook: 'fill-purple-300 dark:fill-purple-100',
+  services: 'fill-purple-400 dark:fill-purple-300',
+  wearables: 'fill-purple-500 dark:fill-purple-500',
+  ipad: 'fill-purple-600 dark:fill-purple-700',
+  iphone: 'fill-purple-800 dark:fill-purple-900',
+};
+
 /**
- * The default chart maps `x.key` to columns, `y.key` to rows, and `color.key` to cell color
- * via a D3 sequential color scale.
+ * The default chart iterates through the `data` prop, using `valueKey` as the value and `nameKey` as the category name.
  *
- * This example shows average monthly temperatures (London, 2018–2024) using the RdYlGn scale.
+ * `data`, `valueKey` and `nameKey` are required props.
  */
 export const Default = meta.story({
   args: {
     data,
     id: 'default-waffle-chart',
-    x: { key: 'year', axis: { location: 'bottom', ticks: 2, label: 'Year' } },
-    y: { key: 'month', axis: { location: 'left', ticks: 2, label: 'Month' } },
-    color: {
-      key: 'temperature',
-      scale: interpolateRdYlGn,
-    },
+    valueKey: 'Y2012',
+    nameKey: 'name',
   },
 });
 
 /**
- * Use a single-hue sequential scale like `interpolateBlues` for a different look.
+ * Provide a `classNameMap` prop to style each category with Tailwind classes.
  */
-export const BluesScale = meta.story({
+export const Styled = meta.story({
   args: {
     ...Default.input.args,
-    id: 'blues-waffle-chart',
-    color: {
-      key: 'temperature',
-      scale: interpolateBlues,
-    },
+    id: 'styled-waffle-chart',
+    classNameMap,
   },
 });
 
 /**
- * Axes with label titles for additional context.
- */
-export const MoreTicks = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'more-ticks-waffle-chart',
-    x: { key: 'year', axis: { location: 'bottom', ticks: 4, label: 'Year' } },
-    y: { key: 'month', axis: { location: 'left', ticks: 12, label: 'Month' } },
-  },
-});
-
-/**
- * No axes — the original minimal look.
- */
-export const NoAxes = meta.story({
-  args: {
-    data,
-    id: 'no-axes-waffle-chart',
-    x: { key: 'year' },
-    y: { key: 'month' },
-    color: {
-      key: 'temperature',
-      scale: interpolateRdYlGn,
-    },
-  },
-});
-
-/**
- * Animate the chart entrance with a staggered fill effect.
+ * Animate the chart entrance by specifying a `duration` in milliseconds via the `drawing` prop. Cells appear one-by-one in a staggered fill effect.
  */
 export const Drawing = meta.story({
   args: {
-    ...Default.input.args,
+    ...Styled.input.args,
     id: 'drawing-waffle-chart',
     drawing: {
       duration: 1000,
@@ -97,24 +67,36 @@ export const Drawing = meta.story({
 });
 
 /**
- * Use `rx` to add border radius to cells. A large value creates circular cells.
+ * Set `cellShape` to `'circle'` to render circular cells.
  */
 export const CircleCells = meta.story({
   args: {
-    ...Default.input.args,
+    ...Styled.input.args,
     id: 'circle-waffle-chart',
-    rx: 999,
+    cellShape: 'circle',
   },
 });
 
 /**
- * Use `rx` for rounded square cells.
+ * Set `cellShape` to `'square'` for sharp-cornered squares (the default is `'rounded'`).
  */
-export const RoundedCells = meta.story({
+export const SquareCells = meta.story({
   args: {
-    ...Default.input.args,
-    id: 'rounded-waffle-chart',
-    rx: 4,
+    ...Styled.input.args,
+    id: 'square-waffle-chart',
+    cellShape: 'square',
+  },
+});
+
+/**
+ * Configure the grid dimensions with `rows` and `columns` props for non-square layouts.
+ */
+export const CustomGrid = meta.story({
+  args: {
+    ...Styled.input.args,
+    id: 'custom-grid-waffle-chart',
+    rows: 5,
+    columns: 20,
   },
 });
 
@@ -123,7 +105,7 @@ export const RoundedCells = meta.story({
  */
 export const LargeGap = meta.story({
   args: {
-    ...Default.input.args,
+    ...Styled.input.args,
     id: 'large-gap-waffle-chart',
     gap: 6,
   },

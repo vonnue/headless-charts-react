@@ -32,6 +32,8 @@ export default definePreview({
             'ScatterPlot',
             'PieChart',
             ['Intro', 'Tooltips', 'Donuts', 'SemiCircle'],
+            'WaffleChart',
+            ['Intro', 'Tooltips'],
           ],
           'Linear',
         ],

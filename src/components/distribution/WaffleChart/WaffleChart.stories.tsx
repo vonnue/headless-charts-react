@@ -95,8 +95,8 @@ export const CustomGrid = meta.story({
   args: {
     ...Styled.input.args,
     id: 'custom-grid-waffle-chart',
-    x: { key: '', end: 20 },
-    y: { key: '', end: 5 },
+    x: { key: 'x', end: 20 },
+    y: { key: 'y', end: 5 },
   },
 });
 

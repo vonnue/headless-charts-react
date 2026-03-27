@@ -8,7 +8,7 @@ import data from './sample.json';
  * Each cell represents a proportion of the total, colored by category.
  *
  * Default settings:
- * - 10x10 grid (100 cells)
+ * - 10x10 grid (100 cells) via `x: { end: 10 }` and `y: { end: 10 }`
  * - gap between cells = 2px
  * - no animation or tooltips
  * - all margins = 40px
@@ -89,14 +89,14 @@ export const RoundedCells = meta.story({
 });
 
 /**
- * Configure the grid dimensions with `rows` and `columns` props for non-square layouts.
+ * Configure the grid dimensions with `x.end` (columns) and `y.end` (rows) for non-square layouts.
  */
 export const CustomGrid = meta.story({
   args: {
     ...Styled.input.args,
     id: 'custom-grid-waffle-chart',
-    rows: 5,
-    columns: 20,
+    x: { key: '', end: 20 },
+    y: { key: '', end: 5 },
   },
 });
 

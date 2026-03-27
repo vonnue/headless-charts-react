@@ -20,36 +20,39 @@ const meta = preview.meta({
   tags: ['autodocs'],
 });
 
-const classNameMap = {
-  macbook: 'fill-purple-300 dark:fill-purple-100',
-  services: 'fill-purple-400 dark:fill-purple-300',
-  wearables: 'fill-purple-500 dark:fill-purple-500',
-  ipad: 'fill-purple-600 dark:fill-purple-700',
-  iphone: 'fill-purple-800 dark:fill-purple-900',
+const color = {
+  key: 'name',
+  classNameMap: {
+    macbook: 'fill-purple-300 dark:fill-purple-100',
+    services: 'fill-purple-400 dark:fill-purple-300',
+    wearables: 'fill-purple-500 dark:fill-purple-500',
+    ipad: 'fill-purple-600 dark:fill-purple-700',
+    iphone: 'fill-purple-800 dark:fill-purple-900',
+  },
 };
 
 /**
- * The default chart iterates through the `data` prop, using `valueKey` as the value and `nameKey` as the category name.
+ * The default chart iterates through the `data` prop, using `valueKey` as the value and `color.key` as the category name.
  *
- * `data`, `valueKey` and `nameKey` are required props.
+ * `data` and `valueKey` are required props.
  */
 export const Default = meta.story({
   args: {
     data,
     id: 'default-waffle-chart',
     valueKey: 'Y2012',
-    nameKey: 'name',
+    color: { key: 'name' },
   },
 });
 
 /**
- * Provide a `classNameMap` prop to style each category with Tailwind classes.
+ * Provide a `color.classNameMap` to style each category with Tailwind classes.
  */
 export const Styled = meta.story({
   args: {
     ...Default.input.args,
     id: 'styled-waffle-chart',
-    classNameMap,
+    color,
   },
 });
 

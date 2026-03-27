@@ -2,7 +2,7 @@ import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
 import useTooltip from '@/hooks/useTooltip';
 
-import { ChartProps, TooltipConfig } from '@/types';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { deepValue } from '@/utils';
 import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
@@ -23,8 +23,8 @@ export interface WaffleChartProps<TData = any> extends ChartProps<TData> {
   classNameCell?: string;
   nameKey: Extract<keyof TData, string> | string;
   valueKey: Extract<keyof TData, string> | string;
-  rows?: number;
-  columns?: number;
+  x?: AxisConfig<TData>;
+  y?: AxisConfig<TData>;
   gap?: number;
   drawing?: DrawingOptions;
   tooltip?: TooltipConfig;
@@ -59,14 +59,17 @@ const WaffleChart = <TData = any,>({
   },
   nameKey = 'name',
   valueKey,
-  rows = 10,
-  columns = 10,
+  x = { key: '', end: 10 },
+  y = { key: '', end: 10 },
   gap = 2,
   classNameCell = '',
   drawing,
   tooltip,
   style = {},
 }: WaffleChartProps<TData>) => {
+  const columns = x.end ?? 10;
+  const rows = y.end ?? 10;
+
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
@@ -194,8 +197,10 @@ const WaffleChart = <TData = any,>({
     padding,
     nameKey,
     valueKey,
-    rows,
+    x,
+    y,
     columns,
+    rows,
     gap,
     classNameCell,
     drawing,

@@ -9,12 +9,15 @@ const meta = preview.meta({
   tags: ['autodocs'],
 });
 
-const classNameMap = {
-  macbook: 'fill-purple-300 dark:fill-purple-100',
-  services: 'fill-purple-400 dark:fill-purple-300',
-  wearables: 'fill-purple-500 dark:fill-purple-500',
-  ipad: 'fill-purple-600 dark:fill-purple-700',
-  iphone: 'fill-purple-800 dark:fill-purple-900',
+const color = {
+  key: 'name',
+  classNameMap: {
+    macbook: 'fill-purple-300 dark:fill-purple-100',
+    services: 'fill-purple-400 dark:fill-purple-300',
+    wearables: 'fill-purple-500 dark:fill-purple-500',
+    ipad: 'fill-purple-600 dark:fill-purple-700',
+    iphone: 'fill-purple-800 dark:fill-purple-900',
+  },
 };
 
 /**
@@ -25,8 +28,7 @@ export const Tooltip = meta.story({
     data,
     id: 'tooltip-waffle-chart',
     valueKey: 'Y2012',
-    nameKey: 'name',
-    classNameMap,
+    color,
     tooltip: {},
   },
 });

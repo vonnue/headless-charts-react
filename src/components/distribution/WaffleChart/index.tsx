@@ -7,10 +7,6 @@ import { deepValue } from '@/utils';
 import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 
-interface ClassNameMap {
-  [key: string]: string;
-}
-
 interface DrawingOptions {
   duration: number;
 }
@@ -19,10 +15,14 @@ export interface WaffleChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   id: string;
   className?: string;
-  classNameMap?: ClassNameMap;
   classNameCell?: string;
-  nameKey: Extract<keyof TData, string> | string;
   valueKey: Extract<keyof TData, string> | string;
+  color?: {
+    key: Extract<keyof TData, string> | string;
+    classNameMap?: {
+      [key: string]: string;
+    };
+  };
   x?: AxisConfig<TData>;
   y?: AxisConfig<TData>;
   gap?: number;
@@ -44,7 +44,6 @@ const WaffleChart = <TData = any,>({
   data,
   id,
   className = '',
-  classNameMap = {},
   padding = {
     left: 0,
     top: 0,
@@ -57,8 +56,8 @@ const WaffleChart = <TData = any,>({
     top: 40,
     bottom: 40,
   },
-  nameKey = 'name',
   valueKey,
+  color,
   x = { key: 'x', end: 10 },
   y = { key: 'y', end: 10 },
   gap = 2,
@@ -108,7 +107,7 @@ const WaffleChart = <TData = any,>({
       const value = Number(deepValue(d, valueKey)) || 0;
       const exact = (value / total) * totalCells;
       return {
-        name: String(deepValue(d, nameKey)),
+        name: color?.key ? String(deepValue(d, color.key)) : String(i),
         value,
         exact,
         floor: Math.floor(exact),
@@ -176,7 +175,7 @@ const WaffleChart = <TData = any,>({
       .attr('width', 0)
       .attr('height', 0)
       .attr('class', (d) =>
-        twMerge('fill-black', classNameCell, classNameMap[d.name])
+        twMerge('fill-black', classNameCell, color?.classNameMap?.[d.name])
       )
       .on('mouseenter', onMouseOver)
       .on('mousemove', onMouseMove)
@@ -195,8 +194,8 @@ const WaffleChart = <TData = any,>({
     data,
     margin,
     padding,
-    nameKey,
     valueKey,
+    color,
     x,
     y,
     columns,
@@ -204,7 +203,6 @@ const WaffleChart = <TData = any,>({
     gap,
     classNameCell,
     drawing,
-    classNameMap,
     onMouseOver,
     onMouseMove,
     onMouseLeave,

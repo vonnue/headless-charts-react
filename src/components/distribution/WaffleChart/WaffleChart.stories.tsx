@@ -14,7 +14,7 @@ import data from './sample.json';
  * - gap between cells = 2px
  * - no animation or tooltips
  * - all margins = 40px
- * - cell shape controlled via `classNameCell` (e.g. `rounded-full` for circles)
+ * - cell border radius controlled via `rx` (e.g. `rx={4}` for rounded squares)
  */
 const meta = preview.meta({
   title: 'Distribution/WaffleChart/Intro',
@@ -32,8 +32,8 @@ export const Default = meta.story({
   args: {
     data,
     id: 'default-waffle-chart',
-    x: { key: 'year' },
-    y: { key: 'month' },
+    x: { key: 'year', axis: { location: 'bottom', ticks: 2, label: 'Year' } },
+    y: { key: 'month', axis: { location: 'left', ticks: 2, label: 'Month' } },
     color: {
       key: 'temperature',
       scale: interpolateRdYlGn,
@@ -56,6 +56,34 @@ export const BluesScale = meta.story({
 });
 
 /**
+ * Axes with label titles for additional context.
+ */
+export const MoreTicks = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'more-ticks-waffle-chart',
+    x: { key: 'year', axis: { location: 'bottom', ticks: 4, label: 'Year' } },
+    y: { key: 'month', axis: { location: 'left', ticks: 12, label: 'Month' } },
+  },
+});
+
+/**
+ * No axes — the original minimal look.
+ */
+export const NoAxes = meta.story({
+  args: {
+    data,
+    id: 'no-axes-waffle-chart',
+    x: { key: 'year' },
+    y: { key: 'month' },
+    color: {
+      key: 'temperature',
+      scale: interpolateRdYlGn,
+    },
+  },
+});
+
+/**
  * Animate the chart entrance with a staggered fill effect.
  */
 export const Drawing = meta.story({
@@ -69,24 +97,24 @@ export const Drawing = meta.story({
 });
 
 /**
- * Use `classNameCell` with `rounded-full` for circular cells.
+ * Use `rx` to add border radius to cells. A large value creates circular cells.
  */
 export const CircleCells = meta.story({
   args: {
     ...Default.input.args,
     id: 'circle-waffle-chart',
-    classNameCell: 'rounded-full',
+    rx: 999,
   },
 });
 
 /**
- * Use `classNameCell` with `rounded-lg` for rounded squares.
+ * Use `rx` for rounded square cells.
  */
 export const RoundedCells = meta.story({
   args: {
     ...Default.input.args,
     id: 'rounded-waffle-chart',
-    classNameCell: 'rounded-lg',
+    rx: 4,
   },
 });
 

@@ -28,6 +28,19 @@ export const Tooltip = meta.story({
 });
 
 /**
+ * Use `tooltip.className` to style the tooltip container with Tailwind classes.
+ */
+export const TooltipClassName = meta.story({
+  args: {
+    ...Tooltip.input.args,
+    id: 'tooltip-classname-waffle-chart',
+    tooltip: {
+      className: 'bg-gray-800 text-white px-4 py-2 rounded-md shadow-md',
+    },
+  },
+});
+
+/**
  * Use `tooltip.keys` to display specific fields from the data.
  */
 export const TooltipKeys = meta.story({

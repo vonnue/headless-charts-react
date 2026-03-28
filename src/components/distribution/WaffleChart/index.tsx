@@ -31,6 +31,7 @@ export interface WaffleChartProps<TData = any> extends ChartProps<TData> {
   y: AxisConfig<TData>;
   color: WaffleChartColorConfig;
   gap?: number;
+  rx?: number;
   drawing?: DrawingOptions;
   tooltip?: TooltipConfig;
 }
@@ -64,6 +65,7 @@ const WaffleChart = <TData = any,>({
   y,
   color,
   gap = 2,
+  rx = 0,
   drawing,
   tooltip,
   style = {},
@@ -173,6 +175,101 @@ const WaffleChart = <TData = any,>({
         `translate(${(margin.left ?? 0) + offsetX}, ${(margin.top ?? 0) + offsetY})`
       );
 
+    // Scale label font size to cell size, capped to stay readable
+    const labelFontSize = Math.min(Math.max(cellSize * 0.45, 8), 13);
+    const titleFontSize = labelFontSize + 1;
+    const labelGap = Math.max(cellSize * 0.4, 6);
+
+    // Pick evenly-spaced tick indices including first and last
+    const pickTickIndices = (count: number, ticks: number): Set<number> => {
+      if (ticks <= 0 || count === 0) return new Set();
+      if (ticks === 1) return new Set([0]);
+      if (ticks >= count) return new Set(Array.from({ length: count }, (_, i) => i));
+      const indices = new Set<number>();
+      for (let i = 0; i < ticks; i++) {
+        indices.add(Math.round((i * (count - 1)) / (ticks - 1)));
+      }
+      return indices;
+    };
+
+    // Draw x-axis labels (column headers) when x.axis is configured
+    if (x.axis) {
+      const isBottom = x.axis.location !== 'top';
+      const xLabelY = isBottom
+        ? gridHeight + labelGap
+        : -labelGap;
+      const xTicks = x.axis.ticks ?? columns;
+      const xTickSet = pickTickIndices(columns, xTicks);
+
+      g.append('g')
+        .attr('class', 'axis axis--x')
+        .attr('data-testid', 'x-axis')
+        .selectAll('text')
+        .data(xValues)
+        .join('text')
+        .text((d, i) => xTickSet.has(i) ? String(d) : '')
+        .attr('x', (_, i) => i * (cellSize + gap) + cellSize / 2)
+        .attr('y', xLabelY)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', isBottom ? 'hanging' : 'auto')
+        .attr('fill', 'currentColor')
+        .style('font-size', `${labelFontSize}px`)
+        .style('opacity', 0.55);
+
+      if (x.axis.label) {
+        g.append('text')
+          .text(x.axis.label)
+          .attr('x', gridWidth / 2)
+          .attr('y', isBottom ? gridHeight + labelGap + labelFontSize + titleFontSize : -labelGap - labelFontSize - 4)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', isBottom ? 'hanging' : 'auto')
+          .attr('fill', 'currentColor')
+          .style('font-size', `${titleFontSize}px`)
+          .style('font-weight', '500')
+          .style('opacity', 0.7);
+      }
+    }
+
+    // Draw y-axis labels (row headers) when y.axis is configured
+    if (y.axis) {
+      const isLeft = y.axis.location !== 'right';
+      const yLabelX = isLeft
+        ? -labelGap
+        : gridWidth + labelGap;
+      const yTicks = y.axis.ticks ?? rows;
+      const yTickSet = pickTickIndices(rows, yTicks);
+
+      g.append('g')
+        .attr('class', 'axis axis--y')
+        .attr('data-testid', 'y-axis')
+        .selectAll('text')
+        .data(yValues)
+        .join('text')
+        .text((d, i) => yTickSet.has(i) ? String(d) : '')
+        .attr('x', yLabelX)
+        .attr('y', (_, i) => i * (cellSize + gap) + cellSize / 2)
+        .attr('text-anchor', isLeft ? 'end' : 'start')
+        .attr('dominant-baseline', 'central')
+        .attr('fill', 'currentColor')
+        .style('font-size', `${labelFontSize}px`)
+        .style('opacity', 0.55);
+
+      if (y.axis.label) {
+        const labelX = isLeft ? -labelGap - 28 : gridWidth + labelGap + 28;
+        g.append('text')
+          .text(y.axis.label)
+          .attr('x', labelX)
+          .attr('y', gridHeight / 2)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'central')
+          .attr('fill', 'currentColor')
+          .attr('transform', `rotate(-90, ${labelX}, ${gridHeight / 2})`)
+          .style('font-size', `${titleFontSize}px`)
+          .style('font-weight', '500')
+          .style('opacity', 0.7);
+      }
+    }
+
     g.selectAll('rect')
       .data(cellData)
       .join('rect')
@@ -185,6 +282,7 @@ const WaffleChart = <TData = any,>({
           color.classNameMap?.[String(deepValue(d.data, color.key))] ?? '';
         return twMerge(classNameCell, catClass);
       })
+      .attr('rx', rx)
       .attr('style', (d) => {
         if (colorFn) {
           return `fill: ${colorFn(d.data)}`;
@@ -212,6 +310,7 @@ const WaffleChart = <TData = any,>({
     y,
     color,
     gap,
+    rx,
     classNameCell,
     drawing,
     onMouseOver,

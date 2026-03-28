@@ -27,7 +27,7 @@ export const Tooltip = meta.story({
   args: {
     data,
     id: 'tooltip-waffle-chart',
-    valueKey: 'Y2012',
+    x: { key: 'Y2012' },
     color,
     tooltip: {},
   },

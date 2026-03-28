@@ -16,14 +16,13 @@ export interface WaffleChartProps<TData = any> extends ChartProps<TData> {
   id: string;
   className?: string;
   classNameCell?: string;
-  valueKey: Extract<keyof TData, string> | string;
   color?: {
     key: Extract<keyof TData, string> | string;
     classNameMap?: {
       [key: string]: string;
     };
   };
-  x?: AxisConfig<TData>;
+  x: AxisConfig<TData>;
   y?: AxisConfig<TData>;
   gap?: number;
   drawing?: DrawingOptions;
@@ -56,9 +55,8 @@ const WaffleChart = <TData = any,>({
     top: 40,
     bottom: 40,
   },
-  valueKey,
   color,
-  x = { key: 'x', end: 10 },
+  x,
   y = { key: 'y', end: 10 },
   gap = 2,
   classNameCell = '',
@@ -97,14 +95,14 @@ const WaffleChart = <TData = any,>({
 
     // Cell allocation using largest remainder method
     const total = data.reduce(
-      (sum, d) => sum + (Number(deepValue(d, valueKey)) || 0),
+      (sum, d) => sum + (Number(deepValue(d, x.key)) || 0),
       0
     );
 
     if (total === 0) return;
 
     const categories = data.map((d, i) => {
-      const value = Number(deepValue(d, valueKey)) || 0;
+      const value = Number(deepValue(d, x.key)) || 0;
       const exact = (value / total) * totalCells;
       return {
         name: color?.key ? String(deepValue(d, color.key)) : String(i),
@@ -194,7 +192,6 @@ const WaffleChart = <TData = any,>({
     data,
     margin,
     padding,
-    valueKey,
     color,
     x,
     y,

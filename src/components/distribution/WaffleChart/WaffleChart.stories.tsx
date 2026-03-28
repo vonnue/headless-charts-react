@@ -32,15 +32,15 @@ const color = {
 };
 
 /**
- * The default chart iterates through the `data` prop, using `valueKey` as the value and `color.key` as the category name.
+ * The default chart iterates through the `data` prop, using `x.key` as the value field and `color.key` as the category name.
  *
- * `data` and `valueKey` are required props.
+ * `data` and `x` are required props.
  */
 export const Default = meta.story({
   args: {
     data,
     id: 'default-waffle-chart',
-    valueKey: 'Y2012',
+    x: { key: 'Y2012' },
     color: { key: 'name' },
   },
 });
@@ -98,7 +98,7 @@ export const CustomGrid = meta.story({
   args: {
     ...Styled.input.args,
     id: 'custom-grid-waffle-chart',
-    x: { key: 'x', end: 20 },
+    x: { key: 'Y2012', end: 20 },
     y: { key: 'y', end: 5 },
   },
 });

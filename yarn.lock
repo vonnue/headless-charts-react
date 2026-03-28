@@ -1039,6 +1039,7 @@ __metadata:
     "@storybook/addon-docs": "npm:^10.1.5"
     "@storybook/addon-links": "npm:^10.1.5"
     "@storybook/addon-themes": "npm:^10.1.5"
+    "@storybook/addon-vitest": "npm:^10.1.5"
     "@storybook/react": "npm:^10.1.5"
     "@storybook/react-vite": "npm:^10.1.5"
     "@tailwindcss/postcss": "npm:^4.1.17"
@@ -1708,6 +1709,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@storybook/addon-vitest@npm:^10.1.5":
+  version: 10.3.3
+  resolution: "@storybook/addon-vitest@npm:10.3.3"
+  dependencies:
+    "@storybook/global": "npm:^5.0.0"
+    "@storybook/icons": "npm:^2.0.1"
+  peerDependencies:
+    "@vitest/browser": ^3.0.0 || ^4.0.0
+    "@vitest/browser-playwright": ^4.0.0
+    "@vitest/runner": ^3.0.0 || ^4.0.0
+    storybook: ^10.3.3
+    vitest: ^3.0.0 || ^4.0.0
+  peerDependenciesMeta:
+    "@vitest/browser":
+      optional: true
+    "@vitest/browser-playwright":
+      optional: true
+    "@vitest/runner":
+      optional: true
+    vitest:
+      optional: true
+  checksum: 10c0/1691bbe974b55510eb1b0d50a542322b79302e42789b35ecdda3fdcd8a289693c681c2a2fcf9c219c63a6d1112433f1f13305bd24143d2183e8d7dd53b65d560
+  languageName: node
+  linkType: hard
+
 "@storybook/builder-vite@npm:10.1.5":
   version: 10.1.5
   resolution: "@storybook/builder-vite@npm:10.1.5"
@@ -1753,7 +1779,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/icons@npm:^2.0.0":
+"@storybook/icons@npm:^2.0.0, @storybook/icons@npm:^2.0.1":
   version: 2.0.1
   resolution: "@storybook/icons@npm:2.0.1"
   peerDependencies:

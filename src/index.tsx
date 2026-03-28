@@ -28,6 +28,7 @@ export { default as RangePlot } from '@/components/ranges/RangePlot';
 
 export { default as ScatterPlot } from '@/components/distribution/ScatterPlot';
 export { default as PieChart } from '@/components/distribution/PieChart';
+export { default as WaffleChart } from '@/components/distribution/WaffleChart';
 
 export { default as RingGauge } from '@/components/gauges/RingGauge';
 export { default as BulletChart } from '@/components/gauges/BulletChart';

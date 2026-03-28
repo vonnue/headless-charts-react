@@ -1,18 +1,20 @@
 import preview from '../../../../.storybook/preview';
+import { interpolateRdYlGn, interpolateBlues } from 'd3-scale-chromatic';
 
 import WaffleChart from '.';
 import data from './sample.json';
 
 /**
- * Waffle charts display part-to-whole relationships using a grid of cells.
- * Each cell represents a proportion of the total, colored by category.
+ * Waffle charts display data as a categorical heatmap grid.
+ * Each cell represents a data point at the intersection of two categorical axes,
+ * with color encoding a continuous value via a D3 color scale.
  *
  * Default settings:
- * - 10x10 grid (100 cells) via `x: { end: 10 }` and `y: { end: 10 }`
+ * - grid dimensions derived from unique x and y values in the data
  * - gap between cells = 2px
  * - no animation or tooltips
  * - all margins = 40px
- * - cell shape controlled via `classNameCell` (e.g. `rounded-full` for circles, `rounded-lg` for rounded squares)
+ * - cell shape controlled via `classNameCell` (e.g. `rounded-full` for circles)
  */
 const meta = preview.meta({
   title: 'Distribution/WaffleChart/Intro',
@@ -20,48 +22,45 @@ const meta = preview.meta({
   tags: ['autodocs'],
 });
 
-const color = {
-  key: 'name',
-  classNameMap: {
-    macbook: 'fill-purple-300 dark:fill-purple-100',
-    services: 'fill-purple-400 dark:fill-purple-300',
-    wearables: 'fill-purple-500 dark:fill-purple-500',
-    ipad: 'fill-purple-600 dark:fill-purple-700',
-    iphone: 'fill-purple-800 dark:fill-purple-900',
-  },
-};
-
 /**
- * The default chart iterates through the `data` prop, using `x.key` as the value field and `color.key` as the category name.
+ * The default chart maps `x.key` to columns, `y.key` to rows, and `color.key` to cell color
+ * via a D3 sequential color scale.
  *
- * `data` and `x` are required props.
+ * This example shows average monthly temperatures (London, 2018–2024) using the RdYlGn scale.
  */
 export const Default = meta.story({
   args: {
     data,
     id: 'default-waffle-chart',
-    x: { key: 'Y2012' },
-    color: { key: 'name' },
+    x: { key: 'year' },
+    y: { key: 'month' },
+    color: {
+      key: 'temperature',
+      scale: interpolateRdYlGn,
+    },
   },
 });
 
 /**
- * Provide a `color.classNameMap` to style each category with Tailwind classes.
+ * Use a single-hue sequential scale like `interpolateBlues` for a different look.
  */
-export const Styled = meta.story({
+export const BluesScale = meta.story({
   args: {
     ...Default.input.args,
-    id: 'styled-waffle-chart',
-    color,
+    id: 'blues-waffle-chart',
+    color: {
+      key: 'temperature',
+      scale: interpolateBlues,
+    },
   },
 });
 
 /**
- * Animate the chart entrance by specifying a `duration` in milliseconds via the `drawing` prop. Cells appear one-by-one in a staggered fill effect.
+ * Animate the chart entrance with a staggered fill effect.
  */
 export const Drawing = meta.story({
   args: {
-    ...Styled.input.args,
+    ...Default.input.args,
     id: 'drawing-waffle-chart',
     drawing: {
       duration: 1000,
@@ -70,11 +69,11 @@ export const Drawing = meta.story({
 });
 
 /**
- * Use `classNameCell` with `rounded-full` to render circular cells.
+ * Use `classNameCell` with `rounded-full` for circular cells.
  */
 export const CircleCells = meta.story({
   args: {
-    ...Styled.input.args,
+    ...Default.input.args,
     id: 'circle-waffle-chart',
     classNameCell: 'rounded-full',
   },
@@ -85,21 +84,9 @@ export const CircleCells = meta.story({
  */
 export const RoundedCells = meta.story({
   args: {
-    ...Styled.input.args,
+    ...Default.input.args,
     id: 'rounded-waffle-chart',
     classNameCell: 'rounded-lg',
-  },
-});
-
-/**
- * Configure the grid dimensions with `x.end` (columns) and `y.end` (rows) for non-square layouts.
- */
-export const CustomGrid = meta.story({
-  args: {
-    ...Styled.input.args,
-    id: 'custom-grid-waffle-chart',
-    x: { key: 'Y2012', end: 20 },
-    y: { key: 'y', end: 5 },
   },
 });
 
@@ -108,7 +95,7 @@ export const CustomGrid = meta.story({
  */
 export const LargeGap = meta.story({
   args: {
-    ...Styled.input.args,
+    ...Default.input.args,
     id: 'large-gap-waffle-chart',
     gap: 6,
   },

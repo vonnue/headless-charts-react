@@ -1,6 +1,8 @@
 import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
 import useTooltip from '@/hooks/useTooltip';
+import { scaleSequential } from 'd3-scale';
+import { min as d3min, max as d3max } from 'd3-array';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { deepValue } from '@/utils';
@@ -11,31 +13,33 @@ interface DrawingOptions {
   duration: number;
 }
 
+export interface WaffleChartColorConfig {
+  key: string;
+  scale?: (t: number) => string;
+  domain?: [number, number];
+  classNameMap?: {
+    [key: string]: string;
+  };
+}
+
 export interface WaffleChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   id: string;
   className?: string;
   classNameCell?: string;
-  color?: {
-    key: Extract<keyof TData, string> | string;
-    classNameMap?: {
-      [key: string]: string;
-    };
-  };
   x: AxisConfig<TData>;
-  y?: AxisConfig<TData>;
+  y: AxisConfig<TData>;
+  color: WaffleChartColorConfig;
   gap?: number;
   drawing?: DrawingOptions;
   tooltip?: TooltipConfig;
 }
 
 interface CellDatum {
-  name: string;
-  value: number;
-  cellCount: number;
+  xValue: any;
+  yValue: any;
   row: number;
   col: number;
-  index: number;
   data: any;
 }
 
@@ -43,6 +47,7 @@ const WaffleChart = <TData = any,>({
   data,
   id,
   className = '',
+  classNameCell = '',
   padding = {
     left: 0,
     top: 0,
@@ -55,25 +60,21 @@ const WaffleChart = <TData = any,>({
     top: 40,
     bottom: 40,
   },
-  color,
   x,
-  y = { key: 'y', end: 10 },
+  y,
+  color,
   gap = 2,
-  classNameCell = '',
   drawing,
   tooltip,
   style = {},
 }: WaffleChartProps<TData>) => {
-  const columns = x.end ?? 10;
-  const rows = y.end ?? 10;
-
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
     defaultHtml: (d: any) => {
-      const totalCells = rows * columns;
-      const percentage = ((d.cellCount / totalCells) * 100).toFixed(1);
-      return `${d.name}: ${d.value} (${percentage}%)`;
+      const datum = d.data;
+      if (!datum) return '';
+      return `${x.key}: ${deepValue(datum, x.key)}<br/>${y.key}: ${deepValue(datum, y.key)}<br/>${color.key}: ${deepValue(datum, color.key)}`;
     },
   });
 
@@ -91,59 +92,66 @@ const WaffleChart = <TData = any,>({
     const chartHeight =
       height - (margin.top ?? 0) - (margin.bottom ?? 0);
 
-    const totalCells = rows * columns;
+    // Extract unique categorical values preserving data order
+    const xValues: any[] = [];
+    const yValues: any[] = [];
+    const xSeen = new Set();
+    const ySeen = new Set();
 
-    // Cell allocation using largest remainder method
-    const total = data.reduce(
-      (sum, d) => sum + (Number(deepValue(d, x.key)) || 0),
-      0
-    );
-
-    if (total === 0) return;
-
-    const categories = data.map((d, i) => {
-      const value = Number(deepValue(d, x.key)) || 0;
-      const exact = (value / total) * totalCells;
-      return {
-        name: color?.key ? String(deepValue(d, color.key)) : String(i),
-        value,
-        exact,
-        floor: Math.floor(exact),
-        remainder: exact - Math.floor(exact),
-        originalIndex: i,
-        data: d,
-      };
+    data.forEach((d) => {
+      const xVal = deepValue(d, x.key);
+      const yVal = deepValue(d, y.key);
+      if (!xSeen.has(xVal)) {
+        xSeen.add(xVal);
+        xValues.push(xVal);
+      }
+      if (!ySeen.has(yVal)) {
+        ySeen.add(yVal);
+        yValues.push(yVal);
+      }
     });
 
-    let allocated = categories.reduce((sum, c) => sum + c.floor, 0);
-    let remaining = totalCells - allocated;
+    const columns = xValues.length;
+    const rows = yValues.length;
 
-    // Distribute remaining cells to highest-remainder categories
-    const sorted = [...categories].sort(
-      (a, b) => b.remainder - a.remainder
-    );
-    for (let i = 0; i < remaining && i < sorted.length; i++) {
-      sorted[i].floor += 1;
+    if (columns === 0 || rows === 0) return;
+
+    // Build lookup map
+    const dataMap = new Map<string, TData>();
+    data.forEach((d) => {
+      const key = `${deepValue(d, x.key)}__${deepValue(d, y.key)}`;
+      dataMap.set(key, d);
+    });
+
+    // Build color scale
+    let colorFn: ((datum: TData) => string) | null = null;
+    if (color.scale) {
+      const colorValues = data.map(
+        (d) => Number(deepValue(d, color.key)) || 0
+      );
+      const domainMin = color.domain?.[0] ?? d3min(colorValues) ?? 0;
+      const domainMax = color.domain?.[1] ?? d3max(colorValues) ?? 1;
+      const seq = scaleSequential(color.scale).domain([domainMin, domainMax]);
+      colorFn = (d: TData) => seq(Number(deepValue(d, color.key)) || 0);
     }
 
-    // Build flat cell array
+    // Build cell data array
     const cellData: CellDatum[] = [];
-    for (const cat of categories) {
-      for (let c = 0; c < cat.floor; c++) {
-        const idx = cellData.length;
-        const col = idx % columns;
-        const row = Math.floor(idx / columns);
-        cellData.push({
-          name: cat.name,
-          value: cat.value,
-          cellCount: cat.floor,
-          row,
-          col,
-          index: idx,
-          data: cat.data,
-        });
-      }
-    }
+    yValues.forEach((yVal, rowIdx) => {
+      xValues.forEach((xVal, colIdx) => {
+        const key = `${xVal}__${yVal}`;
+        const datum = dataMap.get(key);
+        if (datum) {
+          cellData.push({
+            xValue: xVal,
+            yValue: yVal,
+            row: rowIdx,
+            col: colIdx,
+            data: datum,
+          });
+        }
+      });
+    });
 
     // Calculate cell size (keep cells square)
     const cellWidth =
@@ -172,9 +180,17 @@ const WaffleChart = <TData = any,>({
       .attr('y', (d) => d.row * (cellSize + gap))
       .attr('width', 0)
       .attr('height', 0)
-      .attr('class', (d) =>
-        twMerge('fill-black', classNameCell, color?.classNameMap?.[d.name])
-      )
+      .attr('class', (d) => {
+        const catClass =
+          color.classNameMap?.[String(deepValue(d.data, color.key))] ?? '';
+        return twMerge(classNameCell, catClass);
+      })
+      .attr('style', (d) => {
+        if (colorFn) {
+          return `fill: ${colorFn(d.data)}`;
+        }
+        return '';
+      })
       .on('mouseenter', onMouseOver)
       .on('mousemove', onMouseMove)
       .on('mouseleave', onMouseLeave)
@@ -192,11 +208,9 @@ const WaffleChart = <TData = any,>({
     data,
     margin,
     padding,
-    color,
     x,
     y,
-    columns,
-    rows,
+    color,
     gap,
     classNameCell,
     drawing,

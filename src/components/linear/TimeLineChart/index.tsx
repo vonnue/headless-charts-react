@@ -1,27 +1,42 @@
-import { axisBottom, scaleBand, scaleLinear, scaleTime } from 'd3';
+import { scaleBand, scaleLinear, scaleTime } from 'd3-scale';
 import { max, min } from 'd3-array';
 import { select, selectAll } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
 
-import { AxisConfig, ChartProps } from '@/types';
+import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { drawAxis } from '@/hooks/useAxis';
+import useTooltip from '@/hooks/useTooltip';
 import { twMerge } from 'tailwind-merge';
 
 export interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
+  /** Categorical axis defining the swim lanes (y). */
   y?: AxisConfig<TData>;
+  /** Tooltip configuration. */
+  tooltip?: TooltipConfig;
+  /** Minimum rendered width (in px) for rect events so short events stay visible. */
+  minEventWidth?: number;
+  /** Default radius (in px) for circle events when no `sizeKey` is supplied. */
+  defaultEventSize?: number;
   events: {
+    /** When true, `startKey`/`endKey` values are parsed as dates. */
     isTime?: boolean;
 
+    /** Key whose value selects a shape via `shapeMapping`. */
     shapeKey?: Extract<keyof TData, string> | string;
     shapeMapping?: {
       [key: string]: 'circle' | 'rect' | 'line';
     };
-    // Only for rects
+    // Start time/value of the event (required)
     startKey: Extract<keyof TData, string> | string;
+    // End time/value of the event (only used by rects / lines)
     endKey?: Extract<keyof TData, string> | string;
 
+    /** Key whose value selects a className via `classNameMapping` (colours). */
     classNameKey?: Extract<keyof TData, string> | string;
-    classNameMapping?: object;
+    classNameMapping?: {
+      [key: string]: string;
+    };
     // only for circles
     sizeKey?: Extract<keyof TData, string> | string;
   };
@@ -29,7 +44,7 @@ export interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
 
 const TimeLineChart = <TData = any,>({
   id,
-  data,
+  data = [],
   className,
   events = {
     startKey: 'start',
@@ -44,12 +59,24 @@ const TimeLineChart = <TData = any,>({
   margin = {
     top: 20,
     right: 20,
-    bottom: 20,
-    left: 20,
+    bottom: 30,
+    left: 60,
   },
   y,
+  tooltip = undefined,
+  minEventWidth = 2,
+  defaultEventSize = 5,
   style = {},
 }: TimeLineChartProps<TData>) => {
+  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
+    id,
+    tooltip,
+    defaultHtml: (d: any) =>
+      `${y?.key ? `${d[y.key]}<br/>` : ''}${d[events.startKey]}${
+        events.endKey ? ` → ${d[events.endKey]}` : ''
+      }`,
+  });
+
   const refreshChart = useCallback(() => {
     if (!data || data.length === 0) return;
 
@@ -59,42 +86,49 @@ const TimeLineChart = <TData = any,>({
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
 
-    const xFn = events?.isTime ? scaleTime() : scaleLinear();
+    if (!width || !height) return;
 
-    const minVal = min(data, (d: any) => d[events.startKey]);
-    const maxVal = max(data, (d: any) =>
-      events?.endKey ? d[events.endKey] : d[events.startKey]
-    );
+    const { startKey, endKey, isTime } = events;
 
-    xFn
-      .domain([
-        // @ts-ignore
-        events?.isTime
-          ? // @ts-ignore
-            new Date(minVal)
-          : // @ts-ignore
-            minVal ?? 0,
-        // @ts-ignore
-        events?.isTime
-          ? // @ts-ignore
-            new Date(maxVal)
-          : // @ts-ignore
-            maxVal ?? 0,
-      ])
-      // @ts-ignore
-      .range([
-        (padding.left || 0) + (margin.left ?? 0),
-        width - (padding.right || 0) - (margin.right ?? 0),
-      ]);
+    // Parse a raw value into something the scale understands.
+    const parse = (v: any) => (isTime ? new Date(v) : v);
+
+    const startValues = data.map((d: any) => parse(d[startKey]));
+    const endValues = endKey
+      ? data.map((d: any) => parse(d[endKey]))
+      : startValues;
+
+    let minVal: any = min(startValues as any);
+    let maxVal: any = max(endValues as any);
+
+    // Guard against a collapsed domain (single point in time / value).
+    if (minVal == null) minVal = isTime ? new Date() : 0;
+    if (maxVal == null) maxVal = minVal;
+    if (+minVal === +maxVal) {
+      if (isTime) {
+        minVal = new Date(+minVal - 1000);
+        maxVal = new Date(+maxVal + 1000);
+      } else {
+        minVal = minVal - 1;
+        maxVal = maxVal + 1;
+      }
+    }
+
+    const xFn: any = isTime ? scaleTime() : scaleLinear();
+    xFn.domain([minVal, maxVal]).range([
+      (padding.left || 0) + (margin.left ?? 0),
+      width - (padding.right || 0) - (margin.right ?? 0),
+    ]);
+
+    const xOf = (v: any) => (xFn as any)(parse(v)) as number;
 
     const g = svg.append('g');
 
     const listOfYValues = [
-      // @ts-ignore
-      ...new Set(data.map((d) => (y?.key ? d[y?.key] : 1))),
+      ...new Set(data.map((d: any) => (y?.key ? d[y.key] : 'events'))),
     ];
 
-    const yFn = scaleBand()
+    const yFn = scaleBand<any>()
       .domain(listOfYValues)
       .range([
         (padding.top || 0) + (margin.top ?? 0),
@@ -102,122 +136,153 @@ const TimeLineChart = <TData = any,>({
       ])
       .padding(padding.bar || 0.1);
 
+    const laneOf = (d: any) => (y?.key ? d[y.key] : 'events');
+
+    // Swim lane background tracks
     g.append('g')
       .selectAll('rect')
       .data(listOfYValues)
       .enter()
       .append('rect')
-      .attr('class', `track ${y?.className || ''}`)
+      .attr('class', twMerge('track', y?.className))
       .attr('x', (padding.left || 0) + (margin.left ?? 0))
       .attr('y', (d) => yFn(d) || 0)
       .attr(
         'width',
-        width -
-          (padding.right || 0) -
-          (margin.right ?? 0) -
-          (padding.left || 0) -
-          (margin.left ?? 0)
+        Math.max(
+          0,
+          width -
+            (padding.right || 0) -
+            (margin.right ?? 0) -
+            (padding.left || 0) -
+            (margin.left ?? 0)
+        )
       )
       .attr('height', yFn.bandwidth());
 
-    const augmentedDataWithShapeClassNameAndSize = (data || []).map((d) => {
-      const shape = events?.shapeMapping
-        ? // @ts-ignore
-          events?.shapeMapping[d[events?.shapeKey]]
-        : events?.endKey
+    const augmentedData = data.map((d: any) => {
+      const shape: 'circle' | 'rect' | 'line' = events.shapeMapping
+        ? events.shapeMapping[d[events.shapeKey as string]] ||
+          (endKey ? 'rect' : 'circle')
+        : endKey
         ? 'rect'
         : 'circle';
 
-      // @ts-ignore
+      const startX = xOf(d[startKey]);
+      const endX = endKey != null ? xOf(d[endKey]) : startX;
+
       const eventWidth =
-        shape === 'rect' && events?.endKey
-          ? // @ts-ignore
-            xFn(
-              events.isTime
-                ? new Date((d as any)[events.endKey])
-                : (d as any)[events.endKey]
-            ) -
-            xFn(
-              events.isTime
-                ? new Date((d as any)[events.startKey])
-                : (d as any)[events.startKey]
-            )
-          : 0;
+        shape === 'rect'
+          ? Math.max(minEventWidth, endX - startX)
+          : Math.max(0, endX - startX);
 
-      const className = events?.classNameMapping
-        ? // @ts-ignore
-          events?.classNameMapping[d[events?.classNameKey]]
+      const eventClassName = events.classNameMapping
+        ? events.classNameMapping[d[events.classNameKey as string]] || ''
         : '';
-      // @ts-ignore
-      const size = events?.sizeKey ? d[events?.sizeKey] : 5;
 
-      return {
-        ...d,
-        shape,
-        className,
-        size,
-        eventWidth,
-      };
+      const size = events.sizeKey ? d[events.sizeKey] : defaultEventSize;
+
+      return { ...d, shape, startX, endX, eventWidth, eventClassName, size };
     });
 
-    // Render events (circles or rects)
-    g.selectAll('.event')
-      .data(augmentedDataWithShapeClassNameAndSize)
+    // Render events (rect / circle / line)
+    g.append('g')
+      .selectAll('.event')
+      .data(augmentedData)
       .enter()
-      .append((d: any) => {
-        return d.shape === 'rect'
-          ? document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-          : document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      })
-      .attr('class', (d: any) => `event fill-current ${d.className}`)
-      .attr('x', (d: any) =>
-        d.shape === 'rect'
-          ? xFn(
-              events.isTime ? new Date(d[events.startKey]) : d[events.startKey]
-            )
-          : null
+      .append((d: any) =>
+        document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          d.shape === 'circle' ? 'circle' : d.shape === 'line' ? 'line' : 'rect'
+        )
       )
-      .attr('cx', (d: any) =>
-        d.shape === 'circle'
-          ? xFn(
-              events.isTime ? new Date(d[events.startKey]) : d[events.startKey]
-            )
-          : null
+      .attr('class', (d: any) =>
+        twMerge('event fill-current stroke-current', d.eventClassName)
       )
-      .attr('cy', (d: any) =>
-        d.shape === 'circle'
-          ? (yFn(d[y?.key || 1]) || 0) + yFn.bandwidth() / 2
-          : null
-      )
+      // rect
+      .attr('x', (d: any) => (d.shape === 'rect' ? d.startX : null))
       .attr('y', (d: any) =>
         d.shape === 'rect'
-          ? (yFn(d[y?.key || 1]) || 0) + yFn.bandwidth() / 4
+          ? (yFn(laneOf(d)) || 0) + yFn.bandwidth() / 4
           : null
       )
-      .attr('r', (d: any) => (d.shape === 'circle' ? d.size : null))
       .attr('width', (d: any) => (d.shape === 'rect' ? d.eventWidth : null))
       .attr('height', (d: any) =>
         d.shape === 'rect' ? yFn.bandwidth() / 2 : null
-      );
+      )
+      // circle
+      .attr('cx', (d: any) => (d.shape === 'circle' ? d.startX : null))
+      .attr('cy', (d: any) =>
+        d.shape === 'circle'
+          ? (yFn(laneOf(d)) || 0) + yFn.bandwidth() / 2
+          : null
+      )
+      .attr('r', (d: any) => (d.shape === 'circle' ? d.size : null))
+      // line
+      .attr('x1', (d: any) => (d.shape === 'line' ? d.startX : null))
+      .attr('x2', (d: any) => (d.shape === 'line' ? d.endX : null))
+      .attr('y1', (d: any) =>
+        d.shape === 'line' ? (yFn(laneOf(d)) || 0) + yFn.bandwidth() / 2 : null
+      )
+      .attr('y2', (d: any) =>
+        d.shape === 'line' ? (yFn(laneOf(d)) || 0) + yFn.bandwidth() / 2 : null
+      )
+      .on('mouseenter', onMouseOver)
+      .on('mousemove', onMouseMove)
+      .on('mouseleave', onMouseLeave);
 
-    const xAxis = axisBottom(xFn);
+    // y-axis (swim lane labels)
+    if (y?.key) {
+      drawAxis({
+        g,
+        scale: yFn,
+        config: y,
+        dimensions: { width, height },
+        margin,
+        padding,
+        orientation: 'vertical',
+      });
+    }
 
-    g.append('g')
-      .attr('transform', `translate(0, ${height - (margin.bottom ?? 0)})`)
-      .call(xAxis);
-  }, []);
+    // x-axis (time / value)
+    drawAxis({
+      g,
+      scale: xFn,
+      config: {
+        key: startKey,
+        axis: { location: 'bottom', ticks: 5 },
+      },
+      dimensions: { width, height },
+      margin,
+      padding,
+      orientation: 'horizontal',
+    });
+  }, [
+    data,
+    id,
+    events,
+    y,
+    margin,
+    padding,
+    minEventWidth,
+    defaultEventSize,
+    onMouseOver,
+    onMouseMove,
+    onMouseLeave,
+  ]);
 
   useEffect(() => {
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();
     };
-  }, [data, id, className]);
+  }, [refreshChart, id]);
 
   return (
     <svg
       id={id}
       style={style}
+      data-testid='timeline-chart'
       className={twMerge(defaultChartClassNames, className)}></svg>
   );
 };

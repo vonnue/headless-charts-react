@@ -84,7 +84,7 @@ describe('SpeedometerChart', () => {
     );
     const speedometer = screen.getByTestId('speedometer');
     expect(speedometer).toHaveClass('custom-class');
-    expect(speedometer).toHaveStyle({ backgroundColor: 'red' });
+    expect(speedometer.style.backgroundColor).toBe('red');
   });
 
   it('updates when data changes', async () => {

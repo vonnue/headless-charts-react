@@ -38,6 +38,15 @@ describe('AreaChart', () => {
     expect(svg.tagName).toBe('svg');
   });
 
+  it('renders one area path per Y series', () => {
+    render(<AreaChart {...defaultArgs} />);
+
+    const svg = screen.getByTestId('area-chart');
+    const areaPaths = svg.querySelectorAll('path');
+    // Should have at least one path per series
+    expect(areaPaths.length).toBeGreaterThanOrEqual(defaultArgs.y.length);
+  });
+
   it('renders with custom className', () => {
     const styledArgs = {
       ...defaultArgs,
@@ -118,6 +127,30 @@ describe('AreaChart', () => {
     );
 
     const svg = screen.getByTestId('stacked-area-streamgraph');
+    expect(svg).toBeTruthy();
+  });
+
+  it('renders axes', () => {
+    render(
+      <AreaChart
+        {...defaultArgs}
+        id='area-chart-axes'
+        x={{
+          key: 'year',
+          axis: { location: 'bottom', ticks: 5 },
+        }}
+      />
+    );
+
+    const svg = screen.getByTestId('area-chart-axes');
+    const xAxis = svg.querySelector('[data-testid="x-axis"]');
+    expect(xAxis).toBeTruthy();
+  });
+
+  it('handles empty data gracefully', () => {
+    render(<AreaChart {...defaultArgs} id='area-chart-empty' data={[]} />);
+
+    const svg = screen.getByTestId('area-chart-empty');
     expect(svg).toBeTruthy();
   });
 });

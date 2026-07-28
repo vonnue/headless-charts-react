@@ -27,6 +27,16 @@ export interface AxisConfig<TData = any> {
   /** Custom conversion function */
   convert?: (d: any) => any;
 
+  /** Binning configuration for continuous data */
+  bin?: {
+    /** Number of bins to create */
+    count: number;
+    /** Explicit bin edge thresholds (overrides count) */
+    thresholds?: number[];
+    /** Custom label formatter for bin ranges */
+    labelFormat?: (low: number, high: number) => string;
+  };
+
   /** Axis display configuration */
   axis?: {
     /** Position of the axis */

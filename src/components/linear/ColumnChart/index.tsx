@@ -6,7 +6,7 @@ import { scaleBand, scaleLinear } from 'd3-scale';
 import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { defaultChartClassNames, bin1D } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 
 export interface ColumnChartGroupedProps<TData = any> extends ChartProps<TData> {
@@ -61,24 +61,42 @@ const ColumnChartGrouped = <TData = any,>({
       `${d[x.key]} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`,
   });
 
+  const isBinned = x.bin != null;
+
   const refreshChart = useCallback(() => {
     /* eslint-disable */
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
     const g = svg.append('g');
 
+    // When binning is active, transform data into histogram bins
+    let effectiveData: any[];
+    let effectiveX: AxisConfig;
+    let effectiveY: AxisConfig[];
+
+    if (isBinned) {
+      const bins = bin1D(data, x);
+      effectiveData = bins.map((b) => ({ [x.key]: b.label, count: b.count }));
+      effectiveX = { ...x, bin: undefined };
+      effectiveY = [{ key: 'count', className: y[0]?.className }];
+    } else {
+      effectiveData = data;
+      effectiveX = x;
+      effectiveY = y;
+    }
+
     // @ts-ignore
-    const minStart = min(y.map((column) => column.start));
+    const minStart = min(effectiveY.map((column) => column.start));
     // @ts-ignore
     const minY: number = min(
-      y.map((column: AxisConfig) => min(data, (d: any) => d[column.key]))
+      effectiveY.map((column: AxisConfig) => min(effectiveData, (d: any) => d[column.key]))
     );
     // @ts-ignore
     const maxY: number = max(
-      y.map((column: AxisConfig) => max(data, (d: any) => d[column.key]))
+      effectiveY.map((column: AxisConfig) => max(effectiveData, (d: any) => d[column.key]))
     );
     // @ts-ignore
-    const maxEnd = max(y.map((column) => column.end));
+    const maxEnd = max(effectiveY.map((column) => column.end));
     // @ts-ignore
     const areAllGreaterThanZero = minY > 0;
 
@@ -87,7 +105,7 @@ const ColumnChartGrouped = <TData = any,>({
 
     const xFn = scaleBand()
       // @ts-ignore
-      .domain(data.map((d) => (d as any)[x.key]))
+      .domain(effectiveData.map((d) => (d as any)[effectiveX.key]))
       .range([
         (margin.left ?? 0) + (padding.left ?? 0),
         width - (margin.right ?? 0) - (padding.right ?? 0),
@@ -105,12 +123,12 @@ const ColumnChartGrouped = <TData = any,>({
         (margin.top ?? 0) + (padding.top ?? 0),
       ]);
 
-    y.map((column, i) => {
+    effectiveY.map((column, i) => {
       const barsG = g.append('g');
 
       const bars = barsG
         .selectAll('g')
-        .data(data)
+        .data(effectiveData)
         .enter()
         .append('rect')
         .attr(
@@ -127,13 +145,13 @@ const ColumnChartGrouped = <TData = any,>({
         .attr(
           'x',
           (d) =>
-            (xFn((d as any)[x.key]) || 0) + (i * xFn.bandwidth()) / y.length
+            (xFn((d as any)[effectiveX.key]) || 0) + (i * xFn.bandwidth()) / effectiveY.length
         )
         .attr('y', (d) =>
           // @ts-ignore
           drawing && drawing.duration ? yFn(0) : yFn((d as any)[column.key])
         )
-        .attr('width', xFn.bandwidth() / y.length)
+        .attr('width', xFn.bandwidth() / effectiveY.length)
         .attr('height', (d) =>
           drawing && drawing.duration
             ? 0
@@ -195,15 +213,15 @@ const ColumnChartGrouped = <TData = any,>({
     });
 
     // Determine y-axis location
-    const yAxisLocation = y.find((col) => col.axis?.location)?.axis?.location || 'left';
-    const yAxisLabel = y.map((column) => column.axis?.label || column.key || '').join(', ');
+    const yAxisLocation = effectiveY.find((col) => col.axis?.location)?.axis?.location || 'left';
+    const yAxisLabel = isBinned ? 'Count' : effectiveY.map((column) => column.axis?.label || column.key || '').join(', ');
 
     // Create y-axis config
     const yAxisConfig: AxisConfig = {
-      key: y[0]?.key || '',
+      key: effectiveY[0]?.key || '',
       axis: {
         location: yAxisLocation as 'left' | 'right',
-        ticks: y[0]?.axis?.ticks || (wholeNumbers && maxY < 10 ? maxY : 5),
+        ticks: effectiveY[0]?.axis?.ticks || (wholeNumbers && maxY < 10 ? maxY : 5),
         label: yAxisLabel,
       },
     };
@@ -212,7 +230,7 @@ const ColumnChartGrouped = <TData = any,>({
     drawAxis({
       g,
       scale: xFn,
-      config: x,
+      config: effectiveX,
       dimensions: { width, height },
       margin,
       padding,

@@ -16,8 +16,8 @@ import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { defaultChartClassNames } from '@/utils';
-import { scaleLinear } from 'd3-scale';
+import { defaultChartClassNames, binData } from '@/utils';
+import { scaleLinear, scaleBand, scaleSequential } from 'd3-scale';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 
@@ -43,6 +43,10 @@ export interface ScatterPlotProps<TData = any> extends ChartProps<TData> {
       [key: string]: any;
     };
   };
+  binColor?: {
+    scale?: (t: number) => string;
+    domain?: [number, number];
+  };
   tooltip?: TooltipConfig;
   onClick?: (event: any, d: any) => void;
   connect?: {
@@ -67,6 +71,7 @@ const ScatterPlot = <TData = any,>({
   y,
   color,
   size,
+  binColor,
   tooltip,
   shape,
   margin = {
@@ -87,8 +92,12 @@ const ScatterPlot = <TData = any,>({
   connect = {},
   style = {},
 }: ScatterPlotProps<TData>) => {
-  const defaultHtml = (d: any) =>
-    `${x.key} ${d[x.key]}<br/>${y.key} ${d[y.key]}<br/>
+  const isBinned = x.bin != null || y.bin != null;
+
+  const defaultHtml = isBinned
+    ? (d: any) => `${x.key}: ${d[x.key]}<br/>${y.key}: ${d[y.key]}<br/>count: ${d.count}`
+    : (d: any) =>
+        `${x.key} ${d[x.key]}<br/>${y.key} ${d[y.key]}<br/>
     ${color?.key ? `${color.key} ${d[color.key]}<br/>` : ''}
     ${size?.key ? `${size.key} ${d[size.key]}<br/>` : ''}
     ${shape?.key ? `${shape.key} ${d[shape.key]}<br/>` : ''}`;
@@ -216,6 +225,78 @@ const ScatterPlot = <TData = any,>({
       .attr('y', (margin?.top ?? 0) - (padding?.top ?? 0) - 10)
       .attr('width', width - (margin?.left ?? 0))
       .attr('height', height + (padding?.bottom ?? 0) + 8);
+
+    // Binned heatmap mode
+    if (isBinned) {
+      const { binnedData, xValues, yValues } = binData(data, x, y);
+
+      const xBand = scaleBand()
+        .domain(xValues)
+        .range([
+          (margin?.left ?? 0) + (padding?.left ?? 0),
+          width - (margin?.right ?? 0),
+        ])
+        .padding(0.05);
+
+      const yBand = scaleBand()
+        .domain(yValues)
+        .range([
+          height - (margin?.bottom ?? 0) - (padding?.bottom ?? 0),
+          (margin?.top ?? 0) + (padding?.top ?? 0),
+        ])
+        .padding(0.05);
+
+      const counts = binnedData.map((d) => d.count);
+      const maxCount = max(counts) ?? 1;
+      const minCount = min(counts) ?? 0;
+
+      const colorScale = binColor?.scale
+        ? scaleSequential(binColor.scale).domain(binColor.domain ?? [minCount, maxCount])
+        : scaleSequential((t) => `rgba(59, 130, 246, ${0.1 + t * 0.9})`).domain([minCount, maxCount]);
+
+      const heatmapG = g.append('g').attr('clip-path', 'url(#clip)');
+
+      heatmapG
+        .selectAll('rect')
+        .data(binnedData)
+        .enter()
+        .append('rect')
+        .attr('x', (d: any) => xBand(String(d[x.key])) || 0)
+        .attr('y', (d: any) => yBand(String(d[y.key])) || 0)
+        .attr('width', xBand.bandwidth())
+        .attr('height', yBand.bandwidth())
+        .attr('fill', (d: any) => colorScale(d.count))
+        .attr('rx', 2)
+        .on('mouseenter', onMouseOver)
+        .on('mousemove', onMouseMove)
+        .on('mouseleave', onMouseLeave)
+        .on('click', (event: any, d: any) => onClick && onClick(event, d));
+
+      // Draw axes for binned mode
+      drawAxis({
+        g,
+        scale: xBand,
+        config: x,
+        dimensions: { width, height },
+        margin: margin ?? {},
+        padding: padding ?? {},
+        orientation: 'horizontal',
+        className: 'xAxis axis',
+      });
+
+      drawAxis({
+        g,
+        scale: yBand,
+        config: y,
+        dimensions: { width, height },
+        margin: margin ?? {},
+        padding: padding ?? {},
+        orientation: 'vertical',
+        className: 'yAxis axis',
+      });
+
+      return;
+    }
 
     // Drawing
     const pointsGroup = g.append('g').attr('clip-path', 'url(#clip)');
@@ -353,6 +434,7 @@ const ScatterPlot = <TData = any,>({
     zooming,
     drawing,
     connect,
+    binColor,
     data,
     drawAxis,
     onMouseLeave,

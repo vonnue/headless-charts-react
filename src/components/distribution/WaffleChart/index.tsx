@@ -5,7 +5,7 @@ import { scaleSequential } from 'd3-scale';
 import { min as d3min, max as d3max } from 'd3-array';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { deepValue } from '@/utils';
+import { deepValue, binData } from '@/utils';
 import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 
@@ -70,12 +70,17 @@ const WaffleChart = <TData = any,>({
   tooltip,
   style = {},
 }: WaffleChartProps<TData>) => {
+  const isBinned = x.bin != null || y.bin != null;
+
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
     defaultHtml: (d: any) => {
       const datum = d.data;
       if (!datum) return '';
+      if (isBinned) {
+        return `${x.key}: ${deepValue(datum, x.key)}<br/>${y.key}: ${deepValue(datum, y.key)}<br/>count: ${deepValue(datum, 'count')}`;
+      }
       return `${x.key}: ${deepValue(datum, x.key)}<br/>${y.key}: ${deepValue(datum, y.key)}<br/>${color.key}: ${deepValue(datum, color.key)}`;
     },
   });
@@ -94,24 +99,37 @@ const WaffleChart = <TData = any,>({
     const chartHeight =
       height - (margin.top ?? 0) - (margin.bottom ?? 0);
 
-    // Extract unique categorical values preserving data order
-    const xValues: any[] = [];
-    const yValues: any[] = [];
-    const xSeen = new Set();
-    const ySeen = new Set();
+    // When binning is active, transform raw data into binned counts
+    let effectiveData: any[];
+    let xValues: any[];
+    let yValues: any[];
+    const effectiveColorKey = isBinned ? 'count' : color.key;
 
-    data.forEach((d) => {
-      const xVal = deepValue(d, x.key);
-      const yVal = deepValue(d, y.key);
-      if (!xSeen.has(xVal)) {
-        xSeen.add(xVal);
-        xValues.push(xVal);
-      }
-      if (!ySeen.has(yVal)) {
-        ySeen.add(yVal);
-        yValues.push(yVal);
-      }
-    });
+    if (isBinned) {
+      const { binnedData, xValues: bx, yValues: by } = binData(data, x, y);
+      effectiveData = binnedData;
+      xValues = bx;
+      yValues = by;
+    } else {
+      effectiveData = data;
+      // Extract unique categorical values preserving data order
+      xValues = [];
+      yValues = [];
+      const xSeen = new Set();
+      const ySeen = new Set();
+      data.forEach((d) => {
+        const xVal = deepValue(d, x.key);
+        const yVal = deepValue(d, y.key);
+        if (!xSeen.has(xVal)) {
+          xSeen.add(xVal);
+          xValues.push(xVal);
+        }
+        if (!ySeen.has(yVal)) {
+          ySeen.add(yVal);
+          yValues.push(yVal);
+        }
+      });
+    }
 
     const columns = xValues.length;
     const rows = yValues.length;
@@ -119,22 +137,22 @@ const WaffleChart = <TData = any,>({
     if (columns === 0 || rows === 0) return;
 
     // Build lookup map
-    const dataMap = new Map<string, TData>();
-    data.forEach((d) => {
+    const dataMap = new Map<string, any>();
+    effectiveData.forEach((d) => {
       const key = `${deepValue(d, x.key)}__${deepValue(d, y.key)}`;
       dataMap.set(key, d);
     });
 
     // Build color scale
-    let colorFn: ((datum: TData) => string) | null = null;
+    let colorFn: ((datum: any) => string) | null = null;
     if (color.scale) {
-      const colorValues = data.map(
-        (d) => Number(deepValue(d, color.key)) || 0
+      const colorValues = effectiveData.map(
+        (d) => Number(deepValue(d, effectiveColorKey)) || 0
       );
       const domainMin = color.domain?.[0] ?? d3min(colorValues) ?? 0;
       const domainMax = color.domain?.[1] ?? d3max(colorValues) ?? 1;
       const seq = scaleSequential(color.scale).domain([domainMin, domainMax]);
-      colorFn = (d: TData) => seq(Number(deepValue(d, color.key)) || 0);
+      colorFn = (d: any) => seq(Number(deepValue(d, effectiveColorKey)) || 0);
     }
 
     // Build cell data array

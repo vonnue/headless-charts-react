@@ -31,22 +31,28 @@ import { LineChart } from '@headless-charts/react';
 
 function MyChart() {
   const data = [
-    { x: 0, y: 10 },
-    { x: 1, y: 20 },
-    { x: 2, y: 15 },
+    { month: 0, sales: 10 },
+    { month: 1, sales: 20 },
+    { month: 2, sales: 15 },
     // ... more data points
   ];
 
   return (
     <LineChart
+      id='my-line-chart'
       data={data}
-      width={600}
-      height={400}
-      className='bg-white rounded-lg shadow-lg'
+      x={{ key: 'month' }}
+      y={[{ key: 'sales', className: 'text-blue-500' }]}
+      className='w-full h-64 bg-white rounded-lg shadow-lg'
     />
   );
 }
 ```
+
+Every chart takes a required `id` and reads its dimensions from the rendered
+element, so size it with CSS (`className` or `style`) rather than `width` /
+`height` props — that's what makes the charts responsive. Use `margin` and
+`padding` props to control the space around and inside the plot area.
 
 ## Documentation
 

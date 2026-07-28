@@ -7,7 +7,6 @@ export default defineMain({
     '@storybook/addon-themes',
     '@chromatic-com/storybook',
     '@storybook/addon-docs',
-    '@storybook/addon-vitest'
   ],
   framework: {
     name: '@storybook/react-vite',

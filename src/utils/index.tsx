@@ -4,3 +4,5 @@ export const defaultChartClassNames = `w-full md:w-6/12 lg:w-4/12 dark:bg-gray-8
 
 export { default as convertToRanks } from './convertToRanks';
 export { default as deepValue } from './deepValue';
+export { default as binData, bin1D, binDataStats, binAxis } from './binData';
+export type { BinResult, Bin1DResult, BinStatsResult } from './binData';

@@ -6,7 +6,7 @@ import { drawAxis } from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { useCallback, useEffect } from 'react';
-import { defaultChartClassNames } from '@/utils';
+import { defaultChartClassNames, bin1D } from '@/utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -59,6 +59,8 @@ const BarChart = <TData = any,>({
     tooltip,
   });
 
+  const isBinned = x.length > 0 && x[0].bin != null;
+
   const refreshChart = useCallback(() => {
     if (!data || data.length === 0) return;
 
@@ -68,21 +70,37 @@ const BarChart = <TData = any,>({
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
 
-    const minStart = min(x.map((column: BarAxisConfig) => column.start || 0)),
+    // When binning is active, bin the first x series into horizontal histogram
+    let effectiveData: any[];
+    let effectiveX: BarAxisConfig[];
+    let effectiveY: AxisConfig & { padding?: number };
+
+    if (isBinned) {
+      const bins = bin1D(data, x[0]);
+      effectiveData = bins.map((b) => ({ _binLabel: b.label, count: b.count }));
+      effectiveX = [{ key: 'count', className: x[0]?.className, rx: x[0]?.rx }];
+      effectiveY = { ...y, key: '_binLabel' };
+    } else {
+      effectiveData = data;
+      effectiveX = x;
+      effectiveY = y;
+    }
+
+    const minStart = min(effectiveX.map((column: BarAxisConfig) => column.start || 0)),
       minX = min(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        x
-          .map((column: BarAxisConfig) => min(data, (d: any) => d[column.key]))
+        effectiveX
+          .map((column: BarAxisConfig) => min(effectiveData, (d: any) => d[column.key]))
           .filter((v): v is number => v !== undefined)
       ),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       maxX = max(
-        x
-          .map((column) => max(data, (d: any) => d[column.key]))
+        effectiveX
+          .map((column) => max(effectiveData, (d: any) => d[column.key]))
           .filter((v): v is number => v !== undefined)
       ),
       maxEnd = max(
-        x
+        effectiveX
           .map((column: BarAxisConfig) => column.end || maxX)
           .filter((v): v is number => v !== undefined)
       ),
@@ -112,7 +130,7 @@ const BarChart = <TData = any,>({
 
     const yFn = scaleBand()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .domain(data.map((d: any) => d[y.key]))
+      .domain(effectiveData.map((d: any) => d[effectiveY.key]))
       .range([
         (margin.top ?? 0) + (padding?.top ?? 0),
         height - (margin.bottom ?? 0) - (padding?.bottom ?? 0),
@@ -122,24 +140,24 @@ const BarChart = <TData = any,>({
     const g = svg.append('g');
 
     // Determine x-axis location from first x column that has axis config
-    const xAxisLocation = x.find((col) => col.axis?.location)?.axis?.location || 'bottom';
-    const xAxisLabel = x.map((column) => column.axis?.label || column.key || '').join(', ');
+    const xAxisLocation = effectiveX.find((col) => col.axis?.location)?.axis?.location || 'bottom';
+    const xAxisLabel = isBinned ? 'Count' : effectiveX.map((column) => column.axis?.label || column.key || '').join(', ');
 
     // Create a merged config for x-axis with combined label
     const xAxisConfig: AxisConfig = {
-      key: x[0]?.key || '',
+      key: effectiveX[0]?.key || '',
       axis: {
         location: xAxisLocation as 'top' | 'bottom',
-        ticks: x[0]?.axis?.ticks || 5,
+        ticks: effectiveX[0]?.axis?.ticks || 5,
         label: xAxisLabel,
       },
     };
 
     // Determine y-axis location based on direction
     const yAxisConfig: AxisConfig = {
-      ...y,
+      ...effectiveY,
       axis: {
-        ...y.axis,
+        ...effectiveY.axis,
         location: direction === 'left' ? 'right' : 'left',
       },
     };
@@ -166,12 +184,12 @@ const BarChart = <TData = any,>({
       orientation: 'vertical',
     });
 
-    x.map((column, i) => {
+    effectiveX.map((column, i) => {
       const barsG = g.append('g');
 
       const bars = barsG
         .selectAll('g')
-        .data(data)
+        .data(effectiveData)
         .enter()
         .append('rect')
         .attr(
@@ -193,7 +211,7 @@ const BarChart = <TData = any,>({
         )
         .attr(
           'y',
-          (d: any) => (yFn(d[y.key]) || 0) + (i * yFn.bandwidth()) / x.length
+          (d: any) => (yFn(d[effectiveY.key]) || 0) + (i * yFn.bandwidth()) / effectiveX.length
         )
         .attr('width', (d: any) =>
           drawing?.duration
@@ -204,7 +222,7 @@ const BarChart = <TData = any,>({
             ? xFn(0) - xFn(d[column.key])
             : xFn(Math.abs(d[column.key])) - xFn(0)
         )
-        .attr('height', yFn.bandwidth() / x.length - (y?.padding ?? 0))
+        .attr('height', yFn.bandwidth() / effectiveX.length - (effectiveY?.padding ?? 0))
         .on('mouseenter', onMouseOver)
         .on('mousemove', onMouseMove)
         .on('mouseleave', onMouseLeave);
@@ -230,7 +248,7 @@ const BarChart = <TData = any,>({
       dataLabel &&
         barsG
           .selectAll('g')
-          .data(data)
+          .data(effectiveData)
           .enter()
           .append('text')
           .text((d: any) => d[column.key])
@@ -245,9 +263,9 @@ const BarChart = <TData = any,>({
           .attr(
             'y',
             (d: any) =>
-              (yFn(d[y.key]) || 0) +
-              ((i + 1) * yFn.bandwidth()) / x.length -
-              yFn.bandwidth() / x.length / 4
+              (yFn(d[effectiveY.key]) || 0) +
+              ((i + 1) * yFn.bandwidth()) / effectiveX.length -
+              yFn.bandwidth() / effectiveX.length / 4
           );
     });
   }, [data, direction, drawing, id, margin, padding, x, y, dataLabel, tooltip]);

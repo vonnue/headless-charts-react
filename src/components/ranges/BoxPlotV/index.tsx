@@ -7,7 +7,7 @@ import useAxis from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { useCallback, useEffect } from 'react';
-import { defaultChartClassNames } from '@/utils';
+import { defaultChartClassNames, binDataStats } from '@/utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -33,6 +33,8 @@ export interface BoxPlotVProps<TData = any> extends ChartProps<TData> {
   classNames?: BoxPlotClassNames;
   y: BoxPlotYConfig<TData>;
   x: AxisConfig<TData>;
+  /** When x.bin is set, this key specifies the continuous value field to compute box stats from */
+  valueKey?: string;
   tooltip?: TooltipConfig;
 }
 
@@ -57,6 +59,7 @@ const BoxPlotV = <TData = any,>({
   x,
   tooltip,
   y,
+  valueKey,
   zooming = {
     enabled: false,
   },
@@ -65,14 +68,22 @@ const BoxPlotV = <TData = any,>({
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
-    defaultHtml: (d: any) =>
-      `min: ${d[y.minKey].toFixed(0)} <br/> range: ${+d[y.boxStart].toFixed(
+    defaultHtml: (d: any) => {
+      const mk = isBinned && valueKey ? '_min' : y.minKey;
+      const xk = isBinned && valueKey ? '_max' : y.maxKey;
+      const bs = isBinned && valueKey ? '_q1' : y.boxStart;
+      const be = isBinned && valueKey ? '_q3' : y.boxEnd;
+      const md = isBinned && valueKey ? '_median' : y.midKey;
+      return `min: ${d[mk].toFixed(0)} <br/> range: ${+d[bs].toFixed(
         0
-      )} to ${+d[y.boxEnd].toFixed(0)} <br/> mid: ${d[y.midKey].toFixed(
+      )} to ${+d[be].toFixed(0)} <br/> mid: ${d[md].toFixed(
         0
-      )} <br/> max: ${d[y.maxKey].toFixed(0)} `,
+      )} <br/> max: ${d[xk].toFixed(0)} `;
+    },
   });
   const { drawAxis } = useAxis();
+  const isBinned = x.bin != null;
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
@@ -82,8 +93,36 @@ const BoxPlotV = <TData = any,>({
 
     const g = svg.append('g');
 
+    // When binning is active, compute box stats from raw data
+    let effectiveData: any[];
+    let effectiveY: BoxPlotYConfig;
+
+    if (isBinned && valueKey) {
+      const stats = binDataStats(data, x, valueKey);
+      effectiveData = stats.map((s) => ({
+        [x.key]: s.label,
+        _min: s.min,
+        _q1: s.q1,
+        _median: s.median,
+        _q3: s.q3,
+        _max: s.max,
+        _count: s.count,
+      }));
+      effectiveY = {
+        ...y,
+        minKey: '_min',
+        maxKey: '_max',
+        boxStart: '_q1',
+        boxEnd: '_q3',
+        midKey: '_median',
+      };
+    } else {
+      effectiveData = data;
+      effectiveY = y;
+    }
+
     const xFn: any = scaleBand()
-      .domain(data.map((d: any) => d[x.key]))
+      .domain(effectiveData.map((d: any) => d[x.key]))
       .range([
         (margin.left ?? 0) + (padding.left || 0),
         width - (margin.right ?? 0) - (padding.right || 0),
@@ -92,8 +131,8 @@ const BoxPlotV = <TData = any,>({
 
     const yFn = scaleLinear()
       .domain([
-        Number.isFinite(y.min) ? y.min : min(data.map((d: any) => d[y.minKey])),
-        Number.isFinite(y.max) ? y.max : max(data.map((d: any) => d[y.maxKey])),
+        Number.isFinite(effectiveY.min) ? effectiveY.min : min(effectiveData.map((d: any) => d[effectiveY.minKey])),
+        Number.isFinite(effectiveY.max) ? effectiveY.max : max(effectiveData.map((d: any) => d[effectiveY.maxKey])),
       ])
       .range([
         height - (margin.bottom ?? 0) - (padding.bottom || 0),
@@ -116,7 +155,7 @@ const BoxPlotV = <TData = any,>({
 
     const dotRowsG = dataG
       .selectAll('g')
-      .data(data)
+      .data(effectiveData)
       .enter()
       .append('g')
       .on('mouseenter', onMouseOver)
@@ -130,12 +169,12 @@ const BoxPlotV = <TData = any,>({
       .attr('clip-path', 'url(#clip)')
       .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
       .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('y1', (d: any) => yFn(d[y.minKey]))
-      .attr('y2', (d: any) => yFn(d[y.minKey]))
+      .attr('y1', (d: any) => yFn(d[effectiveY.minKey]))
+      .attr('y2', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
-      .attr('y2', (d: any) => yFn(d[y.maxKey]));
+      .attr('y2', (d: any) => yFn(d[effectiveY.maxKey]));
 
     // Begin lines
     dotRowsG
@@ -143,8 +182,8 @@ const BoxPlotV = <TData = any,>({
       .attr('clip-path', 'url(#clip)')
       .attr('x1', (d: any) => xFn(d[x.key]))
       .attr('x2', (d: any) => xFn(d[x.key]))
-      .attr('y1', (d: any) => yFn(d[y.minKey]))
-      .attr('y2', (d: any) => yFn(d[y.minKey]))
+      .attr('y1', (d: any) => yFn(d[effectiveY.minKey]))
+      .attr('y2', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('class', (d: any) =>
         twMerge('box-plot-line stroke-current', d.className || ``)
       )
@@ -157,8 +196,8 @@ const BoxPlotV = <TData = any,>({
     dotRowsG
       .append('line')
       .attr('clip-path', 'url(#clip)')
-      .attr('y1', (d: any) => yFn(d[y.midKey]))
-      .attr('y2', (d: any) => yFn(d[y.midKey]))
+      .attr('y1', (d: any) => yFn(d[effectiveY.midKey]))
+      .attr('y2', (d: any) => yFn(d[effectiveY.midKey]))
       .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
       .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
@@ -171,8 +210,8 @@ const BoxPlotV = <TData = any,>({
     dotRowsG
       .append('line')
       .attr('clip-path', 'url(#clip)')
-      .attr('y1', (d: any) => yFn(d[y.maxKey]))
-      .attr('y2', (d: any) => yFn(d[y.maxKey]))
+      .attr('y1', (d: any) => yFn(d[effectiveY.maxKey]))
+      .attr('y2', (d: any) => yFn(d[effectiveY.maxKey]))
       .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
       .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
@@ -197,8 +236,8 @@ const BoxPlotV = <TData = any,>({
       .attr('width', xFn.bandwidth())
       .transition()
       .duration(1000)
-      .attr('y', (d: any) => yFn(d[y.boxEnd]))
-      .attr('height', (d: any) => yFn(d[y.boxStart]) - yFn(d[y.boxEnd]));
+      .attr('y', (d: any) => yFn(d[effectiveY.boxEnd]))
+      .attr('height', (d: any) => yFn(d[effectiveY.boxStart]) - yFn(d[effectiveY.boxEnd]));
 
     const { axis: yAxis, axisG: yAxisG } = drawAxis({
       g,
@@ -246,6 +285,8 @@ const BoxPlotV = <TData = any,>({
     classNames,
     data,
     id,
+    isBinned,
+    valueKey,
     margin,
     padding,
     x,

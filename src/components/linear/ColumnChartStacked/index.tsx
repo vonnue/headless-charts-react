@@ -30,6 +30,57 @@ interface drawHLineProps {
   dashed?: boolean;
 }
 
+/* catalog:start */
+/**
+ * Vertical bars where each measure stacks on the previous one, showing both
+ * the total per category and its composition.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The total per category matters as much as its breakdown
+ * - Segments are genuinely parts of one whole, not independent measures
+ * - Showing a waterfall of running gains and losses — set `waterfall`
+ *
+ * **Avoid when**
+ * - Individual segments need precise comparison across categories — only the
+ *   bottom segment shares a baseline; use ColumnChart grouped
+ * - Category labels are long or numerous — use BarChartStacked
+ * - There is one category only — use PieChart
+ * - The axis is continuous time — use AreaChart, which reads as a flow
+ *   rather than discrete totals
+ *
+ * **Specialised types**
+ * - Waterfall chart — Set `waterfall` on a ColumnChartStacked. Each `y`
+ *   series becomes a step in the sequence rather than a segment stacked from
+ *   the baseline.
+ *
+ * Also called: stacked column chart, stacked bar chart (vertical).
+ *
+ * Answers: composition, comparison. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <ColumnChartStacked
+ *   id="revenue-split"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *     { key: 'ipad', className: 'fill-purple-400' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @see ColumnChart — segments must be compared precisely across
+ *   categories
+ * @see BarChartStacked — long category labels
+ * @see AreaChart — the axis is continuous time
+ * @see PieChart — a single whole at one point in time
+ */
+/* catalog:end */
 const ColumnChartStacked = <TData = any,>({
   data = [],
   id,

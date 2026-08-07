@@ -36,6 +36,52 @@ export interface SpineChartProps<TData = any> extends Omit<ChartProps<TData>, 'm
   tooltip?: TooltipConfig;
 }
 
+/* catalog:start */
+/**
+ * Bars growing outward in both directions from a shared centre axis, comparing
+ * opposing measures per category.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Two groups are being contrasted on the same measure, e.g. a population
+ *   pyramid by sex or this year against last
+ * - The symmetry of the split is itself the message
+ * - Categories share a scale and both sides should be read against the same
+ *   axis
+ *
+ * **Avoid when**
+ * - There is no natural opposition between the measures — the mirrored
+ *   layout implies one; use BarChart
+ * - More than a few measures per side are needed — the spine gets crowded;
+ *   use BarChart grouped
+ * - The measures are parts of one whole rather than two sides — use
+ *   BarChartStacked
+ *
+ * Also called: population pyramid, age-sex pyramid, butterfly chart, back-to-back bar chart.
+ *
+ * Answers: comparison, composition. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <SpineChart
+ *   id="population-pyramid"
+ *   className="w-full h-64"
+ *   data={data}
+ *   y={{ key: 'ageGroup', axis: { location: 'middle' } }}
+ *   x={[
+ *     { key: 'male', direction: 'left', className: 'fill-blue-700' },
+ *     { key: 'female', direction: 'right', className: 'fill-pink-500' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @see BarChart — the measures are not naturally opposed
+ * @see BarChartStacked — the measures are parts of one whole
+ * @see CometPlot — showing movement between two states rather than two
+ *   independent measures
+ */
+/* catalog:end */
 const SpineChart = <TData = any,>({
   data = [],
   id,

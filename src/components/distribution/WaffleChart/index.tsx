@@ -44,6 +44,58 @@ interface CellDatum {
   data: any;
 }
 
+/* catalog:start */
+/**
+ * A grid of cells indexed by two categorical axes, with a third value encoded
+ * as cell colour — a heatmap.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Two categorical dimensions cross and a magnitude sits at each
+ *   intersection, e.g. month by year
+ * - The pattern across the whole grid matters more than any single value
+ * - Cyclical structure should be visible, such as seasonality down rows and
+ *   drift across columns
+ * - Raw continuous data needs binning on one or both axes — set
+ *   `x.bin`/`y.bin` and cells show counts
+ *
+ * **Avoid when**
+ * - Precise values must be read off — colour is the least precise encoding;
+ *   use a table or BarChart
+ * - One axis is continuous and unbinned — use ScatterPlot
+ * - There are only a few categories, where a grid is overkill — use
+ *   ColumnChart
+ * - The grid would be mostly empty — sparse heatmaps read as noise
+ *
+ * **Specialised types**
+ * - Calendar heatmap — Map the finer time unit to `y` and the coarser to
+ *   `x`, then colour by the measure. Use a diverging scale such as
+ *   `interpolateRdYlGn` for values with a meaningful middle.
+ * - Binned 2D histogram — Set `bin` on `x` and/or `y`; each cell then shows
+ *   the count for that (xBin, yBin) pair rather than a value from the data.
+ *
+ * Also called: heatmap, categorical heatmap, matrix chart, grid chart, tile chart.
+ *
+ * Answers: correlation, distribution, composition. Required props: `id`, `data`, `x`, `y`, `color`.
+ *
+ * @example
+ * ```tsx
+ * <WaffleChart
+ *   id="temps-by-month"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'year', axis: { location: 'bottom', label: 'Year' } }}
+ *   y={{ key: 'month', axis: { location: 'left', label: 'Month' } }}
+ *   color={{ key: 'temperature', scale: interpolateRdYlGn }}
+ * />
+ * ```
+ *
+ * @see ScatterPlot — axes are continuous measures rather than categories
+ * @see ColumnChart — only one categorical dimension is involved
+ * @see PieChart — showing part-to-whole for a single set of categories
+ */
+/* catalog:end */
 const WaffleChart = <TData = any,>({
   data,
   id,

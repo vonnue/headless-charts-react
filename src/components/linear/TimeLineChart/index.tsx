@@ -27,6 +27,61 @@ export interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
   };
 }
 
+/* catalog:start */
+/**
+ * Places discrete events and durations on a shared time axis, one lane per
+ * category.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The data is events with timestamps rather than a measured value sampled
+ *   over time
+ * - Durations need to be visible as spans — pass both `startKey` and
+ *   `endKey`
+ * - Activity should be compared across lanes, e.g. calls per line, jobs per
+ *   worker
+ * - Building a Gantt-style view of overlapping work
+ *
+ * **Avoid when**
+ * - A continuous quantity is being tracked over time — use LineChart or
+ *   AreaChart
+ * - Only counts per period matter, not individual events — aggregate and use
+ *   ColumnChart
+ * - There is no time dimension at all — this chart has no meaning without
+ *   one
+ *
+ * **Specialised types**
+ * - Gantt chart — Pass both `events.startKey` and `events.endKey` with
+ *   `events.isTime: true`, and set `y` to the lane key. Spans render as
+ *   rects; overlapping work in a lane is visible as stacked bars.
+ *
+ * Also called: timeline, event plot, activity timeline.
+ *
+ * Answers: schedule, trend. Required props: `id`, `data`, `events`.
+ *
+ * @example
+ * ```tsx
+ * <TimeLineChart
+ *   id="call-timeline"
+ *   className="w-full h-64"
+ *   data={data}
+ *   y={{ key: 'agent' }}
+ *   events={{
+ *     startKey: 'callStartTime',
+ *     endKey: 'callEndTime',
+ *     isTime: true,
+ *   }}
+ * />
+ * ```
+ *
+ * @see LineChart — tracking a measured value over time rather than
+ *   discrete events
+ * @see ColumnChart — event counts per period are enough
+ * @see RangePlot — intervals are numeric ranges rather than moments in
+ *   time
+ */
+/* catalog:end */
 const TimeLineChart = <TData = any,>({
   id,
   data,

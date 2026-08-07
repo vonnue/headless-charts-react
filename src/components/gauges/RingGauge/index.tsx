@@ -34,6 +34,49 @@ export interface RingGaugeProps<TData = any> extends Omit<GaugeProps<TData>, 'da
   classNameGaugeBg?: string;
 }
 
+/* catalog:start */
+/**
+ * Concentric arcs, one per metric, each filled to its own target — the Apple
+ * Watch activity rings pattern.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Several metrics each have their own target and should read as a single
+ *   glanceable unit
+ * - Completion against goal is the message rather than absolute values
+ * - The set of metrics is stable and small, so ring order can be learned
+ *
+ * **Avoid when**
+ * - Metrics share one scale and their shape should be compared — use
+ *   RadarChart
+ * - There is only one metric — use BulletChart or LinearGauge
+ * - Absolute values must be compared across metrics — arc lengths at
+ *   different radii are not comparable; use ColumnChart
+ * - Metrics have no target, only a raw value — use PizzaChart
+ *
+ * Also called: activity rings, radial progress chart, concentric gauge, donut gauge.
+ *
+ * Answers: progress, profile. Required props: `id`, `data`, `labelKey`, `dataKey`, `targetKey`.
+ *
+ * @example
+ * ```tsx
+ * <RingGauge
+ *   id="activity-rings"
+ *   className="w-full h-64"
+ *   data={metrics}
+ *   labelKey="name"
+ *   dataKey="score"
+ *   targetKey="target"
+ * />
+ * ```
+ *
+ * @see BulletChart — a single metric, with qualitative bands
+ * @see RadarChart — metrics share one scale and profile shape matters
+ * @see PizzaChart — metrics have a shared maximum rather than individual
+ *   targets
+ */
+/* catalog:end */
 const RingGauge = <TData = any,>({
   className,
   id,

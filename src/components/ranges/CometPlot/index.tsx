@@ -44,6 +44,48 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
   tooltip?: TooltipConfig;
 }
 
+/* catalog:start */
+/**
+ * A tapered mark per category running from one value to another, where the
+ * widening head shows the direction of movement.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - A value moved between two states and the direction of that move matters
+ * - Comparing before-and-after across categories, e.g. score with and
+ *   without a change
+ * - The magnitude of change should read at a glance from the shape rather
+ *   than from a computed delta
+ *
+ * **Avoid when**
+ * - The two values are an unordered interval with no direction — use
+ *   RangePlot
+ * - The interval is a quartile summary — use BoxPlotH
+ * - More than two states are involved — use LineChart with one line per
+ *   category
+ *
+ * Also called: comet chart, change plot, movement plot, slope chart.
+ *
+ * Answers: range, comparison. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <CometPlot
+ *   id="score-change"
+ *   className="w-full h-56"
+ *   data={data}
+ *   y={{ key: 'name' }}
+ *   x={{ fromKey: 'before', toKey: 'after', className: 'fill-green-800 stroke-green-800' }}
+ * />
+ * ```
+ *
+ * @see RangePlot — the interval has no direction
+ * @see LineChart — more than two points in the sequence
+ * @see SpineChart — contrasting two independent measures rather than a
+ *   movement
+ */
+/* catalog:end */
 const RangePlot = <TData = any,>({
   id,
   className,

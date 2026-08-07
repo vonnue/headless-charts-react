@@ -35,6 +35,49 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
   tooltip?: TooltipConfig;
 }
 
+/* catalog:start */
+/**
+ * A dumbbell per category: two endpoints joined by a bar, showing the interval
+ * between a low and a high value.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Each category has a low and a high value and the gap between them is the
+ *   message
+ * - Comparing spans across categories, e.g. min and max temperature per city
+ * - Showing a before-and-after pair where direction does not need emphasis
+ * - A box plot would overstate the statistical rigour of the data
+ *
+ * **Avoid when**
+ * - Direction of movement matters — use CometPlot, whose tapered tail shows
+ *   which way the value moved
+ * - The interval is a statistical summary with quartiles — use BoxPlotH
+ * - Only one value per category exists — use LollipopHChart
+ * - The endpoints are times rather than numbers — use TimeLineChart
+ *
+ * Also called: dumbbell chart, dumbbell plot, barbell chart, dot plot, DNA chart, range chart.
+ *
+ * Answers: range, comparison. Required props: `id`, `data`, `x`, `y`, `shape`.
+ *
+ * @example
+ * ```tsx
+ * <RangePlot
+ *   id="temp-range"
+ *   className="w-full h-64"
+ *   data={data}
+ *   shape="circle"
+ *   y={{ key: 'label', axis: { location: 'left' } }}
+ *   x={{ minKey: 'minTemp', maxKey: 'maxTemp', start: 0, end: 100 }}
+ * />
+ * ```
+ *
+ * @see CometPlot — the direction of movement between the two values
+ *   matters
+ * @see BoxPlotH — the interval is a quartile summary
+ * @see LollipopHChart — there is a single value per category
+ */
+/* catalog:end */
 const RangePlot = <TData = any,>({
   id,
   className,

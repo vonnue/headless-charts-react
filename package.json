@@ -1,6 +1,6 @@
 {
   "name": "@headless-charts/react",
-  "version": "0.2.4",
+  "version": "0.2.8",
   "description": "React wrapper for headless-charts",
   "author": "Vonnue dev team",
   "keywords": [
@@ -22,8 +22,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.es.js",
       "require": "./dist/index.cjs.js"
-    }
+    },
+    "./catalog.json": "./catalog.json",
+    "./AGENTS.md": "./AGENTS.md"
   },
+  "files": [
+    "dist",
+    "catalog.json",
+    "AGENTS.md",
+    "README.md"
+  ],
   "packageManager": "yarn@4.0.2",
   "scripts": {
     "start": "tsc -w",
@@ -33,7 +41,9 @@
     "test": "vitest --watch --reporter verbose --ui --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "publish": "vite build && npm publish"
+    "docs": "vitest run src/catalog/catalog.generated.test.ts --update && node scripts/sync-jsdoc.mjs",
+    "docs:check": "vitest run src/catalog/catalog.generated.test.ts && node scripts/sync-jsdoc.mjs --check",
+    "npm:publish": "yarn docs:check && vite build && npm publish"
   },
   "dependencies": {
     "d3": "^7.9.0"
@@ -61,26 +71,26 @@
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/browser": "^4.1.2",
-    "@vitest/coverage-istanbul": "^4.0.15",
-    "@vitest/ui": "^4.0.15",
+    "@vitest/browser": "^4.1.10",
+    "@vitest/coverage-istanbul": "^4.1.10",
+    "@vitest/ui": "^4.1.10",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
-    "eslint-plugin-storybook": "^10.1.5",
+    "eslint-plugin-storybook": "^10.5.7",
     "jsdom": "^27.3.0",
     "playwright": "^1.58.2",
-    "postcss": "^8.5.6",
+    "postcss": "^8.5.26",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
-    "storybook": "^10.1.5",
+    "storybook": "^10.5.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
-    "vite": "^7.2.7",
+    "vite": "^7.3.5",
     "vite-plugin-dts": "^4.5.4",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.10"
   }
 }

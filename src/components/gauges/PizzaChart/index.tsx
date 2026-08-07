@@ -23,6 +23,51 @@ export interface PizzaChartProps<TData = any> extends Omit<GaugeProps<TData>, 'd
   }[];
 }
 
+/* catalog:start */
+/**
+ * Equal-angle radial slices, one per metric, each extending from the centre in
+ * proportion to its value.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - One entity is being profiled across several metrics that share a scale
+ * - The overall silhouette matters more than reading individual values
+ * - Slices have a natural order, so the shape is comparable between renders
+ *
+ * **Avoid when**
+ * - Several entities need comparing — a pizza shows one; use RadarChart,
+ *   which overlays many
+ * - The metrics are parts of one whole — use PieChart, where angle encodes
+ *   share
+ * - Precise values matter — radius is read poorly; use ColumnChart
+ * - Each metric has its own target rather than a shared max — use RingGauge
+ *
+ * Also called: radial bar chart, polar bar chart, sunburst-style profile.
+ *
+ * Answers: profile, progress. Required props: `id`, `data`, `metrics`.
+ *
+ * @example
+ * ```tsx
+ * <PizzaChart
+ *   id="quality-profile"
+ *   className="w-full h-64"
+ *   data={record}
+ *   max={100}
+ *   metrics={[
+ *     { key: 'metric1', className: 'fill-purple-900' },
+ *     { key: 'metric2', className: 'fill-purple-700' },
+ *     { key: 'metric3', className: 'fill-purple-500' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @see RadarChart — several entities must be compared across the same
+ *   metrics
+ * @see RingGauge — each metric has its own target
+ * @see PieChart — the values are parts of one whole
+ */
+/* catalog:end */
 const PizzaChart = <TData = any,>({
   data = {} as TData,
   className,

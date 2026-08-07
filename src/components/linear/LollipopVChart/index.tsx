@@ -55,6 +55,47 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
   y?: AxisConfig<TData>;
 }
 
+/* catalog:start */
+/**
+ * Vertical stems ending in a symbol, marking one value per category with far
+ * less ink than a column.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - A column chart would look heavy but the vertical orientation should be
+ *   kept
+ * - The value point matters more than magnitude-as-area
+ * - Category labels are short enough to sit under vertical stems
+ *
+ * **Avoid when**
+ * - Several measures need comparing per category — use ColumnChart
+ * - Category labels are long — use LollipopHChart
+ * - The axis is continuous time — use LineChart
+ *
+ * Also called: vertical lollipop chart, stem and dot chart.
+ *
+ * Answers: comparison, ranking. Required props: `id`, `data`, `x`, `y`, `shape`.
+ *
+ * @example
+ * ```tsx
+ * <LollipopVChart
+ *   id="readings-by-name"
+ *   className="w-full h-64"
+ *   data={data}
+ *   shape="circle"
+ *   x={{ key: 'name', axis: { location: 'bottom' } }}
+ *   y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
+ * />
+ * ```
+ *
+ * @see ColumnChart — multiple measures per category, or magnitude should
+ *   read as area
+ * @see LollipopHChart — category labels are long
+ * @see ScatterPlot — both axes are numeric rather than one being
+ *   categorical
+ */
+/* catalog:end */
 const LollipopVChart = <TData = any,>({
   data = [],
   //   valueMin,

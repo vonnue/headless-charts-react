@@ -54,6 +54,34 @@ element, so size it with CSS (`className` or `style`) rather than `width` /
 `height` props — that's what makes the charts responsive. Use `margin` and
 `padding` props to control the space around and inside the plot area.
 
+## Choosing a chart
+
+[AGENTS.md](./AGENTS.md) maps the question you are answering — comparison,
+composition, trend, correlation, distribution, range, progress — to the chart
+that fits, and says for each chart when it is the wrong choice. It ships with the
+package, so tools and coding agents can read it from `node_modules`.
+
+It also resolves named chart types that are not components of their own — a
+streamgraph is an `AreaChart` with `stacking.type`, a waterfall is a
+`ColumnChartStacked` with `waterfall`, a histogram is a `ColumnChart` with
+`x.bin`, a donut is a `PieChart` with `innerRadius`.
+
+The same information is available as data:
+
+```ts
+import {
+  chartCatalog,
+  decisionTree,
+  getChartsByIntent,
+  resolveChartRequest,
+} from '@headless-charts/react';
+
+getChartsByIntent('composition'); // → AreaChart, BarChartStacked, PieChart, …
+resolveChartRequest('streamgraph'); // → { chart: AreaChart, variant: Streamgraph }
+```
+
+or as JSON at `@headless-charts/react/catalog.json`.
+
 ## Documentation
 
 For detailed documentation and examples, visit our [Storybook](https://headless-charts-react.netlify.app).

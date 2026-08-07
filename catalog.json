@@ -1,0 +1,2943 @@
+{
+  "$schema": "https://github.com/hacklehub/headless-charts/blob/main/src/catalog/types.ts",
+  "description": "Machine-readable guide to which chart in @headless-charts/react suits which question and data shape.",
+  "globalRules": [
+    "`id` is required on every chart and must be unique in the document — it is the DOM id D3 selects on. Two charts sharing an id will render into the same node.",
+    "Charts read their size from the rendered element. Size them with `className` or `style` (e.g. `className=\"w-full h-64\"`); there are no `width` or `height` props. A container with no height renders an empty chart.",
+    "Styling is headless: pass Tailwind (or any CSS) classes via `className` on the chart and via `className` on each series config. Nothing is coloured by default.",
+    "Use `margin` for space outside the plot area (axis labels live here) and `padding` for space inside it.",
+    "Tooltips are opt-in: pass `tooltip={{}}` for defaults, `tooltip={{ keys: [...] }}` to choose fields, or `tooltip={{ html: (d) => string }}` to take over rendering.",
+    "Animation is opt-in via `drawing={{ duration, delay }}`; charts render instantly by default.",
+    "Axis keys support dot paths into nested objects (e.g. `{ key: \"user.score\" }`)."
+  ],
+  "decisionTree": [
+    {
+      "question": "How does a measure compare across named categories?",
+      "intent": "comparison",
+      "options": [
+        {
+          "name": "ColumnChart",
+          "when": "Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed"
+        },
+        {
+          "name": "BarChart",
+          "when": "Long category labels, or more than ~12 categories — horizontal bars give labels room"
+        },
+        {
+          "name": "LollipopVChart",
+          "when": "Values matter more than magnitude-as-area, and bars would look heavy; vertical orientation"
+        },
+        {
+          "name": "LollipopHChart",
+          "when": "Same as LollipopVChart but with long category labels"
+        },
+        {
+          "name": "SpineChart",
+          "when": "Two opposing measures per category read outward from a shared centre axis, e.g. male/female"
+        },
+        {
+          "name": "RadarChart",
+          "when": "Five or more metrics compared across a handful of entities on one shared 0–max scale"
+        }
+      ]
+    },
+    {
+      "question": "What is this made of — how do parts add to a whole?",
+      "intent": "composition",
+      "options": [
+        {
+          "name": "PieChart",
+          "when": "One whole split into ~6 or fewer slices at a single point in time"
+        },
+        {
+          "name": "ColumnChartStacked",
+          "when": "Composition compared across several categories or periods, vertical"
+        },
+        {
+          "name": "BarChartStacked",
+          "when": "Same as ColumnChartStacked but with long category labels; also does waterfall"
+        },
+        {
+          "name": "AreaChart",
+          "when": "Composition changing over a continuous axis; supports 100% and streamgraph stacking"
+        },
+        {
+          "name": "PizzaChart",
+          "when": "Several metrics as radial segments of one entity, each against its own max"
+        }
+      ]
+    },
+    {
+      "question": "How does a measure change over time or an ordered axis?",
+      "intent": "trend",
+      "options": [
+        {
+          "name": "LineChart",
+          "when": "Trend of one or more series; the default choice for time on x"
+        },
+        {
+          "name": "AreaChart",
+          "when": "Trend where the volume under the line or the split of a total matters"
+        },
+        {
+          "name": "ColumnChart",
+          "when": "Few discrete periods where individual values matter more than the trend line"
+        },
+        {
+          "name": "TimeLineChart",
+          "when": "Discrete events or durations on a date axis rather than a continuous measure"
+        }
+      ]
+    },
+    {
+      "question": "How do two measures relate to each other?",
+      "intent": "correlation",
+      "options": [
+        {
+          "name": "ScatterPlot",
+          "when": "One point per record; encodes up to two more categorical and one more numeric dimension via color, shape and size"
+        },
+        {
+          "name": "WaffleChart",
+          "when": "Both axes are categorical (or binned) and a third value is encoded as cell colour — a heatmap"
+        }
+      ]
+    },
+    {
+      "question": "How are the values of one measure spread out?",
+      "intent": "distribution",
+      "options": [
+        {
+          "name": "ColumnChart",
+          "when": "Histogram of raw continuous values — set `x.bin` and bar heights become counts"
+        },
+        {
+          "name": "BarChart",
+          "when": "Same histogram horizontally — set `x[0].bin`; better for many bins"
+        },
+        {
+          "name": "BoxPlotV",
+          "when": "Compare the spread, median and quartiles of several groups, vertically"
+        },
+        {
+          "name": "BoxPlotH",
+          "when": "Same as BoxPlotV with long group labels"
+        },
+        {
+          "name": "ScatterPlot",
+          "when": "Two-dimensional density — set `x.bin` or `y.bin` for a binned heatmap"
+        }
+      ]
+    },
+    {
+      "question": "What is the interval, or the movement between two states?",
+      "intent": "range",
+      "options": [
+        {
+          "name": "RangePlot",
+          "when": "A static min–max interval per category, drawn as a dumbbell"
+        },
+        {
+          "name": "CometPlot",
+          "when": "Movement from one value to another per category, with direction shown by a tapered tail"
+        },
+        {
+          "name": "BoxPlotH",
+          "when": "The interval is a statistical summary (quartiles and median), not a plain min–max"
+        }
+      ]
+    },
+    {
+      "question": "How does a single value stand against its target?",
+      "intent": "progress",
+      "options": [
+        {
+          "name": "BulletChart",
+          "when": "One metric against base, target, threshold and max — the most information-dense option"
+        },
+        {
+          "name": "LinearGauge",
+          "when": "One value on a plain linear scale, optionally with an error value; compact enough for a table cell"
+        },
+        {
+          "name": "RingGauge",
+          "when": "Several metrics each against their own target, as concentric rings"
+        },
+        {
+          "name": "SpeedometerChart",
+          "when": "One value where a dial metaphor and coloured regions aid reading"
+        },
+        {
+          "name": "PizzaChart",
+          "when": "Several metrics of one entity against a shared max, as radial slices"
+        }
+      ]
+    },
+    {
+      "question": "How do entities compare across many metrics at once?",
+      "intent": "profile",
+      "options": [
+        {
+          "name": "RadarChart",
+          "when": "Five or more metrics on a shared scale, comparing a few entities by shape"
+        },
+        {
+          "name": "PizzaChart",
+          "when": "A single entity profiled across metrics, no entity-to-entity comparison"
+        },
+        {
+          "name": "RingGauge",
+          "when": "Metrics have individual targets rather than one shared scale"
+        }
+      ]
+    },
+    {
+      "question": "How has ordering changed?",
+      "intent": "ranking",
+      "options": [
+        {
+          "name": "LineChart",
+          "when": "Rank over time as a bump chart — convert values with `utils.convertToRanks` and use `curve: \"bumpX\"`"
+        },
+        {
+          "name": "BarChart",
+          "when": "A single ranked snapshot, sorted by value"
+        }
+      ]
+    },
+    {
+      "question": "When did events happen, and for how long?",
+      "intent": "schedule",
+      "options": [
+        {
+          "name": "TimeLineChart",
+          "when": "Events or durations per row on a shared time axis, e.g. call logs or Gantt-style spans"
+        }
+      ]
+    },
+    {
+      "question": "What is connected to what?",
+      "intent": "connection",
+      "options": [
+        {
+          "name": "Network",
+          "when": "Nodes and edges, force-directed by default and optionally pinned to x/y scales"
+        }
+      ]
+    }
+  ],
+  "charts": [
+    {
+      "name": "AreaChart",
+      "aliases": [
+        "area graph",
+        "stacked area chart",
+        "mountain chart"
+      ],
+      "category": "linear",
+      "summary": "Plots series as filled bands over a shared axis, showing a trend and the composition of a total at the same time.",
+      "intents": [
+        "trend",
+        "composition"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "x",
+            "role": "temporal",
+            "required": true,
+            "description": "Single key for the shared axis, typically time or period."
+          },
+          {
+            "prop": "y",
+            "role": "series",
+            "required": true,
+            "description": "Array of series configs, one per band, drawn bottom-up in the order given."
+          }
+        ],
+        "seriesCount": {
+          "min": 1,
+          "ideal": [
+            2,
+            6
+          ],
+          "max": 10
+        },
+        "rowCount": {
+          "min": 2,
+          "ideal": [
+            4,
+            100
+          ]
+        }
+      },
+      "useWhen": [
+        "Both the overall trend and each series’ share of it need to be visible at once",
+        "Series are stacked parts of a meaningful total, e.g. revenue by product line",
+        "Relative share matters more than absolute values — set `stacking.type: \"100%\"`",
+        "A single series should read as volume or magnitude rather than a bare line"
+      ],
+      "avoidWhen": [
+        "Series need to be compared precisely against each other — stacked bands make all but the bottom one hard to read; use LineChart",
+        "Series can be negative and would overlap confusingly — use LineChart, or `stacking.type: \"diverging\"`",
+        "The x axis is categorical rather than continuous — use ColumnChartStacked",
+        "There is a single series and no notion of a total — use LineChart"
+      ],
+      "alternatives": [
+        {
+          "name": "LineChart",
+          "when": "series must be compared precisely, or there is no meaningful total"
+        },
+        {
+          "name": "ColumnChartStacked",
+          "when": "the x axis is categorical rather than continuous"
+        },
+        {
+          "name": "PieChart",
+          "when": "showing composition at one point in time only"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<AreaChart\n  id=\"revenue-by-product\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'iphone', className: 'text-purple-900' },\n    { key: 'macbook', className: 'text-purple-700' },\n    { key: 'ipad', className: 'text-purple-500' },\n  ]}\n/>",
+      "storybook": "Linear/AreaChart/Intro",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Streamgraph",
+          "aliases": [
+            "stream graph",
+            "theme river",
+            "stream chart"
+          ],
+          "summary": "A stacked area chart with a centred, flowing baseline instead of a flat one, emphasising the shape of each band over its exact value.",
+          "how": "Set `stacking={{ type: \"streamgraph\" }}`. Bands are ordered inside-out and offset by wiggle.",
+          "useWhen": [
+            "Many series need showing over a long span and the rise and fall of each is the story",
+            "Relative movement matters more than reading any single value",
+            "The total is large and volatile, so a flat baseline would waste vertical space"
+          ],
+          "avoidWhen": [
+            "Any value must be read off the chart — no band sits on a fixed baseline; use a plain stacked AreaChart",
+            "There are only two or three series — the organic shape adds nothing over a normal stack",
+            "The audience needs the total, which a wiggle baseline obscures"
+          ],
+          "example": "<AreaChart\n  id=\"genre-streamgraph\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'iphone', className: 'text-purple-900' },\n    { key: 'macbook', className: 'text-purple-700' },\n    { key: 'ipad', className: 'text-purple-500' },\n  ]}\n  stacking={{ type: 'streamgraph' }}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "100% stacked area chart",
+          "aliases": [
+            "percentage area chart",
+            "normalised area chart",
+            "share of total area chart"
+          ],
+          "summary": "A stacked area chart normalised so every period fills the full height, showing share rather than absolute value.",
+          "how": "Set `stacking={{ type: \"100%\" }}`. The y axis becomes 0–100% of the period total.",
+          "useWhen": [
+            "The mix matters and the absolute total does not",
+            "Totals differ so much between periods that a plain stack would hide the smaller ones",
+            "Showing how composition shifted over time, e.g. market share"
+          ],
+          "avoidWhen": [
+            "The total is part of the story — normalising deletes it; use a plain stacked AreaChart",
+            "A shrinking absolute value could be mistaken for a growing one because its share rose"
+          ],
+          "example": "<AreaChart\n  id=\"market-share\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'iphone', className: 'text-purple-900' },\n    { key: 'macbook', className: 'text-purple-700' },\n  ]}\n  stacking={{ type: '100%' }}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Diverging area chart",
+          "aliases": [
+            "diverging stacked area chart",
+            "bidirectional area chart"
+          ],
+          "summary": "A stacked area chart that splits around a zero baseline, stacking positive series upward and negative ones downward.",
+          "how": "Set `stacking={{ type: \"diverging\" }}`. Series order is reversed so positive and negative stacks mirror each other.",
+          "useWhen": [
+            "Series contain both gains and losses that should stack away from zero",
+            "Net position against zero is the message, e.g. inflows against outflows"
+          ],
+          "avoidWhen": [
+            "All values share a sign — the diverging offset then behaves as a plain stack with confusing ordering"
+          ],
+          "example": "<AreaChart\n  id=\"flows\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'inflow', className: 'text-green-700' },\n    { key: 'outflow', className: 'text-red-700' },\n  ]}\n  stacking={{ type: 'diverging' }}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Time-scaled area chart",
+          "aliases": [
+            "time series area chart"
+          ],
+          "summary": "An area chart whose x axis parses real dates rather than treating the key as a plain number.",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings.",
+          "useWhen": [
+            "The x values are dates and the spacing between them is uneven",
+            "Axis ticks should fall on real date boundaries"
+          ],
+          "example": "<AreaChart\n  id=\"daily-volume\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}\n  y={[{ key: 'volume', className: 'text-blue-500' }]}\n/>"
+        }
+      ]
+    },
+    {
+      "name": "BarChart",
+      "aliases": [
+        "horizontal bar chart",
+        "grouped bar chart",
+        "ranked bar chart"
+      ],
+      "category": "linear",
+      "summary": "Horizontal bars comparing one or more measures across categories, with room for long category labels.",
+      "intents": [
+        "comparison",
+        "distribution",
+        "ranking"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "y",
+            "role": "category",
+            "required": true,
+            "description": "Single key holding the category label for each row; becomes the vertical axis."
+          },
+          {
+            "prop": "x",
+            "role": "series",
+            "required": true,
+            "description": "Array of numeric keys; one bar per key per category. Each entry also takes `rx` for rounded ends."
+          }
+        ],
+        "seriesCount": {
+          "min": 1,
+          "ideal": [
+            1,
+            4
+          ],
+          "max": 6
+        },
+        "rowCount": {
+          "ideal": [
+            2,
+            25
+          ],
+          "max": 40,
+          "note": "Past ~40 rows the chart needs scrolling — bin the values instead."
+        }
+      },
+      "useWhen": [
+        "Category labels are long enough that vertical bars would truncate or rotate them",
+        "There are more categories than vertical bars can hold (roughly 12 or more)",
+        "Presenting a ranked list, sorted by value",
+        "Showing a histogram horizontally — set `bin` on the first `x` entry and bar lengths become counts",
+        "Bars should grow leftward from the right edge — set `direction: \"left\"`"
+      ],
+      "avoidWhen": [
+        "The x axis is time — a horizontal bar per period breaks the reading order; use LineChart or ColumnChart",
+        "Measures are parts of a whole — use BarChartStacked so the total is readable",
+        "Labels are short and there are few categories — ColumnChart is the more conventional read",
+        "Two measures should read outward from a shared centre — use SpineChart"
+      ],
+      "alternatives": [
+        {
+          "name": "ColumnChart",
+          "when": "few categories with short labels"
+        },
+        {
+          "name": "BarChartStacked",
+          "when": "measures are parts of a whole"
+        },
+        {
+          "name": "LollipopHChart",
+          "when": "bars look heavy and the value point is the focus"
+        },
+        {
+          "name": "SpineChart",
+          "when": "two opposing measures per category"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<BarChart\n  id=\"sales-by-region\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'region' }}\n  x={[{ key: 'revenue', className: 'fill-blue-500' }]}\n/>",
+      "storybook": "Linear/BarChart/Intro",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Horizontal histogram",
+          "aliases": [
+            "binned bar chart",
+            "horizontal frequency distribution"
+          ],
+          "summary": "Bins raw continuous values and draws the count per bin as horizontal bars, with bin ranges as labels down the y axis.",
+          "how": "Set `bin` on the first `x` entry: `x={[{ key: \"score\", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically.",
+          "useWhen": [
+            "A distribution has many bins, which fit better stacked vertically than squeezed across",
+            "Bin range labels are long, e.g. \"10,000–20,000\""
+          ],
+          "avoidWhen": [
+            "The conventional histogram orientation is expected — use ColumnChart with `x.bin`",
+            "The x values are already categorical rather than continuous"
+          ],
+          "example": "<BarChart\n  id=\"score-histogram\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  x={[{ key: 'score', bin: { count: 8 }, className: 'fill-blue-500' }]}\n  y={{ key: 'count' }}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Diverging bar chart",
+          "aliases": [
+            "tornado chart",
+            "bidirectional bar chart",
+            "deviation chart"
+          ],
+          "summary": "Bars growing left and right of a zero baseline, with negative values styled separately to show direction of change.",
+          "how": "Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`.",
+          "useWhen": [
+            "Values are changes against a baseline and the sign is the message, e.g. year-on-year delta",
+            "Gains and losses should be distinguishable at a glance by colour and direction"
+          ],
+          "avoidWhen": [
+            "All values share a sign — nothing diverges, so use a plain BarChart",
+            "The two directions are separate measures rather than one signed measure — use SpineChart"
+          ],
+          "example": "<BarChart\n  id=\"yoy-change\"\n  className=\"w-full h-64\"\n  data={data}\n  x={[{\n    key: 'delta',\n    className: 'text-green-500',\n    classNameNegative: 'text-red-500',\n    start: -10,\n    end: 10,\n    axis: { location: 'top' },\n  }]}\n  y={{ key: 'year', padding: 10 }}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Data labels",
+          "how": "Pass `dataLabel={{ className: \"fill-white text-xs\" }}` to print values on the bars."
+        },
+        {
+          "kind": "option",
+          "name": "Right-to-left",
+          "how": "Set `direction=\"left\"` to anchor bars at the right edge."
+        }
+      ]
+    },
+    {
+      "name": "BarChartStacked",
+      "aliases": [
+        "stacked bar chart",
+        "horizontal stacked bar chart"
+      ],
+      "category": "linear",
+      "summary": "Horizontal bars where measures stack end to end, showing the total per category and its breakdown.",
+      "intents": [
+        "composition",
+        "comparison"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "y",
+            "role": "category",
+            "required": true,
+            "description": "Single key holding the category label for each row."
+          },
+          {
+            "prop": "x",
+            "role": "series",
+            "required": true,
+            "description": "Array of numeric keys, stacked left to right in the order given."
+          }
+        ],
+        "seriesCount": {
+          "min": 2,
+          "ideal": [
+            2,
+            6
+          ],
+          "max": 8
+        },
+        "rowCount": {
+          "ideal": [
+            2,
+            25
+          ],
+          "max": 40
+        }
+      },
+      "useWhen": [
+        "Composition needs comparing across categories whose labels are long",
+        "Both the total and the proportions within each bar matter",
+        "Showing a waterfall of running gains and losses — set `waterfall`"
+      ],
+      "avoidWhen": [
+        "Segments need precise comparison across categories — only the first segment shares a baseline; use BarChart grouped",
+        "Labels are short and few — ColumnChartStacked reads more conventionally",
+        "There is one category only — use PieChart"
+      ],
+      "alternatives": [
+        {
+          "name": "BarChart",
+          "when": "segments must be compared precisely rather than summed"
+        },
+        {
+          "name": "ColumnChartStacked",
+          "when": "short labels and few categories"
+        },
+        {
+          "name": "PieChart",
+          "when": "a single whole at one point in time"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<BarChartStacked\n  id=\"revenue-by-region\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'year' }}\n  x={[\n    { key: 'macbook', className: 'fill-purple-800' },\n    { key: 'iphone', className: 'fill-purple-600' },\n  ]}\n/>",
+      "storybook": "Linear/BarChartStacked/Intro",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Horizontal waterfall chart",
+          "aliases": [
+            "horizontal bridge chart",
+            "horizontal cascade chart"
+          ],
+          "summary": "Floating horizontal bars where each segment continues from the previous total, showing how a figure is built up step by step.",
+          "how": "Set `waterfall` on a BarChartStacked. Each `x` series becomes a step rather than a segment stacked from the baseline.",
+          "useWhen": [
+            "Explaining a running total through successive gains and losses, where step labels are long",
+            "The sequence reads better vertically down the page than across it"
+          ],
+          "avoidWhen": [
+            "The series are independent categories with no running total — use a plain BarChart",
+            "Labels are short, in which case ColumnChartStacked in waterfall mode is the conventional read"
+          ],
+          "example": "<BarChartStacked\n  id=\"profit-walk\"\n  className=\"w-full h-64\"\n  data={data}\n  waterfall\n  y={{ key: 'year' }}\n  x={[\n    { key: 'macbook', className: 'fill-green-600' },\n    { key: 'iphone', className: 'fill-red-500' },\n  ]}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Reference lines",
+          "how": "Pass `referenceLines` to mark targets across the value axis."
+        },
+        {
+          "kind": "option",
+          "name": "Data labels",
+          "how": "Pass `dataLabel` to print segment values inside the bars."
+        }
+      ]
+    },
+    {
+      "name": "ColumnChart",
+      "aliases": [
+        "vertical bar chart",
+        "grouped column chart",
+        "clustered column chart"
+      ],
+      "category": "linear",
+      "summary": "Vertical bars comparing one or more measures across categories; grouped side by side when several measures are passed.",
+      "intents": [
+        "comparison",
+        "distribution"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "x",
+            "role": "category",
+            "required": true,
+            "description": "Single key holding the category label for each row."
+          },
+          {
+            "prop": "y",
+            "role": "series",
+            "required": true,
+            "description": "Array of numeric keys; one bar per key per category, drawn as a group."
+          }
+        ],
+        "seriesCount": {
+          "min": 1,
+          "ideal": [
+            1,
+            4
+          ],
+          "max": 6,
+          "note": "Groups wider than ~4 bars get hard to scan."
+        },
+        "rowCount": {
+          "ideal": [
+            2,
+            12
+          ],
+          "max": 20,
+          "note": "Past ~20 categories the labels collide — switch to BarChart."
+        }
+      },
+      "useWhen": [
+        "Comparing a numeric measure across a modest number of categories with short labels",
+        "Several measures need comparing within each category, side by side",
+        "The categories are periods (years, quarters) and individual values matter more than the trend line",
+        "Showing a histogram of raw continuous values — set `x.bin` and pass `y={[{ key: \"count\" }]}`"
+      ],
+      "avoidWhen": [
+        "Category labels are long or there are more than ~20 categories — use BarChart, where horizontal bars give labels room",
+        "The measures are parts of one whole — use ColumnChartStacked so the total is readable",
+        "The x axis is continuous time with many points — use LineChart",
+        "The bars would be nearly equal in height, making differences invisible — use LollipopVChart or a dot-based chart"
+      ],
+      "alternatives": [
+        {
+          "name": "BarChart",
+          "when": "long labels or many categories"
+        },
+        {
+          "name": "ColumnChartStacked",
+          "when": "measures are parts of a whole"
+        },
+        {
+          "name": "LollipopVChart",
+          "when": "bars look heavy and values are the focus"
+        },
+        {
+          "name": "LineChart",
+          "when": "the axis is continuous time with many points"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<ColumnChart\n  id=\"sales-by-year\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'macbook', className: 'fill-purple-800' },\n    { key: 'iphone', className: 'fill-purple-600' },\n  ]}\n/>",
+      "storybook": "Linear/ColumnChartGrouped",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Histogram",
+          "aliases": [
+            "frequency distribution",
+            "binned column chart",
+            "frequency chart"
+          ],
+          "summary": "Bins raw continuous values into ranges and plots how many records fall into each, showing the shape of a distribution.",
+          "how": "Set `x={{ key: \"score\", bin: { count: 8 } }}` and `y={[{ key: \"count\" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges.",
+          "useWhen": [
+            "The data is raw measurements and the question is how they are spread, not what each one is",
+            "Skew, spread, gaps or multiple peaks need to be visible",
+            "Bin width should be tuned to reveal structure — adjust `bin.count`"
+          ],
+          "avoidWhen": [
+            "The x values are already categories — a histogram bins continuous data; use a plain ColumnChart",
+            "Groups need comparing by their summary statistics rather than their full shape — use BoxPlotV",
+            "There are too few records for bin heights to mean anything"
+          ],
+          "example": "<ColumnChart\n  id=\"score-histogram\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}\n  y={[{ key: 'count', className: 'text-blue-500' }]}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Reference lines",
+          "how": "Pass `referenceLines={[{ y: 50, className: \"stroke-red-500\" }]}`."
+        },
+        {
+          "kind": "option",
+          "name": "Whole numbers",
+          "how": "Set `wholeNumbers` to force integer ticks on the value axis."
+        }
+      ]
+    },
+    {
+      "name": "ColumnChartStacked",
+      "aliases": [
+        "stacked column chart",
+        "stacked bar chart (vertical)"
+      ],
+      "category": "linear",
+      "summary": "Vertical bars where each measure stacks on the previous one, showing both the total per category and its composition.",
+      "intents": [
+        "composition",
+        "comparison"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "x",
+            "role": "category",
+            "required": true,
+            "description": "Single key holding the category label for each row."
+          },
+          {
+            "prop": "y",
+            "role": "series",
+            "required": true,
+            "description": "Array of numeric keys, stacked bottom-up in the order given."
+          }
+        ],
+        "seriesCount": {
+          "min": 2,
+          "ideal": [
+            2,
+            6
+          ],
+          "max": 8
+        },
+        "rowCount": {
+          "ideal": [
+            2,
+            12
+          ],
+          "max": 20
+        }
+      },
+      "useWhen": [
+        "The total per category matters as much as its breakdown",
+        "Segments are genuinely parts of one whole, not independent measures",
+        "Showing a waterfall of running gains and losses — set `waterfall`"
+      ],
+      "avoidWhen": [
+        "Individual segments need precise comparison across categories — only the bottom segment shares a baseline; use ColumnChart grouped",
+        "Category labels are long or numerous — use BarChartStacked",
+        "There is one category only — use PieChart",
+        "The axis is continuous time — use AreaChart, which reads as a flow rather than discrete totals"
+      ],
+      "alternatives": [
+        {
+          "name": "ColumnChart",
+          "when": "segments must be compared precisely across categories"
+        },
+        {
+          "name": "BarChartStacked",
+          "when": "long category labels"
+        },
+        {
+          "name": "AreaChart",
+          "when": "the axis is continuous time"
+        },
+        {
+          "name": "PieChart",
+          "when": "a single whole at one point in time"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<ColumnChartStacked\n  id=\"revenue-split\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'macbook', className: 'fill-purple-800' },\n    { key: 'iphone', className: 'fill-purple-600' },\n    { key: 'ipad', className: 'fill-purple-400' },\n  ]}\n/>",
+      "storybook": "Linear/ColumnChartStacked",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Waterfall chart",
+          "aliases": [
+            "waterfall",
+            "bridge chart",
+            "cascade chart",
+            "flying bricks chart"
+          ],
+          "summary": "Floating columns where each segment starts where the previous one ended, showing how a running total is built up from successive gains and losses.",
+          "how": "Set `waterfall` on a ColumnChartStacked. Each `y` series becomes a step in the sequence rather than a segment stacked from the baseline.",
+          "useWhen": [
+            "Explaining how a starting figure becomes an ending figure through a sequence of contributions",
+            "Each step is a gain or a loss against a running total, e.g. revenue bridge or profit walk",
+            "The order of the steps carries meaning and should be read left to right"
+          ],
+          "avoidWhen": [
+            "The series are independent categories with no running total — use a plain grouped ColumnChart",
+            "The order of steps is arbitrary, which makes the bridge metaphor meaningless",
+            "Category labels are long — use BarChartStacked in waterfall mode instead"
+          ],
+          "example": "<ColumnChartStacked\n  id=\"revenue-bridge\"\n  className=\"w-full h-64\"\n  data={data}\n  waterfall\n  x={{ key: 'year' }}\n  y={[\n    { key: 'macbook', className: 'fill-green-600' },\n    { key: 'iphone', className: 'fill-green-500' },\n    { key: 'ipad', className: 'fill-red-500' },\n  ]}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Reference lines",
+          "how": "Pass `referenceLines={[{ y: 100, className: \"stroke-red-500\" }]}`."
+        }
+      ]
+    },
+    {
+      "name": "LineChart",
+      "aliases": [
+        "line graph",
+        "multi-line chart",
+        "trend line chart"
+      ],
+      "category": "linear",
+      "summary": "Plots one or more numeric series against a shared ordered or time axis to show how values move.",
+      "intents": [
+        "trend",
+        "ranking"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "x",
+            "role": "temporal",
+            "required": true,
+            "description": "Single key for the shared axis. Set `scalingFunction: \"time\"` with `time.format` for dates; otherwise treated as linear."
+          },
+          {
+            "prop": "y",
+            "role": "series",
+            "required": true,
+            "description": "Array of series configs, one per line. Each takes `className`, `curve`, `symbol` and an optional `axis.location: \"right\"` for a second scale."
+          }
+        ],
+        "seriesCount": {
+          "min": 1,
+          "ideal": [
+            1,
+            5
+          ],
+          "max": 8,
+          "note": "Beyond ~8 lines the chart becomes a hairball; facet instead."
+        },
+        "rowCount": {
+          "min": 2,
+          "ideal": [
+            5,
+            200
+          ],
+          "max": 1000
+        }
+      },
+      "useWhen": [
+        "The x axis is time or another continuous ordered dimension and the shape of the movement is the point",
+        "Several series must be compared against each other over the same axis",
+        "Two measures on different scales need separate left and right axes (set `axis.location: \"right\"` on the second series)",
+        "Gaps in the data should break the line — missing keys are skipped rather than zeroed"
+      ],
+      "avoidWhen": [
+        "The x axis is categorical with no inherent order — use ColumnChart or BarChart, since a line implies continuity that is not there",
+        "The split of a total matters as much as the trend — use AreaChart",
+        "There are only two or three points per series — use ColumnChart, where individual values are easier to read",
+        "The data is discrete events or durations rather than a measured value — use TimeLineChart"
+      ],
+      "alternatives": [
+        {
+          "name": "AreaChart",
+          "when": "volume under the curve or composition of a total matters"
+        },
+        {
+          "name": "ColumnChart",
+          "when": "few discrete periods, individual values matter more than the trend"
+        },
+        {
+          "name": "TimeLineChart",
+          "when": "plotting events and durations rather than a continuous measure"
+        },
+        {
+          "name": "ScatterPlot",
+          "when": "the x axis is a measure rather than time, and points should not be joined"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<LineChart\n  id=\"revenue-trend\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'month' }}\n  y={[\n    { key: 'revenue', className: 'text-blue-500' },\n    { key: 'forecast', className: 'text-gray-400', curve: 'step' },\n  ]}\n/>",
+      "storybook": "Linear/LineChart/Intro",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Bump chart",
+          "aliases": [
+            "rank chart",
+            "ranking chart",
+            "bump plot",
+            "rank over time"
+          ],
+          "summary": "Plots rank rather than value over time, so lines cross when entities overtake one another.",
+          "how": "Convert values to ranks with `utils.convertToRanks(data, y, x)` — it takes the same `y` array and `x` object you pass to the chart — then set `curve: \"bumpX\"` and `label: { show: true }` on each series, and `reverse` so rank 1 sits at the top.",
+          "useWhen": [
+            "Changes in ordering are the story, not the size of the underlying values",
+            "Entities are closely bunched, so a value chart would be an unreadable tangle",
+            "Overtaking events should be visible as line crossings"
+          ],
+          "avoidWhen": [
+            "The size of the gap between entities matters — ranking discards magnitude entirely; use a plain LineChart",
+            "There are too many entities for the crossings to be followable"
+          ],
+          "example": "import { utils } from '@headless-charts/react';\n\nconst x = { key: 'year' };\nconst y = [\n  { key: 'macbook', curve: 'bumpX', label: { show: true } },\n  { key: 'iphone', curve: 'bumpX', label: { show: true } },\n];\n\n<LineChart\n  id=\"rank-over-time\"\n  className=\"w-full h-64\"\n  data={utils.convertToRanks(data, y, x)}\n  x={x}\n  y={y}\n  reverse\n  yLeftLabel=\"rank\"\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Step chart",
+          "aliases": [
+            "step line chart",
+            "staircase chart"
+          ],
+          "summary": "Joins points with horizontal and vertical segments rather than diagonals, showing a value that holds constant then jumps.",
+          "how": "Set `curve: \"step\"` on each series.",
+          "useWhen": [
+            "The value genuinely holds constant between readings, e.g. a price or a rate that changes at discrete moments",
+            "Interpolating between points would imply change that did not happen"
+          ],
+          "avoidWhen": [
+            "The underlying quantity varies continuously — a step then misrepresents it; use the default line"
+          ],
+          "example": "<LineChart\n  id=\"rate-changes\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date' }}\n  y={[{ key: 'rate', curve: 'step', className: 'text-blue-500' }]}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Dual-axis line chart",
+          "aliases": [
+            "two axis chart",
+            "secondary axis chart",
+            "combo chart"
+          ],
+          "summary": "Plots two series against independent left and right scales so measures in different units can share one plot.",
+          "how": "Give the second series `axis: { location: \"right\" }` and widen `margin.right`. Label the scales with `yLeftLabel` and `yRightLabel`.",
+          "useWhen": [
+            "Two related measures use different units or magnitudes, e.g. revenue and conversion rate",
+            "The correlation in shape between the two is the point"
+          ],
+          "avoidWhen": [
+            "The two scales could be made comparable — independent axes let any two series be made to look correlated by choosing scales",
+            "More than two measures are involved; a third scale is unreadable"
+          ],
+          "example": "<LineChart\n  id=\"revenue-vs-rate\"\n  className=\"w-full h-64\"\n  data={data}\n  margin={{ right: 40 }}\n  yLeftLabel=\"Revenue\"\n  yRightLabel=\"Conversion\"\n  x={{ key: 'month' }}\n  y={[\n    { key: 'revenue', className: 'text-green-500' },\n    { key: 'conversion', className: 'text-blue-500', axis: { location: 'right' } },\n  ]}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Time-scaled line chart",
+          "aliases": [
+            "time series chart",
+            "time series line chart"
+          ],
+          "summary": "A line chart whose x axis parses real dates rather than treating the key as a plain number.",
+          "how": "Set `x.scalingFunction: \"time\"` and `x.time.format` (or `x.time.isISO`) to parse date strings.",
+          "useWhen": [
+            "The x values are dates and the gaps between them are uneven",
+            "Ticks should land on real date boundaries rather than arbitrary numbers"
+          ],
+          "example": "<LineChart\n  id=\"daily-signups\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}\n  y={[{ key: 'signups', className: 'text-blue-500' }]}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Curved lines",
+          "how": "Set `curve: \"rounded\"` for Catmull-Rom smoothing, or `\"line\"` for plain straight segments."
+        },
+        {
+          "kind": "option",
+          "name": "Reference lines",
+          "how": "Pass `referenceLines={[{ yLeft: 100, className: \"stroke-red-500\" }]}`."
+        }
+      ]
+    },
+    {
+      "name": "LollipopHChart",
+      "aliases": [
+        "horizontal lollipop chart",
+        "lollipop chart",
+        "stem plot"
+      ],
+      "category": "linear",
+      "summary": "Horizontal stems ending in a symbol, marking one value per category with far less ink than a bar.",
+      "intents": [
+        "comparison",
+        "ranking"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "y",
+            "role": "category",
+            "required": true,
+            "description": "Single key holding the category label for each row."
+          },
+          {
+            "prop": "x",
+            "role": "quantitative",
+            "required": true,
+            "description": "Single numeric key. Set `start: 0` to anchor stems at zero."
+          },
+          {
+            "prop": "shape",
+            "role": "shape",
+            "required": false,
+            "description": "Symbol at the end of each stem: circle (default), diamond, triangle, square, cross, star or wye."
+          }
+        ],
+        "seriesCount": {
+          "min": 1,
+          "max": 1,
+          "note": "One value per category; use BarChart for multiple measures."
+        },
+        "rowCount": {
+          "ideal": [
+            5,
+            30
+          ],
+          "max": 50,
+          "note": "Lollipops stay legible where bars would look like a solid block."
+        }
+      },
+      "useWhen": [
+        "There are many categories and a wall of bars would look heavy",
+        "The exact value point matters more than the magnitude-as-area a bar implies",
+        "Category labels are long enough to need horizontal orientation",
+        "Values are clustered in a narrow band where bar lengths would look nearly identical"
+      ],
+      "avoidWhen": [
+        "Several measures need comparing per category — a lollipop carries one value; use BarChart",
+        "The magnitude should read as accumulated quantity — bars encode that better",
+        "The axis is time — use LineChart",
+        "A vertical layout is wanted — use LollipopVChart"
+      ],
+      "alternatives": [
+        {
+          "name": "BarChart",
+          "when": "multiple measures per category, or magnitude should read as area"
+        },
+        {
+          "name": "LollipopVChart",
+          "when": "a vertical layout fits the space better"
+        },
+        {
+          "name": "RangePlot",
+          "when": "each category has an interval rather than a single value"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<LollipopHChart\n  id=\"scores-by-team\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'name' }}\n  x={{ key: 'value', start: 0 }}\n/>",
+      "storybook": "Linear/LollipopHChart",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Custom symbol",
+          "how": "Pass `shape=\"diamond\"` (or star, triangle, square, cross, wye)."
+        },
+        {
+          "kind": "option",
+          "name": "Axis labels",
+          "how": "Set `x.axis.label` and `y.axis.label` to title each axis."
+        },
+        {
+          "kind": "option",
+          "name": "Styling",
+          "how": "Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately."
+        }
+      ]
+    },
+    {
+      "name": "LollipopVChart",
+      "aliases": [
+        "vertical lollipop chart",
+        "stem and dot chart"
+      ],
+      "category": "linear",
+      "summary": "Vertical stems ending in a symbol, marking one value per category with far less ink than a column.",
+      "intents": [
+        "comparison",
+        "ranking"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "x",
+            "role": "category",
+            "required": true,
+            "description": "Single key holding the category label for each row."
+          },
+          {
+            "prop": "y",
+            "role": "quantitative",
+            "required": true,
+            "description": "Single numeric key. Set `start: 0` to anchor stems at zero."
+          },
+          {
+            "prop": "shape",
+            "role": "shape",
+            "required": true,
+            "description": "Symbol at the end of each stem: circle, diamond, triangle, square, cross, star or wye. Unlike LollipopHChart this prop has no default."
+          }
+        ],
+        "seriesCount": {
+          "min": 1,
+          "max": 1
+        },
+        "rowCount": {
+          "ideal": [
+            5,
+            20
+          ],
+          "max": 30
+        }
+      },
+      "useWhen": [
+        "A column chart would look heavy but the vertical orientation should be kept",
+        "The value point matters more than magnitude-as-area",
+        "Category labels are short enough to sit under vertical stems"
+      ],
+      "avoidWhen": [
+        "Several measures need comparing per category — use ColumnChart",
+        "Category labels are long — use LollipopHChart",
+        "The axis is continuous time — use LineChart"
+      ],
+      "alternatives": [
+        {
+          "name": "ColumnChart",
+          "when": "multiple measures per category, or magnitude should read as area"
+        },
+        {
+          "name": "LollipopHChart",
+          "when": "category labels are long"
+        },
+        {
+          "name": "ScatterPlot",
+          "when": "both axes are numeric rather than one being categorical"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y",
+        "shape"
+      ],
+      "example": "<LollipopVChart\n  id=\"readings-by-name\"\n  className=\"w-full h-64\"\n  data={data}\n  shape=\"circle\"\n  x={{ key: 'name', axis: { location: 'bottom' } }}\n  y={{ key: 'reading', start: 0, axis: { location: 'left' } }}\n/>",
+      "storybook": "Linear/LollipopVChart",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Custom symbol",
+          "how": "Pass `shape=\"star\"` (or diamond, triangle, square, cross, wye)."
+        },
+        {
+          "kind": "option",
+          "name": "Styling",
+          "how": "Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately."
+        },
+        {
+          "kind": "option",
+          "name": "Fixed value range",
+          "how": "Pass `valueMin` and `valueMax` to pin the value axis."
+        }
+      ]
+    },
+    {
+      "name": "SpineChart",
+      "aliases": [
+        "population pyramid",
+        "age-sex pyramid",
+        "butterfly chart",
+        "back-to-back bar chart"
+      ],
+      "category": "linear",
+      "summary": "Bars growing outward in both directions from a shared centre axis, comparing opposing measures per category.",
+      "intents": [
+        "comparison",
+        "composition"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "y",
+            "role": "category",
+            "required": true,
+            "description": "Single key for the category label. Set `axis.location: \"middle\"` to put labels on the spine itself, or \"left\"/\"right\" to move them aside."
+          },
+          {
+            "prop": "x",
+            "role": "series",
+            "required": true,
+            "description": "Array of numeric keys, each with `direction: \"left\" | \"right\"` deciding which side of the spine it grows toward."
+          }
+        ],
+        "seriesCount": {
+          "min": 2,
+          "ideal": [
+            2,
+            4
+          ],
+          "max": 6
+        },
+        "rowCount": {
+          "ideal": [
+            3,
+            20
+          ],
+          "max": 30
+        }
+      },
+      "useWhen": [
+        "Two groups are being contrasted on the same measure, e.g. a population pyramid by sex or this year against last",
+        "The symmetry of the split is itself the message",
+        "Categories share a scale and both sides should be read against the same axis"
+      ],
+      "avoidWhen": [
+        "There is no natural opposition between the measures — the mirrored layout implies one; use BarChart",
+        "More than a few measures per side are needed — the spine gets crowded; use BarChart grouped",
+        "The measures are parts of one whole rather than two sides — use BarChartStacked"
+      ],
+      "alternatives": [
+        {
+          "name": "BarChart",
+          "when": "the measures are not naturally opposed"
+        },
+        {
+          "name": "BarChartStacked",
+          "when": "the measures are parts of one whole"
+        },
+        {
+          "name": "CometPlot",
+          "when": "showing movement between two states rather than two independent measures"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<SpineChart\n  id=\"population-pyramid\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'ageGroup', axis: { location: 'middle' } }}\n  x={[\n    { key: 'male', direction: 'left', className: 'fill-blue-700' },\n    { key: 'female', direction: 'right', className: 'fill-pink-500' },\n  ]}\n/>",
+      "storybook": "Linear/SpineChart",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Labels aside",
+          "how": "Set `y.axis.location` to \"left\" or \"right\" to move category labels off the spine."
+        },
+        {
+          "kind": "option",
+          "name": "Centre gap",
+          "how": "Use `margin.middle` to widen the gap between the two sides."
+        },
+        {
+          "kind": "option",
+          "name": "Axis on top",
+          "how": "Set `xAxis=\"top\"` to move the value axis above the plot."
+        }
+      ]
+    },
+    {
+      "name": "TimeLineChart",
+      "aliases": [
+        "timeline",
+        "event plot",
+        "activity timeline"
+      ],
+      "category": "linear",
+      "summary": "Places discrete events and durations on a shared time axis, one lane per category.",
+      "intents": [
+        "schedule",
+        "trend"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "y",
+            "role": "category",
+            "required": false,
+            "description": "Key whose values become the lanes (rows) of the timeline."
+          },
+          {
+            "prop": "events.startKey",
+            "role": "temporal",
+            "required": true,
+            "description": "Key holding the event start. Set `events.isTime` when the values are dates."
+          },
+          {
+            "prop": "events.endKey",
+            "role": "temporal",
+            "required": false,
+            "description": "Key holding the event end. Omit for point events rather than spans."
+          },
+          {
+            "prop": "events.shapeKey",
+            "role": "shape",
+            "required": false,
+            "description": "Key selecting the mark per event via `shapeMapping` — circle, rect or line."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            1,
+            30
+          ],
+          "max": 60,
+          "note": "One lane per distinct y value."
+        }
+      },
+      "useWhen": [
+        "The data is events with timestamps rather than a measured value sampled over time",
+        "Durations need to be visible as spans — pass both `startKey` and `endKey`",
+        "Activity should be compared across lanes, e.g. calls per line, jobs per worker",
+        "Building a Gantt-style view of overlapping work"
+      ],
+      "avoidWhen": [
+        "A continuous quantity is being tracked over time — use LineChart or AreaChart",
+        "Only counts per period matter, not individual events — aggregate and use ColumnChart",
+        "There is no time dimension at all — this chart has no meaning without one"
+      ],
+      "alternatives": [
+        {
+          "name": "LineChart",
+          "when": "tracking a measured value over time rather than discrete events"
+        },
+        {
+          "name": "ColumnChart",
+          "when": "event counts per period are enough"
+        },
+        {
+          "name": "RangePlot",
+          "when": "intervals are numeric ranges rather than moments in time"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "events"
+      ],
+      "example": "<TimeLineChart\n  id=\"call-timeline\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'agent' }}\n  events={{\n    startKey: 'callStartTime',\n    endKey: 'callEndTime',\n    isTime: true,\n  }}\n/>",
+      "storybook": "Linear/TimeLineChart/Intro",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Gantt chart",
+          "aliases": [
+            "gantt",
+            "schedule chart",
+            "project timeline",
+            "swimlane chart"
+          ],
+          "summary": "Draws each row’s work as a horizontal bar spanning its start and end dates, one lane per resource or task.",
+          "how": "Pass both `events.startKey` and `events.endKey` with `events.isTime: true`, and set `y` to the lane key. Spans render as rects; overlapping work in a lane is visible as stacked bars.",
+          "useWhen": [
+            "Work has a start and an end and the overlap between items is the question",
+            "Scheduling, capacity or utilisation needs to be read per lane",
+            "Durations differ enough that their relative length carries meaning"
+          ],
+          "avoidWhen": [
+            "Items are instants rather than spans — omit `endKey` for a point-event timeline instead",
+            "Dependencies between tasks are the real subject; this chart draws no links between bars"
+          ],
+          "example": "<TimeLineChart\n  id=\"project-gantt\"\n  className=\"w-full h-64\"\n  data={tasks}\n  y={{ key: 'owner' }}\n  events={{\n    startKey: 'start',\n    endKey: 'end',\n    isTime: true,\n    classNameKey: 'status',\n    classNameMapping: { done: 'fill-green-500', active: 'fill-blue-500' },\n  }}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Point events",
+          "how": "Omit `events.endKey` and set `events.sizeKey` to size circular markers."
+        },
+        {
+          "kind": "option",
+          "name": "Mixed marks",
+          "how": "Set `events.shapeKey` with `events.shapeMapping` to draw circle, rect or line per event type."
+        },
+        {
+          "kind": "option",
+          "name": "Colour by type",
+          "how": "Set `events.classNameKey` with `events.classNameMapping`."
+        }
+      ]
+    },
+    {
+      "name": "PieChart",
+      "aliases": [
+        "circle chart",
+        "part-to-whole chart"
+      ],
+      "category": "distribution",
+      "summary": "Divides a circle into slices sized by value, showing how much each category contributes to one whole.",
+      "intents": [
+        "composition"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "nameKey",
+            "role": "category",
+            "required": true,
+            "description": "Key holding the slice label."
+          },
+          {
+            "prop": "valueKey",
+            "role": "quantitative",
+            "required": true,
+            "description": "Key holding the slice size. Values are summed to form the whole."
+          },
+          {
+            "prop": "classNameMap",
+            "role": "color",
+            "required": false,
+            "description": "Maps each name value to a fill class; nothing is coloured by default."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            2,
+            6
+          ],
+          "max": 8,
+          "note": "Beyond ~8 slices, angles stop being distinguishable."
+        }
+      },
+      "useWhen": [
+        "The values are parts of a single whole and sum to something meaningful",
+        "There are roughly six or fewer categories",
+        "The rough share of one or two dominant slices is the message, not precise comparison",
+        "A seating or parliament metaphor fits — set `startAngle`/`endAngle` for a semicircle"
+      ],
+      "avoidWhen": [
+        "Slices need precise comparison — angles are read far less accurately than lengths; use BarChart or ColumnChart",
+        "The values do not sum to a meaningful whole, e.g. independent metrics or averages",
+        "Composition must be compared across categories or over time — use ColumnChartStacked or AreaChart",
+        "Any value is negative — a slice cannot represent it"
+      ],
+      "alternatives": [
+        {
+          "name": "ColumnChartStacked",
+          "when": "composition compared across several categories or periods"
+        },
+        {
+          "name": "BarChart",
+          "when": "slices need precise comparison"
+        },
+        {
+          "name": "WaffleChart",
+          "when": "part-to-whole shown as countable cells rather than angles"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "nameKey",
+        "valueKey"
+      ],
+      "example": "<PieChart\n  id=\"revenue-share\"\n  className=\"w-full h-64\"\n  data={data}\n  nameKey=\"product\"\n  valueKey=\"revenue\"\n  classNameMap={{ macbook: 'fill-purple-300', iphone: 'fill-purple-800' }}\n/>",
+      "storybook": "Distribution/PieChart/Intro",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Donut chart",
+          "aliases": [
+            "doughnut chart",
+            "ring chart"
+          ],
+          "summary": "A pie chart with a hollow centre, which reads share by arc length rather than by wedge area and frees the middle for a total.",
+          "how": "Set `innerRadius` above 0. Values are a fraction of `outerRadius`, so `innerRadius={0.5}` hollows half the radius.",
+          "useWhen": [
+            "The same part-to-whole story as a pie, but the centre should carry a headline figure or label",
+            "Slices are thin and the reduced centre clutter helps"
+          ],
+          "avoidWhen": [
+            "Precise comparison is needed — a donut is no more accurate than a pie; use BarChart",
+            "There are many slices, which a donut makes harder to read rather than easier"
+          ],
+          "example": "<PieChart\n  id=\"revenue-donut\"\n  className=\"w-full h-64\"\n  data={data}\n  nameKey=\"product\"\n  valueKey=\"revenue\"\n  innerRadius={0.5}\n  cornerRadius={4}\n  paddingAngle={2}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Semicircle chart",
+          "aliases": [
+            "half donut chart",
+            "parliament chart",
+            "hemicycle chart",
+            "seat chart",
+            "gauge donut"
+          ],
+          "summary": "A pie swept through 180° rather than 360°, echoing a parliamentary seating plan.",
+          "how": "Set `startAngle={-90}` and `endAngle={90}`. Combine with `innerRadius` for a half donut.",
+          "useWhen": [
+            "Showing seat shares, poll results or any split with a parliamentary metaphor",
+            "The chart must sit in a wide, short space where a full circle would not fit"
+          ],
+          "avoidWhen": [
+            "There is no seating or directional metaphor — the half circle then just halves the resolution for no reason"
+          ],
+          "example": "<PieChart\n  id=\"seat-share\"\n  className=\"w-full h-64\"\n  data={data}\n  nameKey=\"party\"\n  valueKey=\"seats\"\n  startAngle={-90}\n  endAngle={90}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Rounded slices",
+          "how": "Set `cornerRadius` and `paddingAngle` to separate and round the slices."
+        },
+        {
+          "kind": "option",
+          "name": "Unsorted",
+          "how": "Set `sort={false}` to keep data order instead of sorting by value descending."
+        }
+      ]
+    },
+    {
+      "name": "ScatterPlot",
+      "aliases": [
+        "scatter chart",
+        "scatter graph",
+        "xy plot",
+        "correlation plot"
+      ],
+      "category": "distribution",
+      "summary": "One point per record positioned by two measures, revealing correlation, clusters and outliers.",
+      "intents": [
+        "correlation",
+        "distribution"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "x",
+            "role": "quantitative",
+            "required": true,
+            "description": "Numeric key for the horizontal position."
+          },
+          {
+            "prop": "y",
+            "role": "quantitative",
+            "required": true,
+            "description": "Numeric key for the vertical position."
+          },
+          {
+            "prop": "color",
+            "role": "color",
+            "required": false,
+            "description": "Categorical key plus a `classNameMap` to colour points by group."
+          },
+          {
+            "prop": "size",
+            "role": "size",
+            "required": false,
+            "description": "Numeric key plus `min`/`max` radius to encode a third measure as bubble size."
+          },
+          {
+            "prop": "shape",
+            "role": "shape",
+            "required": false,
+            "description": "Second categorical key plus a `shapeMap`, useful for accessibility alongside colour."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            20,
+            2000
+          ],
+          "max": 10000,
+          "note": "Past a few thousand points, bin into a heatmap."
+        }
+      },
+      "useWhen": [
+        "The question is whether and how two measures move together",
+        "Outliers or clusters need to be visible as individual records",
+        "Up to five dimensions must share one plot — x, y, size, colour and shape",
+        "Points should be joined in data order to show a path over time — set `connect.enabled`",
+        "Point density matters more than individual records — set `x.bin` or `y.bin` for a binned heatmap"
+      ],
+      "avoidWhen": [
+        "One axis is categorical rather than numeric — use ColumnChart or a lollipop chart",
+        "There are only a handful of records — a table or bar chart communicates more directly",
+        "Overplotting hides the pattern — switch to the binned heatmap mode or use WaffleChart",
+        "The x axis is time and the sequence is the point — use LineChart"
+      ],
+      "alternatives": [
+        {
+          "name": "WaffleChart",
+          "when": "both axes are categorical or binned and density is the message"
+        },
+        {
+          "name": "LineChart",
+          "when": "x is time and the sequence matters"
+        },
+        {
+          "name": "BoxPlotV",
+          "when": "comparing the spread of a measure across groups rather than two measures"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<ScatterPlot\n  id=\"gdp-vs-power\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'gdp' }}\n  y={{ key: 'purchasing_power' }}\n  color={{ key: 'continent', classNameMap: { Asia: 'fill-red-600', Europe: 'fill-blue-600' } }}\n/>",
+      "storybook": "Distribution/ScatterPlot/Intro",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Bubble chart",
+          "aliases": [
+            "bubble plot",
+            "proportional symbol chart"
+          ],
+          "summary": "A scatter plot whose point radius encodes a third measure, showing three quantities at once.",
+          "how": "Add `size={{ key: \"population\", min: 2, max: 20 }}`. Radius is scaled between `min` and `max` pixels.",
+          "useWhen": [
+            "A third numeric dimension matters — classically GDP against life expectancy sized by population",
+            "The relative weight of each point should temper how the x/y pattern is read"
+          ],
+          "avoidWhen": [
+            "The third measure needs reading precisely — area is judged poorly; use colour or a second chart",
+            "Points are dense enough that large bubbles would occlude each other"
+          ],
+          "example": "<ScatterPlot\n  id=\"gdp-bubbles\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'gdp' }}\n  y={{ key: 'life_expectancy' }}\n  size={{ key: 'population', min: 3, max: 24 }}\n  color={{ key: 'continent', classNameMap: { Asia: 'fill-red-600' } }}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Connected scatterplot",
+          "aliases": [
+            "connected scatter",
+            "path plot",
+            "trajectory plot"
+          ],
+          "summary": "A scatter plot whose points are joined in data order, tracing the path two measures took together.",
+          "how": "Set `connect={{ enabled: true, className: \"stroke-gray-400\" }}`. Points join in the order the data is given, so sort it first.",
+          "useWhen": [
+            "Two measures evolve together over time and the trajectory is the story",
+            "Loops or reversals in the relationship should be visible, which a plain scatter hides"
+          ],
+          "avoidWhen": [
+            "The data has no meaningful order — the connecting line invents a sequence that does not exist",
+            "Only one measure changes over time; use LineChart"
+          ],
+          "example": "<ScatterPlot\n  id=\"phillips-curve\"\n  className=\"w-full h-64\"\n  data={sortedByYear}\n  x={{ key: 'unemployment' }}\n  y={{ key: 'inflation' }}\n  connect={{ enabled: true, className: 'stroke-gray-400' }}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Density heatmap",
+          "aliases": [
+            "2d histogram",
+            "binned scatter plot",
+            "density plot"
+          ],
+          "summary": "Bins points into a grid and colours each cell by how many fell into it, revealing density where individual points would overplot.",
+          "how": "Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` with an optional `binColor.domain`.",
+          "useWhen": [
+            "There are too many points to plot individually without them merging into a solid mass",
+            "Where the data concentrates matters more than any individual record"
+          ],
+          "avoidWhen": [
+            "Outliers are the point — binning buries a single distant record in a pale cell; use a plain ScatterPlot",
+            "There are few enough points to show individually"
+          ],
+          "example": "<ScatterPlot\n  id=\"density\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'gdp', bin: { count: 12 } }}\n  y={{ key: 'purchasing_power', bin: { count: 12 } }}\n  binColor={{ scale: interpolateBlues }}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Zooming",
+          "how": "Set `zooming={{ enabled: true, min: 1, max: 8 }}` for scroll-to-zoom."
+        },
+        {
+          "kind": "option",
+          "name": "Click handling",
+          "how": "Pass `onClick={(event, d) => …}` to react to point selection."
+        }
+      ]
+    },
+    {
+      "name": "WaffleChart",
+      "aliases": [
+        "heatmap",
+        "categorical heatmap",
+        "matrix chart",
+        "grid chart",
+        "tile chart"
+      ],
+      "category": "distribution",
+      "summary": "A grid of cells indexed by two categorical axes, with a third value encoded as cell colour — a heatmap.",
+      "intents": [
+        "correlation",
+        "distribution",
+        "composition"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "x",
+            "role": "category",
+            "required": true,
+            "description": "Key whose unique values become columns. Set `bin` to group a continuous field instead."
+          },
+          {
+            "prop": "y",
+            "role": "category",
+            "required": true,
+            "description": "Key whose unique values become rows. Set `bin` to group a continuous field instead."
+          },
+          {
+            "prop": "color",
+            "role": "color",
+            "required": true,
+            "description": "Key holding the cell value, plus a D3 sequential `scale` (e.g. `interpolateBlues`) or a `classNameMap` for discrete colours."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            20,
+            500
+          ],
+          "max": 2000,
+          "note": "One record per (x, y) cell."
+        }
+      },
+      "useWhen": [
+        "Two categorical dimensions cross and a magnitude sits at each intersection, e.g. month by year",
+        "The pattern across the whole grid matters more than any single value",
+        "Cyclical structure should be visible, such as seasonality down rows and drift across columns",
+        "Raw continuous data needs binning on one or both axes — set `x.bin`/`y.bin` and cells show counts"
+      ],
+      "avoidWhen": [
+        "Precise values must be read off — colour is the least precise encoding; use a table or BarChart",
+        "One axis is continuous and unbinned — use ScatterPlot",
+        "There are only a few categories, where a grid is overkill — use ColumnChart",
+        "The grid would be mostly empty — sparse heatmaps read as noise"
+      ],
+      "alternatives": [
+        {
+          "name": "ScatterPlot",
+          "when": "axes are continuous measures rather than categories"
+        },
+        {
+          "name": "ColumnChart",
+          "when": "only one categorical dimension is involved"
+        },
+        {
+          "name": "PieChart",
+          "when": "showing part-to-whole for a single set of categories"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y",
+        "color"
+      ],
+      "example": "<WaffleChart\n  id=\"temps-by-month\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year', axis: { location: 'bottom', label: 'Year' } }}\n  y={{ key: 'month', axis: { location: 'left', label: 'Month' } }}\n  color={{ key: 'temperature', scale: interpolateRdYlGn }}\n/>",
+      "storybook": "Distribution/WaffleChart/Intro",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Calendar heatmap",
+          "aliases": [
+            "month-year heatmap",
+            "seasonality chart",
+            "activity heatmap"
+          ],
+          "summary": "A heatmap with time units on both axes — months down, years across — so seasonal cycles and long-run drift are visible at once.",
+          "how": "Map the finer time unit to `y` and the coarser to `x`, then colour by the measure. Use a diverging scale such as `interpolateRdYlGn` for values with a meaningful middle.",
+          "useWhen": [
+            "The data is one value per period over several cycles, e.g. monthly temperature across years",
+            "Both the within-year pattern and the across-year trend need to be readable in one view"
+          ],
+          "avoidWhen": [
+            "Only the trend matters, with no cyclical structure — use LineChart",
+            "Periods are missing, which leaves holes that read as data rather than absence"
+          ],
+          "example": "<WaffleChart\n  id=\"temps-calendar\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year', axis: { location: 'bottom', label: 'Year' } }}\n  y={{ key: 'month', axis: { location: 'left', label: 'Month' } }}\n  color={{ key: 'temperature', scale: interpolateRdYlGn }}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Binned 2D histogram",
+          "aliases": [
+            "binned heatmap",
+            "two-dimensional histogram"
+          ],
+          "summary": "Groups raw continuous values into ranges on both axes and colours each cell by how many records fall in it.",
+          "how": "Set `bin` on `x` and/or `y`; each cell then shows the count for that (xBin, yBin) pair rather than a value from the data.",
+          "useWhen": [
+            "Both axes are continuous and the joint distribution is the question",
+            "Point-level detail is unnecessary or would overplot"
+          ],
+          "avoidWhen": [
+            "Individual records must stay identifiable — use ScatterPlot",
+            "One axis is already categorical, in which case bin only the other"
+          ],
+          "example": "<WaffleChart\n  id=\"joint-distribution\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  x={{ key: 'height', bin: { count: 8 } }}\n  y={{ key: 'weight', bin: { count: 8 } }}\n  color={{ key: 'count', scale: interpolateBlues }}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Discrete colours",
+          "how": "Use `color.classNameMap` instead of `color.scale` to map values to CSS classes."
+        },
+        {
+          "kind": "option",
+          "name": "Rounded cells",
+          "how": "Set `rx` for rounded corners and `gap` for spacing between cells."
+        }
+      ]
+    },
+    {
+      "name": "BoxPlotH",
+      "aliases": [
+        "horizontal box plot",
+        "box and whisker plot",
+        "quartile plot"
+      ],
+      "category": "ranges",
+      "summary": "Horizontal box-and-whisker marks summarising the spread of a measure per group: min, quartiles, median and max.",
+      "intents": [
+        "distribution",
+        "range"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "y",
+            "role": "category",
+            "required": true,
+            "description": "Key holding the group label; one box per group. Set `bin` here to group a continuous field into bands instead."
+          },
+          {
+            "prop": "x",
+            "role": "value",
+            "required": true,
+            "description": "Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. When `y.bin` is set these are computed internally and can be omitted."
+          },
+          {
+            "prop": "valueKey",
+            "role": "quantitative",
+            "required": false,
+            "description": "With `y.bin` set, names the raw continuous field the box statistics are computed from."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            2,
+            20
+          ],
+          "max": 30
+        }
+      },
+      "useWhen": [
+        "The spread of a measure needs comparing across groups, not just its average",
+        "Median and quartiles matter — an average alone would hide skew",
+        "Group labels are long enough to need horizontal orientation",
+        "Statistics should be derived from raw rows — set `y.bin` with `valueKey` and they are computed automatically"
+      ],
+      "avoidWhen": [
+        "Every underlying point should be visible — use ScatterPlot",
+        "The interval is a plain min–max rather than a statistical summary — use RangePlot",
+        "The audience will not read quartiles; a histogram via ColumnChart with `x.bin` is more intuitive",
+        "A vertical layout fits better — use BoxPlotV"
+      ],
+      "alternatives": [
+        {
+          "name": "BoxPlotV",
+          "when": "a vertical layout fits the space better"
+        },
+        {
+          "name": "RangePlot",
+          "when": "showing a plain min–max interval rather than quartiles"
+        },
+        {
+          "name": "ColumnChart",
+          "when": "a histogram of one group is enough — set `x.bin`"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<BoxPlotH\n  id=\"scores-by-team\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'name' }}\n  x={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    min: 0,\n  }}\n/>",
+      "storybook": "Ranges/BoxPlotH",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Binned box plot",
+          "aliases": [
+            "box plot from raw data",
+            "grouped distribution plot"
+          ],
+          "summary": "Bins a continuous field into groups and computes each group’s min, quartiles and median from the raw rows, rather than taking pre-aggregated statistics.",
+          "how": "Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. The statistic keys on `x` are then computed internally and can be omitted.",
+          "useWhen": [
+            "The data is raw observations and the statistics have not been computed upstream",
+            "The grouping field is continuous, e.g. distribution of salary by age band",
+            "Bin boundaries need tuning to see how the distribution shifts across groups"
+          ],
+          "avoidWhen": [
+            "Groups are already categorical — pass them directly with a plain `y` key instead of binning",
+            "The statistics are already computed, in which case name the keys directly"
+          ],
+          "example": "<BoxPlotH\n  id=\"salary-by-age\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  valueKey=\"salary\"\n  y={{ key: 'age', bin: { count: 5 } }}\n  x={{ min: 0 }}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Per-row colours",
+          "how": "Put a `className` field on each row to colour boxes individually."
+        }
+      ]
+    },
+    {
+      "name": "BoxPlotV",
+      "aliases": [
+        "vertical box plot",
+        "box and whisker chart",
+        "box chart"
+      ],
+      "category": "ranges",
+      "summary": "Vertical box-and-whisker marks summarising the spread of a measure per group: min, quartiles, median and max.",
+      "intents": [
+        "distribution",
+        "range"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "x",
+            "role": "category",
+            "required": true,
+            "description": "Key holding the group label; one box per group. Set `bin` here to group a continuous field into bands instead."
+          },
+          {
+            "prop": "y",
+            "role": "value",
+            "required": true,
+            "description": "Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. When `x.bin` is set these are computed internally and can be omitted."
+          },
+          {
+            "prop": "valueKey",
+            "role": "quantitative",
+            "required": false,
+            "description": "With `x.bin` set, names the raw continuous field the box statistics are computed from."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            2,
+            15
+          ],
+          "max": 25
+        }
+      },
+      "useWhen": [
+        "The spread of a measure needs comparing across a few groups with short labels",
+        "Skew and outliers matter, so a mean alone would mislead",
+        "Groups are ordered periods and the change in spread over them is the message",
+        "Statistics should be derived from raw rows — set `x.bin` with `valueKey`"
+      ],
+      "avoidWhen": [
+        "Every underlying point should be visible — use ScatterPlot",
+        "The interval is a plain min–max — use RangePlot",
+        "Group labels are long — use BoxPlotH",
+        "Only the central value matters — use ColumnChart"
+      ],
+      "alternatives": [
+        {
+          "name": "BoxPlotH",
+          "when": "group labels are long"
+        },
+        {
+          "name": "RangePlot",
+          "when": "showing a plain min–max interval rather than quartiles"
+        },
+        {
+          "name": "ScatterPlot",
+          "when": "individual records should stay visible"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<BoxPlotV\n  id=\"salary-by-band\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'name' }}\n  y={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    min: 0,\n  }}\n/>",
+      "storybook": "Ranges/BoxPlotV",
+      "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Binned box plot (vertical)",
+          "aliases": [
+            "vertical box plot from raw data",
+            "distribution by band"
+          ],
+          "summary": "Bins a continuous field into groups along the x axis and computes each group’s quartiles from the raw rows.",
+          "how": "Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. The statistic keys on `y` are then computed internally and can be omitted. Use `bin.thresholds` for explicit band edges.",
+          "useWhen": [
+            "The data is raw observations and no statistics have been computed upstream",
+            "The grouping field is continuous, e.g. salary distribution by age band"
+          ],
+          "avoidWhen": [
+            "Groups are already categorical — pass them directly rather than binning",
+            "The statistics are already computed, in which case name the keys directly"
+          ],
+          "example": "<BoxPlotV\n  id=\"salary-by-age\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  valueKey=\"salary\"\n  x={{ key: 'age', bin: { count: 5 }, axis: { label: 'Age Group' } }}\n  y={{ min: 0, axis: { label: 'Salary' } }}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Per-row colours",
+          "how": "Put a `className` field on each row to colour boxes individually."
+        }
+      ]
+    },
+    {
+      "name": "CometPlot",
+      "aliases": [
+        "comet chart",
+        "change plot",
+        "movement plot",
+        "slope chart"
+      ],
+      "category": "ranges",
+      "summary": "A tapered mark per category running from one value to another, where the widening head shows the direction of movement.",
+      "intents": [
+        "range",
+        "comparison"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "y",
+            "role": "category",
+            "required": true,
+            "description": "Key holding the category label; one comet per row."
+          },
+          {
+            "prop": "x",
+            "role": "value",
+            "required": true,
+            "description": "Config naming the endpoints: `fromKey` (tail) and `toKey` (head). The taper runs from tail to head."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            3,
+            20
+          ],
+          "max": 30
+        }
+      },
+      "useWhen": [
+        "A value moved between two states and the direction of that move matters",
+        "Comparing before-and-after across categories, e.g. score with and without a change",
+        "The magnitude of change should read at a glance from the shape rather than from a computed delta"
+      ],
+      "avoidWhen": [
+        "The two values are an unordered interval with no direction — use RangePlot",
+        "The interval is a quartile summary — use BoxPlotH",
+        "More than two states are involved — use LineChart with one line per category"
+      ],
+      "alternatives": [
+        {
+          "name": "RangePlot",
+          "when": "the interval has no direction"
+        },
+        {
+          "name": "LineChart",
+          "when": "more than two points in the sequence"
+        },
+        {
+          "name": "SpineChart",
+          "when": "contrasting two independent measures rather than a movement"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y"
+      ],
+      "example": "<CometPlot\n  id=\"score-change\"\n  className=\"w-full h-56\"\n  data={data}\n  y={{ key: 'name' }}\n  x={{ fromKey: 'before', toKey: 'after', className: 'fill-green-800 stroke-green-800' }}\n/>",
+      "storybook": "Ranges/CometPlot",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Custom head",
+          "how": "Set `shape` to diamond, triangle, square, cross, star or wye, and `size` to scale it."
+        },
+        {
+          "kind": "option",
+          "name": "Tail styling",
+          "how": "Use `x.classNameTail` to style the tail separately from the head."
+        }
+      ]
+    },
+    {
+      "name": "RangePlot",
+      "aliases": [
+        "dumbbell chart",
+        "dumbbell plot",
+        "barbell chart",
+        "dot plot",
+        "DNA chart",
+        "range chart"
+      ],
+      "category": "ranges",
+      "summary": "A dumbbell per category: two endpoints joined by a bar, showing the interval between a low and a high value.",
+      "intents": [
+        "range",
+        "comparison"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "y",
+            "role": "category",
+            "required": true,
+            "description": "Key holding the category label; one range per row."
+          },
+          {
+            "prop": "x",
+            "role": "value",
+            "required": true,
+            "description": "Config naming the interval endpoints: `minKey` and `maxKey`. Pin the axis with `start` and `end`."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            3,
+            25
+          ],
+          "max": 40
+        }
+      },
+      "useWhen": [
+        "Each category has a low and a high value and the gap between them is the message",
+        "Comparing spans across categories, e.g. min and max temperature per city",
+        "Showing a before-and-after pair where direction does not need emphasis",
+        "A box plot would overstate the statistical rigour of the data"
+      ],
+      "avoidWhen": [
+        "Direction of movement matters — use CometPlot, whose tapered tail shows which way the value moved",
+        "The interval is a statistical summary with quartiles — use BoxPlotH",
+        "Only one value per category exists — use LollipopHChart",
+        "The endpoints are times rather than numbers — use TimeLineChart"
+      ],
+      "alternatives": [
+        {
+          "name": "CometPlot",
+          "when": "the direction of movement between the two values matters"
+        },
+        {
+          "name": "BoxPlotH",
+          "when": "the interval is a quartile summary"
+        },
+        {
+          "name": "LollipopHChart",
+          "when": "there is a single value per category"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "x",
+        "y",
+        "shape"
+      ],
+      "example": "<RangePlot\n  id=\"temp-range\"\n  className=\"w-full h-64\"\n  data={data}\n  shape=\"circle\"\n  y={{ key: 'label', axis: { location: 'left' } }}\n  x={{ minKey: 'minTemp', maxKey: 'maxTemp', start: 0, end: 100 }}\n/>",
+      "storybook": "Ranges/RangePlot",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Styling",
+          "how": "Use `classNameData` to style the connecting bar and endpoints."
+        },
+        {
+          "kind": "option",
+          "name": "Fixed axis",
+          "how": "Set `x.start` and `x.end` to keep the scale stable across renders."
+        }
+      ]
+    },
+    {
+      "name": "BulletChart",
+      "aliases": [
+        "bullet graph",
+        "kpi bar",
+        "target vs actual chart"
+      ],
+      "category": "gauges",
+      "summary": "A compact linear gauge showing one measure against a base, a target, a threshold and a maximum.",
+      "intents": [
+        "progress"
+      ],
+      "data": {
+        "form": "scalar",
+        "encodings": [
+          {
+            "prop": "data",
+            "role": "value",
+            "required": true,
+            "description": "The single measured value."
+          },
+          {
+            "prop": "base",
+            "role": "value",
+            "required": true,
+            "description": "Lower qualitative band, e.g. last period’s result."
+          },
+          {
+            "prop": "target",
+            "role": "value",
+            "required": true,
+            "description": "The goal, drawn as a marker."
+          },
+          {
+            "prop": "threshold",
+            "role": "value",
+            "required": true,
+            "description": "The point past which performance counts as good."
+          },
+          {
+            "prop": "max",
+            "role": "value",
+            "required": true,
+            "description": "Top of the scale."
+          },
+          {
+            "prop": "label",
+            "role": "label",
+            "required": false,
+            "description": "Text naming the metric."
+          }
+        ]
+      },
+      "useWhen": [
+        "One KPI needs showing against a goal plus qualitative bands, in little vertical space",
+        "Several KPIs will be stacked in a dashboard column and must align on a common layout",
+        "A speedometer would waste space for the same information"
+      ],
+      "avoidWhen": [
+        "There is no target or threshold to compare against — use LinearGauge",
+        "Several metrics each have their own target and should read as one unit — use RingGauge",
+        "The value changes over time and the history matters — use LineChart",
+        "The data is an array of records rather than a single number — gauges take one value"
+      ],
+      "alternatives": [
+        {
+          "name": "LinearGauge",
+          "when": "there is no target or threshold, just a value on a scale"
+        },
+        {
+          "name": "RingGauge",
+          "when": "several metrics each against their own target"
+        },
+        {
+          "name": "SpeedometerChart",
+          "when": "a dial metaphor suits the audience better"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "base",
+        "target",
+        "threshold",
+        "max"
+      ],
+      "example": "<BulletChart\n  id=\"sales-vs-target\"\n  className=\"w-full h-24\"\n  data={85}\n  label=\"Sales\"\n  min={0}\n  base={50}\n  target={80}\n  threshold={90}\n  max={100}\n/>",
+      "storybook": "Gauge/BulletChart/Intro",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Styled bands",
+          "how": "Style each element with `classNameData`, `classNameTarget`, `classNameThreshold`, `classNameBase` and `classNameMax`."
+        },
+        {
+          "kind": "option",
+          "name": "Live updates",
+          "how": "Change `data` on an interval; the bar animates when `drawing.duration` is set."
+        }
+      ]
+    },
+    {
+      "name": "LinearGauge",
+      "aliases": [
+        "progress bar chart",
+        "linear progress gauge",
+        "meter"
+      ],
+      "category": "gauges",
+      "summary": "A single value drawn as a filled bar on a linear scale, with an optional error band.",
+      "intents": [
+        "progress"
+      ],
+      "data": {
+        "form": "scalar",
+        "encodings": [
+          {
+            "prop": "data",
+            "role": "value",
+            "required": true,
+            "description": "The value to display. The scale runs 0 to `max`, which defaults to 1 — so pass a fraction unless `max` is set."
+          },
+          {
+            "prop": "label",
+            "role": "label",
+            "required": true,
+            "description": "Text naming the metric; also accepts a D3 value function."
+          },
+          {
+            "prop": "max",
+            "role": "value",
+            "required": false,
+            "description": "Top of the scale. Defaults to 1."
+          },
+          {
+            "prop": "error",
+            "role": "value",
+            "required": false,
+            "description": "`{ data, className }` drawing an error or shortfall band at the top of the scale."
+          }
+        ]
+      },
+      "useWhen": [
+        "A single value needs showing as a share of a total, with no target to compare against",
+        "The gauge must fit in a table cell, list row or card — it is the most compact chart here",
+        "An error or shortfall portion should be visible alongside the value"
+      ],
+      "avoidWhen": [
+        "There is a target, threshold or qualitative band to compare against — use BulletChart, which encodes all of them",
+        "Several related metrics should read as one unit — use RingGauge",
+        "History or trend matters — use LineChart"
+      ],
+      "alternatives": [
+        {
+          "name": "BulletChart",
+          "when": "there is a target and threshold to show"
+        },
+        {
+          "name": "RingGauge",
+          "when": "several metrics each with their own target"
+        },
+        {
+          "name": "SpeedometerChart",
+          "when": "a dial metaphor with coloured regions suits better"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "label"
+      ],
+      "example": "<LinearGauge\n  id=\"disk-usage\"\n  className=\"h-12\"\n  label=\"Disk usage\"\n  data={0.47}\n/>",
+      "storybook": "Gauge/LinearGauge/Intro",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Absolute scale",
+          "how": "Set `max={100}` and pass the raw value instead of a fraction."
+        },
+        {
+          "kind": "option",
+          "name": "Error band",
+          "how": "Pass `error={{ data: 0.1, className: \"fill-red-500\" }}`."
+        },
+        {
+          "kind": "option",
+          "name": "Styling",
+          "how": "Use `classNameGauge` for the fill and `classNameGaugeBg` for the track."
+        }
+      ]
+    },
+    {
+      "name": "PizzaChart",
+      "aliases": [
+        "radial bar chart",
+        "polar bar chart",
+        "sunburst-style profile"
+      ],
+      "category": "gauges",
+      "summary": "Equal-angle radial slices, one per metric, each extending from the centre in proportion to its value.",
+      "intents": [
+        "profile",
+        "progress"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "data",
+            "role": "value",
+            "required": true,
+            "description": "A single record — one object, not an array — holding every metric as a field."
+          },
+          {
+            "prop": "metrics",
+            "role": "series",
+            "required": true,
+            "description": "Array of `{ key, className, classNameBackground }`, one slice per entry, in the order given."
+          }
+        ],
+        "seriesCount": {
+          "min": 3,
+          "ideal": [
+            5,
+            10
+          ],
+          "max": 12
+        }
+      },
+      "useWhen": [
+        "One entity is being profiled across several metrics that share a scale",
+        "The overall silhouette matters more than reading individual values",
+        "Slices have a natural order, so the shape is comparable between renders"
+      ],
+      "avoidWhen": [
+        "Several entities need comparing — a pizza shows one; use RadarChart, which overlays many",
+        "The metrics are parts of one whole — use PieChart, where angle encodes share",
+        "Precise values matter — radius is read poorly; use ColumnChart",
+        "Each metric has its own target rather than a shared max — use RingGauge"
+      ],
+      "alternatives": [
+        {
+          "name": "RadarChart",
+          "when": "several entities must be compared across the same metrics"
+        },
+        {
+          "name": "RingGauge",
+          "when": "each metric has its own target"
+        },
+        {
+          "name": "PieChart",
+          "when": "the values are parts of one whole"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "metrics"
+      ],
+      "example": "<PizzaChart\n  id=\"quality-profile\"\n  className=\"w-full h-64\"\n  data={record}\n  max={100}\n  metrics={[\n    { key: 'metric1', className: 'fill-purple-900' },\n    { key: 'metric2', className: 'fill-purple-700' },\n    { key: 'metric3', className: 'fill-purple-500' },\n  ]}\n/>",
+      "storybook": "Gauge/PizzaChart",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Scale bounds",
+          "how": "Set `min` and `max` so slice radius is comparable across renders."
+        },
+        {
+          "kind": "option",
+          "name": "Slice shaping",
+          "how": "Set `paddingAngle` and `cornerRadius` to separate and round slices."
+        },
+        {
+          "kind": "option",
+          "name": "Backdrop",
+          "how": "Use `classNameBackground` per metric to show the unfilled remainder."
+        }
+      ]
+    },
+    {
+      "name": "RadarChart",
+      "aliases": [
+        "spider chart",
+        "web chart",
+        "star chart",
+        "polar chart",
+        "kiviat diagram"
+      ],
+      "category": "gauges",
+      "summary": "Plots several metrics on spokes radiating from a centre and joins them into a polygon per entity, comparing profiles by shape.",
+      "intents": [
+        "profile",
+        "comparison"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "label",
+            "role": "label",
+            "required": true,
+            "description": "`{ key }` naming the entity each polygon represents."
+          },
+          {
+            "prop": "metrics",
+            "role": "series",
+            "required": true,
+            "description": "Array of `{ key }`, one spoke per entry. All metrics must share the `min`–`max` scale."
+          },
+          {
+            "prop": "classNameMap",
+            "role": "color",
+            "required": false,
+            "description": "Maps each entity label to stroke and fill classes."
+          }
+        ],
+        "seriesCount": {
+          "min": 3,
+          "ideal": [
+            5,
+            8
+          ],
+          "max": 12,
+          "note": "Spokes; fewer than 5 makes a shape too crude to compare."
+        },
+        "rowCount": {
+          "min": 1,
+          "ideal": [
+            2,
+            4
+          ],
+          "max": 5,
+          "note": "Overlapping polygons; past ~5 entities they obscure each other."
+        }
+      },
+      "useWhen": [
+        "Five or more metrics are compared across a few entities on one shared scale, such as 0–100",
+        "The profile shape is the message — which entity is strong or weak where",
+        "Metrics have a natural cyclical or grouped order that makes the shape meaningful"
+      ],
+      "avoidWhen": [
+        "Metrics use different units or ranges — one shared radial scale would misrepresent them; use ColumnChart grouped",
+        "More than about five entities need overlaying — the polygons become unreadable",
+        "Precise values must be compared — radial position is read poorly; use BarChart",
+        "Only one entity is being shown — use PizzaChart"
+      ],
+      "alternatives": [
+        {
+          "name": "PizzaChart",
+          "when": "profiling a single entity"
+        },
+        {
+          "name": "ColumnChart",
+          "when": "metrics have different units, or values must be read precisely"
+        },
+        {
+          "name": "RingGauge",
+          "when": "each metric has its own target rather than a shared scale"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "label",
+        "metrics"
+      ],
+      "example": "<RadarChart\n  id=\"team-profile\"\n  className=\"w-full h-64\"\n  data={data}\n  label={{ key: 'name' }}\n  min={0}\n  max={100}\n  metrics={[\n    { key: 'attack' },\n    { key: 'defense' },\n    { key: 'midfield' },\n    { key: 'goalkeeper' },\n    { key: 'overall' },\n  ]}\n/>",
+      "storybook": "Gauge/RadarChart/Intro",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Per-entity colours",
+          "how": "Pass `classNameMap={{ Arsenal: \"stroke-red-500 fill-red-500\" }}`."
+        },
+        {
+          "kind": "option",
+          "name": "Fixed scale",
+          "how": "Always set `min` and `max` so shapes stay comparable across renders."
+        }
+      ]
+    },
+    {
+      "name": "RingGauge",
+      "aliases": [
+        "activity rings",
+        "radial progress chart",
+        "concentric gauge",
+        "donut gauge"
+      ],
+      "category": "gauges",
+      "summary": "Concentric arcs, one per metric, each filled to its own target — the Apple Watch activity rings pattern.",
+      "intents": [
+        "progress",
+        "profile"
+      ],
+      "data": {
+        "form": "records",
+        "encodings": [
+          {
+            "prop": "labelKey",
+            "role": "label",
+            "required": true,
+            "description": "Key naming each metric."
+          },
+          {
+            "prop": "dataKey",
+            "role": "value",
+            "required": true,
+            "description": "Key holding the achieved value for each metric."
+          },
+          {
+            "prop": "targetKey",
+            "role": "value",
+            "required": true,
+            "description": "Key holding each metric’s own target; the ring fills to data ÷ target."
+          },
+          {
+            "prop": "errorKey",
+            "role": "value",
+            "required": false,
+            "description": "Key holding an error or shortfall value drawn on the ring."
+          }
+        ],
+        "rowCount": {
+          "min": 1,
+          "ideal": [
+            2,
+            5
+          ],
+          "max": 6,
+          "note": "One ring per row; inner rings get short quickly past ~6."
+        }
+      },
+      "useWhen": [
+        "Several metrics each have their own target and should read as a single glanceable unit",
+        "Completion against goal is the message rather than absolute values",
+        "The set of metrics is stable and small, so ring order can be learned"
+      ],
+      "avoidWhen": [
+        "Metrics share one scale and their shape should be compared — use RadarChart",
+        "There is only one metric — use BulletChart or LinearGauge",
+        "Absolute values must be compared across metrics — arc lengths at different radii are not comparable; use ColumnChart",
+        "Metrics have no target, only a raw value — use PizzaChart"
+      ],
+      "alternatives": [
+        {
+          "name": "BulletChart",
+          "when": "a single metric, with qualitative bands"
+        },
+        {
+          "name": "RadarChart",
+          "when": "metrics share one scale and profile shape matters"
+        },
+        {
+          "name": "PizzaChart",
+          "when": "metrics have a shared maximum rather than individual targets"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data",
+        "labelKey",
+        "dataKey",
+        "targetKey"
+      ],
+      "example": "<RingGauge\n  id=\"activity-rings\"\n  className=\"w-full h-64\"\n  data={metrics}\n  labelKey=\"name\"\n  dataKey=\"score\"\n  targetKey=\"target\"\n/>",
+      "storybook": "Gauge/RingGauge/Intro",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Per-ring colours",
+          "how": "Put a `className` field on each row of `data`."
+        },
+        {
+          "kind": "option",
+          "name": "Label placement",
+          "how": "Set `labels={{ position: \"bottom\" }}`."
+        },
+        {
+          "kind": "option",
+          "name": "Arc geometry",
+          "how": "Tune `startAngle`, `endAngle`, `cornerRadius`, `minRadius` and `padding.arc`."
+        }
+      ]
+    },
+    {
+      "name": "SpeedometerChart",
+      "aliases": [
+        "gauge chart",
+        "dial chart",
+        "speedometer",
+        "needle gauge"
+      ],
+      "category": "gauges",
+      "summary": "A dial with a needle showing one value against a scale that can be split into coloured regions.",
+      "intents": [
+        "progress"
+      ],
+      "data": {
+        "form": "scalar",
+        "encodings": [
+          {
+            "prop": "data",
+            "role": "value",
+            "required": true,
+            "description": "The value the needle points to. The scale runs 0 to the largest `regions` limit, or 0 to 1 when no regions are given."
+          },
+          {
+            "prop": "label",
+            "role": "label",
+            "required": false,
+            "description": "`{ text, className }` naming the metric under the dial."
+          },
+          {
+            "prop": "regions",
+            "role": "color",
+            "required": false,
+            "description": "Bands of the arc as `{ limit, className }`; the largest limit also sets the top of the scale."
+          }
+        ]
+      },
+      "useWhen": [
+        "The audience expects a dial metaphor, e.g. an operational or health readout",
+        "The scale divides into qualitative bands — good, warning, critical — that should be visible at a glance",
+        "One value stands alone on a card and the layout has room for a wide mark"
+      ],
+      "avoidWhen": [
+        "Space is tight or several gauges will be stacked — use LinearGauge or BulletChart, which pack far denser",
+        "Precise reading matters — needle angle is read less accurately than a bar length",
+        "Several metrics need comparing — use RingGauge or RadarChart",
+        "The trend over time is the real question — use LineChart"
+      ],
+      "alternatives": [
+        {
+          "name": "BulletChart",
+          "when": "the same information is needed in a fraction of the space"
+        },
+        {
+          "name": "LinearGauge",
+          "when": "a plain value on a scale, no bands"
+        },
+        {
+          "name": "RingGauge",
+          "when": "several metrics each against their own target"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "data"
+      ],
+      "example": "<SpeedometerChart\n  id=\"coverage\"\n  className=\"w-full h-48\"\n  data={0.7}\n  label={{ text: 'Coverage' }}\n/>",
+      "storybook": "Gauge/Speedometer/Intro",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Coloured regions",
+          "how": "Pass `regions={[{ limit: 50, className: \"fill-red-500\" }, { limit: 100, className: \"fill-green-500\" }]}`; the largest limit becomes the scale maximum."
+        },
+        {
+          "kind": "option",
+          "name": "Axis ticks",
+          "how": "Set `axisTicks={10}` to print values around the arc."
+        },
+        {
+          "kind": "option",
+          "name": "Needle length",
+          "how": "Set `needleRadius` to change how far the needle reaches."
+        }
+      ]
+    },
+    {
+      "name": "Network",
+      "aliases": [
+        "network graph",
+        "node-link diagram",
+        "force-directed graph",
+        "graph chart",
+        "relationship map"
+      ],
+      "category": "flow",
+      "summary": "Draws nodes and the edges between them, laid out by force simulation or pinned to x/y scales.",
+      "intents": [
+        "connection"
+      ],
+      "data": {
+        "form": "graph",
+        "encodings": [
+          {
+            "prop": "nodes",
+            "role": "category",
+            "required": true,
+            "description": "Array of node records. Passed separately from `data`."
+          },
+          {
+            "prop": "edges",
+            "role": "link",
+            "required": true,
+            "description": "Array of edge records referencing nodes by id."
+          },
+          {
+            "prop": "nodeDef.idKey",
+            "role": "label",
+            "required": true,
+            "description": "Field on each node holding its unique id; edges reference this value."
+          },
+          {
+            "prop": "edgeDef.sourceKey",
+            "role": "link",
+            "required": true,
+            "description": "Field on each edge holding the source node id."
+          },
+          {
+            "prop": "edgeDef.targetKey",
+            "role": "link",
+            "required": true,
+            "description": "Field on each edge holding the target node id."
+          }
+        ],
+        "rowCount": {
+          "ideal": [
+            10,
+            300
+          ],
+          "max": 1000,
+          "note": "Nodes. Large graphs need filtering or aggregation first."
+        }
+      },
+      "useWhen": [
+        "The relationships between entities are the subject, not the entities’ values",
+        "Clusters, hubs or isolated nodes should emerge from the layout",
+        "Nodes should be positioned by real measures rather than the simulation — set `nodeDef.x` and `nodeDef.y`",
+        "The graph is small enough to be explored interactively — enable `dragging` and `zooming`"
+      ],
+      "avoidWhen": [
+        "The relationships are strictly hierarchical — a tree layout communicates depth better than a force graph",
+        "The data has no explicit edges; a network cannot be inferred from records alone",
+        "Node values are the real question — use BarChart or ScatterPlot",
+        "The graph is dense enough to become a hairball — aggregate or filter first"
+      ],
+      "alternatives": [
+        {
+          "name": "ScatterPlot",
+          "when": "entities have two measures and no meaningful links"
+        },
+        {
+          "name": "WaffleChart",
+          "when": "the relationships form a matrix better read as a heatmap"
+        }
+      ],
+      "requiredProps": [
+        "id",
+        "nodes",
+        "edges",
+        "nodeDef",
+        "edgeDef"
+      ],
+      "example": "<Network\n  id=\"team-graph\"\n  className=\"w-full h-96\"\n  nodes={nodes}\n  edges={edges}\n  nodeDef={{ idKey: 'name' }}\n  edgeDef={{ sourceKey: 'from', targetKey: 'to' }}\n/>",
+      "storybook": "Flow/Network/Intro",
+      "variants": [
+        {
+          "kind": "option",
+          "name": "Fixed positions",
+          "how": "Set `nodeDef.x` and `nodeDef.y` to place nodes on real scales instead of by simulation."
+        },
+        {
+          "kind": "option",
+          "name": "Dragging",
+          "how": "Set `dragging={{ enabled: true, snapToNewPosition: true }}` to let nodes be repositioned and pinned."
+        },
+        {
+          "kind": "option",
+          "name": "Encoding",
+          "how": "Use `nodeDef.size`, `nodeDef.shape` and `nodeDef.classNameKey` with `classNameMap` to encode node attributes."
+        },
+        {
+          "kind": "option",
+          "name": "Curved edges",
+          "how": "Set `edgeDef.curve` and size edges with `edgeDef.size`."
+        }
+      ]
+    }
+  ]
+}

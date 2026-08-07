@@ -27,6 +27,48 @@ export interface SpeedometerChartProps<TData = any> extends GaugeProps<TData> {
   needleRadius?: number;
 }
 
+/* catalog:start */
+/**
+ * A dial with a needle showing one value against a scale that can be split
+ * into coloured regions.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The audience expects a dial metaphor, e.g. an operational or health
+ *   readout
+ * - The scale divides into qualitative bands — good, warning, critical —
+ *   that should be visible at a glance
+ * - One value stands alone on a card and the layout has room for a wide mark
+ *
+ * **Avoid when**
+ * - Space is tight or several gauges will be stacked — use LinearGauge or
+ *   BulletChart, which pack far denser
+ * - Precise reading matters — needle angle is read less accurately than a
+ *   bar length
+ * - Several metrics need comparing — use RingGauge or RadarChart
+ * - The trend over time is the real question — use LineChart
+ *
+ * Also called: gauge chart, dial chart, speedometer, needle gauge.
+ *
+ * Answers: progress. Required props: `id`, `data`.
+ *
+ * @example
+ * ```tsx
+ * <SpeedometerChart
+ *   id="coverage"
+ *   className="w-full h-48"
+ *   data={0.7}
+ *   label={{ text: 'Coverage' }}
+ * />
+ * ```
+ *
+ * @see BulletChart — the same information is needed in a fraction of the
+ *   space
+ * @see LinearGauge — a plain value on a scale, no bands
+ * @see RingGauge — several metrics each against their own target
+ */
+/* catalog:end */
 const SpeedometerChart = <TData = any,>({
   data,
   label,

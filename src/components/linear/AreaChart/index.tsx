@@ -50,6 +50,68 @@ export interface AreaChartProps<TData = any> extends ChartProps<TData> {
   };
 }
 
+/* catalog:start */
+/**
+ * Plots series as filled bands over a shared axis, showing a trend and the
+ * composition of a total at the same time.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Both the overall trend and each series’ share of it need to be visible
+ *   at once
+ * - Series are stacked parts of a meaningful total, e.g. revenue by product
+ *   line
+ * - Relative share matters more than absolute values — set `stacking.type:
+ *   "100%"`
+ * - A single series should read as volume or magnitude rather than a bare
+ *   line
+ *
+ * **Avoid when**
+ * - Series need to be compared precisely against each other — stacked bands
+ *   make all but the bottom one hard to read; use LineChart
+ * - Series can be negative and would overlap confusingly — use LineChart, or
+ *   `stacking.type: "diverging"`
+ * - The x axis is categorical rather than continuous — use
+ *   ColumnChartStacked
+ * - There is a single series and no notion of a total — use LineChart
+ *
+ * **Specialised types**
+ * - Streamgraph — Set `stacking={{ type: "streamgraph" }}`. Bands are
+ *   ordered inside-out and offset by wiggle.
+ * - 100% stacked area chart — Set `stacking={{ type: "100%" }}`. The y axis
+ *   becomes 0–100% of the period total.
+ * - Diverging area chart — Set `stacking={{ type: "diverging" }}`. Series
+ *   order is reversed so positive and negative stacks mirror each other.
+ * - Time-scaled area chart — Set `x.scalingFunction: "time"` with
+ *   `x.time.format`, or `x.time.isISO` for ISO strings.
+ *
+ * Also called: area graph, stacked area chart, mountain chart.
+ *
+ * Answers: trend, composition. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <AreaChart
+ *   id="revenue-by-product"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'iphone', className: 'text-purple-900' },
+ *     { key: 'macbook', className: 'text-purple-700' },
+ *     { key: 'ipad', className: 'text-purple-500' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @see LineChart — series must be compared precisely, or there is no
+ *   meaningful total
+ * @see ColumnChartStacked — the x axis is categorical rather than
+ *   continuous
+ * @see PieChart — showing composition at one point in time only
+ */
+/* catalog:end */
 const AreaChart = <TData = any,>({
   data = [],
   id,

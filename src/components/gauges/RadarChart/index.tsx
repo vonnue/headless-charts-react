@@ -16,6 +16,59 @@ export interface RadarChartProps<TData = any> extends ChartProps<TData> {
   max?: number;
 }
 
+/* catalog:start */
+/**
+ * Plots several metrics on spokes radiating from a centre and joins them into
+ * a polygon per entity, comparing profiles by shape.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Five or more metrics are compared across a few entities on one shared
+ *   scale, such as 0–100
+ * - The profile shape is the message — which entity is strong or weak where
+ * - Metrics have a natural cyclical or grouped order that makes the shape
+ *   meaningful
+ *
+ * **Avoid when**
+ * - Metrics use different units or ranges — one shared radial scale would
+ *   misrepresent them; use ColumnChart grouped
+ * - More than about five entities need overlaying — the polygons become
+ *   unreadable
+ * - Precise values must be compared — radial position is read poorly; use
+ *   BarChart
+ * - Only one entity is being shown — use PizzaChart
+ *
+ * Also called: spider chart, web chart, star chart, polar chart, kiviat diagram.
+ *
+ * Answers: profile, comparison. Required props: `id`, `data`, `label`, `metrics`.
+ *
+ * @example
+ * ```tsx
+ * <RadarChart
+ *   id="team-profile"
+ *   className="w-full h-64"
+ *   data={data}
+ *   label={{ key: 'name' }}
+ *   min={0}
+ *   max={100}
+ *   metrics={[
+ *     { key: 'attack' },
+ *     { key: 'defense' },
+ *     { key: 'midfield' },
+ *     { key: 'goalkeeper' },
+ *     { key: 'overall' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @see PizzaChart — profiling a single entity
+ * @see ColumnChart — metrics have different units, or values must be read
+ *   precisely
+ * @see RingGauge — each metric has its own target rather than a shared
+ *   scale
+ */
+/* catalog:end */
 const RadarChart = <TData = any,>({
   id,
   data,

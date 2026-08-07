@@ -44,6 +44,52 @@ export interface BarChartStackedProps<TData = any> extends ChartProps<TData> {
   dataLabel?: DataLabel<TData>;
 }
 
+/* catalog:start */
+/**
+ * Horizontal bars where measures stack end to end, showing the total per
+ * category and its breakdown.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Composition needs comparing across categories whose labels are long
+ * - Both the total and the proportions within each bar matter
+ * - Showing a waterfall of running gains and losses — set `waterfall`
+ *
+ * **Avoid when**
+ * - Segments need precise comparison across categories — only the first
+ *   segment shares a baseline; use BarChart grouped
+ * - Labels are short and few — ColumnChartStacked reads more conventionally
+ * - There is one category only — use PieChart
+ *
+ * **Specialised types**
+ * - Horizontal waterfall chart — Set `waterfall` on a BarChartStacked. Each
+ *   `x` series becomes a step rather than a segment stacked from the
+ *   baseline.
+ *
+ * Also called: stacked bar chart, horizontal stacked bar chart.
+ *
+ * Answers: composition, comparison. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <BarChartStacked
+ *   id="revenue-by-region"
+ *   className="w-full h-64"
+ *   data={data}
+ *   y={{ key: 'year' }}
+ *   x={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @see BarChart — segments must be compared precisely rather than summed
+ * @see ColumnChartStacked — short labels and few categories
+ * @see PieChart — a single whole at one point in time
+ */
+/* catalog:end */
 const BarChartStacked = <TData = any,>({
   data = [],
   id,

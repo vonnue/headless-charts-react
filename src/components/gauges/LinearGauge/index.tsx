@@ -20,6 +20,46 @@ export interface LinearGaugeProps<TData = any> extends GaugeProps<TData> {
   classNameGaugeBg?: string;
 }
 
+/* catalog:start */
+/**
+ * A single value drawn as a filled bar on a linear scale, with an optional
+ * error band.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - A single value needs showing as a share of a total, with no target to
+ *   compare against
+ * - The gauge must fit in a table cell, list row or card — it is the most
+ *   compact chart here
+ * - An error or shortfall portion should be visible alongside the value
+ *
+ * **Avoid when**
+ * - There is a target, threshold or qualitative band to compare against —
+ *   use BulletChart, which encodes all of them
+ * - Several related metrics should read as one unit — use RingGauge
+ * - History or trend matters — use LineChart
+ *
+ * Also called: progress bar chart, linear progress gauge, meter.
+ *
+ * Answers: progress. Required props: `id`, `data`, `label`.
+ *
+ * @example
+ * ```tsx
+ * <LinearGauge
+ *   id="disk-usage"
+ *   className="h-12"
+ *   label="Disk usage"
+ *   data={0.47}
+ * />
+ * ```
+ *
+ * @see BulletChart — there is a target and threshold to show
+ * @see RingGauge — several metrics each with their own target
+ * @see SpeedometerChart — a dial metaphor with coloured regions suits
+ *   better
+ */
+/* catalog:end */
 const LinearGauge = <TData = any,>({
   id,
   className,

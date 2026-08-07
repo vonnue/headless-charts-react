@@ -60,6 +60,59 @@ export interface PieChartProps<TData = any> extends ChartProps<TData> {
   sort?: boolean;
 }
 
+/* catalog:start */
+/**
+ * Divides a circle into slices sized by value, showing how much each category
+ * contributes to one whole.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The values are parts of a single whole and sum to something meaningful
+ * - There are roughly six or fewer categories
+ * - The rough share of one or two dominant slices is the message, not
+ *   precise comparison
+ * - A seating or parliament metaphor fits — set `startAngle`/`endAngle` for
+ *   a semicircle
+ *
+ * **Avoid when**
+ * - Slices need precise comparison — angles are read far less accurately
+ *   than lengths; use BarChart or ColumnChart
+ * - The values do not sum to a meaningful whole, e.g. independent metrics or
+ *   averages
+ * - Composition must be compared across categories or over time — use
+ *   ColumnChartStacked or AreaChart
+ * - Any value is negative — a slice cannot represent it
+ *
+ * **Specialised types**
+ * - Donut chart — Set `innerRadius` above 0. Values are a fraction of
+ *   `outerRadius`, so `innerRadius={0.5}` hollows half the radius.
+ * - Semicircle chart — Set `startAngle={-90}` and `endAngle={90}`. Combine
+ *   with `innerRadius` for a half donut.
+ *
+ * Also called: circle chart, part-to-whole chart.
+ *
+ * Answers: composition. Required props: `id`, `data`, `nameKey`, `valueKey`.
+ *
+ * @example
+ * ```tsx
+ * <PieChart
+ *   id="revenue-share"
+ *   className="w-full h-64"
+ *   data={data}
+ *   nameKey="product"
+ *   valueKey="revenue"
+ *   classNameMap={{ macbook: 'fill-purple-300', iphone: 'fill-purple-800' }}
+ * />
+ * ```
+ *
+ * @see ColumnChartStacked — composition compared across several
+ *   categories or periods
+ * @see BarChart — slices need precise comparison
+ * @see WaffleChart — part-to-whole shown as countable cells rather than
+ *   angles
+ */
+/* catalog:end */
 const PieChart = <TData = any,>({
   data,
   id,

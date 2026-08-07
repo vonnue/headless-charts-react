@@ -21,6 +21,34 @@ export { default as useTooltip } from '@/hooks/useTooltip';
 // Types
 export type { AxisConfig, SeriesAxisConfig, TooltipConfig, ChartProps, GaugeProps } from '@/types';
 
+// Catalog — machine-readable guidance on which chart suits which question.
+// See AGENTS.md for the generated decision table.
+export {
+  chartCatalog,
+  chartTypeIndex,
+  getChartMeta,
+  getChartsByIntent,
+  resolveChartRequest,
+  decisionTree,
+  globalRules,
+} from '@/catalog';
+export type { ChartTypeEntry } from '@/catalog';
+export { isNamedChartType } from '@/catalog/types';
+export type {
+  ChartMeta,
+  ChartIntent,
+  ChartCategory,
+  ChartDataSpec,
+  ChartEncoding,
+  ChartAlternative,
+  ChartVariant,
+  NamedChartType,
+  ChartOption,
+  Cardinality,
+  EncodingRole,
+  DecisionBranch,
+} from '@/catalog/types';
+
 export { default as BoxPlotH } from '@/components/ranges/BoxPlotH';
 export { default as BoxPlotV } from '@/components/ranges/BoxPlotV';
 export { default as CometPlot } from '@/components/ranges/CometPlot';

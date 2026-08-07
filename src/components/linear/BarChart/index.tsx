@@ -26,6 +26,61 @@ export interface BarChartProps<TData = any> extends ChartProps<TData> {
   tooltip?: TooltipConfig;
 }
 
+/* catalog:start */
+/**
+ * Horizontal bars comparing one or more measures across categories, with room
+ * for long category labels.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Category labels are long enough that vertical bars would truncate or
+ *   rotate them
+ * - There are more categories than vertical bars can hold (roughly 12 or
+ *   more)
+ * - Presenting a ranked list, sorted by value
+ * - Showing a histogram horizontally — set `bin` on the first `x` entry and
+ *   bar lengths become counts
+ * - Bars should grow leftward from the right edge — set `direction: "left"`
+ *
+ * **Avoid when**
+ * - The x axis is time — a horizontal bar per period breaks the reading
+ *   order; use LineChart or ColumnChart
+ * - Measures are parts of a whole — use BarChartStacked so the total is
+ *   readable
+ * - Labels are short and there are few categories — ColumnChart is the more
+ *   conventional read
+ * - Two measures should read outward from a shared centre — use SpineChart
+ *
+ * **Specialised types**
+ * - Horizontal histogram — Set `bin` on the first `x` entry: `x={[{ key:
+ *   "score", bin: { count: 8 } }]}`. Bin labels move to the y axis
+ *   automatically.
+ * - Diverging bar chart — Supply negative values in the data, set
+ *   `start`/`end` on the series to pin a symmetric axis, and style with
+ *   `className` plus `classNameNegative`.
+ *
+ * Also called: horizontal bar chart, grouped bar chart, ranked bar chart.
+ *
+ * Answers: comparison, distribution, ranking. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <BarChart
+ *   id="sales-by-region"
+ *   className="w-full h-64"
+ *   data={data}
+ *   y={{ key: 'region' }}
+ *   x={[{ key: 'revenue', className: 'fill-blue-500' }]}
+ * />
+ * ```
+ *
+ * @see ColumnChart — few categories with short labels
+ * @see BarChartStacked — measures are parts of a whole
+ * @see LollipopHChart — bars look heavy and the value point is the focus
+ * @see SpineChart — two opposing measures per category
+ */
+/* catalog:end */
 const BarChart = <TData = any,>({
   data,
   id,

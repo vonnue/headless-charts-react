@@ -63,6 +63,63 @@ export interface ScatterPlotProps<TData = any> extends ChartProps<TData> {
   };
 }
 
+/* catalog:start */
+/**
+ * One point per record positioned by two measures, revealing correlation,
+ * clusters and outliers.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The question is whether and how two measures move together
+ * - Outliers or clusters need to be visible as individual records
+ * - Up to five dimensions must share one plot — x, y, size, colour and shape
+ * - Points should be joined in data order to show a path over time — set
+ *   `connect.enabled`
+ * - Point density matters more than individual records — set `x.bin` or
+ *   `y.bin` for a binned heatmap
+ *
+ * **Avoid when**
+ * - One axis is categorical rather than numeric — use ColumnChart or a
+ *   lollipop chart
+ * - There are only a handful of records — a table or bar chart communicates
+ *   more directly
+ * - Overplotting hides the pattern — switch to the binned heatmap mode or
+ *   use WaffleChart
+ * - The x axis is time and the sequence is the point — use LineChart
+ *
+ * **Specialised types**
+ * - Bubble chart — Add `size={{ key: "population", min: 2, max: 20 }}`.
+ *   Radius is scaled between `min` and `max` pixels.
+ * - Connected scatterplot — Set `connect={{ enabled: true, className:
+ *   "stroke-gray-400" }}`. Points join in the order the data is given, so
+ *   sort it first.
+ * - Density heatmap — Set `x.bin` and/or `y.bin`. Cells show counts,
+ *   coloured via `binColor.scale` with an optional `binColor.domain`.
+ *
+ * Also called: scatter chart, scatter graph, xy plot, correlation plot.
+ *
+ * Answers: correlation, distribution. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <ScatterPlot
+ *   id="gdp-vs-power"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'gdp' }}
+ *   y={{ key: 'purchasing_power' }}
+ *   color={{ key: 'continent', classNameMap: { Asia: 'fill-red-600', Europe: 'fill-blue-600' } }}
+ * />
+ * ```
+ *
+ * @see WaffleChart — both axes are categorical or binned and density is
+ *   the message
+ * @see LineChart — x is time and the sequence matters
+ * @see BoxPlotV — comparing the spread of a measure across groups rather
+ *   than two measures
+ */
+/* catalog:end */
 const ScatterPlot = <TData = any,>({
   data,
   id,

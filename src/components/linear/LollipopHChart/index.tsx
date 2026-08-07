@@ -42,6 +42,51 @@ export interface LollipopHChartProps<TData = any> extends ChartProps<TData> {
   y?: AxisConfig<TData>;
 }
 
+/* catalog:start */
+/**
+ * Horizontal stems ending in a symbol, marking one value per category with far
+ * less ink than a bar.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - There are many categories and a wall of bars would look heavy
+ * - The exact value point matters more than the magnitude-as-area a bar
+ *   implies
+ * - Category labels are long enough to need horizontal orientation
+ * - Values are clustered in a narrow band where bar lengths would look
+ *   nearly identical
+ *
+ * **Avoid when**
+ * - Several measures need comparing per category — a lollipop carries one
+ *   value; use BarChart
+ * - The magnitude should read as accumulated quantity — bars encode that
+ *   better
+ * - The axis is time — use LineChart
+ * - A vertical layout is wanted — use LollipopVChart
+ *
+ * Also called: horizontal lollipop chart, lollipop chart, stem plot.
+ *
+ * Answers: comparison, ranking. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <LollipopHChart
+ *   id="scores-by-team"
+ *   className="w-full h-64"
+ *   data={data}
+ *   y={{ key: 'name' }}
+ *   x={{ key: 'value', start: 0 }}
+ * />
+ * ```
+ *
+ * @see BarChart — multiple measures per category, or magnitude should
+ *   read as area
+ * @see LollipopVChart — a vertical layout fits the space better
+ * @see RangePlot — each category has an interval rather than a single
+ *   value
+ */
+/* catalog:end */
 const LollipopHChart = <TData = any,>({
   data = [],
   id,

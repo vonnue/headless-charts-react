@@ -104,6 +104,52 @@ export interface NetworkProps<TData = any> extends ChartProps<TData> {
   };
 }
 
+/* catalog:start */
+/**
+ * Draws nodes and the edges between them, laid out by force simulation or
+ * pinned to x/y scales.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The relationships between entities are the subject, not the entities’
+ *   values
+ * - Clusters, hubs or isolated nodes should emerge from the layout
+ * - Nodes should be positioned by real measures rather than the simulation —
+ *   set `nodeDef.x` and `nodeDef.y`
+ * - The graph is small enough to be explored interactively — enable
+ *   `dragging` and `zooming`
+ *
+ * **Avoid when**
+ * - The relationships are strictly hierarchical — a tree layout communicates
+ *   depth better than a force graph
+ * - The data has no explicit edges; a network cannot be inferred from
+ *   records alone
+ * - Node values are the real question — use BarChart or ScatterPlot
+ * - The graph is dense enough to become a hairball — aggregate or filter
+ *   first
+ *
+ * Also called: network graph, node-link diagram, force-directed graph, graph chart, relationship map.
+ *
+ * Answers: connection. Required props: `id`, `nodes`, `edges`, `nodeDef`, `edgeDef`.
+ *
+ * @example
+ * ```tsx
+ * <Network
+ *   id="team-graph"
+ *   className="w-full h-96"
+ *   nodes={nodes}
+ *   edges={edges}
+ *   nodeDef={{ idKey: 'name' }}
+ *   edgeDef={{ sourceKey: 'from', targetKey: 'to' }}
+ * />
+ * ```
+ *
+ * @see ScatterPlot — entities have two measures and no meaningful links
+ * @see WaffleChart — the relationships form a matrix better read as a
+ *   heatmap
+ */
+/* catalog:end */
 const Network = <TData = any,>({
   id,
   className,

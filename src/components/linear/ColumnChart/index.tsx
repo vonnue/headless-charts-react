@@ -29,6 +29,60 @@ interface drawHLineProps {
   dashed?: boolean;
 }
 
+/* catalog:start */
+/**
+ * Vertical bars comparing one or more measures across categories; grouped side
+ * by side when several measures are passed.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - Comparing a numeric measure across a modest number of categories with
+ *   short labels
+ * - Several measures need comparing within each category, side by side
+ * - The categories are periods (years, quarters) and individual values
+ *   matter more than the trend line
+ * - Showing a histogram of raw continuous values — set `x.bin` and pass
+ *   `y={[{ key: "count" }]}`
+ *
+ * **Avoid when**
+ * - Category labels are long or there are more than ~20 categories — use
+ *   BarChart, where horizontal bars give labels room
+ * - The measures are parts of one whole — use ColumnChartStacked so the
+ *   total is readable
+ * - The x axis is continuous time with many points — use LineChart
+ * - The bars would be nearly equal in height, making differences invisible —
+ *   use LollipopVChart or a dot-based chart
+ *
+ * **Specialised types**
+ * - Histogram — Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{
+ *   key: "count" }]}`. Pass the raw rows as `data` — binning and counting
+ *   happen internally. Use `bin.thresholds` for explicit edges.
+ *
+ * Also called: vertical bar chart, grouped column chart, clustered column chart.
+ *
+ * Answers: comparison, distribution. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <ColumnChart
+ *   id="sales-by-year"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @see BarChart — long labels or many categories
+ * @see ColumnChartStacked — measures are parts of a whole
+ * @see LollipopVChart — bars look heavy and values are the focus
+ * @see LineChart — the axis is continuous time with many points
+ */
+/* catalog:end */
 const ColumnChartGrouped = <TData = any,>({
   data = [],
   id,

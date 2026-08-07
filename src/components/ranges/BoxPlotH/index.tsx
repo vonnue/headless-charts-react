@@ -39,6 +39,61 @@ export interface BoxPlotHProps<TData = any> extends ChartProps<TData> {
   tooltip?: TooltipConfig;
 }
 
+/* catalog:start */
+/**
+ * Horizontal box-and-whisker marks summarising the spread of a measure per
+ * group: min, quartiles, median and max.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The spread of a measure needs comparing across groups, not just its
+ *   average
+ * - Median and quartiles matter — an average alone would hide skew
+ * - Group labels are long enough to need horizontal orientation
+ * - Statistics should be derived from raw rows — set `y.bin` with `valueKey`
+ *   and they are computed automatically
+ *
+ * **Avoid when**
+ * - Every underlying point should be visible — use ScatterPlot
+ * - The interval is a plain min–max rather than a statistical summary — use
+ *   RangePlot
+ * - The audience will not read quartiles; a histogram via ColumnChart with
+ *   `x.bin` is more intuitive
+ * - A vertical layout fits better — use BoxPlotV
+ *
+ * **Specialised types**
+ * - Binned box plot — Set `bin` on the `y` (category) config and pass
+ *   `valueKey` naming the field to summarise. The statistic keys on `x` are
+ *   then computed internally and can be omitted.
+ *
+ * Also called: horizontal box plot, box and whisker plot, quartile plot.
+ *
+ * Answers: distribution, range. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <BoxPlotH
+ *   id="scores-by-team"
+ *   className="w-full h-64"
+ *   data={data}
+ *   y={{ key: 'name' }}
+ *   x={{
+ *     minKey: 'min',
+ *     maxKey: 'max',
+ *     midKey: 'mid',
+ *     boxStart: 'firstQuartile',
+ *     boxEnd: 'lastQuartile',
+ *     min: 0,
+ *   }}
+ * />
+ * ```
+ *
+ * @see BoxPlotV — a vertical layout fits the space better
+ * @see RangePlot — showing a plain min–max interval rather than quartiles
+ * @see ColumnChart — a histogram of one group is enough — set `x.bin`
+ */
+/* catalog:end */
 const BoxPlotH = <TData = any,>({
   className,
   classNames,

@@ -43,6 +43,71 @@ export interface LineChartProps<TData = any> extends ChartProps<TData> {
   }>;
 }
 
+/* catalog:start */
+/**
+ * Plots one or more numeric series against a shared ordered or time axis to
+ * show how values move.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The x axis is time or another continuous ordered dimension and the shape
+ *   of the movement is the point
+ * - Several series must be compared against each other over the same axis
+ * - Two measures on different scales need separate left and right axes (set
+ *   `axis.location: "right"` on the second series)
+ * - Gaps in the data should break the line — missing keys are skipped rather
+ *   than zeroed
+ *
+ * **Avoid when**
+ * - The x axis is categorical with no inherent order — use ColumnChart or
+ *   BarChart, since a line implies continuity that is not there
+ * - The split of a total matters as much as the trend — use AreaChart
+ * - There are only two or three points per series — use ColumnChart, where
+ *   individual values are easier to read
+ * - The data is discrete events or durations rather than a measured value —
+ *   use TimeLineChart
+ *
+ * **Specialised types**
+ * - Bump chart — Convert values to ranks with `utils.convertToRanks(data, y,
+ *   x)` — it takes the same `y` array and `x` object you pass to the chart —
+ *   then set `curve: "bumpX"` and `label: { show: true }` on each series,
+ *   and `reverse` so rank 1 sits at the top.
+ * - Step chart — Set `curve: "step"` on each series.
+ * - Dual-axis line chart — Give the second series `axis: { location: "right"
+ *   }` and widen `margin.right`. Label the scales with `yLeftLabel` and
+ *   `yRightLabel`.
+ * - Time-scaled line chart — Set `x.scalingFunction: "time"` and
+ *   `x.time.format` (or `x.time.isISO`) to parse date strings.
+ *
+ * Also called: line graph, multi-line chart, trend line chart.
+ *
+ * Answers: trend, ranking. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <LineChart
+ *   id="revenue-trend"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'month' }}
+ *   y={[
+ *     { key: 'revenue', className: 'text-blue-500' },
+ *     { key: 'forecast', className: 'text-gray-400', curve: 'step' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @see AreaChart — volume under the curve or composition of a total
+ *   matters
+ * @see ColumnChart — few discrete periods, individual values matter more
+ *   than the trend
+ * @see TimeLineChart — plotting events and durations rather than a
+ *   continuous measure
+ * @see ScatterPlot — the x axis is a measure rather than time, and points
+ *   should not be joined
+ */
+/* catalog:end */
 const LineChart = <TData = any,>({
   data = [],
   id,

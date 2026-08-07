@@ -36,6 +36,53 @@ const defaultClassNames: BulletChartClassNames = {
   max: 'fill-gray-100 stroke-grey-100 dark:fill-gray-700 dark:stroke-gray-700',
 };
 
+/* catalog:start */
+/**
+ * A compact linear gauge showing one measure against a base, a target, a
+ * threshold and a maximum.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - One KPI needs showing against a goal plus qualitative bands, in little
+ *   vertical space
+ * - Several KPIs will be stacked in a dashboard column and must align on a
+ *   common layout
+ * - A speedometer would waste space for the same information
+ *
+ * **Avoid when**
+ * - There is no target or threshold to compare against — use LinearGauge
+ * - Several metrics each have their own target and should read as one unit —
+ *   use RingGauge
+ * - The value changes over time and the history matters — use LineChart
+ * - The data is an array of records rather than a single number — gauges
+ *   take one value
+ *
+ * Also called: bullet graph, kpi bar, target vs actual chart.
+ *
+ * Answers: progress. Required props: `id`, `data`, `base`, `target`, `threshold`, `max`.
+ *
+ * @example
+ * ```tsx
+ * <BulletChart
+ *   id="sales-vs-target"
+ *   className="w-full h-24"
+ *   data={85}
+ *   label="Sales"
+ *   min={0}
+ *   base={50}
+ *   target={80}
+ *   threshold={90}
+ *   max={100}
+ * />
+ * ```
+ *
+ * @see LinearGauge — there is no target or threshold, just a value on a
+ *   scale
+ * @see RingGauge — several metrics each against their own target
+ * @see SpeedometerChart — a dial metaphor suits the audience better
+ */
+/* catalog:end */
 const BulletChart = <TData = any,>({
   id,
   className,

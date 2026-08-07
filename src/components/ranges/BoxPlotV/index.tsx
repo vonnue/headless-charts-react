@@ -38,6 +38,60 @@ export interface BoxPlotVProps<TData = any> extends ChartProps<TData> {
   tooltip?: TooltipConfig;
 }
 
+/* catalog:start */
+/**
+ * Vertical box-and-whisker marks summarising the spread of a measure per
+ * group: min, quartiles, median and max.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - The spread of a measure needs comparing across a few groups with short
+ *   labels
+ * - Skew and outliers matter, so a mean alone would mislead
+ * - Groups are ordered periods and the change in spread over them is the
+ *   message
+ * - Statistics should be derived from raw rows — set `x.bin` with `valueKey`
+ *
+ * **Avoid when**
+ * - Every underlying point should be visible — use ScatterPlot
+ * - The interval is a plain min–max — use RangePlot
+ * - Group labels are long — use BoxPlotH
+ * - Only the central value matters — use ColumnChart
+ *
+ * **Specialised types**
+ * - Binned box plot (vertical) — Set `bin` on the `x` (category) config and
+ *   pass `valueKey` naming the field to summarise. The statistic keys on `y`
+ *   are then computed internally and can be omitted. Use `bin.thresholds`
+ *   for explicit band edges.
+ *
+ * Also called: vertical box plot, box and whisker chart, box chart.
+ *
+ * Answers: distribution, range. Required props: `id`, `data`, `x`, `y`.
+ *
+ * @example
+ * ```tsx
+ * <BoxPlotV
+ *   id="salary-by-band"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'name' }}
+ *   y={{
+ *     minKey: 'min',
+ *     maxKey: 'max',
+ *     midKey: 'mid',
+ *     boxStart: 'firstQuartile',
+ *     boxEnd: 'lastQuartile',
+ *     min: 0,
+ *   }}
+ * />
+ * ```
+ *
+ * @see BoxPlotH — group labels are long
+ * @see RangePlot — showing a plain min–max interval rather than quartiles
+ * @see ScatterPlot — individual records should stay visible
+ */
+/* catalog:end */
 const BoxPlotV = <TData = any,>({
   className,
   classNames,

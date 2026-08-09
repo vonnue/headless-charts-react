@@ -35,14 +35,44 @@ message after sizing the SVG was literally `expected 1 to be close to 138.67`.
 A second tell, beyond a missing `style` prop: a test carrying a *comment* that
 explains the jsdom quirk and then loosens an assertion to accommodate it
 (direction-agnostic monotonicity, sorting marks by x before diffing gaps,
-`uniqueWidths.size <= 2`, `Number.isFinite(x)` in place of `x >= 0`). Each of
-those is a merge-stage workaround for the 0-size render, and each one deletes
-the coverage it looks like it is preserving.
+`uniqueWidths.size <= 2`, `Number.isFinite(x)` in place of `x >= 0`,
+`toBeCloseTo(firstSpacing, 1)` in place of a spacing derived from real date
+math). Each of those is a merge-stage workaround for the 0-size render, and
+each one deletes the coverage it looks like it is preserving.
+
+Third occurrence: the LollipopVChart time-scaling review (issue #7, 2026-08-09),
+23 passing tests. Mutating the time-mode x to `xFn(date) * 0.5 + 3` — an
+arbitrary affine distortion of every position — still passed 23/23. After
+sizing the SVG and pinning exact coordinates, the same mutation failed 17/28.
+
+Two traps specific to that file, both worth checking elsewhere:
+
+- **Sorting the extracted positions before diffing them.** Several charts
+  (LollipopVChart, LollipopHChart) `data.sort(...)` the caller's array *in
+  place* before drawing, so DOM/paint order is value-descending, not the
+  fixture's order. Sorting the extracted x values papers over that and lets a
+  test compare the wrong marks to each other — the "gap" test was subtracting
+  positions in the wrong order and only passed because the inverted 0-size
+  range flipped the sign back. Derive the expected DOM order by applying the
+  same sort to a copy of the fixture instead. The in-place sort also leaks
+  mutated order into later tests in the same file: pass `data={[...fixture]}`.
+- **Transition end-states are never observed.** d3 transitions don't advance
+  during a synchronous `render()`, so tests only ever see the anchor frame and
+  the `.transition().attr(...)` expressions are untested — a 4px nudge to the
+  final symbol transform passed everything. One `async` test with
+  `await waitFor(..., { timeout: 4000 })` lets the 1000ms draw-in actually run
+  under real timers and closes the hole for ~1s of wall clock.
 
 **How to apply:** the fix is cheap — every chart forwards its `style` prop
 straight onto the `<svg>`, so `style={{ width: '500px', height: '300px' }}`
 gives a real range (`[margin.left, width - margin.right]`) and lets tests
 assert exact expected values with `toBeCloseTo(..., 6)` instead of `> 0`.
-Then confirm non-vacuity by mutating the implementation (swap median for
-mean/min, drop an offset term, disable a guard) and checking a test actually
-fails. Related: [[repo-wide-d3-lifecycle-defects]].
+Compute expectations from real date math (elapsed-time *ratios* are invariant
+to the UTC-vs-local difference between `isoParse` and `timeParse`, so one
+helper serves both parsing paths), and pin one hand-computed literal so the
+helper cannot mirror the component's own bug. Note that date-only fixtures
+cannot distinguish the `isISO` branch from `timeParse('%Y-%m-%d')` — use a
+full ISO timestamp with a sub-day offset to cover it. Then confirm
+non-vacuity by mutating the implementation (swap median for mean/min, drop an
+offset term, apply an affine distortion, disable a guard) and checking a test
+actually fails. Related: [[repo-wide-d3-lifecycle-defects]].

@@ -1,16 +1,140 @@
 import { describe, expect, it, afterEach, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 
 import LollipopVChart from '.';
+
+// ============================================================================
+// Shared geometry fixtures
+//
+// JSDOM performs no layout, so `svg.style('width')` reads back as '' and the
+// component's `+svg.style('width').split('px')[0]` resolves to 0. With the
+// default 40px margins that makes the x range [40, -40] — inverted and
+// negative — and every scale-derived assertion collapses to something that
+// would keep passing if the positioning code were deleted. The component
+// forwards `style` straight onto the <svg>, so passing an explicit pixel size
+// gives d3 a real range to work with and lets every test below pin an exact
+// expected coordinate.
+//
+//   width 500, height 300, default margin 40 on all sides, padding 0
+//     x range = [40, 460]   (span 420)
+//     y range = [260, 40]   (bottom -> top)
+// ============================================================================
+
+const CHART_SIZE = { width: '500px', height: '300px' };
+
+const RANGE_START = 40;
+const RANGE_END = 460;
+const Y_BASELINE = 260; // yFn(y.start = 0) with height 300 and margin.bottom 40
+
+/**
+ * Pixel position of a date on a scaleTime whose domain is
+ * `[domainStart, domainEnd]` and whose range is `[rangeStart, rangeEnd]`.
+ *
+ * Only elapsed-time *ratios* are used, so this is correct for both the
+ * `isISO` path (isoParse -> UTC midnight) and the `time.format` path
+ * (timeParse -> local midnight): a constant UTC offset cancels out. All
+ * fixtures below stay inside a single month, so no DST transition can break
+ * that assumption.
+ */
+const xForDate = (
+  iso: string,
+  [domainStart, domainEnd]: [string, string],
+  [rangeStart, rangeEnd]: [number, number] = [RANGE_START, RANGE_END]
+) => {
+  const t0 = Date.parse(domainStart);
+  const t1 = Date.parse(domainEnd);
+  // d3's continuous scales map a degenerate domain to the midpoint of the
+  // range (`normalize` returns a constant 0.5 when domain[0] === domain[1]).
+  if (t1 === t0) return (rangeStart + rangeEnd) / 2;
+  return (
+    rangeStart +
+    ((Date.parse(iso) - t0) / (t1 - t0)) * (rangeEnd - rangeStart)
+  );
+};
+
+/**
+ * The component sorts `data` in place by *descending y value* before drawing,
+ * so DOM/paint order is value-descending and NOT chronological. Derive the
+ * expected DOM order the same way rather than sorting the extracted pixel
+ * positions — sorting the output first is what let the previous revision of
+ * these tests pass while comparing the wrong stems to each other.
+ */
+const inPaintOrder = <T extends Record<string, unknown>>(
+  rows: T[],
+  valueKey: string
+): T[] => [...rows].sort((a, b) => Number(b[valueKey]) - Number(a[valueKey]));
+
+const stemXsOf = (svgId: string) =>
+  // Scope to the chart's own stem lines (class="line") — a bare 'line'
+  // selector also matches d3-axis's per-tick <line> elements (axis ticks
+  // render as <g class="tick"><line/><text/></g> regardless of scale type),
+  // which inflates the count far beyond the data length.
+  Array.from(
+    document.getElementById(svgId)!.querySelectorAll('line.line')
+  ).map((line) => {
+    const x1 = Number(line.getAttribute('x1'));
+    const x2 = Number(line.getAttribute('x2'));
+    // Stems are vertical: both endpoints share one x.
+    expect(x1).toBe(x2);
+    return x1;
+  });
+
+const stemYsOf = (svgId: string) =>
+  Array.from(
+    document.getElementById(svgId)!.querySelectorAll('line.line')
+  ).map((line) => ({
+    y1: Number(line.getAttribute('y1')),
+    y2: Number(line.getAttribute('y2')),
+  }));
+
+/**
+ * Symbol heads are positioned with `transform="translate(x,y)"`. Scope to
+ * class="symbols" — a bare 'path' selector also matches the d3-axis domain
+ * <path>, which carries no transform.
+ */
+const symbolPointsOf = (svgId: string) =>
+  Array.from(
+    document.getElementById(svgId)!.querySelectorAll('path.symbols')
+  ).map((path) => {
+    const transform = path.getAttribute('transform') ?? '';
+    const match = transform.match(
+      /translate\(\s*([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+)/
+    );
+    expect(match).toBeTruthy();
+    return { x: Number(match![1]), y: Number(match![2]) };
+  });
 
 describe('LollipopVChart', () => {
   afterEach(() => {
     vi.clearAllTimers();
   });
 
-  // ============================================================================
-  // Non-time mode baseline tests (ensure time mode doesn't break existing behavior)
-  // ============================================================================
+  // ==========================================================================
+  // Guard the fixture helper itself against hand-computed numbers, so a bug in
+  // `xForDate` cannot silently mirror a bug in the component.
+  // ==========================================================================
+
+  describe('test fixtures', () => {
+    it('xForDate matches hand-computed positions', () => {
+      // Jan 6 -> Jan 27 is 21 days across a 420px range => 20px per day,
+      // 140px per week.
+      const domain: [string, string] = ['2025-01-06', '2025-01-27'];
+      expect(xForDate('2025-01-06', domain)).toBeCloseTo(40, 6);
+      expect(xForDate('2025-01-13', domain)).toBeCloseTo(180, 6);
+      expect(xForDate('2025-01-20', domain)).toBeCloseTo(320, 6);
+      expect(xForDate('2025-01-27', domain)).toBeCloseTo(460, 6);
+      // Degenerate (single-instant) domain lands on the range midpoint.
+      expect(xForDate('2025-01-15', ['2025-01-15', '2025-01-15'])).toBeCloseTo(
+        250,
+        6
+      );
+    });
+  });
+
+  // ==========================================================================
+  // Non-time mode baseline tests (ensure time mode doesn't break existing
+  // behavior)
+  // ==========================================================================
 
   describe('non-time mode (scalingFunction unset or "linear")', () => {
     const categoricalData = [
@@ -19,50 +143,59 @@ describe('LollipopVChart', () => {
       { category: 'C', value: 15 },
     ];
 
+    // scaleBand over 3 categories across [40, 460] with no band padding:
+    // step = bandwidth = 140. Stems sit at band start + bandwidth / 2, in
+    // value-descending order: B(20), C(15), A(10).
+    const expectedBandStemXs = [110, 250, 390];
+
     it('renders lollipop stems for categorical x-axis', () => {
       render(
         <LollipopVChart
           id='lollipop-categorical'
-          data={categoricalData}
+          style={CHART_SIZE}
+          data={[...categoricalData]}
           shape='circle'
           x={{ key: 'category', axis: { location: 'bottom' } }}
           y={{ key: 'value', start: 0, axis: { location: 'left' } }}
         />
       );
 
-      const svg = document.getElementById('lollipop-categorical');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-      // Should have one line per data point
-      expect(lines?.length).toBe(categoricalData.length);
+      const stemXs = stemXsOf('lollipop-categorical');
+      expect(stemXs).toHaveLength(categoricalData.length);
+      // Pin the band-centering arithmetic (`xFn(category) + bandwidth / 2`),
+      // not just the element count — dropping the half-bandwidth offset must
+      // fail here.
+      stemXs.forEach((x, i) =>
+        expect(x).toBeCloseTo(expectedBandStemXs[i], 6)
+      );
     });
 
     it('renders one symbol (path) per data point in categorical mode', () => {
       render(
         <LollipopVChart
           id='lollipop-categorical-symbols'
-          data={categoricalData}
+          style={CHART_SIZE}
+          data={[...categoricalData]}
           shape='circle'
           x={{ key: 'category' }}
           y={{ key: 'value', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-categorical-symbols');
-      // Scope to the chart's own symbol paths (class="symbols") — a bare
-      // 'path' selector also matches the d3-axis domain <path>, which has no
-      // transform attribute and would make truthy-transform assertions fail.
-      const paths = svg?.querySelectorAll('path.symbols');
-      expect(paths?.length).toBeGreaterThanOrEqual(categoricalData.length);
+      const points = symbolPointsOf('lollipop-categorical-symbols');
+      expect(points).toHaveLength(categoricalData.length);
+      points.forEach((point, i) => {
+        expect(point.x).toBeCloseTo(expectedBandStemXs[i], 6);
+        // Symbols are anchored on the baseline before the draw-in transition
+        // runs (see the y-positioning describe block below).
+        expect(point.y).toBeCloseTo(Y_BASELINE, 6);
+      });
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Time mode: evenly-spaced dates
-  // ============================================================================
+  // ==========================================================================
 
   describe('time mode with evenly-spaced dates', () => {
     const evenlySpacedData = [
@@ -71,12 +204,17 @@ describe('LollipopVChart', () => {
       { date: '2025-01-20', reading: 9 },
       { date: '2025-01-27', reading: 22 },
     ];
+    const domain: [string, string] = ['2025-01-06', '2025-01-27'];
+    const expectedStemXs = inPaintOrder(evenlySpacedData, 'reading').map((d) =>
+      xForDate(d.date, domain)
+    );
 
     it('renders an SVG with time-scaled x-axis', () => {
       render(
         <LollipopVChart
           id='lollipop-time-even'
-          data={evenlySpacedData}
+          style={CHART_SIZE}
+          data={[...evenlySpacedData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
@@ -86,89 +224,93 @@ describe('LollipopVChart', () => {
       const svg = document.getElementById('lollipop-time-even');
       expect(svg).toBeTruthy();
       expect(svg?.tagName).toBe('svg');
+      expect(svg?.querySelector('[data-testid="x-axis"]')).toBeTruthy();
     });
 
     it('produces equal spacing between stems for evenly-spaced dates', () => {
       render(
         <LollipopVChart
           id='lollipop-time-even-spacing'
-          data={evenlySpacedData}
+          style={CHART_SIZE}
+          data={[...evenlySpacedData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-even-spacing');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-      expect(lines?.length).toBe(evenlySpacedData.length);
+      const stemXs = stemXsOf('lollipop-time-even-spacing');
+      expect(stemXs).toHaveLength(evenlySpacedData.length);
 
-      // Extract x1 positions from lines (stem center x-coordinate)
-      const stemXPositions = Array.from(lines ?? []).map((line) => {
-        const x1 = Number(line.getAttribute('x1'));
-        const x2 = Number(line.getAttribute('x2'));
-        // x1 and x2 should be equal (vertical line)
-        expect(x1).toBe(x2);
-        return x1;
-      });
+      // Chronological positions, recovered by pairing each rendered stem with
+      // the row it was drawn from (paint order is value-descending). The
+      // fixture array itself stays chronological because each render gets its
+      // own copy — the component sorts `data` in place.
+      const xByDate = new Map(
+        inPaintOrder(evenlySpacedData, 'reading').map(
+          (row, i) => [row.date, stemXs[i]] as const
+        )
+      );
+      const chronologicalXs = evenlySpacedData.map(
+        (row) => xByDate.get(row.date)!
+      );
 
-      // The component's top-of-file `data.sort((a, b) => b[y.key] - a[y.key])`
-      // sorts rows by *value*, not by date (intentional — see the per-chart
-      // spec section for LollipopVChart), so DOM/paint order does not match
-      // chronological order. Sort the extracted positions numerically before
-      // diffing consecutive stems, rather than relying on DOM order to be
-      // chronological.
-      const sortedStemXPositions = [...stemXPositions].sort((a, b) => a - b);
-
-      // Calculate spacing between consecutive stems
-      const spacings: number[] = [];
-      for (let i = 1; i < sortedStemXPositions.length; i++) {
-        spacings.push(sortedStemXPositions[i] - sortedStemXPositions[i - 1]);
-      }
-
-      // All spacings should be approximately equal (within 1px tolerance for rounding)
-      expect(spacings.length).toBeGreaterThan(0);
-      const firstSpacing = spacings[0];
-      spacings.forEach((spacing) => {
-        expect(spacing).toBeCloseTo(firstSpacing, 1);
-      });
+      // One week on a 21-day domain across 420px is exactly 140px. Assert the
+      // literal, not "all spacings equal the first spacing" — the latter is
+      // satisfied by any affine distortion of the scale, including a broken
+      // one.
+      const spacings = chronologicalXs
+        .slice(1)
+        .map((x, i) => x - chronologicalXs[i]);
+      expect(spacings).toHaveLength(evenlySpacedData.length - 1);
+      spacings.forEach((spacing) => expect(spacing).toBeCloseTo(140, 6));
     });
 
     it('positions each stem at the correct date location on the time scale', () => {
       render(
         <LollipopVChart
           id='lollipop-time-position'
-          data={evenlySpacedData}
+          style={CHART_SIZE}
+          data={[...evenlySpacedData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-position');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
+      const stemXs = stemXsOf('lollipop-time-position');
+      expect(stemXs).toHaveLength(evenlySpacedData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(expectedStemXs[i], 6));
 
-      // Verify x1/x2 are set (not undefined or NaN)
-      Array.from(lines ?? []).forEach((line) => {
-        const x1 = Number(line.getAttribute('x1'));
-        const x2 = Number(line.getAttribute('x2'));
-        expect(Number.isFinite(x1)).toBe(true);
-        expect(Number.isFinite(x2)).toBe(true);
-      });
+      // The endpoints of the domain land exactly on the ends of the range:
+      // unlike ColumnChart there is no mark width to inset by.
+      const sorted = [...stemXs].sort((a, b) => a - b);
+      expect(sorted[0]).toBeCloseTo(RANGE_START, 6);
+      expect(sorted[sorted.length - 1]).toBeCloseTo(RANGE_END, 6);
+    });
+
+    it('places the symbol head on the same x as its stem', () => {
+      render(
+        <LollipopVChart
+          id='lollipop-time-stem-symbol-align'
+          style={CHART_SIZE}
+          data={[...evenlySpacedData]}
+          shape='circle'
+          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+          y={{ key: 'reading', start: 0 }}
+        />
+      );
+
+      const stemXs = stemXsOf('lollipop-time-stem-symbol-align');
+      const points = symbolPointsOf('lollipop-time-stem-symbol-align');
+      expect(points).toHaveLength(stemXs.length);
+      points.forEach((point, i) => expect(point.x).toBeCloseTo(stemXs[i], 6));
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Time mode: unevenly-spaced dates (gap in data)
-  // ============================================================================
+  // ==========================================================================
 
   describe('time mode with unevenly-spaced dates', () => {
     const unevenlySpacedData = [
@@ -178,81 +320,79 @@ describe('LollipopVChart', () => {
       { date: '2025-02-10', reading: 22 },
       { date: '2025-02-17', reading: 25 },
     ];
+    // Jan 6 -> Feb 17 is 42 days across 420px => exactly 10px per day.
+    const domain: [string, string] = ['2025-01-06', '2025-02-17'];
+    const PX_PER_DAY = 10;
+
+    const xOf = (date: string) => xForDate(date, domain);
 
     it('renders stems with whitespace at the gap', () => {
       render(
         <LollipopVChart
           id='lollipop-time-gap'
-          data={unevenlySpacedData}
+          style={CHART_SIZE}
+          data={[...unevenlySpacedData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-gap');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-      expect(lines?.length).toBe(unevenlySpacedData.length);
+      const stemXs = stemXsOf('lollipop-time-gap');
+      expect(stemXs).toHaveLength(unevenlySpacedData.length);
 
-      // Extract x positions from the first two stems (before gap) and the last two (after gap)
-      const stemXPositions = Array.from(lines ?? []).map((line) =>
-        Number(line.getAttribute('x1'))
+      const paintOrder = inPaintOrder(unevenlySpacedData, 'reading');
+      const xByDate = new Map(
+        paintOrder.map((row, i) => [row.date, stemXs[i]] as const)
       );
 
-      // Spacing before the gap: 2025-01-13 minus 2025-01-06 (7 days)
-      const spacingBeforeGap = stemXPositions[1] - stemXPositions[0];
+      // Exact positions: 7 days = 70px, 28 days = 280px.
+      expect(xByDate.get('2025-01-06')!).toBeCloseTo(xOf('2025-01-06'), 6);
+      expect(xByDate.get('2025-01-13')!).toBeCloseTo(xOf('2025-01-13'), 6);
+      expect(xByDate.get('2025-02-10')!).toBeCloseTo(xOf('2025-02-10'), 6);
+      expect(xByDate.get('2025-02-17')!).toBeCloseTo(xOf('2025-02-17'), 6);
 
-      // Spacing after the gap: 2025-02-17 minus 2025-02-10 (7 days)
-      const spacingAfterGap = stemXPositions[3] - stemXPositions[2];
+      const spacingBeforeGap =
+        xByDate.get('2025-01-13')! - xByDate.get('2025-01-06')!;
+      const spacingAcrossGap =
+        xByDate.get('2025-02-10')! - xByDate.get('2025-01-13')!;
+      const spacingAfterGap =
+        xByDate.get('2025-02-17')! - xByDate.get('2025-02-10')!;
 
-      // These should be similar (same cadence)
-      expect(spacingAfterGap).toBeCloseTo(spacingBeforeGap, 1);
-
-      // Spacing across the gap: 2025-02-10 minus 2025-01-13 (28 days)
-      const spacingAcrossGap = stemXPositions[2] - stemXPositions[1];
-
-      // The gap should produce significantly larger spacing (much more than one week)
-      // Gap is 4 weeks, so should be ~4x the weekly spacing
-      expect(spacingAcrossGap).toBeGreaterThan(spacingBeforeGap * 3);
+      expect(spacingBeforeGap).toBeCloseTo(7 * PX_PER_DAY, 6);
+      expect(spacingAfterGap).toBeCloseTo(7 * PX_PER_DAY, 6);
+      // The four-week gap renders as exactly four weeks of whitespace: unlike
+      // a band scale, elapsed time is honoured rather than slotted.
+      expect(spacingAcrossGap).toBeCloseTo(28 * PX_PER_DAY, 6);
+      expect(spacingAcrossGap).toBeCloseTo(spacingBeforeGap * 4, 6);
     });
 
     it('renders distinct stems without overlapping in unevenly-spaced data', () => {
       render(
         <LollipopVChart
           id='lollipop-time-uneven-distinct'
-          data={unevenlySpacedData}
+          style={CHART_SIZE}
+          data={[...unevenlySpacedData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-uneven-distinct');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-
-      const xPositions = Array.from(lines ?? []).map((line) =>
-        Number(line.getAttribute('x1'))
-      );
-
-      // Verify all x positions are distinct (sorted and no duplicates)
-      const sortedPositions = [...xPositions].sort((a, b) => a - b);
-      for (let i = 1; i < sortedPositions.length; i++) {
-        expect(sortedPositions[i]).toBeGreaterThan(sortedPositions[i - 1]);
-      }
+      const stemXs = stemXsOf('lollipop-time-uneven-distinct');
+      const unique = new Set(stemXs.map((x) => x.toFixed(6)));
+      expect(unique.size).toBe(unevenlySpacedData.length);
+      // Every stem lies inside the plot area.
+      stemXs.forEach((x) => {
+        expect(x).toBeGreaterThanOrEqual(RANGE_START);
+        expect(x).toBeLessThanOrEqual(RANGE_END);
+      });
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Time mode: single data point
-  // ============================================================================
+  // ==========================================================================
 
   describe('time mode with single data point', () => {
     const singleData = [{ date: '2025-01-15', reading: 10 }];
@@ -262,7 +402,8 @@ describe('LollipopVChart', () => {
         render(
           <LollipopVChart
             id='lollipop-time-single'
-            data={singleData}
+            style={CHART_SIZE}
+            data={[...singleData]}
             shape='circle'
             x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
             y={{ key: 'reading', start: 0 }}
@@ -275,40 +416,26 @@ describe('LollipopVChart', () => {
       render(
         <LollipopVChart
           id='lollipop-time-single-render'
-          data={singleData}
+          style={CHART_SIZE}
+          data={[...singleData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-single-render');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-      expect(lines?.length).toBe(1);
-
-      const line = lines?.[0];
-      const x1 = Number(line?.getAttribute('x1'));
-      expect(Number.isFinite(x1)).toBe(true);
-      // jsdom performs no real layout, so `svg.style('width'/'height')` reads
-      // back as an empty string and the component's `+svg.style('width')...`
-      // parse resolves to 0 — the plot area collapses to a point straddling
-      // the margins rather than a wide canvas. A single-point time domain
-      // therefore renders its stem at the center of that (zero-width) range,
-      // which need not be positive; assert it falls inside the configured
-      // margins (default left/right margin is 40, unset in this test) rather
-      // than assuming a positive x, which only holds under real browser layout.
-      expect(x1).toBeGreaterThanOrEqual(-40);
-      expect(x1).toBeLessThanOrEqual(40);
+      const stemXs = stemXsOf('lollipop-time-single-render');
+      expect(stemXs).toHaveLength(1);
+      // A single point makes the time domain degenerate ([t, t]); d3 maps a
+      // degenerate continuous domain to the midpoint of the range, so the lone
+      // stem is centred in the plot area at (40 + 460) / 2.
+      expect(stemXs[0]).toBeCloseTo((RANGE_START + RANGE_END) / 2, 6);
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Time mode: identical timestamps
-  // ============================================================================
+  // ==========================================================================
 
   describe('time mode with identical timestamps', () => {
     const identicalDatesData = [
@@ -322,7 +449,8 @@ describe('LollipopVChart', () => {
         render(
           <LollipopVChart
             id='lollipop-time-identical'
-            data={identicalDatesData}
+            style={CHART_SIZE}
+            data={[...identicalDatesData]}
             shape='circle'
             x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
             y={{ key: 'reading', start: 0 }}
@@ -335,83 +463,105 @@ describe('LollipopVChart', () => {
       render(
         <LollipopVChart
           id='lollipop-time-identical-positions'
-          data={identicalDatesData}
+          style={CHART_SIZE}
+          data={[...identicalDatesData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-identical-positions');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-      expect(lines?.length).toBe(identicalDatesData.length);
-
-      // All stems should be at the same x position
-      const xPositions = Array.from(lines ?? []).map((line) =>
-        Number(line.getAttribute('x1'))
+      const stemXs = stemXsOf('lollipop-time-identical-positions');
+      expect(stemXs).toHaveLength(identicalDatesData.length);
+      // Documented limitation (see meta.ts `avoidWhen`): rows sharing a
+      // timestamp get no automatic separation, and all collapse onto the
+      // degenerate domain's midpoint.
+      stemXs.forEach((x) =>
+        expect(x).toBeCloseTo((RANGE_START + RANGE_END) / 2, 6)
       );
-
-      const firstX = xPositions[0];
-      xPositions.forEach((x) => {
-        expect(x).toBeCloseTo(firstX, 1);
-      });
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Time mode: date parsing (isISO vs format)
-  // ============================================================================
+  // ==========================================================================
+
+  const parsingData = [
+    { date: '2025-01-06', reading: 12 },
+    { date: '2025-01-13', reading: 18 },
+    { date: '2025-01-20', reading: 15 },
+  ];
+  // Jan 6 -> Jan 20 is 14 days across 420px => 30px per day, 210px per week.
+  const parsingDomain: [string, string] = ['2025-01-06', '2025-01-20'];
+  const parsingExpectedXs = inPaintOrder(parsingData, 'reading').map((d) =>
+    xForDate(d.date, parsingDomain)
+  );
 
   describe('time mode with isISO parsing', () => {
-    const isoData = [
-      { date: '2025-01-06', reading: 12 },
-      { date: '2025-01-13', reading: 18 },
-      { date: '2025-01-20', reading: 15 },
-    ];
-
     it('parses ISO 8601 dates with isISO: true', () => {
       render(
         <LollipopVChart
           id='lollipop-time-iso'
-          data={isoData}
+          style={CHART_SIZE}
+          data={[...parsingData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-iso');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-      expect(lines?.length).toBe(isoData.length);
+      const stemXs = stemXsOf('lollipop-time-iso');
+      expect(stemXs).toHaveLength(parsingData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(parsingExpectedXs[i], 6));
+    });
 
-      // All stems should have finite x positions
-      Array.from(lines ?? []).forEach((line) => {
-        const x = Number(line.getAttribute('x1'));
-        expect(Number.isFinite(x)).toBe(true);
-      });
+    it('parses full ISO timestamps that the default format string cannot', () => {
+      // Date-only strings look the same to isoParse and to
+      // timeParse('%Y-%m-%d'), so a date-only fixture cannot tell the two
+      // branches of `toDateTime` apart. These carry a time component and an
+      // explicit zone: only the isISO branch can read them, and sub-day
+      // offsets make the expected positions differ from midnight-aligned ones.
+      const isoTimestampData = [
+        { date: '2025-01-06T00:00:00.000Z', reading: 12 },
+        { date: '2025-01-13T06:00:00.000Z', reading: 18 },
+        { date: '2025-01-20T00:00:00.000Z', reading: 15 },
+      ];
+      const domain: [string, string] = [
+        '2025-01-06T00:00:00.000Z',
+        '2025-01-20T00:00:00.000Z',
+      ];
+
+      render(
+        <LollipopVChart
+          id='lollipop-time-iso-timestamps'
+          style={CHART_SIZE}
+          data={[...isoTimestampData]}
+          shape='circle'
+          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+          y={{ key: 'reading', start: 0 }}
+        />
+      );
+
+      const expectedXs = inPaintOrder(isoTimestampData, 'reading').map((d) =>
+        xForDate(d.date, domain)
+      );
+      // 14-day domain over 420px => 30px/day, so the +6h point sits 7.5px
+      // right of the midpoint it would occupy at midnight.
+      expect(expectedXs).toContainEqual(257.5);
+
+      const stemXs = stemXsOf('lollipop-time-iso-timestamps');
+      expect(stemXs).toHaveLength(isoTimestampData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(expectedXs[i], 6));
     });
   });
 
   describe('time mode with custom format parsing', () => {
-    const customFormatData = [
-      { date: '2025-01-06', reading: 12 },
-      { date: '2025-01-13', reading: 18 },
-      { date: '2025-01-20', reading: 15 },
-    ];
-
     it('parses dates with custom format string', () => {
       render(
         <LollipopVChart
           id='lollipop-time-format'
-          data={customFormatData}
+          style={CHART_SIZE}
+          data={[...parsingData]}
           shape='circle'
           x={{
             key: 'date',
@@ -422,25 +572,35 @@ describe('LollipopVChart', () => {
         />
       );
 
-      const svg = document.getElementById('lollipop-time-format');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-      expect(lines?.length).toBe(customFormatData.length);
+      const stemXs = stemXsOf('lollipop-time-format');
+      expect(stemXs).toHaveLength(parsingData.length);
+      // Identical geometry to the isISO path: timeParse resolves to local
+      // midnight rather than UTC midnight, but the scale only sees elapsed
+      // time between points, so the constant offset cancels.
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(parsingExpectedXs[i], 6));
+    });
 
-      // All stems should have finite x positions
-      Array.from(lines ?? []).forEach((line) => {
-        const x = Number(line.getAttribute('x1'));
-        expect(Number.isFinite(x)).toBe(true);
-      });
+    it('falls back to the %Y-%m-%d default when no format is supplied', () => {
+      render(
+        <LollipopVChart
+          id='lollipop-time-default-format'
+          style={CHART_SIZE}
+          data={[...parsingData]}
+          shape='circle'
+          x={{ key: 'date', scalingFunction: 'time' }}
+          y={{ key: 'reading', start: 0 }}
+        />
+      );
+
+      const stemXs = stemXsOf('lollipop-time-default-format');
+      expect(stemXs).toHaveLength(parsingData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(parsingExpectedXs[i], 6));
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Time mode: symbol positioning via transform
-  // ============================================================================
+  // ==========================================================================
 
   describe('time mode: symbol transform positioning', () => {
     const timeData = [
@@ -448,30 +608,31 @@ describe('LollipopVChart', () => {
       { date: '2025-01-13', reading: 20 },
       { date: '2025-01-20', reading: 15 },
     ];
+    const domain: [string, string] = ['2025-01-06', '2025-01-20'];
+    const expectedXs = inPaintOrder(timeData, 'reading').map((d) =>
+      xForDate(d.date, domain)
+    );
 
     it('renders symbols with transform attribute', () => {
       render(
         <LollipopVChart
           id='lollipop-time-symbols'
-          data={timeData}
+          style={CHART_SIZE}
+          data={[...timeData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-symbols');
-      // Scope to the chart's own symbol paths (class="symbols") — a bare
-      // 'path' selector also matches the d3-axis domain <path>, which has no
-      // transform attribute and would make truthy-transform assertions fail.
-      const paths = svg?.querySelectorAll('path.symbols');
-      expect(paths?.length).toBeGreaterThanOrEqual(timeData.length);
-
-      // Each path should have a transform attribute
-      Array.from(paths ?? []).forEach((path) => {
-        const transform = path.getAttribute('transform');
-        expect(transform).toBeTruthy();
-        expect(transform).toMatch(/translate\(/);
+      const paths = document
+        .getElementById('lollipop-time-symbols')!
+        .querySelectorAll('path.symbols');
+      expect(paths).toHaveLength(timeData.length);
+      paths.forEach((path) => {
+        expect(path.getAttribute('transform')).toMatch(/translate\(/);
+        // A symbol with no path data would still satisfy a transform check.
+        expect(path.getAttribute('d')).toBeTruthy();
       });
     });
 
@@ -479,43 +640,26 @@ describe('LollipopVChart', () => {
       render(
         <LollipopVChart
           id='lollipop-time-symbols-x'
-          data={timeData}
+          style={CHART_SIZE}
+          data={[...timeData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-symbols-x');
-      // Scope to the chart's own symbol paths (class="symbols") — a bare
-      // 'path' selector also matches the d3-axis domain <path>, which has no
-      // transform attribute and would make truthy-transform assertions fail.
-      const paths = svg?.querySelectorAll('path.symbols');
-
-      // Extract x coordinate from transform="translate(x, y)" for each path
-      const symbolXPositions = Array.from(paths ?? [])
-        .map((path) => {
-          const transform = path.getAttribute('transform');
-          if (!transform) return null;
-          // Match translate(x, y) pattern
-          const match = transform.match(/translate\(([^,]+),/);
-          return match ? Number(match[1]) : null;
-        })
-        .filter((x) => x !== null) as number[];
-
-      // Should have at least as many symbols as data points
-      expect(symbolXPositions.length).toBeGreaterThanOrEqual(timeData.length);
-
-      // All x positions should be finite
-      symbolXPositions.forEach((x) => {
-        expect(Number.isFinite(x)).toBe(true);
+      const points = symbolPointsOf('lollipop-time-symbols-x');
+      expect(points).toHaveLength(timeData.length);
+      points.forEach((point, i) => {
+        expect(point.x).toBeCloseTo(expectedXs[i], 6);
+        expect(point.y).toBeCloseTo(Y_BASELINE, 6);
       });
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Edge cases: empty data and various shapes
-  // ============================================================================
+  // ==========================================================================
 
   describe('time mode with empty data', () => {
     it('renders without throwing for empty data array', () => {
@@ -523,6 +667,7 @@ describe('LollipopVChart', () => {
         render(
           <LollipopVChart
             id='lollipop-time-empty'
+            style={CHART_SIZE}
             data={[]}
             shape='circle'
             x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
@@ -536,6 +681,7 @@ describe('LollipopVChart', () => {
       render(
         <LollipopVChart
           id='lollipop-time-empty-svg'
+          style={CHART_SIZE}
           data={[]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
@@ -546,6 +692,8 @@ describe('LollipopVChart', () => {
       const svg = document.getElementById('lollipop-time-empty-svg');
       expect(svg).toBeTruthy();
       expect(svg?.tagName).toBe('svg');
+      expect(svg?.querySelectorAll('line.line')).toHaveLength(0);
+      expect(svg?.querySelectorAll('path.symbols')).toHaveLength(0);
     });
   });
 
@@ -555,56 +703,84 @@ describe('LollipopVChart', () => {
       { date: '2025-01-13', reading: 18 },
       { date: '2025-01-20', reading: 15 },
     ];
+    const domain: [string, string] = ['2025-01-06', '2025-01-20'];
+    const expectedXs = inPaintOrder(timeData, 'reading').map((d) =>
+      xForDate(d.date, domain)
+    );
+
+    const shapePathsOf = (svgId: string) =>
+      Array.from(
+        document.getElementById(svgId)!.querySelectorAll('path.symbols')
+      ).map((p) => p.getAttribute('d') ?? '');
 
     it('renders time-scaled lollipops with circle shape', () => {
       render(
         <LollipopVChart
           id='lollipop-time-circle'
-          data={timeData}
+          style={CHART_SIZE}
+          data={[...timeData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-circle');
-      expect(svg?.querySelectorAll('line.line').length).toBe(timeData.length);
+      const stemXs = stemXsOf('lollipop-time-circle');
+      expect(stemXs).toHaveLength(timeData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(expectedXs[i], 6));
+      // symbolCircle emits an arc command; the square/diamond shapes below do
+      // not, so the shape prop demonstrably reaches the symbol generator.
+      shapePathsOf('lollipop-time-circle').forEach((d) =>
+        expect(d).toMatch(/[Aa]/)
+      );
     });
 
     it('renders time-scaled lollipops with diamond shape', () => {
       render(
         <LollipopVChart
           id='lollipop-time-diamond'
-          data={timeData}
+          style={CHART_SIZE}
+          data={[...timeData]}
           shape='diamond'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-diamond');
-      expect(svg?.querySelectorAll('line.line').length).toBe(timeData.length);
+      const stemXs = stemXsOf('lollipop-time-diamond');
+      expect(stemXs).toHaveLength(timeData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(expectedXs[i], 6));
+      shapePathsOf('lollipop-time-diamond').forEach((d) => {
+        expect(d).not.toMatch(/[Aa]/);
+        expect(d).toMatch(/^M/);
+      });
     });
 
     it('renders time-scaled lollipops with square shape', () => {
       render(
         <LollipopVChart
           id='lollipop-time-square'
-          data={timeData}
+          style={CHART_SIZE}
+          data={[...timeData]}
           shape='square'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-square');
-      expect(svg?.querySelectorAll('line.line').length).toBe(timeData.length);
+      const stemXs = stemXsOf('lollipop-time-square');
+      expect(stemXs).toHaveLength(timeData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(expectedXs[i], 6));
+      shapePathsOf('lollipop-time-square').forEach((d) => {
+        expect(d).not.toMatch(/[Aa]/);
+        expect(d).toMatch(/[Hh]/);
+      });
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Time mode: stem lines y positioning (should not change)
-  // ============================================================================
+  // ==========================================================================
 
   describe('time mode: stem line y-axis positioning', () => {
     const timeData = [
@@ -617,42 +793,81 @@ describe('LollipopVChart', () => {
       render(
         <LollipopVChart
           id='lollipop-time-y'
-          data={timeData}
+          style={CHART_SIZE}
+          data={[...timeData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
         />
       );
 
-      const svg = document.getElementById('lollipop-time-y');
-      // Scope to the chart's own stem lines (class="line") — a bare 'line'
-      // selector also matches d3-axis's per-tick <line> elements (axis ticks
-      // render as <g class="tick"><line/><text/></g> regardless of scale
-      // type), which inflates the count far beyond the data length.
-      const lines = svg?.querySelectorAll('line.line');
-
       // The component draws each stem by first pinning both endpoints to the
       // baseline (y1 = y2 = yFn(minValue)), then animating y1 up to the data
-      // value via `.transition().duration(1000)`. That transition is driven
-      // by d3-timer's own frame scheduling, which does not advance during a
-      // synchronous render() in jsdom — so at assertion time we're observing
-      // the pre-transition anchor frame, not the animated end state, and
-      // y1 === y2 there is correct rather than a bug. Assert the anchor is
-      // finite and consistent instead of asserting on the mid-animation value.
-      Array.from(lines ?? []).forEach((line) => {
-        const y1 = Number(line.getAttribute('y1'));
-        const y2 = Number(line.getAttribute('y2'));
+      // value via `.transition().duration(1000)`. That transition is driven by
+      // d3-timer's own frame scheduling, which does not advance during a
+      // synchronous render() in jsdom — so we observe the pre-transition
+      // anchor frame. Pin the anchor to its exact pixel value (height 300,
+      // margin.bottom 40, y.start 0 => yFn(0) = 260) rather than asserting it
+      // is merely finite.
+      const ys = stemYsOf('lollipop-time-y');
+      expect(ys).toHaveLength(timeData.length);
+      ys.forEach(({ y1, y2 }) => {
+        expect(y1).toBeCloseTo(Y_BASELINE, 6);
+        expect(y2).toBeCloseTo(Y_BASELINE, 6);
+      });
+    });
 
-        expect(Number.isFinite(y1)).toBe(true);
-        expect(Number.isFinite(y2)).toBe(true);
-        expect(y1).toBe(y2);
+    it('settles stems and symbol heads on their data values once the transition ends', async () => {
+      const domain: [string, string] = ['2025-01-06', '2025-01-20'];
+      // yFn domain [0, 30] over range [260, 40] => 220px for 30 units.
+      const yFor = (reading: number) => Y_BASELINE - (reading / 30) * 220;
+      const paintOrder = inPaintOrder(timeData, 'reading');
+
+      render(
+        <LollipopVChart
+          id='lollipop-time-y-settled'
+          style={CHART_SIZE}
+          data={[...timeData]}
+          shape='circle'
+          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+          y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
+        />
+      );
+
+      // The anchor-frame assertions above never observe the transition's end
+      // state, so the *final* `x1`/`transform` expressions are otherwise
+      // untested. Let the 1000ms draw-in transition actually run (d3-timer
+      // advances on real time under jsdom) and assert the settled geometry.
+      await waitFor(
+        () => {
+          expect(stemYsOf('lollipop-time-y-settled')[0].y1).toBeCloseTo(
+            yFor(paintOrder[0].reading),
+            6
+          );
+        },
+        { timeout: 4000, interval: 50 }
+      );
+
+      const stemXs = stemXsOf('lollipop-time-y-settled');
+      const ys = stemYsOf('lollipop-time-y-settled');
+      const points = symbolPointsOf('lollipop-time-y-settled');
+
+      paintOrder.forEach((row, i) => {
+        const expectedX = xForDate(row.date, domain);
+        expect(stemXs[i]).toBeCloseTo(expectedX, 6);
+        // y1 rises to the value; y2 stays pinned to the baseline.
+        expect(ys[i].y1).toBeCloseTo(yFor(row.reading), 6);
+        expect(ys[i].y2).toBeCloseTo(Y_BASELINE, 6);
+        // The head lands on the top of its own stem.
+        expect(points[i].x).toBeCloseTo(expectedX, 6);
+        expect(points[i].y).toBeCloseTo(yFor(row.reading), 6);
       });
     });
   });
 
-  // ============================================================================
+  // ==========================================================================
   // Integration: time mode with custom margin and padding
-  // ============================================================================
+  // ==========================================================================
 
   describe('time mode with custom margin and padding', () => {
     const timeData = [
@@ -660,12 +875,14 @@ describe('LollipopVChart', () => {
       { date: '2025-01-13', reading: 18 },
       { date: '2025-01-20', reading: 15 },
     ];
+    const domain: [string, string] = ['2025-01-06', '2025-01-20'];
 
     it('renders time-scaled lollipops with custom margin', () => {
       render(
         <LollipopVChart
           id='lollipop-time-margin'
-          data={timeData}
+          style={CHART_SIZE}
+          data={[...timeData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
@@ -673,15 +890,24 @@ describe('LollipopVChart', () => {
         />
       );
 
-      const svg = document.getElementById('lollipop-time-margin');
-      expect(svg?.querySelectorAll('line.line').length).toBe(timeData.length);
+      // margin 50 => x range [50, 450], y baseline = 300 - 50 = 250.
+      const expectedXs = inPaintOrder(timeData, 'reading').map((d) =>
+        xForDate(d.date, domain, [50, 450])
+      );
+      const stemXs = stemXsOf('lollipop-time-margin');
+      expect(stemXs).toHaveLength(timeData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(expectedXs[i], 6));
+      stemYsOf('lollipop-time-margin').forEach(({ y1 }) =>
+        expect(y1).toBeCloseTo(250, 6)
+      );
     });
 
     it('renders time-scaled lollipops with custom padding', () => {
       render(
         <LollipopVChart
           id='lollipop-time-padding'
-          data={timeData}
+          style={CHART_SIZE}
+          data={[...timeData]}
           shape='circle'
           x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
           y={{ key: 'reading', start: 0 }}
@@ -689,8 +915,18 @@ describe('LollipopVChart', () => {
         />
       );
 
-      const svg = document.getElementById('lollipop-time-padding');
-      expect(svg?.querySelectorAll('line.line').length).toBe(timeData.length);
+      // Padding is applied inside the default 40px margins:
+      // x range [40 + 20, 500 - 40 - 20] = [60, 440],
+      // y baseline = 300 - 40 - 20 = 240.
+      const expectedXs = inPaintOrder(timeData, 'reading').map((d) =>
+        xForDate(d.date, domain, [60, 440])
+      );
+      const stemXs = stemXsOf('lollipop-time-padding');
+      expect(stemXs).toHaveLength(timeData.length);
+      stemXs.forEach((x, i) => expect(x).toBeCloseTo(expectedXs[i], 6));
+      stemYsOf('lollipop-time-padding').forEach(({ y1 }) =>
+        expect(y1).toBeCloseTo(240, 6)
+      );
     });
   });
 });

@@ -106,6 +106,33 @@ export interface PieChartProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Donut chart
+ * ```tsx
+ * <PieChart
+ *   id="revenue-donut"
+ *   className="w-full h-64"
+ *   data={data}
+ *   nameKey="product"
+ *   valueKey="revenue"
+ *   innerRadius={0.5}
+ *   cornerRadius={4}
+ *   paddingAngle={2}
+ * />
+ * ```
+ *
+ * @example Semicircle chart
+ * ```tsx
+ * <PieChart
+ *   id="seat-share"
+ *   className="w-full h-64"
+ *   data={data}
+ *   nameKey="party"
+ *   valueKey="seats"
+ *   startAngle={-90}
+ *   endAngle={90}
+ * />
+ * ```
+ *
  * @see ColumnChartStacked — composition compared across several
  *   categories or periods
  * @see BarChart — slices need precise comparison

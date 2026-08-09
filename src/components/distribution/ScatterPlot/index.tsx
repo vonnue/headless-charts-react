@@ -113,6 +113,43 @@ export interface ScatterPlotProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Bubble chart
+ * ```tsx
+ * <ScatterPlot
+ *   id="gdp-bubbles"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'gdp' }}
+ *   y={{ key: 'life_expectancy' }}
+ *   size={{ key: 'population', min: 3, max: 24 }}
+ *   color={{ key: 'continent', classNameMap: { Asia: 'fill-red-600' } }}
+ * />
+ * ```
+ *
+ * @example Connected scatterplot
+ * ```tsx
+ * <ScatterPlot
+ *   id="phillips-curve"
+ *   className="w-full h-64"
+ *   data={sortedByYear}
+ *   x={{ key: 'unemployment' }}
+ *   y={{ key: 'inflation' }}
+ *   connect={{ enabled: true, className: 'stroke-gray-400' }}
+ * />
+ * ```
+ *
+ * @example Density heatmap
+ * ```tsx
+ * <ScatterPlot
+ *   id="density"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'gdp', bin: { count: 12 } }}
+ *   y={{ key: 'purchasing_power', bin: { count: 12 } }}
+ *   binColor={{ scale: interpolateBlues }}
+ * />
+ * ```
+ *
  * @see WaffleChart — both axes are categorical or binned and density is
  *   the message
  * @see LineChart — x is time and the sequence matters

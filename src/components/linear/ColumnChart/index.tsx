@@ -77,6 +77,17 @@ interface drawHLineProps {
  * />
  * ```
  *
+ * @example Histogram
+ * ```tsx
+ * <ColumnChart
+ *   id="score-histogram"
+ *   className="w-full h-64"
+ *   data={rawRows}
+ *   x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}
+ *   y={[{ key: 'count', className: 'text-blue-500' }]}
+ * />
+ * ```
+ *
  * @see BarChart — long labels or many categories
  * @see ColumnChartStacked — measures are parts of a whole
  * @see LollipopVChart — bars look heavy and values are the focus

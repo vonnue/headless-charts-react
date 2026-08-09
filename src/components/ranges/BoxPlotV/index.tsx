@@ -87,6 +87,18 @@ export interface BoxPlotVProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Binned box plot (vertical)
+ * ```tsx
+ * <BoxPlotV
+ *   id="salary-by-age"
+ *   className="w-full h-64"
+ *   data={rawRows}
+ *   valueKey="salary"
+ *   x={{ key: 'age', bin: { count: 5 }, axis: { label: 'Age Group' } }}
+ *   y={{ min: 0, axis: { label: 'Salary' } }}
+ * />
+ * ```
+ *
  * @see BoxPlotH — group labels are long
  * @see RangePlot — showing a plain min–max interval rather than quartiles
  * @see ScatterPlot — individual records should stay visible

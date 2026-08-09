@@ -98,6 +98,66 @@ export interface LineChartProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Bump chart
+ * ```tsx
+ * import { utils } from '@headless-charts/react';
+ *
+ * const x = { key: 'year' };
+ * const y = [
+ *   { key: 'macbook', curve: 'bumpX', label: { show: true } },
+ *   { key: 'iphone', curve: 'bumpX', label: { show: true } },
+ * ];
+ *
+ * <LineChart
+ *   id="rank-over-time"
+ *   className="w-full h-64"
+ *   data={utils.convertToRanks(data, y, x)}
+ *   x={x}
+ *   y={y}
+ *   reverse
+ *   yLeftLabel="rank"
+ * />
+ * ```
+ *
+ * @example Step chart
+ * ```tsx
+ * <LineChart
+ *   id="rate-changes"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'date' }}
+ *   y={[{ key: 'rate', curve: 'step', className: 'text-blue-500' }]}
+ * />
+ * ```
+ *
+ * @example Dual-axis line chart
+ * ```tsx
+ * <LineChart
+ *   id="revenue-vs-rate"
+ *   className="w-full h-64"
+ *   data={data}
+ *   margin={{ right: 40 }}
+ *   yLeftLabel="Revenue"
+ *   yRightLabel="Conversion"
+ *   x={{ key: 'month' }}
+ *   y={[
+ *     { key: 'revenue', className: 'text-green-500' },
+ *     { key: 'conversion', className: 'text-blue-500', axis: { location: 'right' } },
+ *   ]}
+ * />
+ * ```
+ *
+ * @example Time-scaled line chart
+ * ```tsx
+ * <LineChart
+ *   id="daily-signups"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+ *   y={[{ key: 'signups', className: 'text-blue-500' }]}
+ * />
+ * ```
+ *
  * @see AreaChart — volume under the curve or composition of a total
  *   matters
  * @see ColumnChart — few discrete periods, individual values matter more

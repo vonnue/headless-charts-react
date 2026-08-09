@@ -102,6 +102,15 @@ const buildBlock = (chart) => {
   chart.example.split('\n').forEach((line) => push(line));
   push('```');
   push('');
+
+  namedTypes.forEach((variant) => {
+    push(`@example ${variant.name}`);
+    push('```tsx');
+    variant.example.split('\n').forEach((line) => push(line));
+    push('```');
+    push('');
+  });
+
   chart.alternatives.forEach((alternative) => {
     const [first, ...rest] = wrap(`${alternative.name} — ${alternative.when}`, 66);
     push(`@see ${first}`);

@@ -75,6 +75,23 @@ export interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Gantt chart
+ * ```tsx
+ * <TimeLineChart
+ *   id="project-gantt"
+ *   className="w-full h-64"
+ *   data={tasks}
+ *   y={{ key: 'owner' }}
+ *   events={{
+ *     startKey: 'start',
+ *     endKey: 'end',
+ *     isTime: true,
+ *     classNameKey: 'status',
+ *     classNameMapping: { done: 'fill-green-500', active: 'fill-blue-500' },
+ *   }}
+ * />
+ * ```
+ *
  * @see LineChart — tracking a measured value over time rather than
  *   discrete events
  * @see ColumnChart — event counts per period are enough

@@ -105,6 +105,63 @@ export interface AreaChartProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Streamgraph
+ * ```tsx
+ * <AreaChart
+ *   id="genre-streamgraph"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'iphone', className: 'text-purple-900' },
+ *     { key: 'macbook', className: 'text-purple-700' },
+ *     { key: 'ipad', className: 'text-purple-500' },
+ *   ]}
+ *   stacking={{ type: 'streamgraph' }}
+ * />
+ * ```
+ *
+ * @example 100% stacked area chart
+ * ```tsx
+ * <AreaChart
+ *   id="market-share"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'iphone', className: 'text-purple-900' },
+ *     { key: 'macbook', className: 'text-purple-700' },
+ *   ]}
+ *   stacking={{ type: '100%' }}
+ * />
+ * ```
+ *
+ * @example Diverging area chart
+ * ```tsx
+ * <AreaChart
+ *   id="flows"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'inflow', className: 'text-green-700' },
+ *     { key: 'outflow', className: 'text-red-700' },
+ *   ]}
+ *   stacking={{ type: 'diverging' }}
+ * />
+ * ```
+ *
+ * @example Time-scaled area chart
+ * ```tsx
+ * <AreaChart
+ *   id="daily-volume"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+ *   y={[{ key: 'volume', className: 'text-blue-500' }]}
+ * />
+ * ```
+ *
  * @see LineChart — series must be compared precisely, or there is no
  *   meaningful total
  * @see ColumnChartStacked — the x axis is categorical rather than

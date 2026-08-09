@@ -89,6 +89,18 @@ export interface BoxPlotHProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Binned box plot
+ * ```tsx
+ * <BoxPlotH
+ *   id="salary-by-age"
+ *   className="w-full h-64"
+ *   data={rawRows}
+ *   valueKey="salary"
+ *   y={{ key: 'age', bin: { count: 5 } }}
+ *   x={{ min: 0 }}
+ * />
+ * ```
+ *
  * @see BoxPlotV — a vertical layout fits the space better
  * @see RangePlot — showing a plain min–max interval rather than quartiles
  * @see ColumnChart — a histogram of one group is enough — set `x.bin`

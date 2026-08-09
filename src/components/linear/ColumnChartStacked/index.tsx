@@ -74,6 +74,22 @@ interface drawHLineProps {
  * />
  * ```
  *
+ * @example Waterfall chart
+ * ```tsx
+ * <ColumnChartStacked
+ *   id="revenue-bridge"
+ *   className="w-full h-64"
+ *   data={data}
+ *   waterfall
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'macbook', className: 'fill-green-600' },
+ *     { key: 'iphone', className: 'fill-green-500' },
+ *     { key: 'ipad', className: 'fill-red-500' },
+ *   ]}
+ * />
+ * ```
+ *
  * @see ColumnChart — segments must be compared precisely across
  *   categories
  * @see BarChartStacked — long category labels

@@ -75,6 +75,35 @@ export interface BarChartProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Horizontal histogram
+ * ```tsx
+ * <BarChart
+ *   id="score-histogram"
+ *   className="w-full h-64"
+ *   data={rawRows}
+ *   x={[{ key: 'score', bin: { count: 8 }, className: 'fill-blue-500' }]}
+ *   y={{ key: 'count' }}
+ * />
+ * ```
+ *
+ * @example Diverging bar chart
+ * ```tsx
+ * <BarChart
+ *   id="yoy-change"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={[{
+ *     key: 'delta',
+ *     className: 'text-green-500',
+ *     classNameNegative: 'text-red-500',
+ *     start: -10,
+ *     end: 10,
+ *     axis: { location: 'top' },
+ *   }]}
+ *   y={{ key: 'year', padding: 10 }}
+ * />
+ * ```
+ *
  * @see ColumnChart — few categories with short labels
  * @see BarChartStacked — measures are parts of a whole
  * @see LollipopHChart — bars look heavy and the value point is the focus

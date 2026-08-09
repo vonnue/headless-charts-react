@@ -91,6 +91,30 @@ interface CellDatum {
  * />
  * ```
  *
+ * @example Calendar heatmap
+ * ```tsx
+ * <WaffleChart
+ *   id="temps-calendar"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'year', axis: { location: 'bottom', label: 'Year' } }}
+ *   y={{ key: 'month', axis: { location: 'left', label: 'Month' } }}
+ *   color={{ key: 'temperature', scale: interpolateRdYlGn }}
+ * />
+ * ```
+ *
+ * @example Binned 2D histogram
+ * ```tsx
+ * <WaffleChart
+ *   id="joint-distribution"
+ *   className="w-full h-64"
+ *   data={rawRows}
+ *   x={{ key: 'height', bin: { count: 8 } }}
+ *   y={{ key: 'weight', bin: { count: 8 } }}
+ *   color={{ key: 'count', scale: interpolateBlues }}
+ * />
+ * ```
+ *
  * @see ScatterPlot — axes are continuous measures rather than categories
  * @see ColumnChart — only one categorical dimension is involved
  * @see PieChart — showing part-to-whole for a single set of categories

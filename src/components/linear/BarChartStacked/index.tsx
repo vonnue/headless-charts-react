@@ -85,6 +85,21 @@ export interface BarChartStackedProps<TData = any> extends ChartProps<TData> {
  * />
  * ```
  *
+ * @example Horizontal waterfall chart
+ * ```tsx
+ * <BarChartStacked
+ *   id="profit-walk"
+ *   className="w-full h-64"
+ *   data={data}
+ *   waterfall
+ *   y={{ key: 'year' }}
+ *   x={[
+ *     { key: 'macbook', className: 'fill-green-600' },
+ *     { key: 'iphone', className: 'fill-red-500' },
+ *   ]}
+ * />
+ * ```
+ *
  * @see BarChart — segments must be compared precisely rather than summed
  * @see ColumnChartStacked — short labels and few categories
  * @see PieChart — a single whole at one point in time

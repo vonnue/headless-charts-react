@@ -253,10 +253,8 @@ const ColumnChartStacked = <TData = any,>({
           isTimeX
             ? centerX(d) -
               finalBarWidth / 2 +
-              // @ts-ignore
               (waterfall ? i * (finalBarWidth / y.length) : 0)
-            : // @ts-ignore
-              (xFn((d as any)[x.key]) || 0) +
+            : (xFn((d as any)[x.key]) || 0) +
               (waterfall ? (xFn.bandwidth() / y.length) * i : 0)
         )
         .attr('y', (d: any) => yFn(sum(beforeColumns.map((c: any) => d[c]))))

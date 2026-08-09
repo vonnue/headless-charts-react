@@ -513,6 +513,37 @@ describe('ColumnChart', () => {
       );
     });
 
+    it('deduplicates repeated timestamps before inferring cadence', () => {
+      // Three rows share Jan 1. Without deduplication the gap list would be
+      // [0, 0, 1d, 1d] and the median would collapse to half a day, halving
+      // every bar. Deduplicating first leaves gaps of [1d, 1d].
+      const duplicateDatesData = [
+        { date: '2025-01-01T00:00:00.000Z', iphone: 100 },
+        { date: '2025-01-01T00:00:00.000Z', iphone: 105 },
+        { date: '2025-01-01T00:00:00.000Z', iphone: 110 },
+        { date: '2025-01-02T00:00:00.000Z', iphone: 120 },
+        { date: '2025-01-03T00:00:00.000Z', iphone: 130 },
+      ];
+
+      render(
+        <ColumnChart
+          id='time-column-dupes'
+          style={CHART_SIZE}
+          data={duplicateDatesData}
+          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+          y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+        />
+      );
+
+      // Domain spans 2 days across 420px => one day is 210px.
+      const dayPx = RANGE_SPAN / 2;
+      const widths = widthsOf('time-column-dupes');
+      expect(widths).toHaveLength(duplicateDatesData.length);
+      widths.forEach((width) =>
+        expect(width).toBeCloseTo(dayPx * (1 - DEFAULT_PADDING_BAR), 6)
+      );
+    });
+
     it('non-time mode still works (regression test)', () => {
       render(
         <ColumnChart

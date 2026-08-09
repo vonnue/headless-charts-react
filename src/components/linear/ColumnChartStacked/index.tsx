@@ -1,8 +1,9 @@
-import { max, sum } from 'd3-array';
+import { max, min, sum } from 'd3-array';
 import { select, selectAll } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
-import { scaleBand, scaleLinear } from 'd3-scale';
+import { scaleBand, scaleLinear, scaleTime } from 'd3-scale';
+import { isoParse, timeParse, timeFormat } from 'd3-time-format';
 import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
@@ -122,11 +123,22 @@ const ColumnChartStacked = <TData = any,>({
   drawing = undefined,
   style = {},
 }: ColumnChartStackedProps<TData>) => {
+  const d3Format = x.time?.format || '%Y-%m-%d';
+  const formatDate = timeFormat(d3Format);
+  const parseDate = timeParse(d3Format);
+
+  const toDateTime = (d: any): Date =>
+    x.time?.isISO ? (isoParse(d[x.key]) as Date) : (parseDate(d[x.key]) as Date);
+
+  const isTimeX = x.scalingFunction === 'time';
+
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
-    defaultHtml: (d: any) =>
-      `${d[x.key]} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`,
+    defaultHtml: (d: any) => {
+      const xValue = isTimeX ? formatDate(toDateTime(d)) : d[x.key];
+      return `${xValue} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`;
+    },
   });
 
   const refreshChart = useCallback(() => {
@@ -138,14 +150,83 @@ const ColumnChartStacked = <TData = any,>({
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
 
-    const xFn = scaleBand()
-      // @ts-ignore
-      .domain(data.map((d) => (d as any)[x.key]))
-      .range([
-        (margin.left ?? 0) + (padding.left ?? 0),
-        width - (margin.right ?? 0) - (padding.right ?? 0),
-      ])
-      .padding(paddingBar);
+    const paddingBarValue = paddingBar;
+
+    const xFn: any = isTimeX ? scaleTime().nice() : scaleBand();
+
+    if (isTimeX) {
+      xFn.domain([
+        Number.isFinite(x.start)
+          ? x.start
+          : min(data.map((d: any) => toDateTime(d))),
+        Number.isFinite(x.end)
+          ? x.end
+          : max(data.map((d: any) => toDateTime(d))),
+      ]);
+    } else {
+      xFn
+        // @ts-ignore
+        .domain(data.map((d) => (d as any)[x.key]))
+        .padding(paddingBarValue);
+    }
+
+    xFn.range([
+      (margin.left ?? 0) + (padding.left ?? 0),
+      width - (margin.right ?? 0) - (padding.right ?? 0),
+    ]);
+
+    let finalBarWidth = 0;
+    if (isTimeX) {
+      if (Number.isFinite(x.time?.barWidth)) {
+        // 1. Explicit override always wins, used as-is (final rendered width,
+        //    paddingBarValue is NOT applied on top of an explicit value).
+        finalBarWidth = x.time!.barWidth!;
+      } else {
+        // 2. Infer from data cadence.
+        const rangeStart = xFn.range()[0];
+        const rangeEnd = xFn.range()[1];
+
+        const timestamps = Array.from(
+          new Set(
+            data
+              .map((d: any) => toDateTime(d)?.getTime())
+              .filter((t: number) => Number.isFinite(t))
+          )
+        ).sort((a: number, b: number) => a - b);
+
+        let cadenceMs = NaN;
+        if (timestamps.length >= 2) {
+          const gaps: number[] = [];
+          for (let i = 1; i < timestamps.length; i++) {
+            gaps.push(timestamps[i] - timestamps[i - 1]);
+          }
+          gaps.sort((a, b) => a - b);
+          const mid = Math.floor(gaps.length / 2);
+          cadenceMs =
+            gaps.length % 2 === 0 ? (gaps[mid - 1] + gaps[mid]) / 2 : gaps[mid];
+          // Median, not mean or min: resists one large gap (e.g. a missing
+          // period) skewing the width up, and resists a single duplicate/
+          // near-duplicate timestamp collapsing the width to ~0.
+        }
+
+        let slotWidthPx: number;
+        if (Number.isFinite(cadenceMs) && cadenceMs > 0) {
+          // scaleTime is affine in ms, so the pixel delta for a fixed ms
+          // interval is the same everywhere on the scale — any anchor works.
+          const anchor = (xFn.domain()[0] as Date).getTime();
+          slotWidthPx =
+            xFn(new Date(anchor + cadenceMs)) - xFn(new Date(anchor));
+        } else {
+          // 0 or 1 unique timestamp: no cadence to infer. Fall back to an
+          // even split of the available plotting width across the rows.
+          slotWidthPx = (rangeEnd - rangeStart) / Math.max(data.length, 1);
+        }
+
+        finalBarWidth = Math.max(1, slotWidthPx * (1 - paddingBarValue));
+      }
+    }
+
+    const centerX = (d: any) => xFn(toDateTime(d));
 
     const yFnRange = [
       height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
@@ -168,17 +249,25 @@ const ColumnChartStacked = <TData = any,>({
         .append('rect')
         .attr('class', `${column.className} fill-current`)
         .attr('z-index', 100 - i)
-        .attr(
-          'x',
-          (d) =>
-            // @ts-ignore
-            (xFn((d as any)[x.key]) || 0) +
-            (waterfall ? (xFn.bandwidth() / y.length) * i : 0)
+        .attr('x', (d: any) =>
+          isTimeX
+            ? centerX(d) -
+              finalBarWidth / 2 +
+              // @ts-ignore
+              (waterfall ? i * (finalBarWidth / y.length) : 0)
+            : // @ts-ignore
+              (xFn((d as any)[x.key]) || 0) +
+              (waterfall ? (xFn.bandwidth() / y.length) * i : 0)
         )
         .attr('y', (d: any) => yFn(sum(beforeColumns.map((c: any) => d[c]))))
         .style('z-index', 10 + i)
         .attr('width', () =>
-          waterfall
+          isTimeX
+            ? waterfall
+              ? // @ts-ignore
+                finalBarWidth / y.length - (waterfall.padding || 0)
+              : finalBarWidth
+            : waterfall
             ? // @ts-ignore
               xFn.bandwidth() / y.length - (waterfall.padding || 0)
             : xFn.bandwidth()

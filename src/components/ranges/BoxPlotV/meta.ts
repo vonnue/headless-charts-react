@@ -92,6 +92,36 @@ const meta: ChartMeta = {
 />`,
     },
     { kind: 'option', name: 'Per-row colours', how: 'Put a `className` field on each row to colour boxes individually.' },
+    {
+      kind: 'chart-type',
+      name: 'Time-scaled box plot (vertical)',
+      aliases: ['time series box plot'],
+      summary:
+        'A vertical box plot whose x axis parses real dates and spaces boxes proportionally to elapsed time.',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width is inferred from the data\'s date cadence; override with `x.time.barWidth` (pixels).',
+      useWhen: [
+        'Groups are periods (weeks, months) with real dates and spacing should reflect elapsed time',
+        'Some periods have no data and that gap should be visible rather than silently skipped',
+      ],
+      avoidWhen: [
+        'Cadence is highly irregular — a single inferred box width will misrepresent some periods; pin it with `x.time.barWidth`',
+        'The category axis is binned via `x.bin` — binning and time scaling are mutually exclusive; use one or the other',
+      ],
+      example: `<BoxPlotV
+  id="weekly-latency-spread"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+  y={{
+    minKey: 'min',
+    maxKey: 'max',
+    midKey: 'mid',
+    boxStart: 'firstQuartile',
+    boxEnd: 'lastQuartile',
+    min: 0,
+  }}
+/>`,
+    },
   ],
 };
 

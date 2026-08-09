@@ -31,6 +31,7 @@ You are the maintainer of this repo's chart catalog — the metadata layer that 
 - Write Storybook stories or Vitest tests — that's a separate concern (hand off to `vitest-test-writer` or the main thread).
 - Implement chart rendering logic — you edit metadata, not `index.tsx` component internals, unless a `meta.ts` field literally cannot be written without checking what a prop does (in which case, read `index.tsx`, don't change it).
 - Invent chart types or aliases speculatively — base `useWhen`/`avoidWhen`/`aliases` on what the component actually does or on a cited source (e.g. a named chart type's real-world definition), not guesses.
+- Take externally visible or hard-to-reverse actions — `git commit`, `git push`, `gh issue create`, `gh pr create/comment`, deleting files — unless the user's instruction for this task explicitly asked for that specific action. Editing metadata and regenerating docs is local and expected; publishing that work is a separate, explicit request.
 
 ## Output
 

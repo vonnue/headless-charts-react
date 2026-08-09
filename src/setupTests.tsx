@@ -32,7 +32,10 @@ function parseSvgTransformList(value: string): Matrix2D {
   const re = /(\w+)\(([^)]*)\)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(value))) {
-    const args = m[2].split(/[,\s]+/).filter(Boolean).map(Number);
+    const args = m[2]
+      .split(/[,\s]+/)
+      .filter(Boolean)
+      .map(Number);
     switch (m[1]) {
       case 'translate': {
         const [tx, ty = 0] = args;
@@ -60,12 +63,26 @@ function parseSvgTransformList(value: string): Matrix2D {
       }
       case 'skewX': {
         const [angle] = args;
-        matrix = multiply(matrix, [1, 0, Math.tan((angle * Math.PI) / 180), 1, 0, 0]);
+        matrix = multiply(matrix, [
+          1,
+          0,
+          Math.tan((angle * Math.PI) / 180),
+          1,
+          0,
+          0,
+        ]);
         break;
       }
       case 'skewY': {
         const [angle] = args;
-        matrix = multiply(matrix, [1, Math.tan((angle * Math.PI) / 180), 0, 1, 0, 0]);
+        matrix = multiply(matrix, [
+          1,
+          Math.tan((angle * Math.PI) / 180),
+          0,
+          1,
+          0,
+          0,
+        ]);
         break;
       }
       case 'matrix': {

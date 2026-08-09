@@ -27,3 +27,5 @@ dist-ssr
 .yarn
 coverage
 storybook-static
+
+.claude/agent-memory/.run-markers

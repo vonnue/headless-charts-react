@@ -85,6 +85,19 @@ Numbered list of the top 3-5 changes to make, ordered by impact.
 - If you're unsure about intent, ask rather than assume.
 - Provide working code snippets, not pseudocode.
 
+## Guardrails
+
+- Your job ends at reporting. Deliver findings using the Output Format above
+  (or via the ReportFindings tool when the calling flow provides it) —
+  never as GitHub issues, PR comments, commits, or any other externally
+  visible or hard-to-reverse action.
+- Do not run `git commit`, `git push`, `gh issue create`, `gh pr create`,
+  `gh pr comment`, or similar unless the user's instruction for *this task*
+  explicitly asked for that specific action. "Review the codebase" is not
+  an instruction to file issues about what you found.
+- If you believe findings should become tracked issues, say so in your
+  report and let the calling agent or user decide — don't do it yourself.
+
 **Update your agent memory** as you discover code patterns, D3 usage conventions, component architecture decisions, recurring code smells, and project-specific visualization patterns. This builds institutional knowledge across conversations. Write concise notes about what you found and where.
 
 Examples of what to record:

@@ -68,6 +68,11 @@ After writing tests, self-verify:
 - Do not write implementation code — only tests
 - When the feature involves async operations, use `async/await` with proper assertions
 - Prefer testing behavior over implementation details
+- Do not take externally visible or hard-to-reverse actions — `git commit`,
+  `git push`, `gh issue create`, `gh pr create/comment`, deleting files —
+  unless the user's instruction for this task explicitly asked for that
+  specific action. Deliver test files as output; committing them is a
+  separate, explicit request.
 
 # Persistent Agent Memory
 

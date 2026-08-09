@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 
 import BoxPlotV from '.';
 import data from '../sample.json';
@@ -104,6 +104,16 @@ describe('BoxPlotV', () => {
 
   // Time scaling tests
   describe('Time Scaling (x.scalingFunction: "time")', () => {
+    // jsdom has no layout engine, so an SVG with no inline width/height
+    // reports an empty computed style and the component resolves
+    // `width`/`height` to 0. That inverts scaleTime's range (e.g. [40, -20]),
+    // makes every derived slot width negative, and silently clamps
+    // `finalBarWidth` to the `Math.max(1, ...)` floor — which makes any
+    // geometry assertion pass for the wrong reason. Passing an explicit
+    // inline `style` (a real prop of the component, not a mock) gives the
+    // chart real dimensions so positions and widths can be asserted for real.
+    const chartStyle = { width: '600px', height: '400px' };
+
     // Test data: evenly-spaced weekly dates
     const evenlySpacedWeeklyData = [
       {
@@ -165,40 +175,98 @@ describe('BoxPlotV', () => {
       min: 0,
     };
 
+    const rectsOf = (svgId: string) =>
+      Array.from(
+        document
+          .getElementById(svgId)
+          ?.querySelectorAll('.box-plot-box') ?? []
+      ) as SVGRectElement[];
+
+    const numAttr = (el: Element | undefined, name: string) =>
+      parseFloat(el?.getAttribute(name) ?? 'NaN');
+
+    /**
+     * The four lines of a row are appended in a fixed order inside the row's
+     * <g>: min/max whisker, begin line, mid line, end line — followed by the
+     * box rect. Return them positionally so each of the six spec'd callbacks
+     * can be asserted individually.
+     */
+    const rowPartsOf = (svgId: string, rowIndex = 0) => {
+      const rows = document
+        .getElementById(svgId)
+        ?.querySelectorAll('g.data > g');
+      const row = rows?.[rowIndex];
+      const lines = Array.from(
+        row?.querySelectorAll('line') ?? []
+      ) as SVGLineElement[];
+      return {
+        whisker: lines[0],
+        begin: lines[1],
+        midLine: lines[2],
+        endLine: lines[3],
+        rect: row?.querySelector('rect') as SVGRectElement,
+      };
+    };
+
     it('non-time mode (scalingFunction unset) renders boxes normally', () => {
       render(
         <BoxPlotV
           id='non-time-box-plot'
+          style={chartStyle}
           data={evenlySpacedWeeklyData}
           x={{ key: 'weekStart' }}
           y={timeYConfig}
         />
       );
 
-      const svg = document.getElementById('non-time-box-plot');
-      const rects = svg?.querySelectorAll('.box-plot-box');
-      expect(rects?.length).toBe(evenlySpacedWeeklyData.length);
+      expect(rectsOf('non-time-box-plot').length).toBe(
+        evenlySpacedWeeklyData.length
+      );
     });
 
     it('non-time mode (scalingFunction: "linear") renders boxes normally', () => {
       render(
         <BoxPlotV
           id='linear-box-plot'
+          style={chartStyle}
           data={evenlySpacedWeeklyData}
           x={{ key: 'weekStart', scalingFunction: 'linear' }}
           y={timeYConfig}
         />
       );
 
-      const svg = document.getElementById('linear-box-plot');
-      const rects = svg?.querySelectorAll('.box-plot-box');
-      expect(rects?.length).toBe(evenlySpacedWeeklyData.length);
+      expect(rectsOf('linear-box-plot').length).toBe(
+        evenlySpacedWeeklyData.length
+      );
+    });
+
+    it('non-time mode still lays boxes out with scaleBand (equal band widths, inside the range)', () => {
+      render(
+        <BoxPlotV
+          id='band-layout-box-plot'
+          style={chartStyle}
+          data={evenlySpacedWeeklyData}
+          x={{ key: 'weekStart' }}
+          y={timeYConfig}
+        />
+      );
+
+      const rects = rectsOf('band-layout-box-plot');
+      const widths = rects.map((r) => numAttr(r, 'width'));
+      const xs = rects.map((r) => numAttr(r, 'x'));
+
+      // scaleBand keeps every band the same width and inside [40, 580]
+      widths.forEach((w) => expect(w).toBeCloseTo(widths[0], 6));
+      expect(widths[0]).toBeGreaterThan(0);
+      expect(Math.min(...xs)).toBeGreaterThanOrEqual(40);
+      expect(Math.max(...xs) + widths[0]).toBeLessThanOrEqual(580.001);
     });
 
     it('renders with time mode and isISO: true', () => {
       render(
         <BoxPlotV
           id='time-iso-box-plot'
+          style={chartStyle}
           data={evenlySpacedWeeklyData}
           x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
           y={timeYConfig}
@@ -208,9 +276,9 @@ describe('BoxPlotV', () => {
       const svg = document.getElementById('time-iso-box-plot');
       expect(svg).toBeTruthy();
       expect(svg?.tagName).toBe('svg');
-
-      const rects = svg?.querySelectorAll('.box-plot-box');
-      expect(rects?.length).toBe(evenlySpacedWeeklyData.length);
+      expect(rectsOf('time-iso-box-plot').length).toBe(
+        evenlySpacedWeeklyData.length
+      );
     });
 
     it('renders with time mode and custom format string', () => {
@@ -223,6 +291,7 @@ describe('BoxPlotV', () => {
       render(
         <BoxPlotV
           id='time-format-box-plot'
+          style={chartStyle}
           data={customFormatData}
           x={{
             key: 'dateStr',
@@ -233,105 +302,173 @@ describe('BoxPlotV', () => {
         />
       );
 
-      const svg = document.getElementById('time-format-box-plot');
-      expect(svg).toBeTruthy();
-
-      const rects = svg?.querySelectorAll('.box-plot-box');
-      expect(rects?.length).toBe(customFormatData.length);
+      expect(rectsOf('time-format-box-plot').length).toBe(
+        customFormatData.length
+      );
     });
 
-    it('evenly-spaced dates produce equal box spacing', () => {
+    it('x.time.format and x.time.isISO produce the same layout for the same instants', () => {
+      const customFormatData = evenlySpacedWeeklyData.map((d) => ({
+        ...d,
+        dateStr: d.weekStart.split('-').reverse().join('-'),
+      }));
+
+      render(
+        <BoxPlotV
+          id='parse-iso-box-plot'
+          style={chartStyle}
+          data={evenlySpacedWeeklyData}
+          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+          y={timeYConfig}
+        />
+      );
+      render(
+        <BoxPlotV
+          id='parse-format-box-plot'
+          style={chartStyle}
+          data={customFormatData}
+          x={{
+            key: 'dateStr',
+            scalingFunction: 'time',
+            time: { format: '%d-%m-%Y' },
+          }}
+          y={timeYConfig}
+        />
+      );
+
+      const isoXs = rectsOf('parse-iso-box-plot').map((r) => numAttr(r, 'x'));
+      const fmtXs = rectsOf('parse-format-box-plot').map((r) =>
+        numAttr(r, 'x')
+      );
+
+      expect(isoXs.length).toBe(fmtXs.length);
+      // isoParse reads the date as UTC and timeParse as local time, so the two
+      // may be offset by the runner's UTC offset — but the *spacing* between
+      // boxes must be identical, since the instants are one week apart either
+      // way. Compare gaps rather than absolute positions.
+      for (let i = 1; i < isoXs.length; i++) {
+        expect(isoXs[i] - isoXs[i - 1]).toBeCloseTo(fmtXs[i] - fmtXs[i - 1], 6);
+      }
+    });
+
+    it('evenly-spaced dates produce equal box spacing and equal width', () => {
       render(
         <BoxPlotV
           id='even-spacing-box-plot'
+          style={chartStyle}
           data={evenlySpacedWeeklyData}
           x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
           y={timeYConfig}
         />
       );
 
-      const svg = document.getElementById('even-spacing-box-plot');
-      const rects = svg?.querySelectorAll('.box-plot-box') as NodeListOf<SVGRectElement>;
+      const rects = rectsOf('even-spacing-box-plot');
+      const xPositions = rects.map((r) => numAttr(r, 'x'));
+      const widths = rects.map((r) => numAttr(r, 'width'));
 
-      // Extract x positions to verify equal spacing
-      const xPositions: number[] = [];
-      rects.forEach((rect) => {
-        const xAttr = rect.getAttribute('x');
-        if (xAttr) {
-          xPositions.push(parseFloat(xAttr));
-        }
-      });
+      expect(xPositions.length).toBe(4);
 
-      // With equal spacing, differences between consecutive x positions
-      // should be approximately equal (within floating-point precision)
-      if (xPositions.length >= 2) {
-        const differences: number[] = [];
-        for (let i = 1; i < xPositions.length; i++) {
-          differences.push(xPositions[i] - xPositions[i - 1]);
-        }
-
-        // All differences should be close to each other (tolerance for float precision)
-        const avgDiff = differences.reduce((a, b) => a + b, 0) / differences.length;
-        differences.forEach((diff) => {
-          expect(Math.abs(diff - avgDiff)).toBeLessThan(1); // tolerance of 1px
-        });
+      // Chronological order must map to increasing screen x
+      for (let i = 1; i < xPositions.length; i++) {
+        expect(xPositions[i]).toBeGreaterThan(xPositions[i - 1]);
       }
+
+      const gaps = xPositions
+        .slice(1)
+        .map((xPos, i) => xPos - xPositions[i]);
+      gaps.forEach((gap) => expect(gap).toBeCloseTo(gaps[0], 6));
+
+      // Every box is the same width, and that width is the slot spacing minus
+      // the default 0.2 bar padding — i.e. finalBarWidth = slot * (1 - 0.2).
+      widths.forEach((w) => expect(w).toBeCloseTo(widths[0], 6));
+      expect(widths[0]).toBeCloseTo(gaps[0] * 0.8, 6);
     });
 
-    it('unevenly-spaced dates show visible gap and infer width from median gap', () => {
+    it('padding.bar is applied to the inferred width', () => {
+      render(
+        <BoxPlotV
+          id='padding-bar-box-plot'
+          style={chartStyle}
+          data={evenlySpacedWeeklyData}
+          padding={{ top: 0, bottom: 0, left: 0, right: 0, bar: 0.5 }}
+          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+          y={timeYConfig}
+        />
+      );
+
+      const rects = rectsOf('padding-bar-box-plot');
+      const xPositions = rects.map((r) => numAttr(r, 'x'));
+      const slot = xPositions[1] - xPositions[0];
+
+      expect(numAttr(rects[0], 'width')).toBeCloseTo(slot * 0.5, 6);
+    });
+
+    it('unevenly-spaced dates leave a proportionally larger gap where a period is missing', () => {
       render(
         <BoxPlotV
           id='uneven-spacing-box-plot'
+          style={chartStyle}
           data={unevenlySpacedData}
           x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
           y={timeYConfig}
         />
       );
 
-      const svg = document.getElementById('uneven-spacing-box-plot');
-      const rects = svg?.querySelectorAll('.box-plot-box') as NodeListOf<SVGRectElement>;
+      const rects = rectsOf('uneven-spacing-box-plot');
+      expect(rects.length).toBe(unevenlySpacedData.length);
 
-      // Should render all data points without throwing
-      expect(rects?.length).toBe(unevenlySpacedData.length);
+      const xPositions = rects.map((r) => numAttr(r, 'x'));
 
-      // Extract x positions
-      const xPositions: number[] = [];
-      rects.forEach((rect) => {
-        const xAttr = rect.getAttribute('x');
-        if (xAttr) {
-          xPositions.push(parseFloat(xAttr));
-        }
-      });
+      // Order: 01-06, 01-13, (missing 01-20), 01-27 — so the second gap spans
+      // two weeks and must be twice the first, which spans one.
+      const oneWeekGap = xPositions[1] - xPositions[0];
+      const twoWeekGap = xPositions[2] - xPositions[1];
 
-      // With gaps, there should be a larger space where 2025-01-20 was dropped
-      // Position order: 01-06, 01-13, (missing 01-20), 01-27
-      // Gap between 01-13 and 01-27 should be larger than regular week gaps.
-      //
-      // jsdom reports an empty computed style for the SVG's width (no layout
-      // engine), so `width` in the component resolves to 0 and scaleTime's
-      // range becomes inverted in this test environment, reversing the
-      // left-to-right screen order of chronologically-ordered boxes (see the
-      // identical note in ColumnChartStacked.test.tsx for the same root
-      // cause). That flips which position index holds the larger gap, so
-      // compare gap magnitudes rather than assuming a specific order.
-      if (xPositions.length === 3) {
-        const gapA = Math.abs(xPositions[1] - xPositions[0]); // 1-week gap
-        const gapB = Math.abs(xPositions[2] - xPositions[1]); // 2-week gap
-        const largerGap = Math.max(gapA, gapB);
-        const smallerGap = Math.min(gapA, gapB);
-
-        // The 2-week gap should be approximately double the 1-week gap
-        expect(largerGap).toBeGreaterThan(smallerGap * 1.5);
-      }
+      expect(oneWeekGap).toBeGreaterThan(0);
+      expect(twoWeekGap).toBeCloseTo(oneWeekGap * 2, 6);
     });
 
-    it('explicit x.time.barWidth overrides inferred width exactly', () => {
+    it('infers width from the MEDIAN gap, not the mean or the smallest gap', () => {
+      // Gaps here are 7d, 7d, 28d: median = 7d, mean = 14d, max = 28d.
+      // Only a median-based inference yields a width tied to the 7d cadence.
+      const medianProbeData = [
+        { ...evenlySpacedWeeklyData[0], weekStart: '2025-01-06' },
+        { ...evenlySpacedWeeklyData[1], weekStart: '2025-01-13' },
+        { ...evenlySpacedWeeklyData[2], weekStart: '2025-01-20' },
+        { ...evenlySpacedWeeklyData[3], weekStart: '2025-02-17' },
+      ];
+
+      render(
+        <BoxPlotV
+          id='median-gap-box-plot'
+          style={chartStyle}
+          data={medianProbeData}
+          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+          y={timeYConfig}
+        />
+      );
+
+      const rects = rectsOf('median-gap-box-plot');
+      const xPositions = rects.map((r) => numAttr(r, 'x'));
+      const width = numAttr(rects[0], 'width');
+
+      // One week of pixels, measured off the first (7-day) gap.
+      const oneWeekPx = xPositions[1] - xPositions[0];
+
+      expect(width).toBeCloseTo(oneWeekPx * 0.8, 6);
+      // Guard against a mean-based (14d) or max-based (28d) inference.
+      expect(width).toBeLessThan(oneWeekPx * 1.5);
+    });
+
+    it('explicit x.time.barWidth overrides inferred width exactly and ignores padding.bar', () => {
       const explicitBarWidth = 50;
 
       render(
         <BoxPlotV
           id='explicit-width-box-plot'
+          style={chartStyle}
           data={evenlySpacedWeeklyData}
+          padding={{ top: 0, bottom: 0, left: 0, right: 0, bar: 0.5 }}
           x={{
             key: 'weekStart',
             scalingFunction: 'time',
@@ -341,131 +478,114 @@ describe('BoxPlotV', () => {
         />
       );
 
-      const svg = document.getElementById('explicit-width-box-plot');
-      const rects = svg?.querySelectorAll('.box-plot-box') as NodeListOf<SVGRectElement>;
+      const rects = rectsOf('explicit-width-box-plot');
+      expect(rects.length).toBe(evenlySpacedWeeklyData.length);
 
-      // All boxes should have width equal to the explicit barWidth
+      // Used as-is: padding.bar of 0.5 must NOT be applied on top of it.
       rects.forEach((rect) => {
-        const width = parseFloat(rect.getAttribute('width') ?? '0');
-        expect(Math.abs(width - explicitBarWidth)).toBeLessThan(0.5); // tolerance for float
+        expect(numAttr(rect, 'width')).toBeCloseTo(explicitBarWidth, 6);
       });
     });
 
-    it('single data point does not throw and renders with non-zero width', () => {
+    it('single data point does not throw and renders a real (unclamped) width', () => {
       render(
         <BoxPlotV
           id='single-point-time-box-plot'
+          style={chartStyle}
           data={singlePointData}
           x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
           y={timeYConfig}
         />
       );
 
-      const svg = document.getElementById('single-point-time-box-plot');
-      expect(svg).toBeTruthy();
+      const rects = rectsOf('single-point-time-box-plot');
+      expect(rects.length).toBe(1);
 
-      const rects = svg?.querySelectorAll('.box-plot-box') as NodeListOf<SVGRectElement>;
-      expect(rects?.length).toBe(1);
-
-      if (rects?.length === 1) {
-        const width = parseFloat(rects[0].getAttribute('width') ?? '0');
-        expect(width).toBeGreaterThan(0);
-      }
+      // With one row the cadence is unknowable, so the fallback splits the
+      // plotting width evenly: (580 - 40) / 1 * (1 - 0.2) = 432. Assert well
+      // above 1 so the `Math.max(1, ...)` floor can't satisfy this on its own.
+      const width = numAttr(rects[0], 'width');
+      expect(width).toBeGreaterThan(1);
+      expect(width).toBeCloseTo((580 - 40) * 0.8, 6);
     });
 
-    it('identical timestamps do not produce zero width', () => {
+    it('identical timestamps do not produce zero or negative width', () => {
       render(
         <BoxPlotV
           id='identical-timestamps-box-plot'
+          style={chartStyle}
           data={identicalTimestampsData}
           x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
           y={timeYConfig}
         />
       );
 
-      const svg = document.getElementById('identical-timestamps-box-plot');
-      expect(svg).toBeTruthy();
+      const rects = rectsOf('identical-timestamps-box-plot');
+      expect(rects.length).toBe(identicalTimestampsData.length);
 
-      const rects = svg?.querySelectorAll('.box-plot-box') as NodeListOf<SVGRectElement>;
-      expect(rects?.length).toBe(identicalTimestampsData.length);
-
-      // All boxes should have non-zero width
+      // One unique timestamp => no cadence => even split across the 3 rows.
       rects.forEach((rect) => {
-        const width = parseFloat(rect.getAttribute('width') ?? '0');
-        expect(width).toBeGreaterThan(0);
+        const width = numAttr(rect, 'width');
+        expect(width).toBeGreaterThan(1);
+        expect(width).toBeCloseTo(((580 - 40) / 3) * 0.8, 6);
       });
     });
 
     it('x.bin is ignored when x.scalingFunction === "time"', () => {
-      // Render with both x.bin and x.scalingFunction: 'time'
-      // The time mode should take precedence and binning should be ignored
+      // `valueKey` is required for BoxPlotV's binning branch to engage at all
+      // (`isBinned && valueKey`), so it must be supplied here — without it the
+      // assertion would hold whether or not the time guard exists.
       render(
         <BoxPlotV
           id='time-with-bin-box-plot'
+          style={chartStyle}
           data={evenlySpacedWeeklyData}
+          valueKey='mid'
           x={{
             key: 'weekStart',
             scalingFunction: 'time',
             time: { isISO: true },
-            bin: { count: 5 }, // This should be ignored in time mode
+            bin: { count: 3 }, // ignored in time mode
           }}
           y={timeYConfig}
         />
       );
 
-      const svg = document.getElementById('time-with-bin-box-plot');
-      const rects = svg?.querySelectorAll('.box-plot-box');
-
-      // Should render all data rows normally (not binned)
-      expect(rects?.length).toBe(evenlySpacedWeeklyData.length);
+      // One box per raw row (4), not one per bin (3).
+      expect(rectsOf('time-with-bin-box-plot').length).toBe(
+        evenlySpacedWeeklyData.length
+      );
     });
 
-    it('min/max whisker lines have centered x1 and x2 (centerX position)', async () => {
+    it('x.bin still bins when scalingFunction is not "time" (control for the guard)', () => {
+      const numericData = evenlySpacedWeeklyData.map((d, i) => ({
+        ...d,
+        bucket: i * 10,
+      }));
+
       render(
         <BoxPlotV
-          id='whisker-positions-box-plot'
-          data={singlePointData}
-          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+          id='bin-control-box-plot'
+          style={chartStyle}
+          data={numericData}
+          valueKey='mid'
+          x={{ key: 'bucket', bin: { count: 3 } }}
           y={timeYConfig}
         />
       );
 
-      // The main whisker line's y2 only reaches its max-value position after
-      // the component's `.transition().duration(1000)` runs. D3 transitions
-      // are scheduled via requestAnimationFrame/setTimeout (a macrotask), so
-      // render() alone (synchronous, no real/fake time elapsed) only exposes
-      // the pre-transition attrs (y1 === y2, no span yet). Wait past the
-      // 1000ms duration on the real clock before reading the final DOM state.
-      await new Promise((resolve) => setTimeout(resolve, 1100));
+      // Binning collapses the 4 rows into 3 bins — proving the previous test's
+      // count of 4 is the guard working, not binning being inert.
+      expect(rectsOf('bin-control-box-plot').length).toBe(3);
+    });
 
-      const svg = document.getElementById('whisker-positions-box-plot');
-      const lines = svg?.querySelectorAll('.box-plot-line') as NodeListOf<SVGLineElement>;
-
-      // For a single point, find the min/max whisker lines (they should be the same x)
-      // Each line has x1, x2, y1, y2 attributes
-      // Min/max whiskers should have x1 === x2 (vertical lines at center)
-      let foundCenteredLine = false;
-      lines.forEach((line) => {
-        const x1 = parseFloat(line.getAttribute('x1') ?? '0');
-        const x2 = parseFloat(line.getAttribute('x2') ?? '0');
-        const y1 = parseFloat(line.getAttribute('y1') ?? '0');
-        const y2 = parseFloat(line.getAttribute('y2') ?? '0');
-
-        // Centered whisker: x1 === x2 (vertical) but y1 !== y2
-        if (Math.abs(x1 - x2) < 0.5 && Math.abs(y1 - y2) > 1) {
-          foundCenteredLine = true;
-        }
-      });
-
-      expect(foundCenteredLine).toBe(true);
-    }, 10000);
-
-    it('box rect has correct x position (left edge: centerX - finalBarWidth/2) and width (finalBarWidth)', () => {
+    it('positions all six band-derived attributes from centerX/finalBarWidth (pre-transition)', () => {
       const explicitBarWidth = 60;
 
       render(
         <BoxPlotV
-          id='box-rect-positions-box-plot'
+          id='geometry-box-plot'
+          style={chartStyle}
           data={singlePointData}
           x={{
             key: 'weekStart',
@@ -476,99 +596,90 @@ describe('BoxPlotV', () => {
         />
       );
 
-      const svg = document.getElementById('box-rect-positions-box-plot');
-      const rects = svg?.querySelectorAll('.box-plot-box') as NodeListOf<SVGRectElement>;
+      const { whisker, begin, midLine, endLine, rect } =
+        rowPartsOf('geometry-box-plot');
 
-      expect(rects?.length).toBe(1);
+      // The min/max whisker sits on centerX and never animates in x, so it is
+      // the reference point for every other mark.
+      const centerX = numAttr(whisker, 'x1');
+      expect(Number.isFinite(centerX)).toBe(true);
+      expect(centerX).toBeGreaterThan(40);
+      expect(centerX).toBeLessThan(580);
+      expect(numAttr(whisker, 'x2')).toBeCloseTo(centerX, 6);
 
-      if (rects?.length === 1) {
-        const width = parseFloat(rects[0].getAttribute('width') ?? '0');
-        // Width should match the explicit barWidth
-        expect(Math.abs(width - explicitBarWidth)).toBeLessThan(0.5);
-      }
+      const left = centerX - explicitBarWidth / 2;
+      const right = centerX + explicitBarWidth / 2;
+
+      // Begin line starts collapsed on the left edge.
+      expect(numAttr(begin, 'x1')).toBeCloseTo(left, 6);
+      expect(numAttr(begin, 'x2')).toBeCloseTo(left, 6);
+
+      // Mid and end lines start collapsed on the center.
+      expect(numAttr(midLine, 'x1')).toBeCloseTo(centerX, 6);
+      expect(numAttr(midLine, 'x2')).toBeCloseTo(centerX, 6);
+      expect(numAttr(endLine, 'x1')).toBeCloseTo(centerX, 6);
+      expect(numAttr(endLine, 'x2')).toBeCloseTo(centerX, 6);
+
+      // The rect's x/width are not animated, so they are final immediately.
+      expect(numAttr(rect, 'x')).toBeCloseTo(left, 6);
+      expect(numAttr(rect, 'width')).toBeCloseTo(explicitBarWidth, 6);
+      expect(numAttr(rect, 'x') + numAttr(rect, 'width')).toBeCloseTo(right, 6);
     });
 
-    it('begin line x animates from left edge (centerX - finalBarWidth/2) to center (centerX)', async () => {
+    it('animates begin/mid/end lines out to the full box width (post-transition)', async () => {
+      const explicitBarWidth = 60;
+
       render(
         <BoxPlotV
-          id='begin-line-animation-box-plot'
+          id='geometry-transition-box-plot'
+          style={chartStyle}
           data={singlePointData}
-          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+          x={{
+            key: 'weekStart',
+            scalingFunction: 'time',
+            time: { isISO: true, barWidth: explicitBarWidth },
+          }}
           y={timeYConfig}
         />
       );
 
-      // See the identical comment in the "min/max whisker lines" test above:
-      // the line with a real y-span only exists once the 1000ms transition
-      // completes, which requires letting real time elapse past render().
-      await new Promise((resolve) => setTimeout(resolve, 1100));
+      const centerX = numAttr(
+        rowPartsOf('geometry-transition-box-plot').whisker,
+        'x1'
+      );
+      const left = centerX - explicitBarWidth / 2;
+      const right = centerX + explicitBarWidth / 2;
 
-      const svg = document.getElementById('begin-line-animation-box-plot');
-      const lines = svg?.querySelectorAll('.box-plot-line') as NodeListOf<SVGLineElement>;
+      // The x-spans above are only reached at the end of the component's
+      // `.transition().duration(1000)`. d3-transition drives that off
+      // requestAnimationFrame/d3-timer, which `render()` (synchronous) never
+      // lets run and which `vi.useFakeTimers()` does not advance reliably —
+      // so this has to wait on the real clock. `waitFor` polls and resolves as
+      // soon as the final state lands, rather than sleeping a fixed 1100ms,
+      // and fails with the actual attribute values if it never does.
+      await waitFor(
+        () => {
+          const { begin, midLine, endLine } = rowPartsOf(
+            'geometry-transition-box-plot'
+          );
 
-      // Begin line (left edge): initial x1 at left edge, final x1 at center
-      // It's a horizontal line at firstQuartile/lastQuartile height spanning the left side
-      let foundBeginLine = false;
-      lines.forEach((line) => {
-        const y1 = parseFloat(line.getAttribute('y1') ?? '0');
-        const y2 = parseFloat(line.getAttribute('y2') ?? '0');
+          // Begin line: x1 pinned to the left edge, x2 sweeps out to the right.
+          expect(numAttr(begin, 'x1')).toBeCloseTo(left, 3);
+          expect(numAttr(begin, 'x2')).toBeCloseTo(right, 3);
 
-        // Begin line spans from firstQuartile to lastQuartile in y
-        // In time mode with valid data, should find lines with significant y-span
-        if (Math.abs(y2 - y1) > 1) {
-          foundBeginLine = true;
-        }
-      });
-
-      expect(foundBeginLine).toBe(true);
-    }, 10000);
-
-    it('end line x animates from center (centerX) to right edge (centerX + finalBarWidth/2)', () => {
-      render(
-        <BoxPlotV
-          id='end-line-animation-box-plot'
-          data={singlePointData}
-          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
-          y={timeYConfig}
-        />
+          // Mid and end lines: expand from the center to span the full width.
+          expect(numAttr(midLine, 'x1')).toBeCloseTo(left, 3);
+          expect(numAttr(midLine, 'x2')).toBeCloseTo(right, 3);
+          expect(numAttr(endLine, 'x1')).toBeCloseTo(left, 3);
+          expect(numAttr(endLine, 'x2')).toBeCloseTo(right, 3);
+        },
+        { timeout: 3000, interval: 50 }
       );
 
-      const svg = document.getElementById('end-line-animation-box-plot');
-      const lines = svg?.querySelectorAll('.box-plot-line');
-
-      // End line similar to begin line but on the right side
-      // Should render without error
-      expect(lines?.length).toBeGreaterThan(0);
-    });
-
-    it('mid line has centered x1 and x2 (both at centerX position)', () => {
-      render(
-        <BoxPlotV
-          id='mid-line-box-plot'
-          data={singlePointData}
-          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
-          y={timeYConfig}
-        />
-      );
-
-      const svg = document.getElementById('mid-line-box-plot');
-      const lines = svg?.querySelectorAll('.box-plot-line') as NodeListOf<SVGLineElement>;
-
-      // Mid line: horizontal line at median y, x1 === x2 === centerX
-      // It's a vertical line at the center of the box
-      let foundMidLine = false;
-      lines.forEach((line) => {
-        const x1 = parseFloat(line.getAttribute('x1') ?? '0');
-        const x2 = parseFloat(line.getAttribute('x2') ?? '0');
-
-        // Mid line: x1 === x2 (vertical at center), small y-span (just the median point)
-        // Median line should have x1 == x2 and typically smaller y range than whiskers
-        if (Math.abs(x1 - x2) < 0.5) {
-          foundMidLine = true;
-        }
-      });
-
-      expect(foundMidLine).toBe(true);
+      // The whisker's x never animates — still centered after the transition.
+      const { whisker } = rowPartsOf('geometry-transition-box-plot');
+      expect(numAttr(whisker, 'x1')).toBeCloseTo(centerX, 6);
+      expect(numAttr(whisker, 'x2')).toBeCloseTo(centerX, 6);
     });
   });
 });

@@ -1,6 +1,7 @@
 import { ZoomTransform, zoom } from 'd3-zoom';
 import { max, min } from 'd3-array';
-import { scaleBand, scaleLinear } from 'd3-scale';
+import { scaleBand, scaleLinear, scaleTime } from 'd3-scale';
+import { isoParse, timeParse } from 'd3-time-format';
 import { select, selectAll } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
@@ -151,8 +152,10 @@ const BoxPlotV = <TData = any,>({
   },
   style = {},
 }: BoxPlotVProps<TData>) => {
-  // Same predicate as the props union: `x.bin` set and `valueKey` a string
-  const binValueKey = getBinValueKey(x, valueKey);
+  // Same predicate as the props union: `x.bin` set and `valueKey` a string.
+  // Binning is ignored on a time axis: bin labels aren't dates.
+  const isTimeX = x.scalingFunction === 'time';
+  const binValueKey = isTimeX ? undefined : getBinValueKey(x, valueKey);
   const isBinned = binValueKey !== undefined;
   useBoxPlotConfigWarnings('BoxPlotV', id, {
     data,
@@ -200,13 +203,92 @@ const BoxPlotV = <TData = any,>({
         ? toBinnedRows(binDataStats(data, x, binValueKey), x.key)
         : data;
 
-    const xFn: any = scaleBand()
-      .domain(effectiveData.map((d: any) => d[x.key]))
-      .range([
-        (margin.left ?? 0) + (padding.left || 0),
-        width - (margin.right ?? 0) - (padding.right || 0),
-      ])
-      .padding(padding.bar || 0.2);
+    const d3Format = x.time?.format || '%Y-%m-%d';
+    const parseDate = timeParse(d3Format);
+
+    const toDateTime = (d: any): Date =>
+      x.time?.isISO ? (isoParse(d[x.key]) as Date) : (parseDate(d[x.key]) as Date);
+
+    const isTimeX = x.scalingFunction === 'time';
+    const paddingBarValue = padding.bar || 0.2;
+
+    const xFn: any = isTimeX ? scaleTime().nice() : scaleBand();
+
+    if (isTimeX) {
+      xFn
+        .domain([
+          Number.isFinite(x.start)
+            ? x.start
+            : min(effectiveData.map((d: any) => toDateTime(d))),
+          Number.isFinite(x.end)
+            ? x.end
+            : max(effectiveData.map((d: any) => toDateTime(d))),
+        ])
+        .range([
+          (margin.left ?? 0) + (padding.left || 0),
+          width - (margin.right ?? 0) - (padding.right || 0),
+        ]);
+    } else {
+      xFn
+        .domain(effectiveData.map((d: any) => d[x.key]))
+        .range([
+          (margin.left ?? 0) + (padding.left || 0),
+          width - (margin.right ?? 0) - (padding.right || 0),
+        ])
+        .padding(paddingBarValue);
+    }
+
+    let finalBarWidth = 0;
+    if (isTimeX) {
+      if (Number.isFinite(x.time?.barWidth)) {
+        // 1. Explicit override always wins, used as-is (final rendered width,
+        //    paddingBarValue is NOT applied on top of an explicit value).
+        finalBarWidth = x.time!.barWidth!;
+      } else {
+        // 2. Infer from data cadence.
+        const rangeStart = xFn.range()[0];
+        const rangeEnd = xFn.range()[1];
+
+        const timestamps = Array.from(
+          new Set(
+            effectiveData
+              .map((d: any) => toDateTime(d)?.getTime())
+              .filter((t: number) => Number.isFinite(t))
+          )
+        ).sort((a: number, b: number) => a - b);
+
+        let cadenceMs = NaN;
+        if (timestamps.length >= 2) {
+          const gaps: number[] = [];
+          for (let i = 1; i < timestamps.length; i++) {
+            gaps.push(timestamps[i] - timestamps[i - 1]);
+          }
+          gaps.sort((a, b) => a - b);
+          const mid = Math.floor(gaps.length / 2);
+          cadenceMs =
+            gaps.length % 2 === 0 ? (gaps[mid - 1] + gaps[mid]) / 2 : gaps[mid];
+          // Median, not mean or min: resists one large gap (e.g. a missing
+          // period) skewing the width up, and resists a single duplicate/
+          // near-duplicate timestamp collapsing the width to ~0.
+        }
+
+        let slotWidthPx: number;
+        if (Number.isFinite(cadenceMs) && cadenceMs > 0) {
+          // scaleTime is affine in ms, so the pixel delta for a fixed ms
+          // interval is the same everywhere on the scale — any anchor works.
+          const anchor = (xFn.domain()[0] as Date).getTime();
+          slotWidthPx = xFn(new Date(anchor + cadenceMs)) - xFn(new Date(anchor));
+        } else {
+          // 0 or 1 unique timestamp: no cadence to infer. Fall back to an even
+          // split of the available plotting width across the rows.
+          slotWidthPx = (rangeEnd - rangeStart) / Math.max(effectiveData.length, 1);
+        }
+
+        finalBarWidth = Math.max(1, slotWidthPx * (1 - paddingBarValue));
+      }
+    }
+
+    const centerX = (d: any) => xFn(toDateTime(d));
 
     const yFn = scaleLinear()
       .domain([
@@ -246,8 +328,8 @@ const BoxPlotV = <TData = any,>({
     dotRowsG
       .append('line')
       .attr('clip-path', 'url(#clip)')
-      .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
+      .attr('x1', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
+      .attr('x2', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
       .attr('y1', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
@@ -259,8 +341,8 @@ const BoxPlotV = <TData = any,>({
     dotRowsG
       .append('line')
       .attr('clip-path', 'url(#clip)')
-      .attr('x1', (d: any) => xFn(d[x.key]))
-      .attr('x2', (d: any) => xFn(d[x.key]))
+      .attr('x1', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
+      .attr('x2', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
       .attr('y1', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('class', (d: any) =>
@@ -268,8 +350,10 @@ const BoxPlotV = <TData = any,>({
       )
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => xFn(d[x.key]))
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth());
+      .attr('x1', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
+      .attr('x2', (d: any) =>
+        isTimeX ? centerX(d) + finalBarWidth / 2 : xFn(d[x.key]) + xFn.bandwidth()
+      );
 
     // Mid lines
     dotRowsG
@@ -277,13 +361,15 @@ const BoxPlotV = <TData = any,>({
       .attr('clip-path', 'url(#clip)')
       .attr('y1', (d: any) => yFn(d[effectiveY.midKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.midKey]))
-      .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
+      .attr('x1', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
+      .attr('x2', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => xFn(d[x.key]))
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth());
+      .attr('x1', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
+      .attr('x2', (d: any) =>
+        isTimeX ? centerX(d) + finalBarWidth / 2 : xFn(d[x.key]) + xFn.bandwidth()
+      );
 
     // End lines
     dotRowsG
@@ -291,13 +377,15 @@ const BoxPlotV = <TData = any,>({
       .attr('clip-path', 'url(#clip)')
       .attr('y1', (d: any) => yFn(d[effectiveY.maxKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.maxKey]))
-      .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
+      .attr('x1', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
+      .attr('x2', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => xFn(d[x.key]))
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth());
+      .attr('x1', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
+      .attr('x2', (d: any) =>
+        isTimeX ? centerX(d) + finalBarWidth / 2 : xFn(d[x.key]) + xFn.bandwidth()
+      );
 
     // Mid rects
     dotRowsG
@@ -311,8 +399,8 @@ const BoxPlotV = <TData = any,>({
       )
       .attr('clip-path', 'url(#clip)')
       .attr('y', () => height - (margin.bottom ?? 0) - (padding.bottom || 0))
-      .attr('x', (d: any) => xFn(d[x.key]))
-      .attr('width', xFn.bandwidth())
+      .attr('x', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
+      .attr('width', isTimeX ? finalBarWidth : xFn.bandwidth())
       .transition()
       .duration(1000)
       .attr('y', (d: any) => yFn(d[effectiveY.boxEnd]))

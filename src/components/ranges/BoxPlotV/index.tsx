@@ -265,8 +265,7 @@ const BoxPlotV = <TData = any,>({
           }
           gaps.sort((a, b) => a - b);
           const mid = Math.floor(gaps.length / 2);
-          cadenceMs =
-            gaps.length % 2 === 0 ? (gaps[mid - 1] + gaps[mid]) / 2 : gaps[mid];
+          cadenceMs = gaps.reduce((a, b) => a + b, 0) / gaps.length;
           // Median, not mean or min: resists one large gap (e.g. a missing
           // period) skewing the width up, and resists a single duplicate/
           // near-duplicate timestamp collapsing the width to ~0.

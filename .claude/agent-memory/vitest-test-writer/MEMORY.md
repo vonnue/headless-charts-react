@@ -1,0 +1,1 @@
+- [feedback_jsdom_transform_tweens.md](feedback_jsdom_transform_tweens.md) — setupTests.tsx polyfills real SVG transform parsing; assert on post-transition transform values, don't re-stub to identity

@@ -1,0 +1,1 @@
+- [feedback_transition_cleanup_checklist.md](feedback_transition_cleanup_checklist.md) — flag d3 transitions selected by CSS/id instead of node ref, and update functions called both directly in setup() and via their own effect

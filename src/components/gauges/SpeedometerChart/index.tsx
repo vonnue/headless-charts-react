@@ -92,6 +92,7 @@ const SpeedometerChart = <TData = any,>({
   const maxValue = max(regions.map((region) => region.limit)) || 1;
 
   const previousData = useRef(0);
+  const dataGroupRef = useRef<SVGGElement | null>(null);
   regions.sort((a, b) => b.limit - a.limit);
 
   const dataValue = typeof data === 'number' ? data : 0;
@@ -148,6 +149,7 @@ const SpeedometerChart = <TData = any,>({
       .map((_, i) => +((i - 1) * gap).toFixed(1));
 
     const dataG = g.append('g').attr('class', 'data-group');
+    dataGroupRef.current = dataG.node();
     dataG
       .append('circle')
       .attr('cx', 0)
@@ -179,8 +181,6 @@ const SpeedometerChart = <TData = any,>({
       .on('mouseenter', (event: any) => onMouseOver(event, { value: dataValue }))
       .on('mousemove', onMouseMove)
       .on('mouseleave', onMouseLeave);
-
-    refreshChart();
 
     label &&
       g
@@ -238,14 +238,15 @@ const SpeedometerChart = <TData = any,>({
     ((previousData.current / maxValue) * (MAX_ANGLE - MIN_ANGLE) * 180) / PI;
 
   const refreshChart = useCallback(() => {
-    select<SVGElement, number>('.data-group')
+    if (!dataGroupRef.current) return;
+    select<SVGGElement, number>(dataGroupRef.current)
       .data([data])
       .attr('transform', `rotate(${previousAngle})`) // Start from previousData.current
       .transition()
       .duration(1000)
       .attr('transform', `rotate(${currentAngle})`); // Transition to the new value
     previousData.current = dataValue;
-  }, [data, max]);
+  }, [currentAngle, previousAngle, data, dataValue]);
 
   useEffect(() => {
     setup();
@@ -255,8 +256,9 @@ const SpeedometerChart = <TData = any,>({
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();
+      if (dataGroupRef.current) select(dataGroupRef.current).interrupt();
     };
-  }, [data, max, refreshChart]);
+  }, [data, max, refreshChart, id]);
   /* eslint-enable */
   return (
     <svg

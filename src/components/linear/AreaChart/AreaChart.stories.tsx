@@ -156,3 +156,35 @@ export const Streamgraph = Styled.extend({
     },
   },
 });
+
+const flowsData = [
+  { year: 2012, inflow: 12.8, outflow: -8.6 },
+  { year: 2013, inflow: 16.0, outflow: -10.1 },
+  { year: 2014, inflow: 18.0, outflow: -14.3 },
+  { year: 2015, inflow: 19.9, outflow: -12.7 },
+  { year: 2016, inflow: 15.2, outflow: -17.4 },
+  { year: 2017, inflow: 22.6, outflow: -13.9 },
+];
+
+export const DivergingArea = meta.story({
+  args: {
+    id: 'area-chart-diverging',
+    data: flowsData,
+    x: {
+      key: 'year',
+    },
+    y: [
+      {
+        key: 'inflow',
+        className: 'text-green-700',
+      },
+      {
+        key: 'outflow',
+        className: 'text-red-700',
+      },
+    ],
+    stacking: {
+      type: 'diverging',
+    },
+  },
+});

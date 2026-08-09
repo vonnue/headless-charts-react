@@ -40,6 +40,36 @@ resolveChartRequest('waterfall');
 - `src/catalog/` — catalog types, decision tree, and the AGENTS.md generator
 - `src/types.tsx` — shared `AxisConfig`, `ChartProps`, `TooltipConfig`, `GaugeProps`
 
+## Agent workflow (mandatory)
+
+Every code change in this repo — new chart, prop change, bug fix, anything —
+goes through this agent graph, in order. Do not hand-write or hand-edit code
+directly; do not skip or reorder stages.
+
+```
+dataviz-spec-architect
+  ├─> vitest-test-writer ─┐
+  └─> general-purpose ────┤
+                           v
+              general-purpose (merge tests + impl, iterate til green)
+                           v
+              d3-react-code-reviewer <-> general-purpose (loop til clean)
+                           v
+              chart-catalog-editor
+```
+
+1. `dataviz-spec-architect` first, always — locks the prop/type signature and
+   behavior spec before anything forks. Test-writer and implementation must
+   work off the same signature or the merge step fails.
+2. Fork in parallel: `vitest-test-writer` writes tests from the spec;
+   `general-purpose` writes the implementation from the same spec.
+3. `general-purpose` merges tests + implementation, runs them, iterates until
+   green.
+4. `d3-react-code-reviewer` reviews; back-and-forth with `general-purpose`
+   until the review is clean.
+5. `chart-catalog-editor` last, once code is settled — see "Editing charts"
+   below for what it updates and regenerates.
+
 ## Editing charts
 
 When adding a chart, or changing what a chart is for:

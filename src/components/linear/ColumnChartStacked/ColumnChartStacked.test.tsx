@@ -42,6 +42,44 @@ describe('ColumnChartStacked', () => {
     expect(svg).toBeTruthy();
   });
 
+  it('narrows and staggers bars per series in waterfall mode, instead of sharing one column x', () => {
+    // Normal stacking: every series in a category shares the same x and the
+    // full band width — bars sit on top of each other, reading as one column.
+    render(<ColumnChartStacked {...defaultArgs} id='column-stacked-normal' />);
+    const normalRects = Array.from(
+      document.querySelectorAll('#column-stacked-normal rect')
+    );
+    const normalWidths = new Set(normalRects.map((r) => r.getAttribute('width')));
+    const normalXsForFirstCategory = new Set(
+      [0, 1, 2].map((i) => normalRects[i * data.length]?.getAttribute('x'))
+    );
+
+    expect(normalWidths.size).toBe(1); // one shared bar width
+    expect(normalXsForFirstCategory.size).toBe(1); // all series stack at the same x
+
+    // Waterfall: each series becomes its own floating step — narrower bars
+    // (band width / series count) offset side by side instead of stacked.
+    render(<ColumnChartStacked {...defaultArgs} id='column-waterfall-scale' waterfall />);
+    const waterfallRects = Array.from(
+      document.querySelectorAll('#column-waterfall-scale rect')
+    );
+    const waterfallWidth = Number(waterfallRects[0]?.getAttribute('width'));
+    const waterfallXsForFirstCategory = [0, 1, 2].map((i) =>
+      Number(waterfallRects[i * data.length]?.getAttribute('x'))
+    );
+
+    const normalWidth = Number([...normalWidths][0]);
+    expect(waterfallWidth).toBeCloseTo(normalWidth / defaultArgs.y.length);
+    // Each step's x is offset from the previous by exactly one step width —
+    // steps sit side by side rather than stacked at a single x.
+    expect(waterfallXsForFirstCategory[1] - waterfallXsForFirstCategory[0]).toBeCloseTo(
+      waterfallWidth
+    );
+    expect(waterfallXsForFirstCategory[2] - waterfallXsForFirstCategory[1]).toBeCloseTo(
+      waterfallWidth
+    );
+  });
+
   it('renders with reference lines', () => {
     render(
       <ColumnChartStacked

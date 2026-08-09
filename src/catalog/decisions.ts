@@ -18,7 +18,7 @@ export const decisionTree: DecisionBranch[] = [
       },
       {
         name: 'BarChart',
-        when: 'Long category labels, or more than ~12 categories — horizontal bars give labels room',
+        when: 'Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis',
       },
       {
         name: 'LollipopVChart',

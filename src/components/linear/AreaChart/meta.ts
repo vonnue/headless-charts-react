@@ -74,6 +74,7 @@ const meta: ChartMeta = {
         'Any value must be read off the chart — no band sits on a fixed baseline; use a plain stacked AreaChart',
         'There are only two or three series — the organic shape adds nothing over a normal stack',
         'The audience needs the total, which a wiggle baseline obscures',
+        'Series contain negative values — the wiggle baseline only works for positive, cumulative data; use `stacking.type: "diverging"` instead',
       ],
       example: `<AreaChart
   id="genre-streamgraph"

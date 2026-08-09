@@ -130,6 +130,52 @@ describe('AreaChart', () => {
     expect(svg).toBeTruthy();
   });
 
+  it('renders diverging area chart', () => {
+    render(
+      <AreaChart
+        {...defaultArgs}
+        id='area-chart-diverging'
+        stacking={{
+          type: 'diverging',
+        }}
+      />
+    );
+
+    const svg = screen.getByTestId('area-chart-diverging');
+    expect(svg).toBeTruthy();
+  });
+
+  it('keeps the shared y-scale true to value when diverging series have different magnitudes', () => {
+    const flowsData = [
+      { year: 2012, inflow: 120, outflow: -50 },
+      { year: 2013, inflow: 140, outflow: -60 },
+      { year: 2014, inflow: 160, outflow: -70 },
+    ];
+
+    render(
+      <AreaChart
+        id='area-chart-diverging-scale'
+        data={flowsData}
+        x={{ key: 'year' }}
+        y={[{ key: 'inflow' }, { key: 'outflow' }]}
+        stacking={{ type: 'diverging' }}
+      />
+    );
+
+    const svg = screen.getByTestId('area-chart-diverging-scale');
+    const yAxis = svg.querySelector('[data-testid="y-axis"]');
+    const tickValues = Array.from(yAxis?.querySelectorAll('.tick text') ?? []).map(
+      // d3 renders the minus sign as U+2212, not ASCII "-"
+      (tick) => Number(tick.textContent?.replace('−', '-'))
+    );
+
+    // The scale must span both the large positive (inflow) and the small
+    // negative (outflow) extents unmodified — diverging is not normalised
+    // like `100%` or `streamgraph`, so bands stay proportional to real value.
+    expect(Math.max(...tickValues)).toBeGreaterThan(100);
+    expect(Math.min(...tickValues)).toBeLessThan(0);
+  });
+
   it('renders axes', () => {
     render(
       <AreaChart

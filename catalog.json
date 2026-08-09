@@ -21,7 +21,7 @@
         },
         {
           "name": "BarChart",
-          "when": "Long category labels, or more than ~12 categories — horizontal bars give labels room"
+          "when": "Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis"
         },
         {
           "name": "LollipopVChart",
@@ -325,7 +325,8 @@
           "avoidWhen": [
             "Any value must be read off the chart — no band sits on a fixed baseline; use a plain stacked AreaChart",
             "There are only two or three series — the organic shape adds nothing over a normal stack",
-            "The audience needs the total, which a wiggle baseline obscures"
+            "The audience needs the total, which a wiggle baseline obscures",
+            "Series contain negative values — the wiggle baseline only works for positive, cumulative data; use `stacking.type: \"diverging\"` instead"
           ],
           "example": "<AreaChart\n  id=\"genre-streamgraph\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'iphone', className: 'text-purple-900' },\n    { key: 'macbook', className: 'text-purple-700' },\n    { key: 'ipad', className: 'text-purple-500' },\n  ]}\n  stacking={{ type: 'streamgraph' }}\n/>"
         },

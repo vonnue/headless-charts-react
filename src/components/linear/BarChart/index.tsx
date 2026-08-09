@@ -170,7 +170,7 @@ const BarChart = <TData = any,>({
       effectiveY = y;
     }
 
-    const minStart = min(effectiveX.map((column: BarAxisConfig) => column.start || 0)),
+    const minStart = min(effectiveX.map((column: BarAxisConfig) => column.start)),
       minX = min(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         effectiveX

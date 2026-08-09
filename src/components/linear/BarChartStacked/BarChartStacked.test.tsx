@@ -49,6 +49,41 @@ describe('BarChartStacked', () => {
     expect(svg).toBeTruthy();
   });
 
+  it('narrows and staggers bars per series in waterfall mode, instead of sharing one row y', () => {
+    // Normal stacking: every series in a category shares the same y and the
+    // full band height — segments sit end to end on one row.
+    render(<BarChartStacked {...defaultArgs} id='bar-stacked-normal' />);
+    const normalRects = Array.from(
+      document.querySelectorAll('#bar-stacked-normal rect')
+    );
+    const normalHeights = new Set(normalRects.map((r) => r.getAttribute('height')));
+    const normalYsForFirstCategory = new Set(
+      [0, 1].map((i) => normalRects[i * data.length]?.getAttribute('y'))
+    );
+
+    expect(normalHeights.size).toBe(1); // one shared bar height
+    expect(normalYsForFirstCategory.size).toBe(1); // all series share the same row
+
+    // Waterfall: each series becomes its own floating step — narrower bars
+    // (band height / series count) stacked into sub-rows instead of one row.
+    render(<BarChartStacked {...defaultArgs} id='bar-stacked-waterfall-scale' waterfall />);
+    const waterfallRects = Array.from(
+      document.querySelectorAll('#bar-stacked-waterfall-scale rect')
+    );
+    const waterfallHeight = Number(waterfallRects[0]?.getAttribute('height'));
+    const waterfallYsForFirstCategory = [0, 1].map((i) =>
+      Number(waterfallRects[i * data.length]?.getAttribute('y'))
+    );
+
+    const normalHeight = Number([...normalHeights][0]);
+    expect(waterfallHeight).toBeCloseTo(normalHeight / defaultArgs.x.length);
+    // Each step's y is offset from the previous by exactly one step height —
+    // steps sit in sub-rows rather than sharing a single row.
+    expect(waterfallYsForFirstCategory[1] - waterfallYsForFirstCategory[0]).toBeCloseTo(
+      waterfallHeight
+    );
+  });
+
   it('renders with custom padding and margin', () => {
     render(
       <BarChartStacked

@@ -79,7 +79,7 @@ Find the question being asked, then pick among the candidates.
 | Chart | Choose it when |
 | --- | --- |
 | [`ColumnChart`](#columnchart) | Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed |
-| [`BarChart`](#barchart) | Long category labels, or more than ~12 categories — horizontal bars give labels room |
+| [`BarChart`](#barchart) | Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis |
 | [`LollipopVChart`](#lollipopvchart) | Values matter more than magnitude-as-area, and bars would look heavy; vertical orientation |
 | [`LollipopHChart`](#lollipophchart) | Same as LollipopVChart but with long category labels |
 | [`SpineChart`](#spinechart) | Two opposing measures per category read outward from a shared centre axis, e.g. male/female |
@@ -236,6 +236,7 @@ A stacked area chart with a centred, flowing baseline instead of a flat one, emp
 - Any value must be read off the chart — no band sits on a fixed baseline; use a plain stacked AreaChart
 - There are only two or three series — the organic shape adds nothing over a normal stack
 - The audience needs the total, which a wiggle baseline obscures
+- Series contain negative values — the wiggle baseline only works for positive, cumulative data; use `stacking.type: "diverging"` instead
 
 ```tsx
 <AreaChart

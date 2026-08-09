@@ -76,6 +76,43 @@ describe('BarChart', () => {
     expect(yAxisTransform).toEqual(-40);
   });
 
+  it('BUG: a diverging series without explicit start/end should not clip its domain to zero', () => {
+    // `column.start || 0` in index.tsx treats "no start given" the same as
+    // "start explicitly 0", so the x-domain's lower bound collapses to 0
+    // whenever `start` is omitted — clipping negative bars regardless of the
+    // real data minimum. `column.end || maxX` does not have this problem
+    // because its fallback (`maxX`) is already the correct default; `start`
+    // needs the equivalent fallback to `minX` (or a symmetric pin) instead
+    // of a hardcoded 0. See BarChart's own catalog docs / diverging story,
+    // which only render correctly today because they set `start`/`end`
+    // explicitly.
+    const divergingX = [
+        { key: 'delta', className: 'text-green-500', classNameNegative: 'text-red-500' },
+      ],
+      divergingY = { key: 'year' },
+      divergingData = [
+        { year: 2020, delta: -5 },
+        { year: 2021, delta: 8 },
+      ];
+
+    const { container } = render(
+      <BarChart
+        id='bar-chart-diverging-domain'
+        data={divergingData}
+        x={divergingX}
+        y={divergingY}
+      />
+    );
+
+    const tickValues = Array.from(
+      container.querySelectorAll('[data-testid="x-axis"] .tick text')
+    ).map((node) =>
+      Number(node.textContent?.replace(/,/g, '').replace(/−/, '-'))
+    );
+
+    expect(tickValues.some((v) => v < 0)).toBe(true);
+  });
+
   it('Expect labels to be rendered', () => {
     render(
       <BarChart

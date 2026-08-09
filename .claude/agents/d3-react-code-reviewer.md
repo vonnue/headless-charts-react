@@ -1,7 +1,7 @@
 ---
 name: d3-react-code-reviewer
 description: "Use this agent when the user has written or modified code involving D3.js, TypeScript, or React and wants a code review focused on best practices, code smells, and quality improvements. This includes reviewing visualization components, data bindings, React-D3 integration patterns, and TypeScript type safety. Examples:\\n\\n- User: \"I just finished building a bar chart component using D3 and React, can you review it?\"\\n  Assistant: \"Let me use the d3-react-code-reviewer agent to review your bar chart component for best practices and code smells.\"\\n  [Uses Agent tool to launch d3-react-code-reviewer]\\n\\n- User: \"Here's my updated dashboard visualization code, does it look okay?\"\\n  Assistant: \"I'll launch the code reviewer agent to analyze your dashboard visualization code.\"\\n  [Uses Agent tool to launch d3-react-code-reviewer]\\n\\n- User: \"I'm integrating D3 transitions into my React component, review my approach.\"\\n  Assistant: \"Let me use the d3-react-code-reviewer agent to evaluate your D3-React integration approach.\"\\n  [Uses Agent tool to launch d3-react-code-reviewer]"
-model: sonnet
+model: opus
 color: red
 memory: project
 ---

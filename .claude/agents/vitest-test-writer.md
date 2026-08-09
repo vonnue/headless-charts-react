@@ -1,7 +1,7 @@
 ---
 name: vitest-test-writer
 description: "Use this agent when you need to generate test cases from a feature description, user story, or requirements document using Vitest. This includes writing unit tests, integration tests, and edge case coverage based on described behavior.\\n\\nExamples:\\n\\n- User: \"I need tests for the shopping cart feature that allows adding items, removing items, and calculating totals\"\\n  Assistant: \"I'll use the vitest-test-writer agent to analyze this feature description and generate comprehensive test cases.\"\\n  [Launches vitest-test-writer agent]\\n\\n- User: \"Here's the spec for our authentication flow: users can sign up with email/password, login, and reset their password. Write tests for this.\"\\n  Assistant: \"Let me use the vitest-test-writer agent to identify all the test cases from this authentication spec and write Vitest tests.\"\\n  [Launches vitest-test-writer agent]\\n\\n- User: \"We just added a date range picker component that validates start < end, supports presets like 'last 7 days', and emits change events. Can you write tests?\"\\n  Assistant: \"I'll launch the vitest-test-writer agent to break down this component's behavior into test cases and generate thorough Vitest coverage.\"\\n  [Launches vitest-test-writer agent]"
-model: sonnet
+model: haiku
 color: blue
 memory: project
 ---

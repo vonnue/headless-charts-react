@@ -1,7 +1,7 @@
 ---
 name: issue-writer
 description: "Use this agent when findings (from a code review, a bug investigation, or the user directly) need to become tracked GitHub issues, and only when the user has explicitly asked for that — this agent is the sole sanctioned path for filing issues in this repo; no other agent is permitted to run `gh issue create`. Before creating anything, it searches existing issues for a likely duplicate and updates that issue instead of creating a new one when it finds a good match. Examples:\\n\\n- User: \"File these review findings as issues\"\\n  Assistant: \"I'll use the issue-writer agent to check for existing duplicates and create or update issues for each finding.\"\\n  [Uses Agent tool to launch issue-writer]\\n\\n- User: \"Turn this into a GitHub issue\" (after a bug investigation)\\n  Assistant: \"Let me use the issue-writer agent to search for a matching issue first, then file or update it.\"\\n  [Uses Agent tool to launch issue-writer]\\n\\n- User: \"Can you review the codebase and open issues for what you find?\"\\n  Assistant: \"I'll run the review, then hand the findings to the issue-writer agent to file them — it's the only agent allowed to create GitHub issues here.\"\\n  [Uses Agent tool to launch issue-writer]"
-model: sonnet
+model: haiku
 color: yellow
 memory: project
 ---

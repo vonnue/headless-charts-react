@@ -1,7 +1,7 @@
 ---
 name: chart-catalog-editor
 description: "Use this agent when adding a new chart component, adding a new chart-type variant (a recognised name resolved via a prop, e.g. waterfall, streamgraph, histogram) to an existing chart, adding a cosmetic option to a chart, or changing what an existing chart is for — any change that must be reflected in a chart's meta.ts, possibly the decisionTree, and then regenerated into AGENTS.md, catalog.json, and the component's JSDoc block. This includes updating aliases, useWhen/avoidWhen, alternatives, and examples, and verifying the catalog stays internally consistent (no dangling alternative references, no undocumented exports).\\n\\nExamples:\\n\\n- User: \"Add a waterfall-style avoidWhen note to ColumnChartStacked's meta and regenerate the docs\"\\n  Assistant: \"I'll use the chart-catalog-editor agent to update the meta, regenerate AGENTS.md/catalog.json, and verify docs:check passes.\"\\n  [Uses Agent tool to launch chart-catalog-editor]\\n\\n- User: \"We're adding a new BumpChart component — wire it into the catalog\"\\n  Assistant: \"Let me use the chart-catalog-editor agent to write its meta.ts, add a decisionTree entry for the ranking question, and sync the generated docs.\"\\n  [Uses Agent tool to launch chart-catalog-editor]\\n\\n- User: \"AreaChart should mention that streamgraphs can't hold negative values\"\\n  Assistant: \"I'll use the chart-catalog-editor agent to add that to the Streamgraph variant's avoidWhen and regenerate the docs.\"\\n  [Uses Agent tool to launch chart-catalog-editor]"
-model: sonnet
+model: haiku
 color: green
 memory: project
 ---

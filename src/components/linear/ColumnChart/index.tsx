@@ -2,7 +2,8 @@ import { max, min } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
-import { scaleBand, scaleLinear } from 'd3-scale';
+import { scaleBand, scaleLinear, scaleTime } from 'd3-scale';
+import { isoParse, timeParse, timeFormat } from 'd3-time-format';
 import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
@@ -119,14 +120,25 @@ const ColumnChartGrouped = <TData = any,>({
   style = {},
   wholeNumbers = false,
 }: ColumnChartGroupedProps<TData>) => {
+  const isTimeX = x.scalingFunction === 'time';
+
+  const d3Format = x.time?.format || '%Y-%m-%d';
+  const formatDate = timeFormat(d3Format);
+  const parseDate = timeParse(d3Format);
+
+  const toDateTime = (d: any): Date =>
+    x.time?.isISO ? (isoParse(d[x.key]) as Date) : (parseDate(d[x.key]) as Date);
+
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
-    defaultHtml: (d: any) =>
-      `${d[x.key]} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`,
+    defaultHtml: (d: any) => {
+      const xValue = isTimeX ? formatDate(toDateTime(d)) : d[x.key];
+      return `${xValue} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`;
+    },
   });
 
-  const isBinned = x.bin != null;
+  const isBinned = x.bin != null && x.scalingFunction !== 'time';
 
   const refreshChart = useCallback(() => {
     /* eslint-disable */
@@ -168,14 +180,81 @@ const ColumnChartGrouped = <TData = any,>({
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
 
-    const xFn = scaleBand()
-      // @ts-ignore
-      .domain(effectiveData.map((d) => (d as any)[effectiveX.key]))
-      .range([
-        (margin.left ?? 0) + (padding.left ?? 0),
-        width - (margin.right ?? 0) - (padding.right ?? 0),
-      ])
-      .padding(paddingBar);
+    const paddingBarValue = paddingBar;
+
+    const xFn: any = isTimeX ? scaleTime().nice() : scaleBand();
+
+    if (isTimeX) {
+      xFn.domain([
+        Number.isFinite(x.start)
+          ? x.start
+          : min(effectiveData.map((d: any) => toDateTime(d))),
+        Number.isFinite(x.end)
+          ? x.end
+          : max(effectiveData.map((d: any) => toDateTime(d))),
+      ]);
+    } else {
+      xFn
+        .domain(effectiveData.map((d) => (d as any)[effectiveX.key]))
+        .padding(paddingBarValue);
+    }
+
+    xFn.range([
+      (margin.left ?? 0) + (padding.left ?? 0),
+      width - (margin.right ?? 0) - (padding.right ?? 0),
+    ]);
+
+    let finalBarWidth = 0;
+    if (isTimeX) {
+      if (Number.isFinite(x.time?.barWidth)) {
+        // 1. Explicit override always wins, used as-is (final rendered width,
+        //    paddingBarValue is NOT applied on top of an explicit value).
+        finalBarWidth = x.time!.barWidth!;
+      } else {
+        // 2. Infer from data cadence.
+        const rangeStart = xFn.range()[0];
+        const rangeEnd = xFn.range()[1];
+
+        const timestamps = Array.from(
+          new Set(
+            effectiveData
+              .map((d: any) => toDateTime(d)?.getTime())
+              .filter((t: number) => Number.isFinite(t))
+          )
+        ).sort((a: number, b: number) => a - b);
+
+        let cadenceMs = NaN;
+        if (timestamps.length >= 2) {
+          const gaps: number[] = [];
+          for (let i = 1; i < timestamps.length; i++) {
+            gaps.push(timestamps[i] - timestamps[i - 1]);
+          }
+          gaps.sort((a, b) => a - b);
+          const mid = Math.floor(gaps.length / 2);
+          cadenceMs =
+            gaps.length % 2 === 0 ? (gaps[mid - 1] + gaps[mid]) / 2 : gaps[mid];
+          // Median, not mean or min: resists one large gap (e.g. a missing
+          // period) skewing the width up, and resists a single duplicate/
+          // near-duplicate timestamp collapsing the width to ~0.
+        }
+
+        let slotWidthPx: number;
+        if (Number.isFinite(cadenceMs) && cadenceMs > 0) {
+          // scaleTime is affine in ms, so the pixel delta for a fixed ms
+          // interval is the same everywhere on the scale — any anchor works.
+          const anchor = (xFn.domain()[0] as Date).getTime();
+          slotWidthPx = xFn(new Date(anchor + cadenceMs)) - xFn(new Date(anchor));
+        } else {
+          // 0 or 1 unique timestamp: no cadence to infer. Fall back to an even
+          // split of the available plotting width across the rows.
+          slotWidthPx = (rangeEnd - rangeStart) / Math.max(effectiveData.length, 1);
+        }
+
+        finalBarWidth = Math.max(1, slotWidthPx * (1 - paddingBarValue));
+      }
+    }
+
+    const centerX = (d: any) => xFn(toDateTime(d));
 
     const yFn = scaleLinear()
       // @ts-ignore
@@ -207,16 +286,16 @@ const ColumnChartGrouped = <TData = any,>({
             }`
         )
         // @ts-ignore
-        .attr(
-          'x',
-          (d) =>
-            (xFn((d as any)[effectiveX.key]) || 0) + (i * xFn.bandwidth()) / effectiveY.length
+        .attr('x', (d: any) =>
+          isTimeX
+            ? centerX(d) - finalBarWidth / 2 + (i * finalBarWidth) / effectiveY.length
+            : (xFn((d as any)[effectiveX.key]) || 0) + (i * xFn.bandwidth()) / effectiveY.length
         )
         .attr('y', (d) =>
           // @ts-ignore
           drawing && drawing.duration ? yFn(0) : yFn((d as any)[column.key])
         )
-        .attr('width', xFn.bandwidth() / effectiveY.length)
+        .attr('width', isTimeX ? finalBarWidth / effectiveY.length : xFn.bandwidth() / effectiveY.length)
         .attr('height', (d) =>
           drawing && drawing.duration
             ? 0

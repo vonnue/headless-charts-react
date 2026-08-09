@@ -62,6 +62,30 @@ const meta: ChartMeta = {
     { kind: 'option', name: 'Custom symbol', how: 'Pass `shape="star"` (or diamond, triangle, square, cross, wye).' },
     { kind: 'option', name: 'Styling', how: 'Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately.' },
     { kind: 'option', name: 'Fixed value range', how: 'Pass `valueMin` and `valueMax` to pin the value axis.' },
+    {
+      kind: 'chart-type',
+      name: 'Time-scaled lollipop chart',
+      aliases: ['time series lollipop chart'],
+      summary:
+        'A vertical lollipop chart whose x axis parses real dates and positions each stem proportionally to elapsed time, rather than as an equal-width slot.',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart.',
+      useWhen: [
+        'Values are one-per-date and spacing between stems should be proportional to elapsed time',
+        'Category labels are dates rather than names',
+      ],
+      avoidWhen: [
+        'Multiple rows can share the exact same date — stems would overlap with no automatic separation; use ColumnChart in time mode instead',
+        'The axis is continuous time with many points and the trend matters more than individual values — use LineChart',
+      ],
+      example: `<LollipopVChart
+  id="weekly-readings"
+  className="w-full h-64"
+  data={data}
+  shape="circle"
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  y={{ key: 'reading', start: 0 }}
+/>`,
+    },
   ],
 };
 

@@ -92,6 +92,33 @@ const meta: ChartMeta = {
       name: 'Reference lines',
       how: 'Pass `referenceLines={[{ y: 100, className: "stroke-red-500" }]}`.',
     },
+    {
+      kind: 'chart-type',
+      name: 'Time-scaled stacked column chart',
+      aliases: ['time series stacked column chart'],
+      summary:
+        'A stacked column chart whose x axis parses real dates and spaces bars proportionally to elapsed time.',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data\'s date cadence; override with `x.time.barWidth` (pixels).',
+      useWhen: [
+        'The total per period matters and periods are real, possibly unevenly spaced dates',
+        'Some periods are missing and the gap should read as whitespace',
+        'Axis ticks should fall on real date boundaries',
+      ],
+      avoidWhen: [
+        'Cadence is highly irregular — a single inferred bar width will misrepresent some periods; pin it with `x.time.barWidth` or use AreaChart instead',
+        'Combined with `waterfall` — a running total\'s step order rarely aligns cleanly with calendar spacing; prefer a plain categorical waterfall',
+      ],
+      example: `<ColumnChartStacked
+  id="daily-revenue-split"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  y={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>`,
+    },
   ],
 };
 

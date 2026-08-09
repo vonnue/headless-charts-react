@@ -85,6 +85,30 @@ const meta: ChartMeta = {
     },
     { kind: 'option', name: 'Reference lines', how: 'Pass `referenceLines={[{ y: 50, className: "stroke-red-500" }]}`.' },
     { kind: 'option', name: 'Whole numbers', how: 'Set `wholeNumbers` to force integer ticks on the value axis.' },
+    {
+      kind: 'chart-type',
+      name: 'Time-scaled column chart',
+      aliases: ['time series column chart'],
+      summary:
+        'A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data\'s date cadence; override with `x.time.barWidth` (pixels).',
+      useWhen: [
+        'The x values are real dates and spacing between bars should be proportional to elapsed time, not category index',
+        'Some periods are missing and the gap should read as whitespace rather than being silently collapsed',
+        'Axis ticks should fall on real date boundaries',
+      ],
+      avoidWhen: [
+        'Cadence is highly irregular (e.g. mixed daily and monthly points) — a single inferred bar width will misrepresent some periods; pin it with `x.time.barWidth` or use LineChart instead',
+        'The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain ColumnChart',
+      ],
+      example: `<ColumnChart
+  id="daily-signups"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  y={[{ key: 'signups', className: 'fill-purple-600' }]}
+/>`,
+    },
   ],
 };
 

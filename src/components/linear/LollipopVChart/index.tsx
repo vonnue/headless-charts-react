@@ -1,5 +1,6 @@
 import { max, min } from 'd3-array';
-import { scaleBand, scaleLinear } from 'd3';
+import { scaleBand, scaleLinear, scaleTime } from 'd3';
+import { isoParse, timeParse } from 'd3-time-format';
 import { select, selectAll } from 'd3-selection';
 import {
   symbol,
@@ -147,12 +148,41 @@ const LollipopVChart = <TData = any,>({
       ? valueMax
       : max(data, (d) => (d as any)[y.key]);
 
-    const xFn = scaleBand()
-      .domain(data.map((d) => (d as any)[x.key]))
-      .range([
-        (margin.left ?? 0) + (padding.left ?? 0),
-        width - (margin.right ?? 0) - (padding.right ?? 0),
+    const d3Format = x.time?.format || '%Y-%m-%d';
+    // No tooltip in this chart today, so `formatDate` (part of the shared
+    // toDateTime/scale-selection pattern) has no consumer here — omitted to
+    // avoid an unused-variable build failure. See Shared Contract §2/§4.
+    const parseDate = timeParse(d3Format);
+
+    const toDateTime = (d: any): Date =>
+      x.time?.isISO ? (isoParse(d[x.key]) as Date) : (parseDate(d[x.key]) as Date);
+
+    const isTimeX = x.scalingFunction === 'time';
+
+    const xFn: any = isTimeX ? scaleTime().nice() : scaleBand();
+
+    if (isTimeX) {
+      xFn.domain([
+        Number.isFinite(x.start)
+          ? x.start
+          : min(data.map((d: any) => toDateTime(d))),
+        Number.isFinite(x.end)
+          ? x.end
+          : max(data.map((d: any) => toDateTime(d))),
       ]);
+    } else {
+      xFn.domain(data.map((d) => (d as any)[x.key]));
+    }
+
+    xFn.range([
+      (margin.left ?? 0) + (padding.left ?? 0),
+      width - (margin.right ?? 0) - (padding.right ?? 0),
+    ]);
+
+    const centerX = (d: any) => xFn(toDateTime(d));
+
+    const stemX = (d: any) =>
+      isTimeX ? centerX(d) : (xFn((d as any)[x.key]) as number) + xFn.bandwidth() / 2;
 
     const yFn = scaleLinear()
       .domain([minValue, maxValue])
@@ -201,10 +231,10 @@ const LollipopVChart = <TData = any,>({
           twMerge('line stroke-current', classNames?.points, classNames?.lines)
         )
         // @ts-ignore
-        .attr('x1', (d) => xFn((d as any)[x.key]) + xFn.bandwidth() / 2)
+        .attr('x1', (d) => stemX(d))
         .attr('y1', () => yFn(minValue))
         // @ts-ignore
-        .attr('x2', (d) => xFn((d as any)[x.key]) + xFn.bandwidth() / 2)
+        .attr('x2', (d) => stemX(d))
         .attr('y2', () => yFn(minValue))
         .transition()
         .duration(1000)
@@ -221,7 +251,7 @@ const LollipopVChart = <TData = any,>({
           'transform',
           (d) =>
             //@ts-ignore
-            `translate(${xFn((d as any)[x.key]) + xFn.bandwidth() / 2},${yFn(
+            `translate(${stemX(d)},${yFn(
               minValue
             )})`
         )
@@ -231,7 +261,7 @@ const LollipopVChart = <TData = any,>({
           'transform',
           (d) =>
             // @ts-ignore
-            `translate(${xFn((d as any)[x.key]) + xFn.bandwidth() / 2},${yFn(
+            `translate(${stemX(d)},${yFn(
               (d as any)[y.key]
             )} )`
         );

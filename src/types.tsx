@@ -22,6 +22,14 @@ export interface AxisConfig<TData = any> {
     format?: string;
     /** Whether the date is in ISO format */
     isISO?: boolean;
+    /**
+     * Explicit rendered width, in pixels, of each bar/box/stem's mark when
+     * scalingFunction is 'time'. Overrides cadence inference. Only consulted
+     * by charts that derive a mark width from a category axis in time mode
+     * (ColumnChart, ColumnChartStacked, BoxPlotV); ignored by charts with no
+     * width to size (e.g. LollipopVChart, which centers on a point).
+     */
+    barWidth?: number;
   };
 
   /** Custom conversion function */

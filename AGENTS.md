@@ -65,7 +65,11 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Step chart, step line chart, staircase chart | [`LineChart`](#linechart) | Set `curve: "step"` on each series. |
 | Streamgraph, stream graph, theme river, stream chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "streamgraph" }}`. Bands are ordered inside-out and offset by wiggle. |
 | Time-scaled area chart, time series area chart | [`AreaChart`](#areachart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. |
+| Time-scaled box plot (vertical), time series box plot | [`BoxPlotV`](#boxplotv) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels). |
+| Time-scaled column chart, time series column chart | [`ColumnChart`](#columnchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels). |
 | Time-scaled line chart, time series chart, time series line chart | [`LineChart`](#linechart) | Set `x.scalingFunction: "time"` and `x.time.format` (or `x.time.isISO`) to parse date strings. |
+| Time-scaled lollipop chart, time series lollipop chart | [`LollipopVChart`](#lollipopvchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. |
+| Time-scaled stacked column chart, time series stacked column chart | [`ColumnChartStacked`](#columnchartstacked) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels). |
 | TimeLineChart, timeline, event plot, activity timeline | [`TimeLineChart`](#timelinechart) | Base component, no extra configuration |
 | WaffleChart, heatmap, categorical heatmap, matrix chart, grid chart, tile chart | [`WaffleChart`](#wafflechart) | Base component, no extra configuration |
 | Waterfall chart, waterfall, bridge chart, cascade chart, flying bricks chart | [`ColumnChartStacked`](#columnchartstacked) | Set `waterfall` on a ColumnChartStacked. Each `y` series becomes a step in the sequence rather than a segment stacked from the baseline. |
@@ -634,6 +638,35 @@ Bins raw continuous values into ranges and plots how many records fall into each
 />
 ```
 
+#### Time-scaled column chart (ColumnChart)
+
+A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.
+
+**Also called:** time series column chart
+
+**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels).
+
+**Use when**
+
+- The x values are real dates and spacing between bars should be proportional to elapsed time, not category index
+- Some periods are missing and the gap should read as whitespace rather than being silently collapsed
+- Axis ticks should fall on real date boundaries
+
+**Do not use when**
+
+- Cadence is highly irregular (e.g. mixed daily and monthly points) — a single inferred bar width will misrepresent some periods; pin it with `x.time.barWidth` or use LineChart instead
+- The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain ColumnChart
+
+```tsx
+<ColumnChart
+  id="daily-signups"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  y={[{ key: 'signups', className: 'fill-purple-600' }]}
+/>
+```
+
 **Options**
 
 - **Reference lines** — Pass `referenceLines={[{ y: 50, className: "stroke-red-500" }]}`.
@@ -725,6 +758,38 @@ Floating columns where each segment starts where the previous one ended, showing
     { key: 'macbook', className: 'fill-green-600' },
     { key: 'iphone', className: 'fill-green-500' },
     { key: 'ipad', className: 'fill-red-500' },
+  ]}
+/>
+```
+
+#### Time-scaled stacked column chart (ColumnChartStacked)
+
+A stacked column chart whose x axis parses real dates and spaces bars proportionally to elapsed time.
+
+**Also called:** time series stacked column chart
+
+**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels).
+
+**Use when**
+
+- The total per period matters and periods are real, possibly unevenly spaced dates
+- Some periods are missing and the gap should read as whitespace
+- Axis ticks should fall on real date boundaries
+
+**Do not use when**
+
+- Cadence is highly irregular — a single inferred bar width will misrepresent some periods; pin it with `x.time.barWidth` or use AreaChart instead
+- Combined with `waterfall` — a running total's step order rarely aligns cleanly with calendar spacing; prefer a plain categorical waterfall
+
+```tsx
+<ColumnChartStacked
+  id="daily-revenue-split"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  y={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
   ]}
 />
 ```
@@ -1023,6 +1088,35 @@ Vertical stems ending in a symbol, marking one value per category with far less 
   shape="circle"
   x={{ key: 'name', axis: { location: 'bottom' } }}
   y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
+/>
+```
+
+#### Time-scaled lollipop chart (LollipopVChart)
+
+A vertical lollipop chart whose x axis parses real dates and positions each stem proportionally to elapsed time, rather than as an equal-width slot.
+
+**Also called:** time series lollipop chart
+
+**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart.
+
+**Use when**
+
+- Values are one-per-date and spacing between stems should be proportional to elapsed time
+- Category labels are dates rather than names
+
+**Do not use when**
+
+- Multiple rows can share the exact same date — stems would overlap with no automatic separation; use ColumnChart in time mode instead
+- The axis is continuous time with many points and the trend matters more than individual values — use LineChart
+
+```tsx
+<LollipopVChart
+  id="weekly-readings"
+  className="w-full h-64"
+  data={data}
+  shape="circle"
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  y={{ key: 'reading', start: 0 }}
 />
 ```
 
@@ -1742,6 +1836,41 @@ Bins a continuous field into groups along the x axis and computes each group’s
   valueKey="salary"
   x={{ key: 'age', bin: { count: 5 }, axis: { label: 'Age Group' } }}
   y={{ min: 0, axis: { label: 'Salary' } }}
+/>
+```
+
+#### Time-scaled box plot (vertical) (BoxPlotV)
+
+A vertical box plot whose x axis parses real dates and spaces boxes proportionally to elapsed time.
+
+**Also called:** time series box plot
+
+**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels).
+
+**Use when**
+
+- Groups are periods (weeks, months) with real dates and spacing should reflect elapsed time
+- Some periods have no data and that gap should be visible rather than silently skipped
+
+**Do not use when**
+
+- Cadence is highly irregular — a single inferred box width will misrepresent some periods; pin it with `x.time.barWidth`
+- The category axis is binned via `x.bin` — binning and time scaling are mutually exclusive; use one or the other
+
+```tsx
+<BoxPlotV
+  id="weekly-latency-spread"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+  y={{
+    minKey: 'min',
+    maxKey: 'max',
+    midKey: 'mid',
+    boxStart: 'firstQuartile',
+    boxEnd: 'lastQuartile',
+    min: 0,
+  }}
 />
 ```
 

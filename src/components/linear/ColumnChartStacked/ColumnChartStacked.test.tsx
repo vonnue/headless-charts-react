@@ -294,17 +294,27 @@ describe('ColumnChartStacked', () => {
         expect(width).toBeCloseTo(barWidth, 6);
       }
 
-      // Bars advance left-to-right by exactly one cadence slot, and each is
-      // centred on its own date, so the first bar's centre is the range start.
-      const slot = PLOT_WIDTH * (cadence / domainSpan);
+      // Bars are centered marks, so a bar at the domain's min/max would
+      // overhang the range edge by half its width; the component insets the
+      // usable range by half a bar width on each side to prevent that (see
+      // #16), which is why the slot spacing is computed from the *inset*
+      // plot width, not the raw one.
+      const slot = (PLOT_WIDTH - barWidth) * (cadence / domainSpan);
       const deltas = xPositions.slice(1).map((x, i) => x - xPositions[i]);
       for (const delta of deltas) {
         expect(delta).toBeCloseTo(slot, 6);
       }
-      expect(xPositions[0] + barWidth / 2).toBeCloseTo(RANGE_START, 6);
+      // With the inset applied, the first/last bar's centre lands exactly
+      // half a bar width in from the original range edge — confirms the
+      // #16 fix rather than the old (buggy) "centre lands on the edge"
+      // behaviour that let bars overhang.
+      expect(xPositions[0] + barWidth / 2).toBeCloseTo(
+        RANGE_START + barWidth / 2,
+        6
+      );
       expect(
         xPositions[xPositions.length - 1] + barWidth / 2
-      ).toBeCloseTo(RANGE_END, 6);
+      ).toBeCloseTo(RANGE_END - barWidth / 2, 6);
     });
 
     it('creates visible whitespace at gaps between unevenly-spaced dates', () => {
@@ -332,14 +342,18 @@ describe('ColumnChartStacked', () => {
 
       // All bars share one width (the median cadence, one year); the
       // whitespace between them is therefore purely a function of elapsed
-      // time, and must be proportional to the number of years skipped.
+      // time, and must be proportional to the number of years skipped. The
+      // component insets the usable range by half a bar width on each side
+      // (see #16), so elapsed time maps to the *inset* plot width, not the
+      // raw one.
       const domainSpan = spanMs(unevenlySpacedTimeData);
+      const barWidth = positions[0].width;
+      const insetPlotWidth = PLOT_WIDTH - barWidth;
       const yearPx = (rows: number) =>
-        PLOT_WIDTH *
+        insetPlotWidth *
         ((new Date(unevenlySpacedTimeData[rows].date).getTime() -
           new Date(unevenlySpacedTimeData[rows - 1].date).getTime()) /
           domainSpan);
-      const barWidth = positions[0].width;
 
       const gaps = positions
         .slice(1)
@@ -565,11 +579,13 @@ describe('ColumnChartStacked', () => {
       const xs = firstSeries.map((r) => Number(r.getAttribute('x')));
       const width = Number(firstSeries[0].getAttribute('width'));
       for (const value of xs) expect(value).not.toBeNaN();
-      // Two equal one-year gaps -> one even step, and the outer bars are
-      // centred on the range ends.
+      // Two equal one-year gaps -> one even step. The component insets the
+      // usable range by half a bar width on each side (see #16), so the
+      // outer bars' centres land half a bar width in from the range ends,
+      // not flush against them.
       expect(xs[1] - xs[0]).toBeCloseTo(xs[2] - xs[1], 6);
-      expect(xs[0] + width / 2).toBeCloseTo(RANGE_START, 6);
-      expect(xs[2] + width / 2).toBeCloseTo(RANGE_END, 6);
+      expect(xs[0] + width / 2).toBeCloseTo(RANGE_START + width / 2, 6);
+      expect(xs[2] + width / 2).toBeCloseTo(RANGE_END - width / 2, 6);
     });
 
     it('respects x.start and x.end for axis domain in time mode', () => {
@@ -602,13 +618,18 @@ describe('ColumnChartStacked', () => {
       // The domain is wider than the data, so the first bar is no longer
       // flush against the range start the way it is when the domain is
       // inferred — its centre sits proportionally inside the custom domain.
+      // The component also insets the usable range by half a bar width on
+      // each side (see #16), so the mapping uses the inset sub-range, not
+      // the raw [RANGE_START, RANGE_END].
       const first = rects[0];
-      const centre =
-        Number(first.getAttribute('x')) +
-        Number(first.getAttribute('width')) / 2;
+      const width = Number(first.getAttribute('width'));
+      const centre = Number(first.getAttribute('x')) + width / 2;
       const t0 = new Date(evenlySpacedTimeData[0].date).getTime();
+      const insetPlotWidth = PLOT_WIDTH - width;
       expect(centre).toBeCloseTo(
-        RANGE_START + PLOT_WIDTH * ((t0 - customStart) / (customEnd - customStart)),
+        RANGE_START +
+          width / 2 +
+          insetPlotWidth * ((t0 - customStart) / (customEnd - customStart)),
         6
       );
       expect(centre).toBeGreaterThan(RANGE_START);

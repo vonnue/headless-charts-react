@@ -24,11 +24,22 @@ const CHART_SIZE = { width: '500px', height: '300px' };
 
 const RANGE_START = 40;
 const RANGE_END = 460;
+const RANGE_SPAN = RANGE_END - RANGE_START;
 const Y_BASELINE = 260; // yFn(y.start = 0) with height 300 and margin.bottom 40
+
+// A stem at the domain's min/max centers its symbol exactly on the range
+// edge, so — with no inset — half the symbol would render outside the plot.
+// The component insets its usable x range by this many px on each side to
+// prevent that (see #16); it's the largest bounding radius among this
+// component's symbol shapes at their fixed render size (star, ~9.44px).
+const SYMBOL_INSET = 10;
 
 /**
  * Pixel position of a date on a scaleTime whose domain is
  * `[domainStart, domainEnd]` and whose range is `[rangeStart, rangeEnd]`.
+ * Defaults to the component's actual (inset) usable range at the default
+ * chart size/margins — pass an explicit range for other sizes/margins, or
+ * to test the raw math independent of the component's inset behavior.
  *
  * Only elapsed-time *ratios* are used, so this is correct for both the
  * `isISO` path (isoParse -> UTC midnight) and the `time.format` path
@@ -39,7 +50,10 @@ const Y_BASELINE = 260; // yFn(y.start = 0) with height 300 and margin.bottom 40
 const xForDate = (
   iso: string,
   [domainStart, domainEnd]: [string, string],
-  [rangeStart, rangeEnd]: [number, number] = [RANGE_START, RANGE_END]
+  [rangeStart, rangeEnd]: [number, number] = [
+    RANGE_START + SYMBOL_INSET,
+    RANGE_END - SYMBOL_INSET,
+  ]
 ) => {
   const t0 = Date.parse(domainStart);
   const t1 = Date.parse(domainEnd);
@@ -116,18 +130,21 @@ describe('LollipopVChart', () => {
 
   describe('test fixtures', () => {
     it('xForDate matches hand-computed positions', () => {
+      // Tests the helper's raw math against the *un-inset* [40, 460] range
+      // explicitly, independent of the component's SYMBOL_INSET default —
+      // a bug in that default couldn't then mask a bug here.
       // Jan 6 -> Jan 27 is 21 days across a 420px range => 20px per day,
       // 140px per week.
       const domain: [string, string] = ['2025-01-06', '2025-01-27'];
-      expect(xForDate('2025-01-06', domain)).toBeCloseTo(40, 6);
-      expect(xForDate('2025-01-13', domain)).toBeCloseTo(180, 6);
-      expect(xForDate('2025-01-20', domain)).toBeCloseTo(320, 6);
-      expect(xForDate('2025-01-27', domain)).toBeCloseTo(460, 6);
+      const rawRange: [number, number] = [RANGE_START, RANGE_END];
+      expect(xForDate('2025-01-06', domain, rawRange)).toBeCloseTo(40, 6);
+      expect(xForDate('2025-01-13', domain, rawRange)).toBeCloseTo(180, 6);
+      expect(xForDate('2025-01-20', domain, rawRange)).toBeCloseTo(320, 6);
+      expect(xForDate('2025-01-27', domain, rawRange)).toBeCloseTo(460, 6);
       // Degenerate (single-instant) domain lands on the range midpoint.
-      expect(xForDate('2025-01-15', ['2025-01-15', '2025-01-15'])).toBeCloseTo(
-        250,
-        6
-      );
+      expect(
+        xForDate('2025-01-15', ['2025-01-15', '2025-01-15'], rawRange)
+      ).toBeCloseTo(250, 6);
     });
   });
 
@@ -255,15 +272,19 @@ describe('LollipopVChart', () => {
         (row) => xByDate.get(row.date)!
       );
 
-      // One week on a 21-day domain across 420px is exactly 140px. Assert the
+      // One week on a 21-day domain across the *inset* range (420px minus
+      // SYMBOL_INSET on each side — see #16) is 133.33px. Assert the
       // literal, not "all spacings equal the first spacing" — the latter is
       // satisfied by any affine distortion of the scale, including a broken
       // one.
+      const insetWeekPx = (RANGE_SPAN - 2 * SYMBOL_INSET) / 3;
       const spacings = chronologicalXs
         .slice(1)
         .map((x, i) => x - chronologicalXs[i]);
       expect(spacings).toHaveLength(evenlySpacedData.length - 1);
-      spacings.forEach((spacing) => expect(spacing).toBeCloseTo(140, 6));
+      spacings.forEach((spacing) =>
+        expect(spacing).toBeCloseTo(insetWeekPx, 6)
+      );
     });
 
     it('positions each stem at the correct date location on the time scale', () => {
@@ -282,11 +303,12 @@ describe('LollipopVChart', () => {
       expect(stemXs).toHaveLength(evenlySpacedData.length);
       stemXs.forEach((x, i) => expect(x).toBeCloseTo(expectedStemXs[i], 6));
 
-      // The endpoints of the domain land exactly on the ends of the range:
-      // unlike ColumnChart there is no mark width to inset by.
+      // The endpoints of the domain land SYMBOL_INSET px in from the range
+      // ends, not flush against them: a stem's symbol is a centered mark
+      // and would otherwise render half outside the plot bounds (see #16).
       const sorted = [...stemXs].sort((a, b) => a - b);
-      expect(sorted[0]).toBeCloseTo(RANGE_START, 6);
-      expect(sorted[sorted.length - 1]).toBeCloseTo(RANGE_END, 6);
+      expect(sorted[0]).toBeCloseTo(RANGE_START + SYMBOL_INSET, 6);
+      expect(sorted[sorted.length - 1]).toBeCloseTo(RANGE_END - SYMBOL_INSET, 6);
     });
 
     it('places the symbol head on the same x as its stem', () => {
@@ -320,9 +342,10 @@ describe('LollipopVChart', () => {
       { date: '2025-02-10', reading: 22 },
       { date: '2025-02-17', reading: 25 },
     ];
-    // Jan 6 -> Feb 17 is 42 days across 420px => exactly 10px per day.
+    // Jan 6 -> Feb 17 is 42 days across the inset range (420px minus
+    // SYMBOL_INSET on each side — see #16), which is 400px => ~9.524px/day.
     const domain: [string, string] = ['2025-01-06', '2025-02-17'];
-    const PX_PER_DAY = 10;
+    const PX_PER_DAY = (RANGE_SPAN - 2 * SYMBOL_INSET) / 42;
 
     const xOf = (date: string) => xForDate(date, domain);
 
@@ -542,12 +565,15 @@ describe('LollipopVChart', () => {
         />
       );
 
-      const expectedXs = inPaintOrder(isoTimestampData, 'reading').map((d) =>
-        xForDate(d.date, domain)
-      );
-      // 14-day domain over 420px => 30px/day, so the +6h point sits 7.5px
-      // right of the midpoint it would occupy at midnight.
-      expect(expectedXs).toContainEqual(257.5);
+      const paintOrder = inPaintOrder(isoTimestampData, 'reading');
+      const expectedXs = paintOrder.map((d) => xForDate(d.date, domain));
+      // 14-day domain over the inset range (420px minus SYMBOL_INSET on each
+      // side — see #16), so the +6h point sits 0.25 days right of the
+      // midpoint it would occupy at midnight.
+      const pxPerDay = (RANGE_SPAN - 2 * SYMBOL_INSET) / 14;
+      const sixHourOffsetX = RANGE_START + SYMBOL_INSET + 7.25 * pxPerDay;
+      const sixHourIndex = paintOrder.findIndex((d) => d.date.includes('T06:00'));
+      expect(expectedXs[sixHourIndex]).toBeCloseTo(sixHourOffsetX, 6);
 
       const stemXs = stemXsOf('lollipop-time-iso-timestamps');
       expect(stemXs).toHaveLength(isoTimestampData.length);
@@ -890,9 +916,11 @@ describe('LollipopVChart', () => {
         />
       );
 
-      // margin 50 => x range [50, 450], y baseline = 300 - 50 = 250.
+      // margin 50 => x range [50, 450], inset by SYMBOL_INSET on each side
+      // for the centered symbols (see #16) => [60, 440]. y baseline = 300 -
+      // 50 = 250.
       const expectedXs = inPaintOrder(timeData, 'reading').map((d) =>
-        xForDate(d.date, domain, [50, 450])
+        xForDate(d.date, domain, [50 + SYMBOL_INSET, 450 - SYMBOL_INSET])
       );
       const stemXs = stemXsOf('lollipop-time-margin');
       expect(stemXs).toHaveLength(timeData.length);
@@ -916,10 +944,11 @@ describe('LollipopVChart', () => {
       );
 
       // Padding is applied inside the default 40px margins:
-      // x range [40 + 20, 500 - 40 - 20] = [60, 440],
+      // x range [40 + 20, 500 - 40 - 20] = [60, 440], inset by SYMBOL_INSET
+      // on each side for the centered symbols (see #16) => [70, 430].
       // y baseline = 300 - 40 - 20 = 240.
       const expectedXs = inPaintOrder(timeData, 'reading').map((d) =>
-        xForDate(d.date, domain, [60, 440])
+        xForDate(d.date, domain, [60 + SYMBOL_INSET, 440 - SYMBOL_INSET])
       );
       const stemXs = stemXsOf('lollipop-time-padding');
       expect(stemXs).toHaveLength(timeData.length);

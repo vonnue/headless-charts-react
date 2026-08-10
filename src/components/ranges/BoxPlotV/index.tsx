@@ -85,6 +85,10 @@ export type BoxPlotVProps<TData = any> =
  *   (any given are ignored). `bin` without `valueKey` is ignored, and `y`
  *   still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use
  *   `bin.thresholds` for explicit band edges.
+ * - Time-scaled box plot (vertical) — Set `x.scalingFunction: "time"` with
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. Box width is
+ *   inferred from the data's date cadence; override with `x.time.barWidth`
+ *   (pixels).
  *
  * Also called: vertical box plot, box and whisker chart, box chart.
  *
@@ -117,6 +121,24 @@ export type BoxPlotVProps<TData = any> =
  *   valueKey="salary"
  *   x={{ key: 'age', bin: { count: 5 }, axis: { label: 'Age Group' } }}
  *   y={{ min: 0, axis: { label: 'Salary' } }}
+ * />
+ * ```
+ *
+ * @example Time-scaled box plot (vertical)
+ * ```tsx
+ * <BoxPlotV
+ *   id="weekly-latency-spread"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+ *   y={{
+ *     minKey: 'min',
+ *     maxKey: 'max',
+ *     midKey: 'mid',
+ *     boxStart: 'firstQuartile',
+ *     boxEnd: 'lastQuartile',
+ *     min: 0,
+ *   }}
  * />
  * ```
  *

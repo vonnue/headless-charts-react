@@ -55,6 +55,10 @@ interface drawHLineProps {
  * - Waterfall chart — Set `waterfall` on a ColumnChartStacked. Each `y`
  *   series becomes a step in the sequence rather than a segment stacked from
  *   the baseline.
+ * - Time-scaled stacked column chart — Set `x.scalingFunction: "time"` with
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is
+ *   inferred from the data's date cadence; override with `x.time.barWidth`
+ *   (pixels).
  *
  * Also called: stacked column chart, stacked bar chart (vertical).
  *
@@ -87,6 +91,20 @@ interface drawHLineProps {
  *     { key: 'macbook', className: 'fill-green-600' },
  *     { key: 'iphone', className: 'fill-green-500' },
  *     { key: 'ipad', className: 'fill-red-500' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @example Time-scaled stacked column chart
+ * ```tsx
+ * <ColumnChartStacked
+ *   id="daily-revenue-split"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+ *   y={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
  *   ]}
  * />
  * ```

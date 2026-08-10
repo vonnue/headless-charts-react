@@ -59,6 +59,10 @@ interface drawHLineProps {
  * - Histogram — Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{
  *   key: "count" }]}`. Pass the raw rows as `data` — binning and counting
  *   happen internally. Use `bin.thresholds` for explicit edges.
+ * - Time-scaled column chart — Set `x.scalingFunction: "time"` with
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is
+ *   inferred from the data's date cadence; override with `x.time.barWidth`
+ *   (pixels).
  *
  * Also called: vertical bar chart, grouped column chart, clustered column chart.
  *
@@ -86,6 +90,17 @@ interface drawHLineProps {
  *   data={rawRows}
  *   x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}
  *   y={[{ key: 'count', className: 'text-blue-500' }]}
+ * />
+ * ```
+ *
+ * @example Time-scaled column chart
+ * ```tsx
+ * <ColumnChart
+ *   id="daily-signups"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+ *   y={[{ key: 'signups', className: 'fill-purple-600' }]}
  * />
  * ```
  *

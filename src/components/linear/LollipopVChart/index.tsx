@@ -74,6 +74,11 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
  * - Category labels are long — use LollipopHChart
  * - The axis is continuous time — use LineChart
  *
+ * **Specialised types**
+ * - Time-scaled lollipop chart — Set `x.scalingFunction: "time"` with
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar
+ *   width to derive — `x.time.barWidth` is not used by this chart.
+ *
  * Also called: vertical lollipop chart, stem and dot chart.
  *
  * Answers: comparison, ranking. Required props: `id`, `data`, `x`, `y`, `shape`.
@@ -87,6 +92,18 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
  *   shape="circle"
  *   x={{ key: 'name', axis: { location: 'bottom' } }}
  *   y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
+ * />
+ * ```
+ *
+ * @example Time-scaled lollipop chart
+ * ```tsx
+ * <LollipopVChart
+ *   id="weekly-readings"
+ *   className="w-full h-64"
+ *   data={data}
+ *   shape="circle"
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+ *   y={{ key: 'reading', start: 0 }}
  * />
  * ```
  *

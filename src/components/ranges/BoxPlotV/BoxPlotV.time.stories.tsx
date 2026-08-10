@@ -28,6 +28,7 @@ export const TimeScaledBoxPlotV = meta.story({
       boxEnd: 'lastQuartile',
       min: 0,
     },
+    padding: { left: 10, right: 10 },
   },
 });
 

@@ -25,6 +25,7 @@ export const TimeScaledLollipopVChart = meta.story({
     shape: 'circle',
     x: { key: 'date', scalingFunction: 'time', time: { isISO: true } },
     y: { key: 'reading', start: 0 },
+    padding: { left: 10, right: 10 },
   },
 });
 

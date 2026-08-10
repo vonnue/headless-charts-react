@@ -258,13 +258,19 @@ describe('ColumnChart', () => {
         />
       );
 
-      // Each bar is centered on its own date: the first and last data points
-      // sit exactly on the domain ends, so their centers land exactly on the
-      // range ends and the bars are spaced by one day's worth of pixels.
+      // Each bar is centered on its own date. Bars are centered marks, so a
+      // bar at the domain start/end would overhang the range edge by half
+      // its width; the component insets the usable range by half a bar
+      // width on each side to prevent that (see #16), which is why the day
+      // spacing here is computed from the *inset* span, not the raw one.
+      const expectedWidth = (RANGE_SPAN / 4) * (1 - DEFAULT_PADDING_BAR);
+      const inset = expectedWidth / 2;
+      const insetStart = RANGE_START + inset;
+      const dayPx = (RANGE_SPAN - expectedWidth) / 4;
+
       const centers = centersOf('time-column-positions');
-      const dayPx = RANGE_SPAN / 4;
       const expectedCenters = [0, 1, 2, 3, 4].map(
-        (i) => RANGE_START + i * dayPx
+        (i) => insetStart + i * dayPx
       );
 
       expect(centers).toHaveLength(timeSeriesDataISO.length);
@@ -272,19 +278,16 @@ describe('ColumnChart', () => {
         expect(center).toBeCloseTo(expectedCenters[i], 6)
       );
 
-      // The leftmost bar's `x` is legitimately negative here: it is centered
-      // on the domain start (x = 40) and is 84px wide, so it overhangs the
-      // range edge by half its width — exactly like any centered mark on a
-      // continuous scale (cf. a D3 histogram's edge bin). This is asserted
-      // deliberately so nobody "fixes" positioning back to an `x >= 0`
-      // invariant that does not hold for this chart.
+      // With the inset applied, the first bar's left edge lands exactly on
+      // the original range start rather than overhanging it — confirms the
+      // #16 fix rather than the old (buggy) "just clamp to >= 0" approach.
       const firstX = parseFloat(
         document
           .getElementById('time-column-positions')!
           .querySelector('rect')!
           .getAttribute('x') || '0'
       );
-      expect(firstX).toBeCloseTo(RANGE_START - (dayPx * 0.8) / 2, 6);
+      expect(firstX).toBeCloseTo(RANGE_START, 6);
     });
 
     it('evenly-spaced dates produce equal bar widths', () => {
@@ -630,15 +633,20 @@ describe('ColumnChart', () => {
       expect(rects).toHaveLength(10);
 
       // Each sub-bar takes 1/n of the group width, and the group is centered
-      // on the date.
+      // on the date. Day spacing is computed from the range as inset by the
+      // group's half-width on each side (see #16) — the group width plays
+      // the same role here that a single series' bar width does elsewhere.
       const groupWidth = (RANGE_SPAN / 4) * (1 - DEFAULT_PADDING_BAR);
       const subWidth = groupWidth / 2;
       rects.forEach((r) => expect(wOf(r)).toBeCloseTo(subWidth, 6));
 
+      const insetStart = RANGE_START + groupWidth / 2;
+      const dayPx = (RANGE_SPAN - groupWidth) / 4;
+
       for (let i = 0; i < 5; i++) {
         const first = rects[i];
         const second = rects[i + 5];
-        const center = RANGE_START + i * (RANGE_SPAN / 4);
+        const center = insetStart + i * dayPx;
 
         // Group is centered on the date...
         expect(xOf(first)).toBeCloseTo(center - groupWidth / 2, 6);

@@ -246,16 +246,21 @@ const BoxPlotV = <TData = any,>({
     }
 
     let finalBarWidth = 0;
+    // The axis must span the full margin-to-margin range (`xFn`, used by
+    // `drawAxis` below), but marks are centered and need a narrower *mark*
+    // range so the edge marks don't overhang it (see #16). Using one scale
+    // for both would either shrink the axis or let marks overhang —
+    // `markXFn` is a separate copy so each concern gets the range it needs.
+    let markXFn: any = xFn;
     if (isTimeX) {
+      const [rangeStart, rangeEnd] = xFn.range();
+
       if (Number.isFinite(x.time?.barWidth)) {
         // 1. Explicit override always wins, used as-is (final rendered width,
         //    paddingBarValue is NOT applied on top of an explicit value).
         finalBarWidth = x.time!.barWidth!;
       } else {
         // 2. Infer from data cadence.
-        const rangeStart = xFn.range()[0];
-        const rangeEnd = xFn.range()[1];
-
         const timestamps = Array.from(
           new Set(
             effectiveData
@@ -293,9 +298,21 @@ const BoxPlotV = <TData = any,>({
 
         finalBarWidth = Math.max(1, slotWidthPx * (1 - paddingBarValue));
       }
+
+      // Marks are centered on their date (centerX(d) +/- finalBarWidth / 2),
+      // so a mark at the domain's min/max would otherwise render half its
+      // width outside [rangeStart, rangeEnd] — .nice() doesn't help here,
+      // since it niceifies the domain before this point, not the range (see
+      // #16). Inset the range by half a mark width on each side, clamped so
+      // two insets can never invert the range on a degenerate/tiny chart.
+      const inset = Math.min(
+        finalBarWidth / 2,
+        Math.max(0, (rangeEnd - rangeStart) / 2 - 0.5)
+      );
+      markXFn = xFn.copy().range([rangeStart + inset, rangeEnd - inset]);
     }
 
-    const centerX = (d: any) => xFn(toDateTime(d));
+    const centerX = (d: any) => markXFn(toDateTime(d));
 
     const yFn = scaleLinear()
       .domain([

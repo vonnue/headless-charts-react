@@ -196,7 +196,31 @@ const LollipopVChart = <TData = any,>({
       width - (margin.right ?? 0) - (padding.right ?? 0),
     ]);
 
-    const centerX = (d: any) => xFn(toDateTime(d));
+    // The axis must span the full margin-to-margin range (`xFn`, used by
+    // `drawAxis` below), but a stem's symbol is a centered mark and needs a
+    // narrower *mark* range so edge symbols don't overhang it (see #16).
+    // Using one scale for both would either shrink the axis or let symbols
+    // overhang — `markXFn` is a separate copy so each concern gets the range
+    // it needs.
+    let markXFn: any = xFn;
+    if (isTimeX) {
+      // A stem at the domain's min/max centers its symbol exactly on the
+      // range edge, so the symbol renders half outside the plot bounds —
+      // .nice() doesn't help here, since it niceifies the domain, not the
+      // range (see #16). Inset by the largest bounding radius among this
+      // component's symbol shapes at the fixed size=100 used below (star is
+      // the widest at ~9.44px; 10px covers all of them with a hair to spare),
+      // clamped so it can never invert the range on a degenerate/tiny chart.
+      const SYMBOL_INSET_PX = 10;
+      const [rangeStart, rangeEnd] = xFn.range();
+      const inset = Math.min(
+        SYMBOL_INSET_PX,
+        Math.max(0, (rangeEnd - rangeStart) / 2 - 0.5)
+      );
+      markXFn = xFn.copy().range([rangeStart + inset, rangeEnd - inset]);
+    }
+
+    const centerX = (d: any) => markXFn(toDateTime(d));
 
     const stemX = (d: any) =>
       isTimeX ? centerX(d) : (xFn((d as any)[x.key]) as number) + xFn.bandwidth() / 2;

@@ -351,6 +351,13 @@ describe('BoxPlotV', () => {
       }
     });
 
+    // Chart is 600px wide with the component's default margins (left 40,
+    // right 20), and zero default padding => plot range [40, 580].
+    const RANGE_START = 40;
+    const RANGE_END = 580;
+    const PLOT_WIDTH = RANGE_END - RANGE_START; // 540
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
     it('evenly-spaced dates produce equal box spacing and equal width', () => {
       render(
         <BoxPlotV
@@ -373,15 +380,27 @@ describe('BoxPlotV', () => {
         expect(xPositions[i]).toBeGreaterThan(xPositions[i - 1]);
       }
 
+      widths.forEach((w) => expect(w).toBeCloseTo(widths[0], 6));
       const gaps = xPositions
         .slice(1)
         .map((xPos, i) => xPos - xPositions[i]);
       gaps.forEach((gap) => expect(gap).toBeCloseTo(gaps[0], 6));
 
-      // Every box is the same width, and that width is the slot spacing minus
-      // the default 0.2 bar padding — i.e. finalBarWidth = slot * (1 - 0.2).
-      widths.forEach((w) => expect(w).toBeCloseTo(widths[0], 6));
-      expect(widths[0]).toBeCloseTo(gaps[0] * 0.8, 6);
+      // Cross-check against the algorithm's own math rather than deriving
+      // width from the observed gap: the component insets the usable range
+      // by half a box width on each side (see #16), so the *rendered* gap
+      // and the *cadence-derived* width come from different ranges (inset
+      // vs full) and are not related by a simple ratio.
+      const domainSpanMs =
+        new Date(evenlySpacedWeeklyData[3].weekStart).getTime() -
+        new Date(evenlySpacedWeeklyData[0].weekStart).getTime();
+      const cadenceMs = domainSpanMs / (evenlySpacedWeeklyData.length - 1);
+      const expectedWidth = PLOT_WIDTH * (cadenceMs / domainSpanMs) * 0.8;
+      const expectedGap =
+        (PLOT_WIDTH - expectedWidth) * (cadenceMs / domainSpanMs);
+
+      expect(widths[0]).toBeCloseTo(expectedWidth, 6);
+      expect(gaps[0]).toBeCloseTo(expectedGap, 6);
     });
 
     it('padding.bar is applied to the inferred width', () => {
@@ -397,10 +416,20 @@ describe('BoxPlotV', () => {
       );
 
       const rects = rectsOf('padding-bar-box-plot');
-      const xPositions = rects.map((r) => numAttr(r, 'x'));
-      const slot = xPositions[1] - xPositions[0];
+      const width = numAttr(rects[0], 'width');
 
-      expect(numAttr(rects[0], 'width')).toBeCloseTo(slot * 0.5, 6);
+      // Computed independently from cadence/domain/plot-width rather than
+      // derived from the observed gap between boxes — see #16, the width
+      // is computed against the full (uninset) range, so it isn't simply
+      // "observed gap * (1 - paddingBar)" once the range is inset for
+      // rendering.
+      const domainSpanMs =
+        new Date(evenlySpacedWeeklyData[3].weekStart).getTime() -
+        new Date(evenlySpacedWeeklyData[0].weekStart).getTime();
+      const cadenceMs = domainSpanMs / (evenlySpacedWeeklyData.length - 1);
+      const expectedWidth = PLOT_WIDTH * (cadenceMs / domainSpanMs) * 0.5;
+
+      expect(width).toBeCloseTo(expectedWidth, 6);
     });
 
     it('unevenly-spaced dates leave a proportionally larger gap where a period is missing', () => {
@@ -449,15 +478,26 @@ describe('BoxPlotV', () => {
       );
 
       const rects = rectsOf('median-gap-box-plot');
-      const xPositions = rects.map((r) => numAttr(r, 'x'));
       const width = numAttr(rects[0], 'width');
 
-      // One week of pixels, measured off the first (7-day) gap.
-      const oneWeekPx = xPositions[1] - xPositions[0];
+      // Computed independently from the known median gap (7d) rather than
+      // from an observed on-screen gap: the component insets the usable
+      // range by half a box width on each side (see #16), so the width
+      // (computed against the full, uninset range) and a rendered gap
+      // (computed against the inset range) aren't related by a simple
+      // ratio anymore.
+      const domainSpanMs =
+        new Date(medianProbeData[3].weekStart).getTime() -
+        new Date(medianProbeData[0].weekStart).getTime(); // 42 days
+      const medianGapMs = 7 * DAY_MS;
+      const meanGapMs = 14 * DAY_MS;
+      const expectedWidth =
+        PLOT_WIDTH * (medianGapMs / domainSpanMs) * 0.8;
+      const meanBasedWidth = PLOT_WIDTH * (meanGapMs / domainSpanMs) * 0.8;
 
-      expect(width).toBeCloseTo(oneWeekPx * 0.8, 6);
+      expect(width).toBeCloseTo(expectedWidth, 6);
       // Guard against a mean-based (14d) or max-based (28d) inference.
-      expect(width).toBeLessThan(oneWeekPx * 1.5);
+      expect(width).toBeLessThan(meanBasedWidth);
     });
 
     it('explicit x.time.barWidth overrides inferred width exactly and ignores padding.bar', () => {

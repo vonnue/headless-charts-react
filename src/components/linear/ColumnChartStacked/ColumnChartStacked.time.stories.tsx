@@ -26,6 +26,10 @@ export const TimeScaledColumnChartStacked = meta.story({
       { key: 'iphone', className: 'fill-purple-600' },
       { key: 'ipad', className: 'fill-purple-400' },
     ],
+    // Without this, the first bar's left edge lands exactly on the margin
+    // edge (by design — see #16, no bleed) and reads as flush against the
+    // y-axis with no breathing room.
+    padding: { left: 10, right: 10 },
   },
 });
 

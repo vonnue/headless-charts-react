@@ -26,7 +26,7 @@ export const TimeScaledAreaChart = meta.story({
     x: {
       key: 'date',
       scalingFunction: 'time',
-      isISO: true,
+      time: { isISO: true },
     },
     y: [
       {
@@ -127,7 +127,7 @@ export const TypedTimeSeries = meta.story({
     x: {
       key: 'time_bucket', // TypeScript autocomplete works here!
       scalingFunction: 'time',
-      isISO: true,
+      time: { isISO: true },
     },
     y: [
       {

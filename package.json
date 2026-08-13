@@ -43,6 +43,8 @@
     "build-storybook": "storybook build",
     "docs": "vitest run src/catalog/catalog.generated.test.ts --update && node scripts/sync-jsdoc.mjs",
     "docs:check": "vitest run src/catalog/catalog.generated.test.ts && node scripts/sync-jsdoc.mjs --check",
+    "test:storybook-render": "playwright test",
+    "test:storybook-render:update": "playwright test --update-snapshots",
     "npm:publish": "yarn docs:check && vite build && npm publish"
   },
   "dependencies": {
@@ -54,6 +56,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
+    "@playwright/test": "^1.62.1",
     "@storybook/addon-docs": "^10.1.5",
     "@storybook/addon-links": "^10.1.5",
     "@storybook/addon-themes": "^10.1.5",

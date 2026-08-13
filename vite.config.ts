@@ -20,7 +20,14 @@ export default defineConfig({
   ],
   test: {
     environment: 'jsdom',
-    exclude: ['**/node_modules/**', '**/dist/**', '**/.stories.tsx'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.stories.tsx',
+      // Playwright's own test runner (real-browser render audit), not
+      // vitest's — see playwright.config.ts.
+      'tests/storybook-render-audit/**',
+    ],
     setupFiles: ['/src/setupTests.tsx'],
     globals: true,
     coverage: {

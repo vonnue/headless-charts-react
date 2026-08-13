@@ -53,6 +53,8 @@ dataviz-spec-architect
                            v
               general-purpose (merge tests + impl, iterate til green)
                            v
+              storybook-render-auditor (real-browser render check, loop til clean)
+                           v
               d3-react-code-reviewer <-> general-purpose (loop til clean)
                            v
               chart-catalog-editor
@@ -65,10 +67,19 @@ dataviz-spec-architect
    `general-purpose` writes the implementation from the same spec.
 3. `general-purpose` merges tests + implementation, runs them, iterates until
    green.
-4. `d3-react-code-reviewer` reviews; back-and-forth with `general-purpose`
+4. `storybook-render-auditor` renders the affected stories in a real browser
+   (Playwright) and checks structural invariants plus visual regression
+   against committed baselines — jsdom-based unit tests can pass while the
+   real rendered chart is broken, since jsdom has no layout engine. Iterates
+   with `general-purpose` until clean; anything unrelated to the current
+   change goes to `issue-writer` instead of blocking this stage.
+5. `d3-react-code-reviewer` reviews; back-and-forth with `general-purpose`
    until the review is clean.
-5. `chart-catalog-editor` last, once code is settled — see "Editing charts"
+6. `chart-catalog-editor` last, once code is settled — see "Editing charts"
    below for what it updates and regenerates.
+
+Also runnable standalone (not just as a pipeline stage): `/storybook-render-audit`
+sanity-checks the current state of Storybook, scoped or full-library.
 
 ## Editing charts
 

@@ -29,4 +29,17 @@ export default [
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    // Library entry point: it re-exports utils/constants alongside
+    // components by design, so the fast-refresh rule does not apply.
+    files: ['src/index.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  {
+    // `yarn lint` uses --max-warnings 0, so a warning already fails lint.
+    // Making it an error keeps that behaviour and lets the existing
+    // violations live in eslint-suppressions.json (which only holds errors).
+    files: ['**/*.{ts,tsx}'],
+    rules: { 'react-hooks/exhaustive-deps': 'error' },
+  },
 ];

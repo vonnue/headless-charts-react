@@ -1,0 +1,389 @@
+{
+  "src/components/distribution/PieChart/PieChart.tooltip.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/distribution/PieChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 10
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 3
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "src/components/distribution/ScatterPlot/Scatterplot.tooltip.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/distribution/ScatterPlot/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 30
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 2
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "src/components/distribution/WaffleChart/WaffleChart.tooltip.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/distribution/WaffleChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 12
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "src/components/flow/Network/index.tsx": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 15
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 25
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 3
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "react-hooks/rules-of-hooks": {
+      "count": 2
+    }
+  },
+  "src/components/gauges/BulletChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/LinearGauge/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/PizzaChart/PizzaChart.tooltip.stories.tsx": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/PizzaChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 13
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/RadarChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 18
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/RingGauge/RingGauge.custom.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/RingGauge/RingGauge.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/RingGauge/RingGauge.tooltip.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/RingGauge/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 13
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/SpeedometerChart/Speedometer.tooltip.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/gauges/SpeedometerChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "src/components/gauges/SpeedometerChart/speedometer.test.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/AreaChart/AreaChart.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/AreaChart/AreaChart.time.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "src/components/linear/AreaChart/AreaChart.tooltip.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/AreaChart/index.tsx": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 7
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 16
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 4
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "src/components/linear/BarChart/BarChart.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 11
+    }
+  },
+  "src/components/linear/BarChart/BarChart.tooltip.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/BarChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 16
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 2
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "src/components/linear/BarChartStacked/BarChartStacked.tooltip.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/BarChartStacked/index.tsx": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 3
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 8
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "src/components/linear/ColumnChart/ColumnChartGrouped.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/ColumnChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    }
+  },
+  "src/components/linear/ColumnChartStacked/ColumnChartStacked.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/ColumnChartStacked/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    }
+  },
+  "src/components/linear/LineChart/LineChart.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/LineChart/index.tsx": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 38
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 31
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 19
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "src/components/linear/LollipopHChart/LollipopHChart.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/LollipopHChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 13
+    }
+  },
+  "src/components/linear/LollipopVChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 7
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "src/components/linear/SpineChart/SpineChart.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/linear/SpineChart/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    }
+  },
+  "src/components/linear/TimeLineChart/index.tsx": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 13
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 17
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "src/components/ranges/BoxPlotH/BoxPlotH.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "src/components/ranges/BoxPlotH/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 38
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "src/components/ranges/BoxPlotV/BoxPlotV.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "src/components/ranges/BoxPlotV/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 38
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "src/components/ranges/CometPlot/CometPlot.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "src/components/ranges/CometPlot/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 13
+    }
+  },
+  "src/components/ranges/RangePlot/RangePlot.stories.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/components/ranges/RangePlot/index.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "src/hooks/useAxis.test.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/hooks/useAxis.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    }
+  },
+  "src/hooks/useTooltip.test.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/hooks/useTooltip.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 1
+    }
+  },
+  "src/types.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 8
+    }
+  },
+  "src/utils/binData.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 6
+    }
+  },
+  "src/utils/convertToRanks.tsx": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 4
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    }
+  },
+  "src/utils/deepValue.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/utils/mergeTailwindClasses.tsx": {
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 1
+    }
+  }
+}

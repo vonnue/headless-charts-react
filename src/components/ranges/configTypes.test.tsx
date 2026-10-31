@@ -1,24 +1,13 @@
+// Render checks for the range-chart config changes. Type-level checks live in
+// configTypes.test-d.ts (Vitest typecheck).
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
-import type { ComponentProps } from 'react';
 
 import BoxPlotH from './BoxPlotH';
 import BoxPlotV from './BoxPlotV';
 import CometPlot from './CometPlot';
 import RangePlot from './RangePlot';
-
-type BoxPlotHProps = ComponentProps<typeof BoxPlotH>;
-type BoxPlotVProps = ComponentProps<typeof BoxPlotV>;
-type CometPlotProps = ComponentProps<typeof CometPlot>;
-type RangePlotProps = ComponentProps<typeof RangePlot>;
-
-const statKeys = {
-  minKey: 'min',
-  maxKey: 'max',
-  boxStart: 'q1',
-  boxEnd: 'q3',
-  midKey: 'mid',
-};
+import { getBinValueKey, resolveValueConfig } from './boxPlotConfig';
 
 const rawRows = [
   { age: 22, salary: 30000 },
@@ -30,68 +19,17 @@ const rawRows = [
   { age: 55, salary: 78000 },
 ];
 
-/*
- * Type-level checks: these are verified by `tsc --noEmit` (tests are part of
- * the tsconfig include). A wrong `@ts-expect-error` fails the type check.
- */
-
-// Value-axis `key` is optional (it is never read for these axes)
-export const hSummaryNoKey: BoxPlotHProps = {
-  id: 'a',
-  data: [],
-  y: { key: 'name' },
-  x: { ...statKeys, min: 0 },
-};
-export const vSummaryNoKey: BoxPlotVProps = {
-  id: 'a',
-  data: [],
-  x: { key: 'name' },
-  y: { ...statKeys },
-};
-export const rangeNoKey: RangePlotProps = {
-  id: 'a',
-  data: [],
-  shape: 'circle',
-  y: { key: 'label' },
-  x: { minKey: 'minTemp', maxKey: 'maxTemp' },
-};
-export const cometNoKey: CometPlotProps = {
-  id: 'a',
-  data: [],
-  y: { key: 'label' },
-  x: { fromKey: 'from', toKey: 'to' },
+const expectFiniteBoxes = (selector: string, attr: 'x' | 'y') => {
+  const rects = Array.from(document.querySelectorAll(selector));
+  expect(rects.length).toBeGreaterThan(0);
+  rects.forEach((r) => {
+    expect(Number.isFinite(Number(r.getAttribute(attr)))).toBe(true);
+  });
+  return rects;
 };
 
-// Binned mode: stat keys may be omitted when bin + valueKey are set
-export const hBinned: BoxPlotHProps = {
-  id: 'a',
-  data: [],
-  valueKey: 'salary',
-  y: { key: 'age', bin: { count: 5 } },
-  x: { min: 0 },
-};
-export const vBinned: BoxPlotVProps = {
-  id: 'a',
-  data: [],
-  valueKey: 'salary',
-  x: { key: 'age', bin: { count: 5 } },
-  y: {},
-};
-
-// Summary mode still requires every stat key...
-// @ts-expect-error -- missing stat keys without bin + valueKey
-export const hMissingKeys: BoxPlotHProps = { id: 'a', data: [], y: { key: 'name' }, x: { min: 0 } };
-// ...including when only one of bin / valueKey is given
-// @ts-expect-error -- valueKey without y.bin is not binned mode
-export const hValueKeyOnly: BoxPlotHProps = { id: 'a', data: [], valueKey: 'salary', y: { key: 'age' }, x: {} };
-// @ts-expect-error -- x.bin without valueKey is not binned mode
-export const vBinOnly: BoxPlotVProps = { id: 'a', data: [], x: { key: 'age', bin: { count: 5 } }, y: {} };
-// The category axis key is still required
-// @ts-expect-error -- y.key is the category key and is read at runtime
-export const hNoCategoryKey: BoxPlotHProps = { id: 'a', data: [], y: {}, x: { ...statKeys } };
-
-describe('range chart config types', () => {
-  it('renders binned BoxPlotH without stat keys', () => {
+describe('BoxPlot binned mode', () => {
+  it('renders binned BoxPlotH without stat keys, with finite geometry', () => {
     render(
       <BoxPlotH
         id='bp-h-binned'
@@ -101,11 +39,10 @@ describe('range chart config types', () => {
         x={{ min: 0 }}
       />
     );
-    const rects = document.querySelectorAll('#bp-h-binned .box-plot-box');
-    expect(rects.length).toBeGreaterThan(0);
+    expectFiniteBoxes('#bp-h-binned .box-plot-box', 'x');
   });
 
-  it('renders binned BoxPlotV without stat keys', () => {
+  it('renders binned BoxPlotV without stat keys, with finite geometry', () => {
     render(
       <BoxPlotV
         id='bp-v-binned'
@@ -115,23 +52,70 @@ describe('range chart config types', () => {
         y={{}}
       />
     );
-    const rects = document.querySelectorAll('#bp-v-binned .box-plot-box');
-    expect(rects.length).toBeGreaterThan(0);
+    expectFiniteBoxes('#bp-v-binned .box-plot-box', 'y');
   });
 
-  it('renders RangePlot without x.key', () => {
+  it("treats valueKey '' with bin as binned (same predicate as the types): no NaN boxes", () => {
+    expect(getBinValueKey({ bin: { count: 3 } }, '')).toBe('');
+    expect(getBinValueKey({ bin: { count: 3 } }, undefined)).toBeUndefined();
+    expect(getBinValueKey({}, 'salary')).toBeUndefined();
+
+    render(
+      <BoxPlotH
+        id='bp-h-empty-key'
+        data={rawRows}
+        valueKey=''
+        y={{ key: 'age', bin: { count: 3 } }}
+        x={{}}
+      />
+    );
+    // No field named '' -> no stats -> nothing drawn, rather than NaN geometry
+    expect(
+      document.querySelectorAll('#bp-h-empty-key .box-plot-box')
+    ).toHaveLength(0);
+  });
+
+  it('resolveValueConfig returns null instead of a config missing stat keys', () => {
+    expect(resolveValueConfig({ min: 0 }, false)).toBeNull();
+    expect(resolveValueConfig({ min: 0 }, true)).toMatchObject({
+      minKey: '_min',
+      midKey: '_median',
+      min: 0,
+    });
+  });
+});
+
+describe('range charts without x.key', () => {
+  const rows = [
+    { label: 'Jan', lo: 25, hi: 31 },
+    { label: 'Feb', lo: 26, hi: 32 },
+  ];
+
+  it('renders RangePlot start and end dots', () => {
     render(
       <RangePlot
         id='range-no-key'
         shape='circle'
-        data={[
-          { label: 'Jan', minTemp: 25, maxTemp: 31 },
-          { label: 'Feb', minTemp: 26, maxTemp: 32 },
-        ]}
+        data={rows}
         y={{ key: 'label' }}
-        x={{ minKey: 'minTemp', maxKey: 'maxTemp' }}
+        x={{ minKey: 'lo', maxKey: 'hi' }}
       />
     );
-    expect(document.getElementById('range-no-key')).toBeTruthy();
+    expect(document.querySelectorAll('#range-no-key .start-dots')).toHaveLength(2);
+    expect(document.querySelectorAll('#range-no-key .end-dots')).toHaveLength(2);
+  });
+
+  it('renders CometPlot comets', () => {
+    render(
+      <CometPlot
+        id='comet-no-key'
+        data={rows}
+        y={{ key: 'label' }}
+        x={{ fromKey: 'lo', toKey: 'hi' }}
+      />
+    );
+    expect(
+      document.querySelectorAll('#comet-no-key .data path').length
+    ).toBeGreaterThan(0);
   });
 });

@@ -2,16 +2,23 @@
 # PreToolUse/Bash hook: hard-blocks externally visible / hard-to-reverse git
 # and gh commands when run from a subagent context (agent_type set), backing
 # up the prompt-level guardrail in .claude/agents/*.md with actual
-# enforcement. Never fires for the main thread (agent_type empty), so the
-# user can still ask the top-level assistant to commit/push/file issues
-# directly — this only stops a subagent from doing it unprompted.
+# enforcement. Never blocks the main thread (agent_type empty) unless the
+# hook input itself can't be parsed (bad JSON, a broken jq, or a grep
+# error), in which case every Bash call is denied (fail closed). The
+# matcher is "Bash" only, so non-Bash tools never reach this hook. The user
+# can still ask the top-level assistant to commit/push/file issues
+# directly; this only stops a subagent from doing it unprompted.
 #
 # One carve-out: issue-writer's entire job is filing/updating GitHub issues,
-# so `gh issue create/comment/edit` is allowed for that agent_type only.
-# Everything else — git push/commit, gh issue close/delete, all gh pr and gh
-# release actions, and gh api — stays blocked even for issue-writer,
+# so `gh issue create/comment/edit/reopen` is allowed for that agent_type
+# only. Everything else (git push/commit/send-pack and git aliases for them,
+# other gh issue writes, gh pr/release/repo/label/workflow/run/secret/
+# variable/gist writes, and gh api) stays blocked even for issue-writer,
 # matching its own stated guardrails (enforced here too, not just trusted
 # from its prompt).
+#
+# Best effort, not a sandbox: variable indirection (`G=git; $G push`) or a
+# raw curl to the GitHub API can't be caught by pattern matching.
 #
 # Fails closed: Claude Code only treats exit 2 (or a deny JSON) as a block,
 # so every failure path below exits 2. Tests:

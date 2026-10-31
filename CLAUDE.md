@@ -79,7 +79,7 @@ review and update the catalog; they never commit or push.
    for what it updates and regenerates.
 6. Before committing or opening a PR, the main session runs the same checks
    as CI, and all must pass:
-   `yarn tsc --noEmit && yarn lint && yarn vitest run && yarn docs:check && yarn vite build`
+   `yarn tsc --noEmit && yarn lint && yarn test:hooks && yarn vitest run && yarn docs:check && yarn vite build`
 
 Existing lint debt lives in `eslint-suppressions.json`. If you fix suppressed
 violations, run `yarn lint:prune` and commit the smaller file. Never run

@@ -37,6 +37,7 @@
     "start": "tsc -w",
     "build": "tsc && vite build",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint:prune": "eslint . --prune-suppressions",
     "preview": "vite preview",
     "test": "vitest --watch --reporter verbose --ui --coverage",
     "storybook": "storybook dev -p 6006",

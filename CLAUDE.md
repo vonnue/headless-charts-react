@@ -80,6 +80,12 @@ review and update the catalog; they never commit or push.
    as CI, and all must pass:
    `yarn tsc --noEmit && yarn lint && yarn vitest run && yarn docs:check && yarn vite build`
 
+Existing lint debt lives in `eslint-suppressions.json`. If you fix suppressed
+violations, run `yarn lint:prune` and commit the smaller file. Never run
+`eslint --suppress-all` / `--suppress-rule` to make new code pass; type it or
+fix it. Any diff that *increases* counts in `eslint-suppressions.json` must be
+called out for review.
+
 ## Editing charts
 
 When adding a chart, or changing what a chart is for:

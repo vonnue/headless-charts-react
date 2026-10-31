@@ -116,5 +116,22 @@ check block "no jq, subagent, pretty-printed JSON" "$TMP/nojq" "$TMP/pretty.json
 jq -cn '{tool_input:{command:"git push"}}' >"$TMP/main.json"
 check allow "no jq, main thread" "$TMP/nojq" "$TMP/main.json"
 
+# --- Review-2 bypasses: quoting, case, attached/space-separated globals, aliases, redirects ---
+for c in \
+  'g"i"t push' "'git' push" '"git" push' '\git push' "\$'git' push" 'GIT push' \
+  'git --git-dir .git push' 'git --work-tree . push' 'git -C. push' \
+  'git config alias.p push && git p' "git config alias.x '!git push'" 'git -c alias.p=push p' \
+  'git send-pack origin main' 'git push>/dev/null' 'git push<x' \
+  'gh --repo=o/r pr create' 'gh -Ro/r pr create' 'gh issue reopen 1' 'gh repo delete o/r --yes' \
+  'gh workflow run ci.yml' 'gh label delete bug'; do
+  case_ block "$A" "$c"
+done
+case_ allow issue-writer 'gh issue reopen 5'
+
+# --- grep errors fail closed ---
+mkdir -p "$TMP/badgrep"
+printf '#!/bin/sh\nexit 2\n' >"$TMP/badgrep/grep" && chmod +x "$TMP/badgrep/grep"
+check block "grep errors" "$TMP/badgrep:$PATH" "$TMP/ok.json"
+
 printf '%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

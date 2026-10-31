@@ -29,3 +29,5 @@ coverage
 storybook-static
 
 .claude/agent-memory/.run-markers
+# Agent review/hand-off scratch files
+.handoff/

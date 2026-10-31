@@ -17,6 +17,7 @@ import {
   getBinValueKey,
   resolveValueConfig,
   toBinnedRows,
+  useBoxPlotConfigWarnings,
 } from '../boxPlotConfig';
 
 export interface BoxPlotClassNames {
@@ -151,6 +152,12 @@ const BoxPlotV = <TData = any,>({
   // Same predicate as the props union: `x.bin` set and `valueKey` a string
   const binValueKey = getBinValueKey(x, valueKey);
   const isBinned = binValueKey !== undefined;
+  useBoxPlotConfigWarnings('BoxPlotV', id, {
+    data,
+    categoryConfig: x,
+    valueConfig: y,
+    valueKey,
+  });
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,

@@ -1,5 +1,7 @@
 // Shared configuration types and helpers for BoxPlotH and BoxPlotV.
+import { useEffect, useMemo } from 'react';
 import { AxisConfig, ValueAxisConfig } from '@/types';
+import { deepValue } from '@/utils';
 import type { BinStatsResult } from '@/utils';
 
 /** Row fields holding the pre-computed box statistics (summary mode) */
@@ -15,8 +17,9 @@ export interface BoxPlotStatKeys<TData = any> {
  * Value-axis settings shared by both modes. `key` is not read for the value
  * axis (positions come from the statistic keys), so it is optional.
  */
-export interface BoxPlotValueAxisBase<TData = any>
-  extends ValueAxisConfig<TData> {
+export interface BoxPlotValueAxisBase<
+  TData = any,
+> extends ValueAxisConfig<TData> {
   min?: number;
   max?: number;
   /** Class names keyed by category value */
@@ -53,7 +56,7 @@ export const BINNED_STAT_KEYS = {
  */
 export const getBinValueKey = (
   categoryConfig: Pick<AxisConfig, 'bin'>,
-  valueKey: string | undefined
+  valueKey: string | undefined,
 ): string | undefined =>
   categoryConfig.bin != null && typeof valueKey === 'string'
     ? valueKey
@@ -61,7 +64,7 @@ export const getBinValueKey = (
 
 /** Type guard: does the value-axis config carry every stat key? */
 export const hasStatKeys = <TData = any>(
-  config: BoxPlotBinnedValueConfig<TData>
+  config: BoxPlotBinnedValueConfig<TData>,
 ): config is BoxPlotValueConfig<TData> =>
   !!(
     config.minKey &&
@@ -79,7 +82,7 @@ export const hasStatKeys = <TData = any>(
  */
 export const resolveValueConfig = <TData = any>(
   config: BoxPlotBinnedValueConfig<TData>,
-  binned: boolean
+  binned: boolean,
 ): BoxPlotValueConfig<TData> | null => {
   if (binned) return { ...config, ...BINNED_STAT_KEYS };
   return hasStatKeys(config) ? config : null;
@@ -96,3 +99,125 @@ export const toBinnedRows = (stats: BinStatsResult[], categoryKey: string) =>
     [BINNED_STAT_KEYS.maxKey]: s.max,
     _count: s.count,
   }));
+
+// ---------------------------------------------------------------------------
+// Dev-only configuration warnings
+// ---------------------------------------------------------------------------
+
+// Module-local declaration so this compiles without @types/node.
+declare const process: { env?: { NODE_ENV?: string } } | undefined;
+
+/**
+ * Dev-only gate. `process.env.NODE_ENV` is used rather than
+ * `import.meta.env.DEV` because Vite's library mode statically replaces
+ * `import.meta.env.*` when this package is built, which would strip the
+ * warnings from the published bundle for everyone. `process.env.NODE_ENV` is
+ * left as-is in library builds and is replaced by the *consumer's* bundler
+ * (Vite, webpack, Next, ...), so warnings show in their dev builds and are
+ * dead-code-eliminated in their production builds. The try/catch keeps
+ * environments with no `process` at all (unbundled ESM in a browser) from
+ * throwing; they get no warnings.
+ */
+export const isDevEnvironment = (): boolean => {
+  try {
+    return process!.env!.NODE_ENV !== 'production';
+  } catch {
+    return false;
+  }
+};
+
+export type BoxPlotConfigIssue =
+  'missing-stat-keys' | 'no-binned-values' | 'bin-without-valuekey';
+
+const ISSUE_MESSAGES: Record<BoxPlotConfigIssue, (detail: string) => string> = {
+  'missing-stat-keys': () =>
+    'value axis needs minKey, maxKey, boxStart, boxEnd and midKey (or set bin on the category axis plus valueKey); nothing is drawn',
+  'no-binned-values': (detail) =>
+    `valueKey "${detail}" produced no numeric values to summarise (empty or misspelled?); nothing is drawn`,
+  'bin-without-valuekey': () =>
+    'bin is set on the category axis but valueKey is missing, so bin is ignored and summary mode is used',
+};
+
+/** Logs one configuration warning (no-op outside development). */
+export const warnBoxPlotConfig = (
+  chart: 'BoxPlotH' | 'BoxPlotV',
+  id: string,
+  issue: BoxPlotConfigIssue,
+  detail = '',
+): void => {
+  if (!isDevEnvironment()) return;
+  console.warn(
+    `[headless-charts] ${chart}#${id}: ${ISSUE_MESSAGES[issue](detail)}`,
+  );
+};
+
+/** Pure check: which misconfigurations apply? Uses the same predicates as rendering. */
+export const getBoxPlotConfigIssues = ({
+  data,
+  hasBin,
+  statKeysPresent,
+  valueKey,
+}: {
+  data: unknown[];
+  /** `bin` is set on the category axis */
+  hasBin: boolean;
+  /** hasStatKeys(valueConfig) */
+  statKeysPresent: boolean;
+  valueKey: string | undefined;
+}): BoxPlotConfigIssue[] => {
+  const binValueKey = getBinValueKey(
+    hasBin ? { bin: { count: 0 } } : {},
+    valueKey,
+  );
+  if (binValueKey === undefined) {
+    const issues: BoxPlotConfigIssue[] = [];
+    if (hasBin) issues.push('bin-without-valuekey');
+    if (!statKeysPresent) issues.push('missing-stat-keys');
+    return issues;
+  }
+  // Same test binDataStats uses to keep a value
+  const anyNumeric = data.some(
+    (d) => !isNaN(Number(deepValue(d, binValueKey))),
+  );
+  return data.length > 0 && !anyNumeric ? ['no-binned-values'] : [];
+};
+
+/**
+ * Warns about misconfigured box plot props in development. The check is
+ * memoised on primitives and the warning runs in an effect keyed on the set of
+ * issues, so each problem is logged once per mount and again only when the
+ * config changes, not on every render (inline `x`/`y` objects change identity
+ * every render).
+ */
+export const useBoxPlotConfigWarnings = <TData = any>(
+  chart: 'BoxPlotH' | 'BoxPlotV',
+  id: string,
+  {
+    data,
+    categoryConfig,
+    valueConfig,
+    valueKey,
+  }: {
+    data: TData[];
+    categoryConfig: Pick<AxisConfig, 'bin'>;
+    valueConfig: BoxPlotBinnedValueConfig<TData>;
+    valueKey: string | undefined;
+  },
+): void => {
+  const hasBin = categoryConfig.bin != null;
+  const statKeysPresent = hasStatKeys(valueConfig);
+  const issuesKey = useMemo(
+    () =>
+      getBoxPlotConfigIssues({ data, hasBin, statKeysPresent, valueKey }).join(
+        '|',
+      ),
+    [data, hasBin, statKeysPresent, valueKey],
+  );
+
+  useEffect(() => {
+    if (!issuesKey) return;
+    (issuesKey.split('|') as BoxPlotConfigIssue[]).forEach((issue) =>
+      warnBoxPlotConfig(chart, id, issue, valueKey ?? ''),
+    );
+  }, [chart, id, issuesKey, valueKey]);
+};

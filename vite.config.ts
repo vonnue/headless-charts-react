@@ -12,7 +12,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 // are opt-in via STORYBOOK_TESTS=1 (`yarn test:storybook`; run
 // `yarn playwright install chromium` once first). Plain `vitest run` only
 // runs the jsdom unit project.
-const storybookProject = process.env.STORYBOOK_TESTS
+const storybookProject = process.env.STORYBOOK_TESTS === '1'
   ? [
       {
         extends: true,
@@ -62,7 +62,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'jsdom',
-          exclude: ['**/node_modules/**', '**/dist/**', '**/.stories.tsx'],
+          exclude: ['**/node_modules/**', '**/dist/**'],
           setupFiles: ['/src/setupTests.tsx'],
         },
       },

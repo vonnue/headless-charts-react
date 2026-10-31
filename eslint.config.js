@@ -8,8 +8,9 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import storybook from 'eslint-plugin-storybook';
 
 export default [
-  // The old `--ext ts,tsx` linted only TypeScript sources.
-  { ignores: ['dist', '**/*.{js,cjs,mjs}'] },
+  // Build output, caches, and plain JS (the old `--ext ts,tsx` linted only
+  // TypeScript sources).
+  { ignores: ['dist', 'coverage', 'storybook-static', '.yarn', '**/*.{js,cjs,mjs}'] },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {

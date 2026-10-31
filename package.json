@@ -33,6 +33,9 @@
     "README.md"
   ],
   "packageManager": "yarn@4.4.1",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "start": "tsc -w",
     "build": "tsc && vite build",

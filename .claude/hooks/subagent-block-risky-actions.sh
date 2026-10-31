@@ -87,7 +87,7 @@ if [ -n "$BLOCK" ]; then
   # Truncate so `jq --arg` stays far below ARG_MAX for huge commands.
   SHORT_CMD="${CMD:0:500}"
   [ "${#CMD}" -gt 500 ] && SHORT_CMD="${SHORT_CMD}…"
-  REASON="Blocked for subagent '${AGENT_TYPE:0:100}': externally visible/hard-to-reverse git or gh action ('$SHORT_CMD'). Per this agent's guardrails, these require the user's explicit instruction for this specific action. Report your findings/output back to the calling agent or user instead — they can run this themselves, or ask for the issue-writer agent if the goal is filing GitHub issues."
+  REASON="Blocked for subagent '${AGENT_TYPE:0:100}': externally visible/hard-to-reverse git or gh action ('$SHORT_CMD'). Per this agent's guardrails, these require the user's explicit instruction for this specific action. Report your findings/output back to the calling agent or user instead — they can run this themselves, or ask for the issue-writer agent if the goal is filing GitHub issues. This check is deliberately conservative and also matches these words inside echo/grep/rg arguments; to search for or read such strings, use the Grep or Read tools instead of Bash."
   jq -n --arg reason "$REASON" '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",

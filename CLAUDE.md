@@ -43,8 +43,9 @@ resolveChartRequest('waterfall');
 ## Agent workflow (mandatory)
 
 Every code change in this repo — new chart, prop change, bug fix, anything —
-goes through this agent graph, in order. Do not hand-write or hand-edit code
-directly; do not skip or reorder stages.
+goes through this agent graph, in order. Do not skip or reorder stages, and
+do not write implementation code before `dataviz-spec-architect` has locked
+the spec or commit before the review loop is clean.
 
 ```
 dataviz-spec-architect

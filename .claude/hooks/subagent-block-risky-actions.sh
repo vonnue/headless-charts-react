@@ -13,11 +13,19 @@
 # stated guardrails (enforced here too, not just trusted from its prompt).
 set -euo pipefail
 
-# Fail open if jq isn't installed — a missing dependency on a teammate's
-# machine shouldn't error out (or silently no-op-deny) on every Bash call.
-command -v jq >/dev/null 2>&1 || exit 0
-
 INPUT="$(cat)"
+
+# Fail closed if jq isn't installed: without it we can't parse the command,
+# so block every Bash call from a subagent (exit 2 = deny, stderr is shown
+# to the agent). The main thread (no agent_type) is still allowed, so a
+# missing jq never locks the user out of the top-level session.
+if ! command -v jq >/dev/null 2>&1; then
+  if printf '%s' "$INPUT" | grep -Eq '"agent_type"[[:space:]]*:[[:space:]]*"[^"]'; then
+    echo "Blocked: .claude/hooks/subagent-block-risky-actions.sh needs 'jq' to vet subagent Bash commands, and jq is not installed. Install jq (e.g. 'brew install jq' or 'apt-get install jq'), or report back to the calling agent so the main session can run this command." >&2
+    exit 2
+  fi
+  exit 0
+fi
 
 AGENT_TYPE="$(printf '%s' "$INPUT" | jq -r '.agent_type // empty')"
 [ -z "$AGENT_TYPE" ] && exit 0

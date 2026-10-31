@@ -41,6 +41,7 @@
     "test": "vitest --watch --reporter verbose --ui --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test:hooks": "bash .claude/hooks/tests/subagent-block-risky-actions.test.sh",
     "test:storybook": "STORYBOOK_TESTS=1 vitest run --project storybook",
     "docs": "vitest run src/catalog/catalog.generated.test.ts --update && node scripts/sync-jsdoc.mjs",
     "docs:check": "vitest run src/catalog/catalog.generated.test.ts && node scripts/sync-jsdoc.mjs --check",

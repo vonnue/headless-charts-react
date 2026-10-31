@@ -32,7 +32,7 @@
     "AGENTS.md",
     "README.md"
   ],
-  "packageManager": "yarn@4.0.2",
+  "packageManager": "yarn@4.4.1",
   "scripts": {
     "start": "tsc -w",
     "build": "tsc && vite build",

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { arc, interpolateNumber, pie, scaleLinear, transition } from 'd3';
 import { select, selectAll } from 'd3-selection';

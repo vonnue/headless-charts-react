@@ -176,12 +176,10 @@ const BarChart = <TData = any,>({
           .filter((v): v is number => v !== undefined)
       ),
       minX = min(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         effectiveX
           .map((column: BarAxisConfig) => min(effectiveData, (d: any) => d[column.key]))
           .filter((v): v is number => v !== undefined)
       ),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       maxX = max(
         effectiveX
           .map((column) => max(effectiveData, (d: any) => d[column.key]))

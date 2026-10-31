@@ -11,7 +11,6 @@ import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import useTooltip from '@/hooks/useTooltip';
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 export interface RingGaugeProps<TData = any> extends Omit<GaugeProps<TData>, 'data'> {
   data?: TData[];

@@ -872,7 +872,6 @@ const LineChart = <TData = any,>({
       svg.call(zoomFunc);
     }
   }, []);
-  /* eslint-enable */
 
   useEffect(() => {
     refreshChart();

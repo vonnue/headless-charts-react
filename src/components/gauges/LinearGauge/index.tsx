@@ -192,9 +192,7 @@ const LinearGauge = <TData = any,>({
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     const width = +svg.style('width').split('px')[0];
-    /* eslint-disable */
 
-    /* eslint-enable */
     const xFn = scaleLinear()
       .domain([0, max])
       .range([margin.left || 0, width - (margin.right || 0)]);

@@ -282,7 +282,6 @@ const BarChartStacked = <TData = any,>({
     drawing,
     dataLabel,
   ]);
-  /* eslint-enable */
 
   useEffect(() => {
     refreshChart();

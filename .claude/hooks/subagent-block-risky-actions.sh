@@ -29,7 +29,12 @@ INPUT="$(cat)"
 # flattened first so pretty-printed JSON is detected too.
 if ! command -v jq >/dev/null 2>&1; then
   FLAT="${INPUT//[$'\n\r\t']/ }"
-  if grep -Eq '"agent_type"[[:space:]]*:[[:space:]]*"[^"]' <<<"$FLAT"; then
+  # Check grep's exit code explicitly: inside `if`, a grep error (exit >1)
+  # would read as "no agent_type" and allow the call.
+  rc=0
+  grep -Eq '"agent_type"[[:space:]]*:[[:space:]]*"[^"]' <<<"$FLAT" || rc=$?
+  [ "$rc" -le 1 ] || deny "pattern match failed (grep exit $rc)."
+  if [ "$rc" -eq 0 ]; then
     deny ".claude/hooks/subagent-block-risky-actions.sh needs 'jq' to vet subagent Bash commands, and jq is not installed. Install jq (e.g. 'brew install jq' or 'apt-get install jq'), or report back to the calling agent so the main session can run this command."
   fi
   exit 0

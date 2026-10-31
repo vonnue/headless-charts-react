@@ -132,6 +132,22 @@ case_ allow issue-writer 'gh issue reopen 5'
 mkdir -p "$TMP/badgrep"
 printf '#!/bin/sh\nexit 2\n' >"$TMP/badgrep/grep" && chmod +x "$TMP/badgrep/grep"
 check block "grep errors" "$TMP/badgrep:$PATH" "$TMP/ok.json"
+mkdir -p "$TMP/nojq-badgrep"
+for b in bash cat printf env dirname; do ln -s "$(command -v "$b")" "$TMP/nojq-badgrep/$b"; done
+ln -s "$TMP/badgrep/grep" "$TMP/nojq-badgrep/grep"
+check block "no jq, grep errors" "$TMP/nojq-badgrep" "$TMP/ok.json"
+
+# --- More review-2 gh write actions, and read-only commands that must stay allowed ---
+for c in 'gh secret set X' 'gh variable set X' 'gh gist create f' 'gh pr ready 1' 'gh release upload v1 f' \
+  'gh issue transfer 1 o/r' 'gh repo edit --visibility public' 'gh run cancel 1' 'git -C/tmp push'; do
+  case_ block "$A" "$c"
+done
+for c in 'git log --grep push' 'git stash push' 'git stash list' 'git config --get user.name' \
+  'git config alias.st status' 'git log --author=pushkin' 'git fetch' 'git rebase main' \
+  'gh run list' 'gh run view 1' 'gh repo view --json name' 'gh issue list --search "x y"' \
+  'gh pr checkout 1' 'echo $HOME' 'cat src/git/push.ts' 'yarn commitlint'; do
+  case_ allow "$A" "$c"
+done
 
 printf '%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

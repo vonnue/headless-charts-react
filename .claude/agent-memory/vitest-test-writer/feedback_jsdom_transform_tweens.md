@@ -29,5 +29,4 @@ requestAnimationFrame loop reliably here). Don't reintroduce an
 identity-only stub to "fix" a transform-related jsdom crash — check
 `setupTests.tsx` first, since the real parser is probably already handling
 it and the crash means something else (e.g. a transition still scheduled
-against a node from an unmounted/replaced component — see
-[[project_speedometer_transition_cleanup]]).
+against a node from an unmounted/replaced component).

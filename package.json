@@ -41,6 +41,7 @@
     "test": "vitest --watch --reporter verbose --ui --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test:storybook": "STORYBOOK_TESTS=1 vitest run --project storybook",
     "docs": "vitest run src/catalog/catalog.generated.test.ts --update && node scripts/sync-jsdoc.mjs",
     "docs:check": "vitest run src/catalog/catalog.generated.test.ts && node scripts/sync-jsdoc.mjs --check",
     "npm:publish": "yarn docs:check && vite build && npm publish"
@@ -73,6 +74,7 @@
     "@typescript-eslint/parser": "^8.49.0",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/browser": "^4.1.10",
+    "@vitest/browser-playwright": "4.1.10",
     "@vitest/coverage-istanbul": "^4.1.10",
     "@vitest/ui": "^4.1.10",
     "autoprefixer": "^10.4.22",

@@ -740,6 +740,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^8.49.0"
     "@vitejs/plugin-react": "npm:^5.1.2"
     "@vitest/browser": "npm:^4.1.10"
+    "@vitest/browser-playwright": "npm:4.1.10"
     "@vitest/coverage-istanbul": "npm:^4.1.10"
     "@vitest/ui": "npm:^4.1.10"
     autoprefixer: "npm:^10.4.22"
@@ -2644,7 +2645,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/browser@npm:^4.1.10":
+"@vitest/browser-playwright@npm:4.1.10":
+  version: 4.1.10
+  resolution: "@vitest/browser-playwright@npm:4.1.10"
+  dependencies:
+    "@vitest/browser": "npm:4.1.10"
+    "@vitest/mocker": "npm:4.1.10"
+    tinyrainbow: "npm:^3.1.0"
+  peerDependencies:
+    playwright: "*"
+    vitest: 4.1.10
+  peerDependenciesMeta:
+    playwright:
+      optional: false
+  checksum: 10c0/161530da4da9c061875c0e80c2c94e93658bf92514f2e5173c04299e17a6021feb209ef8fb5e14e880c8c8b2b9e7fc4f3ec7a346c8c4a77831864597331257fc
+  languageName: node
+  linkType: hard
+
+"@vitest/browser@npm:4.1.10, @vitest/browser@npm:^4.1.10":
   version: 4.1.10
   resolution: "@vitest/browser@npm:4.1.10"
   dependencies:

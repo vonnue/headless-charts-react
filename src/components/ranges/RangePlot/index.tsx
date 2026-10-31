@@ -15,13 +15,19 @@ import { useCallback, useEffect } from 'react';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
 
-import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import {
+  AxisConfig,
+  ChartProps,
+  TooltipConfig,
+  ValueAxisConfig,
+} from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 
-interface RangePlotXConfig<TData = any> extends AxisConfig<TData> {
+/** `key` is not read for the range axis — positions come from the range keys */
+interface RangePlotXConfig<TData = any> extends ValueAxisConfig<TData> {
   minKey: Extract<keyof TData, string> | string;
   maxKey: Extract<keyof TData, string> | string;
 }

@@ -6,22 +6,37 @@ import { select, selectAll } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
 
-import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
+import {
+  AxisConfig,
+  ChartProps,
+  TooltipConfig,
+  ValueAxisConfig,
+} from '@/types';
 import { useCallback, useEffect } from 'react';
 import { defaultChartClassNames, binDataStats } from '@/utils';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
-interface BoxPlotXConfig<TData = any> extends AxisConfig<TData> {
+/** Row fields holding the pre-computed box statistics (summary mode) */
+export interface BoxPlotStatKeys<TData = any> {
   minKey: Extract<keyof TData, string> | string;
   maxKey: Extract<keyof TData, string> | string;
   boxStart: Extract<keyof TData, string> | string;
   boxEnd: Extract<keyof TData, string> | string;
   midKey: Extract<keyof TData, string> | string;
+}
+
+/**
+ * Value-axis settings shared by both modes. `key` is not read for the value
+ * axis (positions come from the statistic keys), so it is optional.
+ */
+interface BoxPlotValueAxisBase<TData = any> extends ValueAxisConfig<TData> {
   min?: number;
   max?: number;
   classNameMap?: any;
 }
+
+type BoxPlotXConfig<TData = any> = BoxPlotValueAxisBase<TData> & BoxPlotStatKeys<TData>;
 
 export interface BoxPlotClassNames {
   boxes?: string;
@@ -29,15 +44,54 @@ export interface BoxPlotClassNames {
   data?: string;
 }
 
-export interface BoxPlotHProps<TData = any> extends ChartProps<TData> {
+interface BoxPlotHBaseProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   classNames?: BoxPlotClassNames;
-  x: BoxPlotXConfig<TData>;
-  y: AxisConfig<TData>;
-  /** When y.bin is set, this key specifies the continuous value field to compute box stats from */
-  valueKey?: string;
   tooltip?: TooltipConfig;
 }
+
+/** Summary mode: each row already carries the statistics named on `x`. */
+export interface BoxPlotHSummaryProps<TData = any> extends BoxPlotHBaseProps<TData> {
+  x: BoxPlotXConfig<TData>;
+  y: AxisConfig<TData>;
+  /** Only takes effect together with `y.bin` (see binned mode) */
+  valueKey?: string;
+}
+
+/**
+ * Binned mode: `y.bin` groups the raw rows and `valueKey` names the field to
+ * summarise. Statistics are computed internally, so the stat keys on `x`
+ * may be omitted (any that are given are ignored).
+ */
+export interface BoxPlotHBinnedProps<TData = any> extends BoxPlotHBaseProps<TData> {
+  x: BoxPlotValueAxisBase<TData> & Partial<BoxPlotStatKeys<TData>>;
+  y: AxisConfig<TData> & { bin: NonNullable<AxisConfig<TData>['bin']> };
+  /** The continuous value field to compute box stats from */
+  valueKey: string;
+}
+
+export type BoxPlotHProps<TData = any> =
+  | BoxPlotHSummaryProps<TData>
+  | BoxPlotHBinnedProps<TData>;
+
+/** Field names binDataStats results are mapped to in binned mode */
+const BINNED_STAT_KEYS: BoxPlotStatKeys = {
+  minKey: '_min',
+  maxKey: '_max',
+  boxStart: '_q1',
+  boxEnd: '_q3',
+  midKey: '_median',
+};
+
+/**
+ * Outside binned mode the props can only satisfy BoxPlotHSummaryProps, so the
+ * value-axis config is guaranteed to carry every stat key.
+ */
+const resolveValueConfig = (
+  config: BoxPlotHProps['x'],
+  binned: boolean
+): BoxPlotXConfig =>
+  binned ? { ...config, ...BINNED_STAT_KEYS } : (config as BoxPlotXConfig);
 
 /* catalog:start */
 /**
@@ -133,17 +187,20 @@ const BoxPlotH = <TData = any,>({
   },
   style = {},
 }: BoxPlotHProps<TData>) => {
-  const isBinned = y.bin != null;
+  // Binned mode needs both `y.bin` and `valueKey`; otherwise summary mode
+  const isBinned = y.bin != null && !!valueKey;
 
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
     defaultHtml: (d: any) => {
-      const mk = isBinned && valueKey ? '_min' : x.minKey;
-      const xk = isBinned && valueKey ? '_max' : x.maxKey;
-      const bs = isBinned && valueKey ? '_q1' : x.boxStart;
-      const be = isBinned && valueKey ? '_q3' : x.boxEnd;
-      const md = isBinned && valueKey ? '_median' : x.midKey;
+      const {
+        minKey: mk,
+        maxKey: xk,
+        boxStart: bs,
+        boxEnd: be,
+        midKey: md,
+      } = resolveValueConfig(x, isBinned);
       return `min: ${d[mk].toFixed(0)} <br/> range: ${d[bs].toFixed(
         0
       )} to ${d[be].toFixed(0)} <br/> mid: ${d[md].toFixed(
@@ -165,8 +222,8 @@ const BoxPlotH = <TData = any,>({
     let effectiveData: any[];
     let effectiveX: BoxPlotXConfig;
 
-    if (isBinned && valueKey) {
-      const stats = binDataStats(data, y, valueKey);
+    if (isBinned) {
+      const stats = binDataStats(data, y, valueKey as string);
       effectiveData = stats.map((s) => ({
         [y.key]: s.label,
         _min: s.min,
@@ -176,17 +233,10 @@ const BoxPlotH = <TData = any,>({
         _max: s.max,
         _count: s.count,
       }));
-      effectiveX = {
-        ...x,
-        minKey: '_min',
-        maxKey: '_max',
-        boxStart: '_q1',
-        boxEnd: '_q3',
-        midKey: '_median',
-      };
+      effectiveX = resolveValueConfig(x, true);
     } else {
       effectiveData = data;
-      effectiveX = x;
+      effectiveX = resolveValueConfig(x, false);
     }
 
     const xFn = scaleLinear()

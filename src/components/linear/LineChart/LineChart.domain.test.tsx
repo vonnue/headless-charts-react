@@ -49,7 +49,7 @@ describe('LineChart y start/end domain (F4)', () => {
         id='line-right-end-zero'
         data={[
           { t: 1, a: 1, b: -10 },
-          { t: 2, a: 2, b: -5 },
+          { t: 2, a: 2, b: 5 },
         ]}
         x={{ key: 't' }}
         y={[
@@ -58,6 +58,7 @@ describe('LineChart y start/end domain (F4)', () => {
         ]}
       />
     );
+    // Domain [-10, 0]. Merging end into the data max gave [-10, 5].
     const right = ticks(container, 'right');
     expect(right.get('0')).toBeCloseTo(TOP, 2);
     expect(right.get('-10')).toBeCloseTo(BOTTOM, 2);
@@ -99,5 +100,25 @@ describe('LineChart y start/end domain (F4)', () => {
     const left = ticks(container, 'left');
     expect(left.get('2')).toBeCloseTo(BOTTOM, 2);
     expect(left.get('10')).toBeCloseTo(TOP, 2);
+  });
+
+  it('left axis: a finite end wins even when another series has +Infinity', () => {
+    const { container } = render(
+      <LineChart
+        {...layout}
+        id='line-left-mixed-end'
+        data={data}
+        x={{ key: 't' }}
+        y={[
+          { key: 'a', symbol: 'none', start: 0, end: 20 },
+          { key: 'b', symbol: 'none', end: Infinity },
+        ]}
+      />
+    );
+    // Domain [0, 20]. max(20, Infinity) used to be non-finite, so the pinned
+    // 20 was dropped for the data max (30).
+    const left = ticks(container, 'left');
+    expect(left.get('0')).toBeCloseTo(BOTTOM, 2);
+    expect(left.get('20')).toBeCloseTo(TOP, 2);
   });
 });

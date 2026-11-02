@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { scaleTime } from 'd3-scale';
 
 import type { AxisConfig } from '@/types';
@@ -12,6 +13,7 @@ import {
   medianCadenceMs,
   padTimeDomain,
   timePosition,
+  useTimeAxisWarnings,
   utcSuggestionSample,
   validBarWidth,
 } from './timeScale';
@@ -522,5 +524,46 @@ describe('timePosition (review-2 N4)', () => {
 
   it('maps an unreadable date to NaN instead of the scale of null', () => {
     expect(pos({ date: 'garbage' })).toBeNaN();
+  });
+});
+
+describe('useTimeAxisWarnings outside development (review-3 R4)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // Rows whose x value counts how often it is read, to observe the scan.
+  const countingRows = () => {
+    let reads = 0;
+    const rows = ['2025-01-01', '2025-01-02', 'garbage'].map((value) => {
+      const row = {} as { date: string };
+      Object.defineProperty(row, 'date', {
+        enumerable: true,
+        get: () => {
+          reads += 1;
+          return value;
+        },
+      });
+      return row;
+    });
+    return { rows, reads: () => reads };
+  };
+  const x: AxisConfig = { key: 'date', scalingFunction: 'time', time: { isISO: true } };
+
+  it('does not scan the rows in production', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const { rows, reads } = countingRows();
+    renderHook(() => useTimeAxisWarnings('ColumnChart', 'prod-scan', rows, x));
+    expect(reads()).toBe(0);
+  });
+
+  it('scans the rows in development', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rows, reads } = countingRows();
+    renderHook(() => useTimeAxisWarnings('ColumnChart', 'dev-scan', rows, x));
+    expect(reads()).toBeGreaterThan(0);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('ColumnChart#dev-scan: 1 row(s)'));
+    warn.mockRestore();
   });
 });

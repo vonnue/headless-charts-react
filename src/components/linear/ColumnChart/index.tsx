@@ -12,6 +12,7 @@ import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, bin1D } from '@/utils';
+import { pinnedEnd, pinnedStart } from '@/utils/domain';
 import {
   createTimeBarLayout,
   makeDateAccessor,
@@ -197,20 +198,17 @@ const ColumnChartGrouped = <TData = any,>({
       effectiveY = y;
     }
 
-    // @ts-ignore
-    const minStart = min(effectiveY.map((column) => column.start));
-    // @ts-ignore
-    const minY: number = min(
-      effectiveY.map((column: AxisConfig) => min(effectiveData, (d: any) => d[column.key]))
+    const minStart = pinnedStart(effectiveY.map((column) => column.start));
+    const maxEnd = pinnedEnd(effectiveY.map((column) => column.end));
+    // Row values read as numbers, the way d3's min/max treat them.
+    const valueOf = (d: unknown, key: string) =>
+      (d as Record<string, number | undefined>)[key];
+    const minY = min(effectiveY, (column) =>
+      min(effectiveData, (d) => valueOf(d, column.key))
     );
-    // @ts-ignore
-    const maxY: number = max(
-      effectiveY.map((column: AxisConfig) => max(effectiveData, (d: any) => d[column.key]))
+    const maxY = max(effectiveY, (column) =>
+      max(effectiveData, (d) => valueOf(d, column.key))
     );
-    // @ts-ignore
-    const maxEnd = max(effectiveY.map((column) => column.end));
-    // @ts-ignore
-    const areAllGreaterThanZero = minY > 0;
 
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
@@ -253,11 +251,7 @@ const ColumnChartGrouped = <TData = any,>({
     }
 
     const yFn = scaleLinear()
-      // @ts-ignore
-      .domain([
-        Number.isFinite(minStart) ? minStart : minY || 0,
-        maxEnd || maxY,
-      ])
+      .domain([minStart ?? (minY || 0), maxEnd ?? maxY ?? 0])
       .range([
         height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
         (margin.top ?? 0) + (padding.top ?? 0),
@@ -357,7 +351,7 @@ const ColumnChartGrouped = <TData = any,>({
       key: effectiveY[0]?.key || '',
       axis: {
         location: yAxisLocation as 'left' | 'right',
-        ticks: effectiveY[0]?.axis?.ticks || (wholeNumbers && maxY < 10 ? maxY : 5),
+        ticks: effectiveY[0]?.axis?.ticks || (wholeNumbers && maxY !== undefined && maxY < 10 ? maxY : 5),
         label: yAxisLabel,
       },
     };

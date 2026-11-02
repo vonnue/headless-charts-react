@@ -59,6 +59,18 @@ export const makeDateAccessor = <TData,>(x: TimeAxis) => {
 };
 
 /**
+ * Maps a row to its x pixel on a time scale. A row whose date can't be read
+ * maps to `NaN` (the charts drop such rows before drawing, so this only
+ * guards the type instead of casting `Date | null` to `Date`).
+ */
+export const timePosition =
+  <TData,>(scale: ScaleTime<number, number>, toDate: (d: TData) => Date | null) =>
+  (d: TData): number => {
+    const date = toDate(d);
+    return date ? scale(date) : NaN;
+  };
+
+/**
  * Formats a date for the default tooltip: `x.time.tooltipFormat`, else
  * `x.time.format`, else `%Y-%m-%d`; in UTC when `x.time.utc` is set, local
  * time otherwise.

@@ -16,6 +16,7 @@ import { defaultChartClassNames, binDataStats } from '@/utils';
 import {
   createTimeBarLayout,
   makeDateAccessor,
+  timePosition,
   makeDateFormatter,
   useTimeAxisWarnings,
   warnIfBarWidthCapped,
@@ -274,7 +275,8 @@ const BoxPlotV = <TData = any,>({
       const timeXFn = layout.scale;
       xFn = timeXFn;
       boxWidth = layout.width;
-      boxLeft = (d) => timeXFn(toDateTime(d) as Date) - boxWidth / 2;
+      const timeX = timePosition(timeXFn, toDateTime);
+      boxLeft = (d) => timeX(d) - boxWidth / 2;
     } else {
       const bandXFn = scaleBand<string>()
         .domain(effectiveData.map((d: any) => d[x.key]))

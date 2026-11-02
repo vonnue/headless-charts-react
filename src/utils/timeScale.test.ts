@@ -11,6 +11,7 @@ import {
   makeDateParser,
   medianCadenceMs,
   padTimeDomain,
+  timePosition,
   utcSuggestionSample,
   validBarWidth,
 } from './timeScale';
@@ -486,5 +487,24 @@ describe('x.time.utc in a non-UTC time zone (F3)', () => {
     // local scaleTime would put ticks on New York midnights (05:00 UTC)
     const local = createTimeXScale(rows, { ...x, time: { isISO: true } }, toDate, [0, 300]);
     local.ticks(4).forEach((t) => expect(t.getUTCHours()).toBe(5));
+  });
+});
+
+describe('timePosition (review-2 N4)', () => {
+  const scale = scaleTime()
+    .domain([new Date(Date.UTC(2024, 0, 1)), new Date(Date.UTC(2024, 0, 11))])
+    .range([0, 100]);
+  const toDate = makeDateAccessor<{ date: string }>({
+    key: 'date',
+    time: { isISO: true },
+  });
+  const pos = timePosition(scale, toDate);
+
+  it('maps a dated row onto the scale', () => {
+    expect(pos({ date: '2024-01-06T00:00:00Z' })).toBeCloseTo(50, 6);
+  });
+
+  it('maps an unreadable date to NaN instead of the scale of null', () => {
+    expect(pos({ date: 'garbage' })).toBeNaN();
   });
 });

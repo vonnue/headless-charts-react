@@ -245,7 +245,7 @@ const LineChart = <TData = any,>({
               ? min(data.map((d: any) => d[x.key]))
               : // @ts-ignore
                 min(data.map((d: any) => x.convert(d))),
-            Number.isFinite(x.start)
+            Number.isFinite(x.end)
               ? x.end
               : x.convert
               ? // @ts-ignore

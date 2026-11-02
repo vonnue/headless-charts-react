@@ -2,18 +2,21 @@ import { max, min } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
-import { scaleBand, scaleLinear, type ScaleTime } from 'd3-scale';
-import { timeFormat } from 'd3-time-format';
+import {
+  scaleBand,
+  scaleLinear,
+  type ScaleBand,
+  type ScaleTime,
+} from 'd3-scale';
 import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, bin1D } from '@/utils';
 import {
-  DEFAULT_TIME_FORMAT,
-  createTimeXScale,
-  insetTimeScale,
+  createTimeBarLayout,
   makeDateAccessor,
-  timeMarkWidth,
+  makeDateFormatter,
+  useTimeAxisWarnings,
 } from '@/utils/timeScale';
 import { twMerge } from 'tailwind-merge';
 
@@ -144,14 +147,16 @@ const ColumnChartGrouped = <TData = any,>({
 }: ColumnChartGroupedProps<TData>) => {
   const isTimeX = x.scalingFunction === 'time';
 
-  const formatDate = timeFormat(x.time?.format || DEFAULT_TIME_FORMAT);
-  const toDateTime = makeDateAccessor(x);
+  const formatDate = makeDateFormatter(x);
+  const toDateTime = makeDateAccessor<TData>(x);
+  useTimeAxisWarnings('ColumnChart', id, data, x);
 
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
     defaultHtml: (d: any) => {
-      const xValue = isTimeX ? formatDate(toDateTime(d)) : d[x.key];
+      const date = isTimeX ? toDateTime(d) : null;
+      const xValue = date ? formatDate(date) : d[x.key];
       return `${xValue} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`;
     },
   });
@@ -175,7 +180,9 @@ const ColumnChartGrouped = <TData = any,>({
       effectiveX = { ...x, bin: undefined };
       effectiveY = [{ key: 'count', className: y[0]?.className }];
     } else {
-      effectiveData = data;
+      // In time mode rows without a readable date are not drawn (dev warning
+      // from useTimeAxisWarnings)
+      effectiveData = isTimeX ? data.filter((d) => toDateTime(d) != null) : data;
       effectiveX = x;
       effectiveY = y;
     }
@@ -205,32 +212,33 @@ const ColumnChartGrouped = <TData = any,>({
       width - (margin.right ?? 0) - (padding.right ?? 0),
     ];
 
-    // In time mode the axis is drawn from the full margin-to-margin `xFn`, but
-    // bars are centered on their date and positioned with `markXFn`, a
-    // copy inset by half a mark width so the edge marks don't overhang the
-    // plot (#16).
-    let xFn: any;
-    let markXFn: ScaleTime<number, number> | undefined;
-    let finalBarWidth = 0;
+    // In time mode one scale positions the bars *and* draws the axis, so bars
+    // sit on their ticks; its domain is padded so edge bars stay inside (#16).
+    let xFn: ScaleBand<string> | ScaleTime<number, number>;
+    let barX: (d: TData) => number;
+    let barWidth: number;
     if (isTimeX) {
-      const timeXFn = createTimeXScale(effectiveData, x, toDateTime, xRange);
-      finalBarWidth = timeMarkWidth({
-        scale: timeXFn,
-        dates: effectiveData.map(toDateTime),
-        rowCount: effectiveData.length,
-        paddingRatio: paddingBarValue,
-        explicitWidth: x.time?.barWidth,
-      });
-      markXFn = insetTimeScale(timeXFn, finalBarWidth / 2);
+      const layout = createTimeBarLayout(
+        effectiveData,
+        x,
+        toDateTime,
+        xRange,
+        paddingBarValue,
+        x.time?.barWidth
+      );
+      const timeXFn = layout.scale;
       xFn = timeXFn;
+      barWidth = layout.width;
+      barX = (d) => timeXFn(toDateTime(d) as Date) - barWidth / 2;
     } else {
-      xFn = scaleBand()
+      const bandXFn = scaleBand<string>()
         .domain(effectiveData.map((d) => (d as any)[effectiveX.key]))
         .range(xRange)
         .padding(paddingBarValue);
+      xFn = bandXFn;
+      barWidth = bandXFn.bandwidth();
+      barX = (d) => bandXFn((d as any)[effectiveX.key]) || 0;
     }
-
-    const centerX = (d: TData): number => (markXFn ? markXFn(toDateTime(d)) : NaN);
 
     const yFn = scaleLinear()
       // @ts-ignore
@@ -262,16 +270,12 @@ const ColumnChartGrouped = <TData = any,>({
             }`
         )
         // @ts-ignore
-        .attr('x', (d: any) =>
-          isTimeX
-            ? centerX(d) - finalBarWidth / 2 + (i * finalBarWidth) / effectiveY.length
-            : (xFn((d as any)[effectiveX.key]) || 0) + (i * xFn.bandwidth()) / effectiveY.length
-        )
+        .attr('x', (d: any) => barX(d) + (i * barWidth) / effectiveY.length)
         .attr('y', (d) =>
           // @ts-ignore
           drawing && drawing.duration ? yFn(0) : yFn((d as any)[column.key])
         )
-        .attr('width', isTimeX ? finalBarWidth / effectiveY.length : xFn.bandwidth() / effectiveY.length)
+        .attr('width', barWidth / effectiveY.length)
         .attr('height', (d) =>
           drawing && drawing.duration
             ? 0

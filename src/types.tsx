@@ -18,16 +18,37 @@ export interface AxisConfig<TData = any> {
 
   /** Time series configuration (when scalingFunction='time') */
   time?: {
-    /** Date format string */
+    /** Date format string (d3-time-format specifier, default `%Y-%m-%d`) */
     format?: string;
     /** Whether the date is in ISO format */
     isISO?: boolean;
     /**
-     * Explicit rendered width, in pixels, of each bar/box/stem's mark when
-     * scalingFunction is 'time'. Overrides cadence inference. Only consulted
-     * by charts that derive a mark width from a category axis in time mode
-     * (ColumnChart, ColumnChartStacked, BoxPlotV); ignored by charts with no
-     * width to size (e.g. LollipopVChart, which centers on a point).
+     * Read and show dates in UTC instead of the viewer's local time zone:
+     * `format` strings are parsed with `utcParse`, the axis uses `scaleUtc`
+     * (UTC tick positions and labels) and the default tooltip formats with
+     * `utcFormat`. Default `false`.
+     *
+     * Local-time caveat: without `utc`, ISO instants such as
+     * `2024-12-31T00:00:00Z` are drawn and labelled in the viewer's zone, so
+     * west of UTC they land on (and read as) Dec 30. Set `utc: true` when the
+     * data holds UTC instants or date-only values meant as calendar days.
+     *
+     * Read by ColumnChart, ColumnChartStacked, LollipopVChart and BoxPlotV.
+     */
+    utc?: boolean;
+    /**
+     * Format specifier for the date in the default tooltip. Falls back to
+     * `format`, then `%Y-%m-%d`. Read by ColumnChart, ColumnChartStacked and
+     * BoxPlotV (LollipopVChart has no tooltip).
+     */
+    tooltipFormat?: string;
+    /**
+     * Explicit width of each bar/box, in positive pixels, when
+     * scalingFunction is 'time'. Overrides cadence inference and is capped at
+     * one date slot so neighbouring marks never overlap. Values that are not
+     * finite or not > 0 are ignored (with a development warning). Read by
+     * ColumnChart, ColumnChartStacked and BoxPlotV; LollipopVChart has no
+     * width to size and ignores it.
      */
     barWidth?: number;
   };

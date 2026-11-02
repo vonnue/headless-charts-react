@@ -29,8 +29,9 @@ const Y_BASELINE = 260; // yFn(y.start = 0) with height 300 and margin.bottom 40
 
 // A stem at the domain's min/max centers its symbol exactly on the range
 // edge, so — with no inset — half the symbol would render outside the plot.
-// The component insets its usable x range by this many px on each side to
-// prevent that (see #16); it's the largest bounding radius among this
+// The component pads its time domain so the end dates land this many px in
+// from each side (see #16); the axis draws from the same padded scale, so
+// ticks and stems agree; it's the largest bounding radius among this
 // component's symbol shapes at their fixed render size (star, ~9.44px).
 const SYMBOL_INSET = 10;
 
@@ -997,5 +998,69 @@ describe('LollipopVChart time mode keeps edge symbols inside the plot (#16)', ()
     const [axisStart, axisEnd] = xAxisSpan(container);
     expect(axisStart).toBeCloseTo(RANGE_START + 0.5, 6);
     expect(axisEnd).toBeCloseTo(RANGE_END + 0.5, 6);
+  });
+
+  it('stems are centred on their axis ticks within 1px (axis and stems share a scale)', () => {
+    const rows = [1, 2, 3, 4, 5].map((d) => ({
+      date: new Date(Date.UTC(2025, 0, d)).toISOString(),
+      value: d * 10,
+    }));
+    const { container } = render(
+      <LollipopVChart
+        id='ticks-lollipop'
+        shape='circle'
+        style={CHART_SIZE}
+        data={rows}
+        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+        y={{ key: 'value' }}
+      />
+    );
+
+    const ticks = new Map(
+      Array.from(container.querySelectorAll('.axis--x .tick')).map((t) => [
+        (t as unknown as { __data__: Date }).__data__.getTime(),
+        Number(/translate\(([-\d.]+)/.exec(t.getAttribute('transform') || '')![1]) - 0.5,
+      ])
+    );
+    // Stems paint in value order, not date order; sort by x to pair them
+    // with the (date-ordered) rows.
+    const stems = stemXsOf('ticks-lollipop').sort((a, b) => a - b);
+    let matched = 0;
+    rows.forEach((row, i) => {
+      const tickX = ticks.get(Date.parse(row.date));
+      if (tickX === undefined) return;
+      matched++;
+      expect(Math.abs(stems[i] - tickX)).toBeLessThanOrEqual(1);
+    });
+    expect(matched).toBeGreaterThanOrEqual(2);
+  });
+
+  it('accepts Date and epoch-ms x values, and drops unreadable rows with a warning (F6)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <LollipopVChart
+        id='mixed-lollipop'
+        shape='circle'
+        style={CHART_SIZE}
+        data={[
+          { date: new Date('2025-01-06T00:00:00Z'), value: 10 },
+          { date: Date.parse('2025-01-13T00:00:00Z'), value: 20 },
+          { date: 'not a date', value: 999 },
+          { date: new Date('2025-01-27T00:00:00Z'), value: 15 },
+        ]}
+        x={{ key: 'date', scalingFunction: 'time' }}
+        y={{ key: 'value' }}
+      />
+    );
+
+    const stems = stemXsOf('mixed-lollipop').sort((a, b) => a - b);
+    expect(stems).toHaveLength(3);
+    expect(stems[0]).toBeCloseTo(RANGE_START + SYMBOL_INSET, 6);
+    expect(stems[1]).toBeCloseTo(RANGE_START + SYMBOL_INSET + (RANGE_SPAN - 2 * SYMBOL_INSET) / 3, 6);
+    expect(stems[2]).toBeCloseTo(RANGE_END - SYMBOL_INSET, 6);
+    expect(
+      warn.mock.calls.some(([m]) => String(m).includes('LollipopVChart#mixed-lollipop: 1 row(s)'))
+    ).toBe(true);
+    warn.mockRestore();
   });
 });

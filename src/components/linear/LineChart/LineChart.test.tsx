@@ -149,6 +149,26 @@ describe('LineChart', () => {
       expect(xs[3]).toBeCloseTo(364, 6);
     });
 
+    it('treats x.end = 0 as a real bound, not as unset', () => {
+      const { container } = render(
+        <LineChart
+          {...defaultArgs}
+          {...layout}
+          id='line-chart-x-end-zero'
+          x={{ key: 'year', end: 0 }}
+          y={[{ key: 'revenue', symbol: 'none' }]}
+        />
+      );
+
+      const xs = pathXs(container, 'line-chart-x-end-zero');
+      // Domain [2020, 0]: 2020 -> 40, 2023 -> 40 + 540 * 3 / (0 - 2020).
+      // An `x.end || max` style check would ignore 0 and map 2023 to 580.
+      expect(xs).toHaveLength(4);
+      expect(xs[0]).toBeCloseTo(40, 6);
+      // The path is rounded to 3 decimals, so compare to 2.
+      expect(xs[3]).toBeCloseTo(40 + (540 * 3) / (0 - 2020), 2);
+    });
+
     it('falls back to the data max when only x.start is set', () => {
       const { container } = render(
         <LineChart

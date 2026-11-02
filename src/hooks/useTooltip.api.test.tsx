@@ -4,10 +4,12 @@
  *   (where the deprecated render-time `tooltipDiv` is still empty);
  * - onMouseMove() without an event warns once per instance in development
  *   and stays a no-op; with an event it does not warn;
+ * - getTooltipDiv() is live in a child component's mount effect and in a
+ *   layout effect declared after the hook (the [id] effect is a layout effect);
  * - server rendering logs nothing, with and without `window` (the hook picks
  *   useEffect over useLayoutEffect when there is no `window`).
  */
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, renderHook } from '@testing-library/react';
@@ -16,6 +18,7 @@ import useTooltip from './useTooltip';
 
 const ID = 'api-test';
 const el = () => document.getElementById(`tooltip-${ID}`);
+type GetTooltipDiv = ReturnType<typeof useTooltip>['getTooltipDiv'];
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -37,6 +40,33 @@ describe('useTooltip getTooltipDiv', () => {
     render(<Probe />);
     expect(seen).toEqual([{ live: 1, snapshot: 0 }]);
     expect(el()?.innerHTML).toBe('from mount effect');
+  });
+
+  it("returns the live element from a child component's mount effect", () => {
+    const Child = ({ getDiv }: { getDiv: GetTooltipDiv }) => {
+      useEffect(() => {
+        getDiv().html('from child');
+      }, [getDiv]);
+      return null;
+    };
+    const Parent = () => {
+      const { getTooltipDiv } = useTooltip({ id: ID, tooltip: {} });
+      return <Child getDiv={getTooltipDiv} />;
+    };
+    render(<Parent />);
+    expect(el()?.innerHTML).toBe('from child');
+  });
+
+  it('returns the live element from a layout effect declared after the hook', () => {
+    const Probe = () => {
+      const { getTooltipDiv } = useTooltip({ id: ID, tooltip: {} });
+      useLayoutEffect(() => {
+        getTooltipDiv().html('from layout effect');
+      }, [getTooltipDiv]);
+      return null;
+    };
+    render(<Probe />);
+    expect(el()?.innerHTML).toBe('from layout effect');
   });
 
   it('returns the element it would act on, re-creating it if removed', () => {

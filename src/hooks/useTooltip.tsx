@@ -33,14 +33,20 @@ export interface UseTooltipResult {
   /**
    * Selection of the tooltip element as it was in the DOM at render time:
    * empty on the first render and on the render where `id` changes.
-   * @deprecated Use `getTooltipDiv()`, which returns the live element and is
-   * safe to call from effects (including mount effects) and from callbacks
-   * captured on the first render.
+   * @deprecated Use `getTooltipDiv()`, which returns the live element from
+   * mount effects and from callbacks captured on the first render.
    */
   tooltipDiv: TooltipSelection;
   /**
    * Returns a selection of the live tooltip element, creating (or re-creating)
    * it if needed. Empty before mount and after unmount.
+   *
+   * Safe from passive effects anywhere in the tree (including mount effects and
+   * a child component's effects), from layout effects declared after
+   * `useTooltip` in the same component, and from event handlers and callbacks.
+   * It is still empty when called from a ref callback or from a child
+   * component's layout effect on mount, since those run before this hook's
+   * own layout effect.
    */
   getTooltipDiv: () => TooltipSelection;
   onMouseOver: (event: unknown, d: unknown) => void;
@@ -108,11 +114,12 @@ const ensureElement = (state: TooltipState, id?: string): HTMLDivElement => {
  * Owns one `div#tooltip-${id}` on `document.body` per mounted instance.
  *
  * The element is created (or adopted, if one with the same id already exists)
- * in an effect, never during render, and is removed on unmount only if this
+ * in a layout effect, never during render, and is removed on unmount only if this
  * hook created it. Handlers always act on the live element and re-create it if
  * something removed it in the meantime. They are no-ops after unmount.
  *
- * Use `getTooltipDiv()` to reach the element from effects or callbacks. The
+ * Use `getTooltipDiv()` to reach the element from effects or callbacks (see
+ * its doc for the ref-callback and child-layout-effect exceptions). The
  * deprecated `tooltipDiv` reflects the DOM at render time and is an empty
  * selection on the first render, before the element exists.
  */
@@ -130,14 +137,17 @@ const useTooltip = ({
     warnedMissingEvent: false,
   });
 
-  // Runs after every render, before the [id] effect, so the element is
-  // created with the current config.
+  // Runs after every render, before the [id] effect (declared below), so the
+  // element is created with the current config.
   useIsomorphicLayoutEffect(() => {
     stateRef.current.tooltip = tooltip;
     stateRef.current.defaultHtml = defaultHtml;
   });
 
-  useEffect(() => {
+  // A layout effect (in the browser) so the element exists before passive
+  // effects run anywhere in the tree, and before layout effects declared after
+  // this hook in the same component.
+  useIsomorphicLayoutEffect(() => {
     const state = stateRef.current;
     state.mounted = true;
     ensureElement(state, id);

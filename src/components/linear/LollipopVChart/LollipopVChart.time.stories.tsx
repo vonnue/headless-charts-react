@@ -23,7 +23,7 @@ export const TimeScaledLollipopVChart = meta.story({
     id: 'time-lollipop-v-chart',
     data: weeklyData,
     shape: 'circle',
-    x: { key: 'date', scalingFunction: 'time', time: { isISO: true } },
+    x: { key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } },
     y: { key: 'reading', start: 0 },
     padding: { left: 10, right: 10 },
   },

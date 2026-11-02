@@ -1,6 +1,5 @@
 import preview from '../../../../.storybook/preview';
 import ColumnChartStacked from '.';
-import { timeParse, timeFormat } from 'd3-time-format';
 import data from './sample.json';
 
 const meta = preview.meta({
@@ -9,26 +8,25 @@ const meta = preview.meta({
   tags: ['autodocs'],
 });
 
-const parseDate = timeParse('%d-%m-%Y %H:%M:%S');
-const formatISO = timeFormat('%Y-%m-%dT%H:%M:%S.000Z');
+// One true UTC instant per year (Dec 31, 00:00Z), read on a UTC axis so the
+// tooltip and ticks show the same calendar date in every time zone.
 const timeSeriesData = data.map((d) => ({
   ...d,
-  date: formatISO(parseDate(`31-12-${d.year} 23:59:59`) as Date),
+  date: new Date(Date.UTC(d.year, 11, 31)).toISOString(),
 }));
 
 export const TimeScaledColumnChartStacked = meta.story({
   args: {
     id: 'time-column-chart-stacked',
     data: timeSeriesData,
-    x: { key: 'date', scalingFunction: 'time', time: { isISO: true } },
+    x: { key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } },
     y: [
       { key: 'macbook', className: 'fill-purple-800' },
       { key: 'iphone', className: 'fill-purple-600' },
       { key: 'ipad', className: 'fill-purple-400' },
     ],
-    // Without this, the first bar's left edge lands exactly on the margin
-    // edge (by design — see #16, no bleed) and reads as flush against the
-    // y-axis with no breathing room.
+    // A little extra room between the y-axis and the first slot. The time
+    // domain is already padded by half a slot per side (see #16).
     padding: { left: 10, right: 10 },
   },
 });
@@ -45,6 +43,6 @@ export const ExplicitBarWidthColumnChartStacked = meta.story({
   args: {
     ...TimeScaledColumnChartStacked.input.args,
     id: 'explicit-bar-width-column-chart-stacked',
-    x: { ...TimeScaledColumnChartStacked.input.args.x, time: { isISO: true, barWidth: 30 } },
+    x: { ...TimeScaledColumnChartStacked.input.args.x, time: { isISO: true, utc: true, barWidth: 30 } },
   },
 });

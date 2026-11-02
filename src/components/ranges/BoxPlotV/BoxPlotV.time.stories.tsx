@@ -19,7 +19,7 @@ export const TimeScaledBoxPlotV = meta.story({
   args: {
     id: 'time-box-plot-v',
     data: weeklyStats,
-    x: { key: 'weekStart', scalingFunction: 'time', time: { isISO: true } },
+    x: { key: 'weekStart', scalingFunction: 'time', time: { isISO: true, utc: true } },
     y: {
       minKey: 'min',
       maxKey: 'max',
@@ -46,6 +46,6 @@ export const ExplicitBarWidthBoxPlotV = meta.story({
   args: {
     ...TimeScaledBoxPlotV.input.args,
     id: 'explicit-bar-width-box-plot-v',
-    x: { ...TimeScaledBoxPlotV.input.args.x, time: { isISO: true, barWidth: 40 } },
+    x: { ...TimeScaledBoxPlotV.input.args.x, time: { isISO: true, utc: true, barWidth: 40 } },
   },
 });

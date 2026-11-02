@@ -85,6 +85,30 @@ const meta: ChartMeta = {
     },
     { kind: 'option', name: 'Reference lines', how: 'Pass `referenceLines={[{ y: 50, className: "stroke-red-500" }]}`.' },
     { kind: 'option', name: 'Whole numbers', how: 'Set `wholeNumbers` to force integer ticks on the value axis.' },
+    {
+      kind: 'chart-type',
+      name: 'Time-scaled column chart',
+      aliases: ['time series column chart'],
+      summary:
+        'A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer\'s local time zone. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).',
+      useWhen: [
+        'The x values are real dates and spacing between bars should be proportional to elapsed time, not category index',
+        'Some periods are missing and the gap should read as whitespace rather than being silently collapsed',
+        'Axis ticks should fall on real date boundaries',
+      ],
+      avoidWhen: [
+        'Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead',
+        'The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain ColumnChart',
+      ],
+      example: `<ColumnChart
+  id="daily-signups"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+  y={[{ key: 'signups', className: 'fill-purple-600' }]}
+/>`,
+    },
   ],
 };
 

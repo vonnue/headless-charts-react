@@ -1,13 +1,26 @@
 import { ZoomTransform, zoom } from 'd3-zoom';
 import { max, min } from 'd3-array';
-import { scaleBand, scaleLinear } from 'd3-scale';
+import {
+  scaleBand,
+  scaleLinear,
+  type ScaleBand,
+  type ScaleTime,
+} from 'd3-scale';
 import { select, selectAll } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { defaultChartClassNames, binDataStats } from '@/utils';
+import {
+  createTimeBarLayout,
+  makeDateAccessor,
+  timePosition,
+  makeDateFormatter,
+  useTimeAxisWarnings,
+  warnIfBarWidthCapped,
+} from '@/utils/timeScale';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import {
@@ -84,6 +97,18 @@ export type BoxPlotVProps<TData = any> =
  *   (any given are ignored). `bin` without `valueKey` is ignored, and `y`
  *   still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use
  *   `bin.thresholds` for explicit band edges.
+ * - Time-scaled box plot (vertical) — Set `x.scalingFunction: "time"` with
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from
+ *   the median gap between dates (one slot per step); `x.time.barWidth`
+ *   (positive pixels) overrides it but is capped at one slot, so it can
+ *   narrow boxes but never widen them past their slot. Set `x.time.utc:
+ *   true` when dates are UTC instants or calendar days — otherwise they are
+ *   parsed, placed and labelled in the viewer's local time zone. Pinned
+ *   `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly
+ *   on a pinned end is centred on the plot edge and overhangs it by half a
+ *   box; to keep edge marks inside, pin half a step outside the data (e.g.
+ *   `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1
+ *   Jan 2025).
  *
  * Also called: vertical box plot, box and whisker chart, box chart.
  *
@@ -119,6 +144,24 @@ export type BoxPlotVProps<TData = any> =
  * />
  * ```
  *
+ * @example Time-scaled box plot (vertical)
+ * ```tsx
+ * <BoxPlotV
+ *   id="weekly-latency-spread"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+ *   y={{
+ *     minKey: 'min',
+ *     maxKey: 'max',
+ *     midKey: 'mid',
+ *     boxStart: 'firstQuartile',
+ *     boxEnd: 'lastQuartile',
+ *     min: 0,
+ *   }}
+ * />
+ * ```
+ *
  * @see BoxPlotH — group labels are long
  * @see RangePlot — showing a plain min–max interval rather than quartiles
  * @see ScatterPlot — individual records should stay visible
@@ -151,15 +194,34 @@ const BoxPlotV = <TData = any,>({
   },
   style = {},
 }: BoxPlotVProps<TData>) => {
-  // Same predicate as the props union: `x.bin` set and `valueKey` a string
-  const binValueKey = getBinValueKey(x, valueKey);
+  // Same predicate as the props union: `x.bin` set and `valueKey` a string.
+  // Binning is ignored on a time axis: bin labels aren't dates.
+  const isTimeX = x.scalingFunction === 'time';
+  const binValueKey = isTimeX ? undefined : getBinValueKey(x, valueKey);
   const isBinned = binValueKey !== undefined;
   useBoxPlotConfigWarnings('BoxPlotV', id, {
     data,
     categoryConfig: x,
     valueConfig: y,
     valueKey,
+    timeMode: isTimeX,
   });
+  useTimeAxisWarnings('BoxPlotV', id, data, x);
+  // Keyed on the fields the parser reads, so an inline `x` object literal
+  // doesn't rebuild the accessor on every render.
+  const xKey = x.key;
+  const xTimeFormat = x.time?.format;
+  const xTimeIsISO = x.time?.isISO;
+  const xTimeUtc = x.time?.utc;
+  const toDateTime = useMemo(
+    () =>
+      makeDateAccessor<TData>({
+        key: xKey,
+        time: { format: xTimeFormat, isISO: xTimeIsISO, utc: xTimeUtc },
+      }),
+    [xKey, xTimeFormat, xTimeIsISO, xTimeUtc]
+  );
+  const formatDate = makeDateFormatter(x);
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
@@ -173,7 +235,8 @@ const BoxPlotV = <TData = any,>({
         boxEnd: be,
         midKey: md,
       } = resolved;
-      return `min: ${d[mk].toFixed(0)} <br/> range: ${+d[bs].toFixed(
+      const date = isTimeX ? toDateTime(d) : null;
+      return `${date ? `${formatDate(date)} <br/> ` : ''}min: ${d[mk].toFixed(0)} <br/> range: ${+d[bs].toFixed(
         0
       )} to ${+d[be].toFixed(0)} <br/> mid: ${d[md].toFixed(
         0
@@ -198,15 +261,51 @@ const BoxPlotV = <TData = any,>({
     const effectiveData: any[] =
       binValueKey !== undefined
         ? toBinnedRows(binDataStats(data, x, binValueKey), x.key)
-        : data;
+        : isTimeX
+          ? // rows without a readable date are not drawn (dev warning from
+            // useTimeAxisWarnings)
+            data.filter((d) => toDateTime(d) != null)
+          : data;
 
-    const xFn: any = scaleBand()
-      .domain(effectiveData.map((d: any) => d[x.key]))
-      .range([
-        (margin.left ?? 0) + (padding.left || 0),
-        width - (margin.right ?? 0) - (padding.right || 0),
-      ])
-      .padding(padding.bar || 0.2);
+    const paddingBarValue = padding.bar || 0.2;
+
+    const xRange: [number, number] = [
+      (margin.left ?? 0) + (padding.left || 0),
+      width - (margin.right ?? 0) - (padding.right || 0),
+    ];
+
+    // In time mode one scale positions the boxes *and* draws the axis, so
+    // boxes sit on their ticks; its domain is padded so edge boxes stay
+    // inside (#16).
+    let xFn: ScaleBand<string> | ScaleTime<number, number>;
+    let boxLeft: (d: any) => number;
+    let boxWidth: number;
+    if (isTimeX) {
+      const layout = createTimeBarLayout(
+        effectiveData,
+        x,
+        toDateTime,
+        xRange,
+        paddingBarValue,
+        x.time?.barWidth
+      );
+      warnIfBarWidthCapped('BoxPlotV', id, layout);
+      const timeXFn = layout.scale;
+      xFn = timeXFn;
+      boxWidth = layout.width;
+      const timeX = timePosition(timeXFn, toDateTime);
+      boxLeft = (d) => timeX(d) - boxWidth / 2;
+    } else {
+      const bandXFn = scaleBand<string>()
+        .domain(effectiveData.map((d: any) => d[x.key]))
+        .range(xRange)
+        .padding(paddingBarValue);
+      xFn = bandXFn;
+      boxWidth = bandXFn.bandwidth();
+      boxLeft = (d) => bandXFn(d[x.key]) ?? 0;
+    }
+    const boxCenter = (d: any) => boxLeft(d) + boxWidth / 2;
+    const boxRight = (d: any) => boxLeft(d) + boxWidth;
 
     const yFn = scaleLinear()
       .domain([
@@ -246,8 +345,8 @@ const BoxPlotV = <TData = any,>({
     dotRowsG
       .append('line')
       .attr('clip-path', 'url(#clip)')
-      .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
+      .attr('x1', boxCenter)
+      .attr('x2', boxCenter)
       .attr('y1', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
@@ -259,8 +358,8 @@ const BoxPlotV = <TData = any,>({
     dotRowsG
       .append('line')
       .attr('clip-path', 'url(#clip)')
-      .attr('x1', (d: any) => xFn(d[x.key]))
-      .attr('x2', (d: any) => xFn(d[x.key]))
+      .attr('x1', boxLeft)
+      .attr('x2', boxLeft)
       .attr('y1', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('class', (d: any) =>
@@ -268,8 +367,8 @@ const BoxPlotV = <TData = any,>({
       )
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => xFn(d[x.key]))
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth());
+      .attr('x1', boxLeft)
+      .attr('x2', boxRight);
 
     // Mid lines
     dotRowsG
@@ -277,13 +376,13 @@ const BoxPlotV = <TData = any,>({
       .attr('clip-path', 'url(#clip)')
       .attr('y1', (d: any) => yFn(d[effectiveY.midKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.midKey]))
-      .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
+      .attr('x1', boxCenter)
+      .attr('x2', boxCenter)
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => xFn(d[x.key]))
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth());
+      .attr('x1', boxLeft)
+      .attr('x2', boxRight);
 
     // End lines
     dotRowsG
@@ -291,13 +390,13 @@ const BoxPlotV = <TData = any,>({
       .attr('clip-path', 'url(#clip)')
       .attr('y1', (d: any) => yFn(d[effectiveY.maxKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.maxKey]))
-      .attr('x1', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth() / 2)
+      .attr('x1', boxCenter)
+      .attr('x2', boxCenter)
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => xFn(d[x.key]))
-      .attr('x2', (d: any) => xFn(d[x.key]) + xFn.bandwidth());
+      .attr('x1', boxLeft)
+      .attr('x2', boxRight);
 
     // Mid rects
     dotRowsG
@@ -311,8 +410,8 @@ const BoxPlotV = <TData = any,>({
       )
       .attr('clip-path', 'url(#clip)')
       .attr('y', () => height - (margin.bottom ?? 0) - (padding.bottom || 0))
-      .attr('x', (d: any) => xFn(d[x.key]))
-      .attr('width', xFn.bandwidth())
+      .attr('x', boxLeft)
+      .attr('width', boxWidth)
       .transition()
       .duration(1000)
       .attr('y', (d: any) => yFn(d[effectiveY.boxEnd]))
@@ -365,6 +464,8 @@ const BoxPlotV = <TData = any,>({
     data,
     id,
     isBinned,
+    isTimeX,
+    toDateTime,
     binValueKey,
     margin,
     padding,

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 
 import AreaChart from '.';
 import data from './data.json';
+import { TimeScaledAreaChart, TypedTimeSeries } from './AreaChart.time.stories';
 
 describe('AreaChart', () => {
   const defaultArgs = {
@@ -198,5 +200,48 @@ describe('AreaChart', () => {
 
     const svg = screen.getByTestId('area-chart-empty');
     expect(svg).toBeTruthy();
+  });
+});
+
+describe('AreaChart time scaling stories (#15)', () => {
+  // Regression for #15: the time stories set `isISO` directly on `x` instead
+  // of `x.time`, so the ISO strings were parsed with the default
+  // '%Y-%m-%d' format, every date came back null and the chart drew NaN.
+  const timeStories = [
+    ['TimeScaledAreaChart', TimeScaledAreaChart.input.args],
+    ['TypedTimeSeries', TypedTimeSeries.input.args],
+  ] as const;
+
+  const areaPathData = (id: string) =>
+    Array.from(screen.getByTestId(id).querySelectorAll('path'))
+      .map((path) => path.getAttribute('d'))
+      .filter((d): d is string => !!d);
+
+  it.each(timeStories)('%s nests isISO under x.time', (_name, args) => {
+    expect(args?.x?.time?.isISO).toBe(true);
+    expect(args?.x).not.toHaveProperty('isISO');
+  });
+
+  it.each(timeStories)('%s renders area paths without NaN coordinates', (_name, args) => {
+    render(<AreaChart {...(args as ComponentProps<typeof AreaChart>)} />);
+
+    const paths = areaPathData(args?.id as string);
+    expect(paths.length).toBeGreaterThan(0);
+    paths.forEach((d) => expect(d).not.toContain('NaN'));
+  });
+
+  it('draws NaN when isISO is misplaced on x (the #15 bug), so the check above can fail', () => {
+    const args = TimeScaledAreaChart.input.args;
+    const buggyX = { key: 'date', scalingFunction: 'time', isISO: true };
+    render(
+      <AreaChart
+        {...(args as ComponentProps<typeof AreaChart>)}
+        id='buggy-time-area-chart'
+        x={buggyX as ComponentProps<typeof AreaChart>['x']}
+      />
+    );
+
+    const paths = areaPathData('buggy-time-area-chart');
+    expect(paths.some((d) => d.includes('NaN'))).toBe(true);
   });
 });

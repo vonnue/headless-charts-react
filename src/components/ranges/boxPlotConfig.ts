@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { AxisConfig, ValueAxisConfig } from '@/types';
 import { deepValue } from '@/utils';
 import type { BinStatsResult } from '@/utils';
+import { isDevEnvironment, warnOnceInDev } from '@/utils/devEnvironment';
 
 /** Row fields holding the pre-computed box statistics (summary mode) */
 export interface BoxPlotStatKeys<TData = unknown> {
@@ -104,30 +105,14 @@ export const toBinnedRows = (stats: BinStatsResult[], categoryKey: string) =>
 // Dev-only configuration warnings
 // ---------------------------------------------------------------------------
 
-// Module-local declaration so this compiles without @types/node.
-declare const process: { env?: { NODE_ENV?: string } } | undefined;
-
-/**
- * Dev-only gate. `process.env.NODE_ENV` is used rather than
- * `import.meta.env.DEV` because Vite's library mode statically replaces
- * `import.meta.env.*` when this package is built, which would strip the
- * warnings from the published bundle for everyone. `process.env.NODE_ENV` is
- * left as-is in library builds and is replaced by the *consumer's* bundler
- * (Vite, webpack, Next, ...), so warnings show in their dev builds and are
- * dead-code-eliminated in their production builds. The try/catch keeps
- * environments with no `process` at all (unbundled ESM in a browser) from
- * throwing; they get no warnings.
- */
-export const isDevEnvironment = (): boolean => {
-  try {
-    return process!.env!.NODE_ENV !== 'production';
-  } catch {
-    return false;
-  }
-};
+// Re-exported: tests and callers import the dev gate from here.
+export { isDevEnvironment };
 
 export type BoxPlotConfigIssue =
-  'missing-stat-keys' | 'no-binned-values' | 'bin-without-valuekey';
+  | 'missing-stat-keys'
+  | 'no-binned-values'
+  | 'bin-without-valuekey'
+  | 'bin-ignored-in-time-mode';
 
 const ISSUE_MESSAGES: Record<BoxPlotConfigIssue, (detail: string) => string> = {
   'missing-stat-keys': () =>
@@ -136,20 +121,25 @@ const ISSUE_MESSAGES: Record<BoxPlotConfigIssue, (detail: string) => string> = {
     `valueKey "${detail}" produced no numeric values to summarise (empty or misspelled?); nothing is drawn`,
   'bin-without-valuekey': () =>
     'bin is set on the category axis but valueKey is missing, so bin is ignored and summary mode is used',
+  'bin-ignored-in-time-mode': () =>
+    "bin/valueKey are ignored when x.scalingFunction is 'time' (bin labels aren't dates); summary mode is used, so y needs the stat keys",
 };
 
-/** Logs one configuration warning (no-op outside development). */
+/**
+ * Logs one configuration warning, in development only and once per chart, id,
+ * issue and detail (via `warnOnceInDev`), so remounts and StrictMode double
+ * effects don't repeat it.
+ */
 export const warnBoxPlotConfig = (
   chart: 'BoxPlotH' | 'BoxPlotV',
   id: string,
   issue: BoxPlotConfigIssue,
   detail = '',
-): void => {
-  if (!isDevEnvironment()) return;
-  console.warn(
+): void =>
+  warnOnceInDev(
+    `${chart}#${id}:${issue}:${detail}`,
     `[headless-charts] ${chart}#${id}: ${ISSUE_MESSAGES[issue](detail)}`,
   );
-};
 
 /** Pure check: which misconfigurations apply? Uses the same predicates as rendering. */
 export const getBoxPlotConfigIssues = ({
@@ -157,6 +147,7 @@ export const getBoxPlotConfigIssues = ({
   hasBin,
   statKeysPresent,
   valueKey,
+  timeMode = false,
 }: {
   data: unknown[];
   /** `bin` is set on the category axis */
@@ -164,7 +155,18 @@ export const getBoxPlotConfigIssues = ({
   /** hasStatKeys(valueConfig) */
   statKeysPresent: boolean;
   valueKey: string | undefined;
+  /**
+   * The category axis is a time axis (BoxPlotV `x.scalingFunction: 'time'`),
+   * where binning is never applied.
+   */
+  timeMode?: boolean;
 }): BoxPlotConfigIssue[] => {
+  if (timeMode) {
+    const issues: BoxPlotConfigIssue[] = [];
+    if (hasBin || valueKey !== undefined) issues.push('bin-ignored-in-time-mode');
+    if (!statKeysPresent) issues.push('missing-stat-keys');
+    return issues;
+  }
   const binValueKey = getBinValueKey(
     hasBin ? { bin: { count: 0 } } : {},
     valueKey,
@@ -197,21 +199,28 @@ export const useBoxPlotConfigWarnings = <TData = unknown>(
     categoryConfig,
     valueConfig,
     valueKey,
+    timeMode = false,
   }: {
     data: TData[];
     categoryConfig: Pick<AxisConfig, 'bin'>;
     valueConfig: BoxPlotBinnedValueConfig<TData>;
     valueKey: string | undefined;
+    /** See getBoxPlotConfigIssues */
+    timeMode?: boolean;
   },
 ): void => {
   const hasBin = categoryConfig.bin != null;
   const statKeysPresent = hasStatKeys(valueConfig);
   const issuesKey = useMemo(
     () =>
-      getBoxPlotConfigIssues({ data, hasBin, statKeysPresent, valueKey }).join(
-        '|',
-      ),
-    [data, hasBin, statKeysPresent, valueKey],
+      getBoxPlotConfigIssues({
+        data,
+        hasBin,
+        statKeysPresent,
+        valueKey,
+        timeMode,
+      }).join('|'),
+    [data, hasBin, statKeysPresent, valueKey, timeMode],
   );
 
   useEffect(() => {

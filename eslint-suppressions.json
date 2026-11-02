@@ -259,7 +259,7 @@
   },
   "src/components/linear/LollipopVChart/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 7
+      "count": 6
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -306,7 +306,7 @@
   },
   "src/components/ranges/BoxPlotV/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 36
+      "count": 23
     },
     "react-hooks/exhaustive-deps": {
       "count": 1

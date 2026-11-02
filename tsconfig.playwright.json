@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["tests/storybook-render-audit", "playwright.config.ts"],
+  "exclude": []
+}

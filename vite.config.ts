@@ -64,15 +64,13 @@ export default defineConfig({
           environment: 'jsdom',
           exclude: ['**/node_modules/**', '**/dist/**'],
           setupFiles: ['/src/setupTests.tsx'],
-          // Type-level tests (*.test-d.ts) run under `vitest run`. Scoped to
-          // those files, and source errors outside them are not reported here,
-          // so the pre-existing BarChart tsc errors don't fail this run;
-          // `tsc --noEmit` still covers the whole project.
+          // Type-level tests (*.test-d.ts) run under `vitest run` in the unit
+          // project only (the storybook project doesn't inherit them). Type
+          // errors in source files they import also fail the run.
           typecheck: {
             enabled: true,
             include: ['src/**/*.test-d.ts'],
             tsconfig: './tsconfig.json',
-            ignoreSourceErrors: true,
           },
         },
       },

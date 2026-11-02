@@ -11,7 +11,7 @@ const meta = preview.meta({
 
 const parseDate = timeParse('%d-%m-%Y %H:%M:%S');
 const formatISO = timeFormat('%Y-%m-%dT%H:%M:%S.000Z');
-const timeSeriesData = data.map((d: any) => ({
+const timeSeriesData = data.map((d) => ({
   ...d,
   date: formatISO(parseDate(`31-12-${d.year} 23:59:59`) as Date),
 }));
@@ -38,7 +38,7 @@ export const SparseTimeScaledColumnChart = meta.story({
   args: {
     ...TimeScaledColumnChart.input.args,
     id: 'sparse-time-column-chart',
-    data: timeSeriesData.filter((d: any) => ![2015, 2016, 2019].includes(d.year)),
+    data: timeSeriesData.filter((d) => ![2015, 2016, 2019].includes(d.year)),
   },
 });
 

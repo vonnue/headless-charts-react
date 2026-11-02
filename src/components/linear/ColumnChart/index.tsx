@@ -2,12 +2,19 @@ import { max, min } from 'd3-array';
 import { select, selectAll } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
-import { scaleBand, scaleLinear, scaleTime } from 'd3-scale';
-import { isoParse, timeParse, timeFormat } from 'd3-time-format';
+import { scaleBand, scaleLinear, type ScaleTime } from 'd3-scale';
+import { timeFormat } from 'd3-time-format';
 import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, bin1D } from '@/utils';
+import {
+  DEFAULT_TIME_FORMAT,
+  createTimeXScale,
+  insetTimeScale,
+  makeDateAccessor,
+  timeMarkWidth,
+} from '@/utils/timeScale';
 import { twMerge } from 'tailwind-merge';
 
 export interface ColumnChartGroupedProps<TData = any> extends ChartProps<TData> {
@@ -137,12 +144,8 @@ const ColumnChartGrouped = <TData = any,>({
 }: ColumnChartGroupedProps<TData>) => {
   const isTimeX = x.scalingFunction === 'time';
 
-  const d3Format = x.time?.format || '%Y-%m-%d';
-  const formatDate = timeFormat(d3Format);
-  const parseDate = timeParse(d3Format);
-
-  const toDateTime = (d: any): Date =>
-    x.time?.isISO ? (isoParse(d[x.key]) as Date) : (parseDate(d[x.key]) as Date);
+  const formatDate = timeFormat(x.time?.format || DEFAULT_TIME_FORMAT);
+  const toDateTime = makeDateAccessor(x);
 
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
@@ -197,96 +200,37 @@ const ColumnChartGrouped = <TData = any,>({
 
     const paddingBarValue = paddingBar;
 
-    const xFn: any = isTimeX ? scaleTime().nice() : scaleBand();
+    const xRange: [number, number] = [
+      (margin.left ?? 0) + (padding.left ?? 0),
+      width - (margin.right ?? 0) - (padding.right ?? 0),
+    ];
 
+    // In time mode the axis is drawn from the full margin-to-margin `xFn`, but
+    // bars are centered on their date and positioned with `markXFn`, a
+    // copy inset by half a mark width so the edge marks don't overhang the
+    // plot (#16).
+    let xFn: any;
+    let markXFn: ScaleTime<number, number> | undefined;
+    let finalBarWidth = 0;
     if (isTimeX) {
-      xFn.domain([
-        Number.isFinite(x.start)
-          ? x.start
-          : min(effectiveData.map((d: any) => toDateTime(d))),
-        Number.isFinite(x.end)
-          ? x.end
-          : max(effectiveData.map((d: any) => toDateTime(d))),
-      ]);
+      const timeXFn = createTimeXScale(effectiveData, x, toDateTime, xRange);
+      finalBarWidth = timeMarkWidth({
+        scale: timeXFn,
+        dates: effectiveData.map(toDateTime),
+        rowCount: effectiveData.length,
+        paddingRatio: paddingBarValue,
+        explicitWidth: x.time?.barWidth,
+      });
+      markXFn = insetTimeScale(timeXFn, finalBarWidth / 2);
+      xFn = timeXFn;
     } else {
-      xFn
+      xFn = scaleBand()
         .domain(effectiveData.map((d) => (d as any)[effectiveX.key]))
+        .range(xRange)
         .padding(paddingBarValue);
     }
 
-    xFn.range([
-      (margin.left ?? 0) + (padding.left ?? 0),
-      width - (margin.right ?? 0) - (padding.right ?? 0),
-    ]);
-
-    let finalBarWidth = 0;
-    // The axis must span the full margin-to-margin range (`xFn`, used by
-    // `drawAxis` below), but bars are centered marks and need a narrower
-    // *mark* range so the edge bars don't overhang it (see #16). Using one
-    // scale for both would either shrink the axis or let bars overhang —
-    // `markXFn` is a separate copy so each concern gets the range it needs.
-    let markXFn: any = xFn;
-    if (isTimeX) {
-      const [rangeStart, rangeEnd] = xFn.range();
-
-      if (Number.isFinite(x.time?.barWidth)) {
-        // 1. Explicit override always wins, used as-is (final rendered width,
-        //    paddingBarValue is NOT applied on top of an explicit value).
-        finalBarWidth = x.time!.barWidth!;
-      } else {
-        // 2. Infer from data cadence.
-        const timestamps = Array.from(
-          new Set(
-            effectiveData
-              .map((d: any) => toDateTime(d)?.getTime())
-              .filter((t: number) => Number.isFinite(t))
-          )
-        ).sort((a: number, b: number) => a - b);
-
-        let cadenceMs = NaN;
-        if (timestamps.length >= 2) {
-          const gaps: number[] = [];
-          for (let i = 1; i < timestamps.length; i++) {
-            gaps.push(timestamps[i] - timestamps[i - 1]);
-          }
-          gaps.sort((a, b) => a - b);
-          const mid = Math.floor(gaps.length / 2);
-          cadenceMs =
-            gaps.length % 2 === 0 ? (gaps[mid - 1] + gaps[mid]) / 2 : gaps[mid];
-          // Median, not mean or min: resists one large gap (e.g. a missing
-          // period) skewing the width up, and resists a single duplicate/
-          // near-duplicate timestamp collapsing the width to ~0.
-        }
-
-        let slotWidthPx: number;
-        if (Number.isFinite(cadenceMs) && cadenceMs > 0) {
-          // scaleTime is affine in ms, so the pixel delta for a fixed ms
-          // interval is the same everywhere on the scale — any anchor works.
-          const anchor = (xFn.domain()[0] as Date).getTime();
-          slotWidthPx = xFn(new Date(anchor + cadenceMs)) - xFn(new Date(anchor));
-        } else {
-          // 0 or 1 unique timestamp: no cadence to infer. Fall back to an even
-          // split of the available plotting width across the rows.
-          slotWidthPx = (rangeEnd - rangeStart) / Math.max(effectiveData.length, 1);
-        }
-
-        finalBarWidth = Math.max(1, slotWidthPx * (1 - paddingBarValue));
-      }
-
-      // Bars are centered on their date (centerX(d) - finalBarWidth / 2), so
-      // a bar at the domain's min/max would otherwise render half its width
-      // outside [rangeStart, rangeEnd] — .nice() doesn't help here, since it
-      // niceifies the domain before this point, not the range (see #16).
-      // Inset the range by half a bar width on each side, clamped so two
-      // insets can never invert the range on a degenerate (tiny/dense) chart.
-      const inset = Math.min(
-        finalBarWidth / 2,
-        Math.max(0, (rangeEnd - rangeStart) / 2 - 0.5)
-      );
-      markXFn = xFn.copy().range([rangeStart + inset, rangeEnd - inset]);
-    }
-
-    const centerX = (d: any) => markXFn(toDateTime(d));
+    const centerX = (d: TData): number => (markXFn ? markXFn(toDateTime(d)) : NaN);
 
     const yFn = scaleLinear()
       // @ts-ignore

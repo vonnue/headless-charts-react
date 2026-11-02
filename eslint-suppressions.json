@@ -259,7 +259,7 @@
   },
   "src/components/linear/LollipopVChart/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 7
+      "count": 6
     },
     "react-hooks/exhaustive-deps": {
       "count": 1

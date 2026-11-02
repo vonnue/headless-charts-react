@@ -83,7 +83,7 @@ Examples of what to record:
 
 # Persistent Agent Memory
 
-You have a persistent, file-based memory system found at: `/Users/jayaramkasivisweswaran/work/headless-charts/.claude/agent-memory/issue-writer/`
+You have a persistent, file-based memory system found at: `.claude/agent-memory/issue-writer/` (relative to the repository root)
 
 You should build up this memory system over time so that future conversations can have a complete picture of who the user is, how they'd like to collaborate with you, what behaviors to avoid or repeat, and the context behind the work the user gives you.
 

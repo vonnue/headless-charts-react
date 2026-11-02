@@ -92,7 +92,7 @@ export const RankedLine = meta.story({
  * curve can be set to bumpX to make the lines more horizontal
  */
 
-export const bumpX = meta.story({
+export const BumpX = meta.story({
   args: {
     ...RankedLine.input.args,
     id: 'bump-ranked-chart',

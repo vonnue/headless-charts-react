@@ -43,32 +43,49 @@ resolveChartRequest('waterfall');
 ## Agent workflow (mandatory)
 
 Every code change in this repo — new chart, prop change, bug fix, anything —
-goes through this agent graph, in order. Do not hand-write or hand-edit code
-directly; do not skip or reorder stages.
+goes through this agent graph, in order. Do not skip or reorder stages, and
+do not write implementation code before `dataviz-spec-architect` has locked
+the spec or commit before the review loop is clean.
 
 ```
 dataviz-spec-architect
   ├─> vitest-test-writer ─┐
-  └─> general-purpose ────┤
+  └─> main session ───────┤
                            v
-              general-purpose (merge tests + impl, iterate til green)
+              main session (merge tests + impl, iterate til green)
                            v
-              d3-react-code-reviewer <-> general-purpose (loop til clean)
+              d3-react-code-reviewer <-> main session (loop til clean)
                            v
               chart-catalog-editor
+                           v
+              main session (pre-PR checks, commit)
 ```
+
+The **main session** (the coordinating, top-level assistant — not a
+subagent) implements the code, merges tests with the implementation, writes
+the Storybook stories, and makes the commits. Subagents only spec, test,
+review and update the catalog; they never commit or push.
 
 1. `dataviz-spec-architect` first, always — locks the prop/type signature and
    behavior spec before anything forks. Test-writer and implementation must
    work off the same signature or the merge step fails.
-2. Fork in parallel: `vitest-test-writer` writes tests from the spec;
-   `general-purpose` writes the implementation from the same spec.
-3. `general-purpose` merges tests + implementation, runs them, iterates until
+2. Fork in parallel: `vitest-test-writer` writes tests from the spec; the
+   main session writes the implementation (and stories) from the same spec.
+3. The main session merges tests + implementation, runs them, iterates until
    green.
-4. `d3-react-code-reviewer` reviews; back-and-forth with `general-purpose`
+4. `d3-react-code-reviewer` reviews; back-and-forth with the main session
    until the review is clean.
-5. `chart-catalog-editor` last, once code is settled — see "Editing charts"
-   below for what it updates and regenerates.
+5. `chart-catalog-editor` once code is settled — see "Editing charts" below
+   for what it updates and regenerates.
+6. Before committing or opening a PR, the main session runs the same checks
+   as CI, and all must pass:
+   `yarn tsc --noEmit && yarn lint && yarn test:hooks && yarn vitest run && yarn docs:check && yarn vite build`
+
+Existing lint debt lives in `eslint-suppressions.json`. If you fix suppressed
+violations, run `yarn lint:prune` and commit the smaller file. Never run
+`eslint --suppress-all` / `--suppress-rule` to make new code pass; type it or
+fix it. Any diff that *increases* counts in `eslint-suppressions.json` must be
+called out for review.
 
 ## Editing charts
 

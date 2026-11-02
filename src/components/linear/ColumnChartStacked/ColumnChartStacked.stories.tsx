@@ -1,5 +1,4 @@
 import preview from '../../../../.storybook/preview';
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import ColumnChartStacked from '.';
 import data from './sample.json';

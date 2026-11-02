@@ -17,6 +17,12 @@ import {
   utcSuggestionSample,
   validBarWidth,
 } from './timeScale';
+import { resetDevWarnings } from '@/utils/devEnvironment';
+
+// warnOnceInDev remembers keys for the page's lifetime; start each test clean.
+afterEach(() => {
+  resetDevWarnings();
+});
 
 // Module-local declaration so this compiles without @types/node.
 declare const process: { env: Record<string, string | undefined> };

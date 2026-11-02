@@ -15,6 +15,7 @@ import {
   isDevEnvironment,
   resolveValueConfig,
 } from './boxPlotConfig';
+import { resetDevWarnings } from '@/utils/devEnvironment';
 
 const rawRows = [
   { age: 22, salary: 30000 },
@@ -27,6 +28,7 @@ const rawRows = [
 ];
 
 afterEach(() => {
+  resetDevWarnings();
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
 });

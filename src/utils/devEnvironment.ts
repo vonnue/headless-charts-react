@@ -33,3 +33,12 @@ export const warnOnceInDev = (key: string, message: string): void => {
   warnedKeys.add(key);
   console.warn(message);
 };
+
+/**
+ * Forgets which `warnOnceInDev` keys have fired, so tests that count warnings
+ * don't depend on test order or unique ids.
+ * @internal test-only; not part of the public API.
+ */
+export const resetDevWarnings = (): void => {
+  warnedKeys.clear();
+};

@@ -128,3 +128,15 @@ describe('PieChart', () => {
     expect(svg).toBeTruthy();
   });
 });
+
+describe('PieChart tooltip lifecycle (spec: specs/issue-8.md)', () => {
+  it('C7: removes its tooltip on unmount', () => {
+    const { unmount } = render(
+      <PieChart id='c7-pie' data={data} nameKey='name' valueKey='Y2022' tooltip={{}} style={{ width: '400px', height: '200px' }} />
+    );
+
+    unmount();
+
+    expect(document.querySelectorAll('[id="tooltip-c7-pie"]')).toHaveLength(0);
+  });
+});

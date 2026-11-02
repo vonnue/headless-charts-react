@@ -1,57 +1,35 @@
 import fs from 'node:fs';
 import { test, expect, type ConsoleMessage } from '@playwright/test';
 import { runStructuralChecks, waitForTransitionsToSettle } from './checks';
-import { STORY_IDS_FILE } from './shared';
+import { AUDIT_BASE_URL, KNOWN_BROKEN, LIVE_UPDATING, STORY_IDS_ENV } from './shared';
 
 /**
- * Console "Failed to load resource" errors for these Storybook dev-server
- * assets are tooling noise, not chart bugs: builder-vite injects
- * `/vite-inject-mocker-entry.js` into iframe.html, and a server that has
- * desynced from its config (or a different Storybook on the same port)
- * answers it with a 404. Only that exact message for exactly these URLs is
- * ignored — JS errors, and 404s for anything else, still fail the story.
+ * A console "Failed to load resource" error for builder-vite's injected
+ * `/vite-inject-mocker-entry.js` is dev-server tooling noise, not a chart bug:
+ * the dev server can answer it with a 404 (e.g. when it is requested with a
+ * cache-busting query string, or when node_modules resolves outside the
+ * project root). Only that message for exactly that path on the audit's own
+ * server (any query string) is ignored. JS errors, and 404s for anything
+ * else, including the same file name under another path or origin, still
+ * fail the story.
  */
-const IGNORED_RESOURCE_URLS = [/\/vite-inject-mocker-entry\.js(\?.*)?$/];
+const IGNORED_RESOURCE_PATH = '/vite-inject-mocker-entry.js';
 
 function isIgnoredConsoleError(msg: ConsoleMessage): boolean {
-  const url = msg.location()?.url ?? '';
-  return (
-    msg.text().startsWith('Failed to load resource') &&
-    IGNORED_RESOURCE_URLS.some((re) => re.test(url))
-  );
+  if (!msg.text().startsWith('Failed to load resource')) return false;
+  try {
+    const url = new URL(msg.location()?.url ?? '');
+    return url.origin === AUDIT_BASE_URL && url.pathname === IGNORED_RESOURCE_PATH;
+  } catch {
+    return false;
+  }
 }
 
-/**
- * Stories that are broken on main by already-filed, pre-existing bugs, keyed
- * by story id. They run as `test.fail()`: the audit stays green while the bug
- * is open, and turns red ("expected to fail, but passed") the moment it is
- * fixed, so the entry has to be removed together with the fix. No baseline is
- * taken for them — a screenshot of a broken render is not a reference image.
- * Add an entry only with a filed issue number; never to hide a new failure.
- */
-const KNOWN_BROKEN: Record<string, string> = {
-  'distribution-piechart-intro--custom-style': '#18',
-  'linear-barchart-intro--styled': '#19',
-  'linear-barchart-intro--negative-styling': '#19',
-  'flow-network-tooltip--style-node-tooltip': '#20',
-  'flow-network-tooltip--node-tooltip-custom-keys': '#20',
-  'flow-network-tooltip--node-tooltip-custom-html': '#20',
-  'flow-network-tooltip--edge-tooltip': '#20',
-  'flow-network-tooltip--edge-tooltip-style-with-class-name': '#20',
-  'flow-network-tooltip--edge-tooltip-custom-keys': '#20',
-};
-
-/**
- * Stories that re-render on a `setInterval` with fresh data (live demos).
- * Their settled frame depends on how many ticks fired before the screenshot,
- * so a pixel baseline is meaningless; they get the structural tier only.
- */
-const LIVE_UPDATING = new Set([
-  'distribution-piechart-intro--pie-chart-race',
-  'gauge-bulletchart-intro--updating-data',
-  'gauge-lineargauge-intro--updating-data',
-  'gauge-ringgauge-intro--updating-data',
-]);
+/** Console text plus the URL it came from, so a 404 names the resource. */
+function describeConsoleError(msg: ConsoleMessage): string {
+  const url = msg.location()?.url;
+  return url ? `${msg.text()} (${url})` : msg.text();
+}
 
 /**
  * Some stories build their data with Math.random() at load time. Seed it
@@ -69,25 +47,39 @@ function seedMathRandom(seed: number): void {
   };
 }
 
+/**
+ * Some stories build dates from `new Date()` (relative to today) or in local
+ * time. The config pins the browser's timezone and locale; this pins "now",
+ * so those stories render the same axis on every day of the year. Only Date
+ * is frozen; timers, rAF and transitions keep running in real time.
+ */
+const FIXED_NOW = new Date('2026-01-15T12:00:00Z');
+
 // Written by global-setup.ts, which runs after the webServer is up and before
 // this file is loaded. One test per story: stories run in parallel across
 // workers, a retry reruns only the failing story, and one failure can't stop
 // the audit of the rest.
-const storyIds: string[] = fs.existsSync(STORY_IDS_FILE)
-  ? JSON.parse(fs.readFileSync(STORY_IDS_FILE, 'utf8'))
-  : [];
+const storyIdsFile = process.env[STORY_IDS_ENV];
+const storyIds: string[] =
+  storyIdsFile && fs.existsSync(storyIdsFile) ? JSON.parse(fs.readFileSync(storyIdsFile, 'utf8')) : [];
+
+/**
+ * A missing baseline is an error on Linux (the platform the committed
+ * baselines are for) and in CI, so a deleted or never-generated baseline
+ * can't pass silently. Elsewhere it is a visible warning, so a macOS or
+ * Windows run can still use the structural tier.
+ */
+const MISSING_BASELINE_IS_ERROR = process.platform === 'linux' || !!process.env.CI;
 
 for (const storyId of storyIds) {
   test(storyId, async ({ page }, testInfo) => {
-    const knownIssue = KNOWN_BROKEN[storyId];
-    test.fail(!!knownIssue, `known broken story, tracked in ${knownIssue}`);
-
     const consoleErrors: string[] = [];
     page.on('console', (msg) => {
-      if (msg.type() === 'error' && !isIgnoredConsoleError(msg)) consoleErrors.push(msg.text());
+      if (msg.type() === 'error' && !isIgnoredConsoleError(msg)) consoleErrors.push(describeConsoleError(msg));
     });
     page.on('pageerror', (err) => consoleErrors.push(err.message));
 
+    await page.clock.setFixedTime(FIXED_NOW);
     await page.addInitScript(seedMathRandom, 0x5eed);
     await page.goto(`/iframe.html?id=${storyId}&viewMode=story`);
     await page.waitForLoadState('networkidle');
@@ -99,10 +91,21 @@ for (const storyId of storyIds) {
       ...structuralIssues.map((i) => `[${i.check}] ${i.message}`),
     ];
 
+    const known = KNOWN_BROKEN[storyId];
+    if (known) {
+      testInfo.annotations.push({ type: 'known-broken', description: `tracked in ${known.issue}` });
+      const unexpected = lines.filter((l) => !known.symptoms.some((re) => re.test(l)));
+      expect(unexpected, `issues in known-broken story "${storyId}" beyond ${known.issue}`).toEqual([]);
+      expect(
+        lines.some((l) => known.symptoms[0].test(l)),
+        `${known.issue} no longer reproduces in "${storyId}"; if it is fixed, remove the story from KNOWN_BROKEN`
+      ).toBe(true);
+      return;
+    }
+
     // Both tiers are soft assertions, so a structural break and a visual diff
     // are reported together rather than the first masking the second.
     expect.soft(lines, `structural issues in story "${storyId}"`).toEqual([]);
-    if (knownIssue) return;
     if (LIVE_UPDATING.has(storyId)) {
       testInfo.annotations.push({
         type: 'structural-only',
@@ -117,15 +120,13 @@ for (const storyId of storyIds) {
     // just the chart makes the same shift a much larger, more
     // reliably-detected fraction of the compared image.
     //
-    // Baselines are per platform. When this platform has none for the story,
-    // a normal run skips the comparison (with an annotation) instead of
-    // failing or silently writing one; an update run creates it.
+    // Baselines are per platform; an update run creates missing ones.
     const baseline = testInfo.snapshotPath(`${storyId}.png`);
     if (testInfo.config.updateSnapshots === 'none' && !fs.existsSync(baseline)) {
-      testInfo.annotations.push({
-        type: 'no-baseline',
-        description: `no ${process.platform} baseline for ${storyId}; visual tier skipped (run yarn test:storybook-render:update to create it)`,
-      });
+      const message = `no ${process.platform} baseline for ${storyId} (run yarn test:storybook-render:update to create it)`;
+      if (MISSING_BASELINE_IS_ERROR) throw new Error(message);
+      console.warn(`[storybook-render-audit] WARNING: ${message}; visual tier skipped`);
+      testInfo.annotations.push({ type: 'no-baseline', description: `${message}; visual tier skipped` });
       return;
     }
     await expect.soft(page.locator('svg').first()).toHaveScreenshot(`${storyId}.png`);

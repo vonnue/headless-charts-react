@@ -98,8 +98,9 @@ async function checkAxesRendered(svg: Locator): Promise<StructuralIssue[]> {
 /**
  * Rendered shapes shouldn't sit wildly outside the SVG's own viewport — a
  * generous tolerance (half the SVG's own size) allows for intentional
- * partial overhang (see #16) without flagging it, while still catching
- * gross mispositioning (a coordinate off by orders of magnitude).
+ * partial overhang (labels, markers and strokes that sit past the plot edge)
+ * without flagging it, while still catching gross mispositioning (a
+ * coordinate off by orders of magnitude).
  */
 async function checkNoGrossOverflow(svg: Locator): Promise<StructuralIssue[]> {
   return svg.evaluate((svgEl) => {

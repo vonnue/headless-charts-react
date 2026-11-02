@@ -41,12 +41,19 @@ export default defineConfig({
     baseURL: AUDIT_BASE_URL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // Pin what date and number formatting depend on, so axis labels and
+    // local-time story data don't differ between machines. render.spec.ts
+    // also freezes "now" (page.clock) for stories that use new Date().
+    timezoneId: 'UTC',
+    locale: 'en-US',
   },
   webServer: {
     // Playwright owns a fresh server on a dedicated port. Set
     // STORYBOOK_AUDIT_REUSE=1 to attach to one you already started on that
     // port (only if you know it is fresh — see the agent's notes).
-    command: `yarn storybook --ci -p ${AUDIT_PORT}`,
+    // `run -B` runs the storybook binary directly (not the package.json
+    // script, which hard-codes -p 6006), so only this port is passed.
+    command: `yarn run -B storybook dev --ci -p ${AUDIT_PORT}`,
     url: `${AUDIT_BASE_URL}/index.json`,
     reuseExistingServer: !!process.env.STORYBOOK_AUDIT_REUSE,
     timeout: 120_000,

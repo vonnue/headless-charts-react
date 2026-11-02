@@ -53,23 +53,27 @@ baseline for a story, a normal run does the structural tier only and adds a
 (`updateSnapshots: 'none'`). To create or refresh baselines, run
 `yarn test:storybook-render:update` (scoped with `STORYBOOK_AUDIT_FILTER` when
 you can) on that platform and review the PNGs in `git diff` before committing.
-The update run also deletes orphaned baselines (stories that no longer exist);
-a normal run fails and lists them.
+The update run also deletes orphaned baselines (stories that no longer exist,
+or that are exempt below); a normal run fails and lists them. A missing
+baseline fails the story on Linux and in CI, and is a printed warning plus a
+`no-baseline` annotation elsewhere.
 
 ### Stories without a visual baseline
 
-`render.spec.ts` keeps two short, explicit lists:
+`tests/storybook-render-audit/shared.ts` keeps two short, explicit lists:
 
-- `KNOWN_BROKEN` — stories broken by an already-filed bug (issue number in the
-  value). They run as `test.fail()`, so the audit stays green while the issue
-  is open and goes red ("expected to fail, but passed") when it is fixed;
-  remove the entry with the fix and generate its baseline. Never add a story
-  here without a filed issue.
-- `LIVE_UPDATING` — stories that re-render on a `setInterval`; structural
+- `KNOWN_BROKEN`: stories broken by an already-filed bug, each with the issue
+  number and that bug's exact symptoms (regexes). The story stays green only
+  while every reported line matches those symptoms and the bug's signature
+  still appears. Any other issue fails it (a new break), and so does the
+  signature disappearing (the bug is fixed: remove the entry with the fix and
+  generate its baseline). Never add a story here without a filed issue.
+- `LIVE_UPDATING`: stories that re-render on a `setInterval`; structural
   tier only, since their settled frame depends on timing.
 
-`Math.random` is seeded before every story loads, so stories that build random
-data render identically on every run.
+The browser runs in UTC with an en-US locale, a fixed "now" and a seeded
+`Math.random`, so date-dependent and random-data stories render identically
+on every machine and every run.
 
 To update baselines after an *intentional* visual change: `yarn test:storybook-render:update`, then review the diffs in `git diff` before committing — a baseline update should have a clear reason, not be a reflex response to a failing screenshot.
 

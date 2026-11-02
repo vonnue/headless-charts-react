@@ -103,7 +103,12 @@ export type BoxPlotVProps<TData = any> =
  *   (positive pixels) overrides it but is capped at one slot, so it can
  *   narrow boxes but never widen them past their slot. Set `x.time.utc:
  *   true` when dates are UTC instants or calendar days — otherwise they are
- *   parsed, placed and labelled in the viewer's local time zone.
+ *   parsed, placed and labelled in the viewer's local time zone. Pinned
+ *   `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly
+ *   on a pinned end is centred on the plot edge and overhangs it by half a
+ *   box; to keep edge marks inside, pin half a step outside the data (e.g.
+ *   `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1
+ *   Jan 2025).
  *
  * Also called: vertical box plot, box and whisker chart, box chart.
  *

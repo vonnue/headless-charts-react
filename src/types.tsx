@@ -10,14 +10,20 @@ export interface AxisConfig<TData = any> {
   /**
    * Starting value for the axis domain (for continuous/value axes). On a
    * time axis (epoch ms) a pinned start gets no edge padding, so a mark whose
-   * date equals it is centred on the boundary and may overhang by half a bar.
+   * date equals it is centred on the boundary and overhangs by half a bar.
+   * To keep edge marks inside, pin half a step (cadence) earlier, e.g.
+   * `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting
+   * 1 Jan 2025.
    */
   start?: number;
 
   /**
    * Ending value for the axis domain (for continuous/value axes). On a time
    * axis (epoch ms) a pinned end gets no edge padding, so a mark whose date
-   * equals it is centred on the boundary and may overhang by half a bar.
+   * equals it is centred on the boundary and overhangs by half a bar. To keep
+   * edge marks inside, pin half a step (cadence) later, e.g.
+   * `end: Date.UTC(2025, 0, 31) + 12 * 3600_000` for daily data ending
+   * 31 Jan 2025.
    */
   end?: number;
 

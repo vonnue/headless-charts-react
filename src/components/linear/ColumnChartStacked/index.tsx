@@ -19,6 +19,7 @@ import {
   useTimeAxisWarnings,
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
+import { warnOnceInDev } from '@/utils/devEnvironment';
 import { transition } from 'd3';
 import { twMerge } from 'tailwind-merge';
 
@@ -222,11 +223,16 @@ const ColumnChartStacked = <TData = any,>({
       barX = (d) => bandXFn((d as any)[x.key]) || 0;
     }
     // Waterfall steps share one bar slot; never a negative width
-    const waterfallWidth = Math.max(
-      0,
+    const rawWaterfallWidth =
       // @ts-ignore
-      barWidth / y.length - ((waterfall && waterfall.padding) || 0)
-    );
+      barWidth / y.length - ((waterfall && waterfall.padding) || 0);
+    const waterfallWidth = Math.max(0, rawWaterfallWidth);
+    if (waterfall && rows.length > 0 && !(rawWaterfallWidth > 0)) {
+      warnOnceInDev(
+        `ColumnChartStacked#${id}:waterfall-zero-width`,
+        `[headless-charts] ColumnChartStacked#${id}: waterfall bars have no width: each step gets ${+(barWidth / y.length).toFixed(1)}px of the bar (${+barWidth.toFixed(1)}px / ${y.length} series) and the waterfall padding takes all of it, so the bars are invisible. Reduce the waterfall padding, use fewer series, or widen the bars`
+      );
+    }
 
     const yFnRange = [
       height - (margin.bottom ?? 0) - (padding.bottom ?? 0),

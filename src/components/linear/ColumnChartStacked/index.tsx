@@ -17,6 +17,7 @@ import {
   makeDateAccessor,
   makeDateFormatter,
   useTimeAxisWarnings,
+  warnIfBarWidthCapped,
 } from '@/utils/timeScale';
 import { transition } from 'd3';
 import { twMerge } from 'tailwind-merge';
@@ -206,6 +207,7 @@ const ColumnChartStacked = <TData = any,>({
         paddingBarValue,
         x.time?.barWidth
       );
+      warnIfBarWidthCapped('ColumnChartStacked', id, layout);
       const timeXFn = layout.scale;
       xFn = timeXFn;
       barWidth = layout.width;

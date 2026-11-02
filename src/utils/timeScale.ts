@@ -153,6 +153,8 @@ export interface TimeBarLayout {
   width: number;
   /** Width, in px, of one date slot; `width` never exceeds it */
   slotPx: number;
+  /** The `x.time.barWidth` that was capped to `slotPx`, if any */
+  cappedBarWidth?: number;
 }
 
 /**
@@ -206,7 +208,24 @@ export const createTimeBarLayout = <TData,>(
     scale: padTimeDomain(base, Math.max(slotPx, width) / 2, x),
     width,
     slotPx,
+    ...(explicit !== undefined && explicit > slotPx ? { cappedBarWidth: explicit } : {}),
   };
+};
+
+/**
+ * Dev-only, once per chart/id/value: say when a valid `x.time.barWidth` was
+ * capped to one date slot, so a width that looks ignored is explained.
+ */
+export const warnIfBarWidthCapped = (
+  chart: string,
+  id: string,
+  layout: TimeBarLayout
+): void => {
+  if (layout.cappedBarWidth === undefined) return;
+  warnOnceInDev(
+    `${chart}#${id}:bar-width-capped:${layout.cappedBarWidth}`,
+    `[headless-charts] ${chart}#${id}: x.time.barWidth ${layout.cappedBarWidth} exceeds one date slot (${+layout.slotPx.toFixed(1)}px); it is capped to the slot so neighbouring marks don't overlap`
+  );
 };
 
 export type TimeAxisIssue = 'dropped-rows' | 'invalid-bar-width' | 'suggest-utc';

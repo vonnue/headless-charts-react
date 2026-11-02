@@ -20,8 +20,9 @@
 # Best effort, not a sandbox: variable indirection (`G=git; $G push`) or a
 # raw curl to the GitHub API can't be caught by pattern matching.
 #
-# Fails closed: Claude Code only treats exit 2 (or a deny JSON) as a block,
-# so every failure path below exits 2. Tests:
+# Fails closed: every failure path below exits 2 (a block). settings.json also
+# sets onFailure: "block", so a timeout, spawn failure or any exit other than
+# 0/2 blocks the call too (Claude Code >= 2.1.295). Tests:
 # .claude/hooks/tests/subagent-block-risky-actions.test.sh
 set -euo pipefail
 
@@ -54,7 +55,8 @@ AGENT_TYPE="$(jq -r '.agent_type // empty' <<<"$INPUT")" || deny "could not pars
 CMD="$(jq -r '.tool_input.command // empty' <<<"$INPUT")" || deny "could not parse hook input as JSON."
 [ -z "$CMD" ] && exit 0
 # bash's ${var//pat/} below is quadratic in the number of matches (400 KB of
-# quotes takes ~45 s), and a hook that hits its timeout doesn't block. Cap the size.
+# quotes takes ~45 s). A timeout now blocks (onFailure: "block"), but cap the
+# size so a long command fails fast with a clear message instead of stalling.
 [ "${#CMD}" -le 524288 ] || deny "command is longer than 512 KB; write long scripts to a file with the Write tool and run that."
 
 # Deliberately conservative: git/gh may be preceded by any separator,

@@ -9,6 +9,7 @@ import useAxis from '@/hooks/useAxis';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { useCallback, useEffect } from 'react';
 import { defaultChartClassNames, binDataStats } from '@/utils';
+import { resolveBound } from '@/utils/domain';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import {
@@ -204,8 +205,8 @@ const BoxPlotH = <TData = any,>({
 
     const xFn = scaleLinear()
       .domain([
-        Number.isFinite(effectiveX.min) ? effectiveX.min : min(effectiveData.map((d: any) => d[effectiveX.minKey])),
-        effectiveX.max || max(effectiveData.map((d: any) => d[effectiveX.maxKey])),
+        resolveBound(effectiveX.min, min(effectiveData.map((d: any) => d[effectiveX.minKey]))),
+        resolveBound(effectiveX.max, max(effectiveData.map((d: any) => d[effectiveX.maxKey]))),
       ])
       .range([(margin.left ?? 0), width - (padding.right || 0) - (margin.right ?? 0)]);
 

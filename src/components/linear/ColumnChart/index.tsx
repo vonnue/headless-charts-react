@@ -12,6 +12,8 @@ import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, bin1D } from '@/utils';
+import { warnOnceInDev } from '@/utils/devEnvironment';
+import { pinnedEnd, pinnedStart } from '@/utils/domain';
 import {
   createTimeBarLayout,
   makeDateAccessor,
@@ -197,20 +199,17 @@ const ColumnChartGrouped = <TData = any,>({
       effectiveY = y;
     }
 
-    // @ts-ignore
-    const minStart = min(effectiveY.map((column) => column.start));
-    // @ts-ignore
-    const minY: number = min(
-      effectiveY.map((column: AxisConfig) => min(effectiveData, (d: any) => d[column.key]))
+    const minStart = pinnedStart(effectiveY.map((column) => column.start));
+    const maxEnd = pinnedEnd(effectiveY.map((column) => column.end));
+    // Row values read as numbers, the way d3's min/max treat them.
+    const valueOf = (d: unknown, key: string) =>
+      (d as Record<string, number | undefined>)[key];
+    const minY = min(effectiveY, (column) =>
+      min(effectiveData, (d) => valueOf(d, column.key))
     );
-    // @ts-ignore
-    const maxY: number = max(
-      effectiveY.map((column: AxisConfig) => max(effectiveData, (d: any) => d[column.key]))
+    const maxY = max(effectiveY, (column) =>
+      max(effectiveData, (d) => valueOf(d, column.key))
     );
-    // @ts-ignore
-    const maxEnd = max(effectiveY.map((column) => column.end));
-    // @ts-ignore
-    const areAllGreaterThanZero = minY > 0;
 
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
@@ -252,16 +251,22 @@ const ColumnChartGrouped = <TData = any,>({
       barX = (d) => bandXFn((d as any)[effectiveX.key]) || 0;
     }
 
+    // Empty data leaves the end NaN (no ticks), as before the domain typing.
+    const yStart = minStart ?? (minY || 0);
+    const yEnd = maxEnd ?? maxY ?? NaN;
+    if (yStart > yEnd)
+      warnOnceInDev(
+        `col-${id}-inverted`,
+        `ColumnChart "${id}": y start (${yStart}) > end (${yEnd}); bars cannot render on an inverted axis.`
+      );
+
+    const plotBottom = height - (margin.bottom ?? 0) - (padding.bottom ?? 0);
     const yFn = scaleLinear()
-      // @ts-ignore
-      .domain([
-        Number.isFinite(minStart) ? minStart : minY || 0,
-        maxEnd || maxY,
-      ])
-      .range([
-        height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
-        (margin.top ?? 0) + (padding.top ?? 0),
-      ]);
+      .domain([yStart, yEnd])
+      .range([plotBottom, (margin.top ?? 0) + (padding.top ?? 0)]);
+    // Columns grow up from the plot bottom; an inverted axis would give a
+    // negative height (invalid SVG), so clamp to 0.
+    const columnHeight = (value: number) => Math.max(0, plotBottom - yFn(value));
 
     effectiveY.map((column, i) => {
       const barsG = g.append('g');
@@ -292,11 +297,7 @@ const ColumnChartGrouped = <TData = any,>({
           drawing && drawing.duration
             ? 0
             : (d as any)[column.key]
-            ? // @ts-ignore
-              height -
-              (margin.bottom ?? 0) -
-              (padding.bottom ?? 0) -
-              yFn((d as any)[column.key])
+            ? columnHeight((d as any)[column.key])
             : 0
         )
         .on('mouseenter', onMouseOver)
@@ -311,11 +312,7 @@ const ColumnChartGrouped = <TData = any,>({
           .attr('y', (d) => yFn((d as any)[column.key]))
           .attr('height', (d) =>
             Number.isFinite((d as any)[column.key])
-              ? // @ts-ignore
-                height -
-                (margin.bottom ?? 0) -
-                (padding.bottom ?? 0) -
-                yFn((d as any)[column.key])
+              ? columnHeight((d as any)[column.key])
               : 0
           );
     });
@@ -357,7 +354,7 @@ const ColumnChartGrouped = <TData = any,>({
       key: effectiveY[0]?.key || '',
       axis: {
         location: yAxisLocation as 'left' | 'right',
-        ticks: effectiveY[0]?.axis?.ticks || (wholeNumbers && maxY < 10 ? maxY : 5),
+        ticks: effectiveY[0]?.axis?.ticks || (wholeNumbers && maxY !== undefined && maxY < 10 ? maxY : 5),
         label: yAxisLabel,
       },
     };

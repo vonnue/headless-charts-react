@@ -21,6 +21,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { timeParse, isoParse } from 'd3-time-format';
 import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { pinnedEnd, pinnedStart, resolveBound } from '@/utils/domain';
 import { easeLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
@@ -288,24 +289,14 @@ const LineChart = <TData = any,>({
 
     const g = svg.append('g');
 
-    const minLeftYs =
-        allLeftY.length > 0 &&
-        Number.isFinite(min(allLeftY.map((column: any) => column.start)))
-          ? min(allLeftY.map((column: any) => column.start))
-          : min([
-              ...allLeftY.map((column) =>
-                min(data.map((d: any) => d[column.key]))
-              ),
-            ]),
-      maxLeftYs =
-        allLeftY.length > 0 &&
-        Number.isFinite(max(allLeftY.map((column: any) => column.end)))
-          ? max(allLeftY.map((column: any) => column.end))
-          : max([
-              ...allLeftY.map((column) =>
-                max(data.map((d: any) => d[column.key]))
-              ),
-            ]),
+    const minLeftYs = resolveBound(
+        pinnedStart(allLeftY.map((column) => column.start)),
+        min(allLeftY.map((column) => min(data.map((d: any) => d[column.key]))))
+      ),
+      maxLeftYs = resolveBound(
+        pinnedEnd(allLeftY.map((column) => column.end)),
+        max(allLeftY.map((column) => max(data.map((d: any) => d[column.key]))))
+      ),
       minTicksLeft =
         allLeftY.length > 0 &&
         min(allLeftY.map((column: any) => column.axis?.ticks));
@@ -327,22 +318,16 @@ const LineChart = <TData = any,>({
         .domain(reverse ? [maxLeftYs, minLeftYs] : [minLeftYs, maxLeftYs])
         .range(yRange);
 
-    const minRightYs =
-        allRightY.length > 0 &&
-        min([
-          ...allRightY.map((column) =>
-            min(data.map((d: any) => d[column.key]))
-          ),
-          ...allRightY.map((column) => column.start),
-        ]),
-      maxRightYs =
-        allRightY.length > 0 &&
-        max([
-          ...allRightY.map((column) =>
-            max(data.map((d: any) => d[column.key]))
-          ),
-          ...allRightY.map((column) => column.end),
-        ]);
+    // Same rule as the left axis: a finite start/end on any right-axis series
+    // pins that end of the right axis (narrowing or widening it).
+    const minRightYs = resolveBound(
+        pinnedStart(allRightY.map((column) => column.start)),
+        min(allRightY.map((column) => min(data.map((d: any) => d[column.key]))))
+      ),
+      maxRightYs = resolveBound(
+        pinnedEnd(allRightY.map((column) => column.end)),
+        max(allRightY.map((column) => max(data.map((d: any) => d[column.key]))))
+      );
 
     const yRightFn =
         allRightY.length > 0 &&

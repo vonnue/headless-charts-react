@@ -17,6 +17,7 @@ import useAxis from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, binData } from '@/utils';
+import { resolveBound } from '@/utils/domain';
 import { scaleLinear, scaleBand, scaleSequential } from 'd3-scale';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
@@ -218,32 +219,37 @@ const ScatterPlot = <TData = any,>({
       width - (margin?.right ?? 0),
     ]);
 
+    // A finite start/end pins that end of the axis; anything else (undefined,
+    // null, NaN, ±Infinity) falls back to the data extent.
     const setDefaultDomain = (xFn: any, yFn: any) => {
       xFn.domain([
-        x.start !== null && x.start !== undefined
-          ? x.start
-          : min(
-              data.map((d: any) => (x.convert ? x.convert(d[x.key]) : d[x.key]))
-            ),
-
-        x.end !== null && x.end !== undefined
-          ? x.end
-          : max(
-              data.map((d: any) => (x.convert ? x.convert(d[x.key]) : d[x.key]))
-            ),
+        resolveBound(
+          x.start,
+          min(
+            data.map((d: any) => (x.convert ? x.convert(d[x.key]) : d[x.key]))
+          )
+        ),
+        resolveBound(
+          x.end,
+          max(
+            data.map((d: any) => (x.convert ? x.convert(d[x.key]) : d[x.key]))
+          )
+        ),
       ]);
 
       yFn.domain([
-        y.start !== null && y.start !== undefined
-          ? y.start
-          : min(
-              data.map((d: any) => (y.convert ? y.convert(d[y.key]) : d[y.key]))
-            ),
-        y.end !== null && y.end !== undefined
-          ? y.end
-          : max(
-              data.map((d: any) => (y.convert ? y.convert(d[y.key]) : d[y.key]))
-            ),
+        resolveBound(
+          y.start,
+          min(
+            data.map((d: any) => (y.convert ? y.convert(d[y.key]) : d[y.key]))
+          )
+        ),
+        resolveBound(
+          y.end,
+          max(
+            data.map((d: any) => (y.convert ? y.convert(d[y.key]) : d[y.key]))
+          )
+        ),
       ]);
     };
 

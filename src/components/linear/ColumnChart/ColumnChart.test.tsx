@@ -508,18 +508,46 @@ describe('ColumnChart', () => {
       });
     });
 
-    it('caps an explicit barWidth at one slot so bars cannot overlap', () => {
+    it('caps an explicit barWidth at one slot so bars cannot overlap, warning once in dev', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const props = {
+        id: 'time-column-wide',
+        style: CHART_SIZE,
+        x: {
+          key: 'date',
+          scalingFunction: 'time' as const,
+          time: { isISO: true, utc: true, barWidth: 500 },
+        },
+        y: [{ key: 'iphone', className: 'fill-blue-500' }],
+      };
+      const { rerender } = render(<ColumnChart {...props} data={timeSeriesDataISO} />);
+      rerender(<ColumnChart {...props} data={[...timeSeriesDataISO]} />);
+
+      widthsOf('time-column-wide').forEach((w) => expect(w).toBeCloseTo(SLOT_5, 6));
+      const msgs = warn.mock.calls
+        .map(([m]) => String(m))
+        .filter((m) => m.includes('ColumnChart#time-column-wide'));
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0]).toContain('x.time.barWidth 500 exceeds one date slot (84px)');
+      warn.mockRestore();
+    });
+
+    it('does not warn about a barWidth that fits in the slot', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       render(
         <ColumnChart
-          id='time-column-wide'
+          id='time-column-narrow'
           style={CHART_SIZE}
           data={timeSeriesDataISO}
-          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, barWidth: 500 } }}
+          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true, barWidth: 30 } }}
           y={[{ key: 'iphone', className: 'fill-blue-500' }]}
         />
       );
 
-      widthsOf('time-column-wide').forEach((w) => expect(w).toBeCloseTo(SLOT_5, 6));
+      expect(
+        warn.mock.calls.some(([m]) => String(m).includes('ColumnChart#time-column-narrow'))
+      ).toBe(false);
+      warn.mockRestore();
     });
 
     it.each([0, -20, NaN, Infinity])(

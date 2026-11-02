@@ -53,7 +53,8 @@ export interface AxisConfig<TData = any> {
     /**
      * Explicit width of each bar/box, in positive pixels, when
      * scalingFunction is 'time'. Overrides cadence inference and is capped at
-     * one date slot so neighbouring marks never overlap. Values that are not
+     * one date slot so neighbouring marks never overlap (a development
+     * warning says when a width was capped). Values that are not
      * finite or not > 0 are ignored (with a development warning). Read by
      * ColumnChart, ColumnChartStacked and BoxPlotV; LollipopVChart has no
      * width to size and ignores it.

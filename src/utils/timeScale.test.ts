@@ -294,10 +294,14 @@ describe('createTimeBarLayout (F1/F2: one scale, slots, no overlap)', () => {
     expect(layout.scale.range()).toStrictEqual(RANGE);
   });
 
-  it('uses an explicit barWidth, capped at one slot', () => {
+  it('uses an explicit barWidth, capped at one slot, and reports the cap', () => {
     const rows = daily(5); // slot = 84px
-    expect(createTimeBarLayout(rows, x, toDate, RANGE, 0.2, 30).width).toBe(30);
-    expect(createTimeBarLayout(rows, x, toDate, RANGE, 0.2, 500).width).toBeCloseTo(84, 6);
+    const fits = createTimeBarLayout(rows, x, toDate, RANGE, 0.2, 30);
+    const capped = createTimeBarLayout(rows, x, toDate, RANGE, 0.2, 500);
+    expect(fits.width).toBe(30);
+    expect(fits.cappedBarWidth).toBeUndefined();
+    expect(capped.width).toBeCloseTo(84, 6);
+    expect(capped.cappedBarWidth).toBe(500);
   });
 
   it.each([NaN, Infinity, 0, -10])('ignores an unusable barWidth (%s)', (bad) => {

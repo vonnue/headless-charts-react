@@ -17,6 +17,7 @@ import {
   makeDateAccessor,
   makeDateFormatter,
   useTimeAxisWarnings,
+  warnIfBarWidthCapped,
 } from '@/utils/timeScale';
 import { twMerge } from 'tailwind-merge';
 
@@ -229,6 +230,7 @@ const ColumnChartGrouped = <TData = any,>({
         paddingBarValue,
         x.time?.barWidth
       );
+      warnIfBarWidthCapped('ColumnChart', id, layout);
       const timeXFn = layout.scale;
       xFn = timeXFn;
       barWidth = layout.width;

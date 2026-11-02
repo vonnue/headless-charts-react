@@ -18,6 +18,7 @@ import {
   makeDateAccessor,
   makeDateFormatter,
   useTimeAxisWarnings,
+  warnIfBarWidthCapped,
 } from '@/utils/timeScale';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
@@ -269,6 +270,7 @@ const BoxPlotV = <TData = any,>({
         paddingBarValue,
         x.time?.barWidth
       );
+      warnIfBarWidthCapped('BoxPlotV', id, layout);
       const timeXFn = layout.scale;
       xFn = timeXFn;
       boxWidth = layout.width;

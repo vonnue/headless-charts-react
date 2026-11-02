@@ -246,7 +246,7 @@ const AreaChart = <TData = any,>({
         : (parseDate(d[x.key]) as Date);
 
     const xFn =
-      x.scalingFunction === 'time' ? scaleTime().nice() : scaleLinear();
+      x.scalingFunction === 'time' ? scaleTime() : scaleLinear();
 
     const setDefaultXDomain = (xFunction: any) => {
       x.scalingFunction === 'time'

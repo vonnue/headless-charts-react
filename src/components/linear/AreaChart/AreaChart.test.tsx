@@ -200,3 +200,39 @@ describe('AreaChart', () => {
     expect(svg).toBeTruthy();
   });
 });
+
+// #16: the time scale must use the raw data extent, not a niced one.
+describe('AreaChart time scale domain (#16)', () => {
+  const timeData = [
+    { date: '2020-01-15', value: 10 },
+    { date: '2020-02-10', value: 20 },
+    { date: '2020-03-17', value: 15 },
+  ];
+
+  it('maps the first and last dates to the edges of the x range (not niced)', () => {
+    render(
+      <AreaChart
+        id='area-chart-time-domain'
+        data={timeData}
+        style={{ width: '600px', height: '400px' }}
+        x={{
+          key: 'date',
+          scalingFunction: 'time',
+          time: { format: '%Y-%m-%d' },
+        }}
+        y={[{ key: 'value' }]}
+      />
+    );
+
+    const svg = screen.getByTestId('area-chart-time-domain');
+    const d = svg.querySelector('.area path')?.getAttribute('d') ?? '';
+    const xs = Array.from(d.matchAll(/[ML]([-\d.e]+),/g), (m) => Number(m[1]));
+
+    // margin.left = 40, margin.right = 20, padding = 0 → range [40, 580].
+    // A niced domain would round the dates out to month boundaries and pull
+    // the area's edges inwards.
+    expect(xs.length).toBeGreaterThan(0);
+    expect(Math.min(...xs)).toBeCloseTo(40, 6);
+    expect(Math.max(...xs)).toBeCloseTo(580, 6);
+  });
+});

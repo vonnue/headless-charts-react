@@ -265,7 +265,7 @@ const LineChart = <TData = any,>({
       height = +svg.style('height').split('px')[0];
 
     const xFn =
-      x.scalingFunction === 'time' ? scaleTime().nice() : scaleLinear();
+      x.scalingFunction === 'time' ? scaleTime() : scaleLinear();
 
     setDefaultXDomain(xFn);
     xFn.range([

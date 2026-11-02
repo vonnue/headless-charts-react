@@ -895,24 +895,52 @@ describe('ColumnChartStacked', () => {
         .forEach((r) => expect(Number(r.getAttribute('width'))).toBeCloseTo(130, 6));
     });
 
-    it('clamps waterfall bar width at 0 when waterfall.padding exceeds it (F4)', () => {
-      render(
-        <ColumnChartStacked
-          id='time-stacked-waterfall-clamp'
-          data={evenlySpacedTimeData}
-          style={chartStyle}
-          {...timeSeriesArgs}
-          // The prop is typed boolean, but the component also reads an object's
-          // `padding` (pre-existing, @ts-ignore'd in the component).
-          waterfall={{ padding: 500 } as unknown as boolean}
-        />
-      );
+    it('clamps waterfall bar width at 0 when waterfall.padding exceeds it, warning once in dev (F4, review-2 N3)', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const props = {
+        id: 'time-stacked-waterfall-clamp',
+        style: chartStyle,
+        ...timeSeriesArgs,
+        // The prop is typed boolean, but the component also reads an object's
+        // `padding` (pre-existing, @ts-ignore'd in the component).
+        waterfall: { padding: 500 } as unknown as boolean,
+      };
+      const { rerender } = render(<ColumnChartStacked {...props} data={evenlySpacedTimeData} />);
+      rerender(<ColumnChartStacked {...props} data={[...evenlySpacedTimeData]} />);
 
       const widths = Array.from(
         document.querySelectorAll('#time-stacked-waterfall-clamp rect')
       ).map((r) => Number(r.getAttribute('width')));
       expect(widths.length).toBeGreaterThan(0);
       widths.forEach((w) => expect(w).toBe(0));
+      const msgs = warn.mock.calls
+        .map(([m]) => String(m))
+        .filter(
+          (m) =>
+            m.includes('ColumnChartStacked#time-stacked-waterfall-clamp') &&
+            m.includes('waterfall bars have no width')
+        );
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0]).toContain('each step gets 34.7px of the bar (104px / 3 series)');
+      warn.mockRestore();
+    });
+
+    it('does not warn about waterfall width when the bars are visible', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(
+        <ColumnChartStacked
+          id='time-stacked-waterfall-ok'
+          data={evenlySpacedTimeData}
+          style={chartStyle}
+          {...timeSeriesArgs}
+          waterfall
+        />
+      );
+
+      expect(
+        warn.mock.calls.some(([m]) => String(m).includes('waterfall bars have no width'))
+      ).toBe(false);
+      warn.mockRestore();
     });
 
     it('drops rows whose date cannot be read, with a dev warning (F6)', () => {

@@ -420,7 +420,10 @@ describe('utcSuggestionSample (review-2 N1: date-only ISO without utc)', () => {
     [['2025-01-01', '2025-01-02']],
     [['2025-01-01T00:00:00Z', '2025-01-02T00:00:00.000Z']],
     [['2025-01-01T00:00:00+00:00', '2025-01-02T00:00:00-0000']],
-  ])('suggests utc when every value is date-only or UTC: %j', (dates) => {
+    [['2025-01-01T00:00Z', '2025-01-02T00:00+0000']],
+    [['2025-01', '2025-02']],
+    [['2025', '2026']],
+  ])('suggests utc when every value is date-only or UTC midnight: %j', (dates) => {
     const data = dates.map((date) => ({ date }));
     expect(utcSuggestionSample(data, iso)).toBe(dates[0]);
     expect(getTimeAxisIssues(data, iso, true)).toStrictEqual([
@@ -436,6 +439,19 @@ describe('utcSuggestionSample (review-2 N1: date-only ISO without utc)', () => {
       utcSuggestionSample([{ date: '2025-01-01T09:00:00+05:30' }], iso)
     ).toBeUndefined();
     expect(utcSuggestionSample([{ date: '2025-01-01T09:00:00' }], iso)).toBeUndefined();
+  });
+
+  it.each([
+    [['2025-01-01T14:37:00Z', '2025-01-02T14:37:00Z']],
+    [['2025-01-01T14:37:00.123Z', '2025-01-02T14:37:00.123Z']],
+    [['2025-01-01T09:00:00+00:00', '2025-01-02T09:00:00+00:00']],
+    [['2025-01-01T00:00:00.001Z', '2025-01-02T00:00:00.001Z']],
+    // one real timestamp among midnights means these are instants, not dates
+    [['2025-01-01T00:00:00Z', '2025-01-02T14:37:00Z']],
+  ])('stays quiet for real UTC timestamps (review-3 R1): %j', (dates) => {
+    const data = dates.map((date) => ({ date }));
+    expect(utcSuggestionSample(data, iso)).toBeUndefined();
+    expect(getTimeAxisIssues(data, iso, true)).toStrictEqual([]);
     expect(utcSuggestionSample([{ date: '2025-01-01' }, { date: utcDay(2) }], iso)).toBeUndefined();
     expect(utcSuggestionSample([], iso)).toBeUndefined();
   });

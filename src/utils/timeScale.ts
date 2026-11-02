@@ -242,15 +242,20 @@ export const warnIfBarWidthCapped = (
 
 export type TimeAxisIssue = 'dropped-rows' | 'invalid-bar-width' | 'suggest-utc';
 
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
-const UTC_SUFFIX = /(Z|[+-]00:?00)$/;
+// Date-only ISO (YYYY, YYYY-MM, YYYY-MM-DD): isoParse / native Date read these
+// as UTC midnight.
+const DATE_ONLY = /^\d{4}(-\d{2}(-\d{2})?)?$/;
+// A UTC instant at exactly midnight, i.e. a date serialised with toISOString().
+const UTC_MIDNIGHT = /T00:00(:00(\.0+)?)?(Z|[+-]00:?00)$/;
 
 /**
  * The first x value when `x.time.isISO` is set without `x.time.utc` and every
- * x value is a date-only ISO string or a UTC instant (`Z` / `+00:00`), else
- * undefined. `isoParse` reads those as UTC, but the axis and tooltip are in
- * local time, so outside UTC the marks, ticks and labels land a day off
- * (review-2 N1).
+ * x value is a date-only ISO string (`2025`, `2025-01`, `2025-01-01`) or a UTC
+ * instant at midnight (`2025-01-01T00:00:00.000Z`), else undefined. Those are
+ * dates read as UTC midnight, but the axis and tooltip are in local time, so
+ * west of UTC the marks, ticks and labels land a day early (review-2 N1).
+ * Real UTC timestamps (e.g. `T14:37:00Z`) don't trigger it: showing those in
+ * the viewer's local time is the right default (review-3 R1).
  */
 export const utcSuggestionSample = <TData,>(
   data: TData[],
@@ -259,7 +264,7 @@ export const utcSuggestionSample = <TData,>(
   if (!x.time?.isISO || x.time?.utc || data.length === 0) return undefined;
   const values = data.map((d) => (d as Record<string, unknown>)[x.key]);
   const allUtc = values.every(
-    (v) => typeof v === 'string' && (DATE_ONLY.test(v) || UTC_SUFFIX.test(v))
+    (v) => typeof v === 'string' && (DATE_ONLY.test(v) || UTC_MIDNIGHT.test(v))
   );
   return allUtc ? String(values[0]) : undefined;
 };
@@ -289,12 +294,12 @@ const TIME_ISSUE_MESSAGES: Record<TimeAxisIssue, (key: string, detail: string) =
   'invalid-bar-width': (_key, detail) =>
     `x.time.barWidth must be a positive number of pixels, got ${detail}; it is ignored and the width is inferred from the date cadence`,
   'suggest-utc': (key, detail) =>
-    `x.${key} values are date-only or UTC ISO strings (e.g. "${detail}") but x.time.utc is off, so they are placed and labelled in the viewer's local time zone; west of UTC they show as the previous day. Set x.time.utc: true`,
+    `x.${key} values are date-only or UTC-midnight ISO strings (e.g. "${detail}") but x.time.utc is off, so they are placed and labelled in the viewer's local time zone; west of UTC they show as the previous day. Set x.time.utc: true`,
 };
 
 /**
  * Dev-only warnings for a time x axis: rows dropped because their date can't
- * be read, an unusable `x.time.barWidth`, and date-only/UTC ISO strings
+ * be read, an unusable `x.time.barWidth`, and date-only/UTC-midnight ISO strings
  * without `x.time.utc`. Logged once per distinct problem (via
  * `warnOnceInDev`), not on every render. No-op unless `x.scalingFunction` is
  * 'time'.

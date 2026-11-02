@@ -1107,4 +1107,46 @@ describe('ColumnChart suggests x.time.utc for date-only ISO data (review-2 N1)',
     ).toBe(false);
     warn.mockRestore();
   });
+
+  const utcHints = (id: string, dates: string[]) => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <ColumnChart
+        id={id}
+        style={CHART_SIZE}
+        data={dates.map((date, i) => ({ date, a: i + 1 }))}
+        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+        y={[{ key: 'a' }]}
+      />
+    );
+    const msgs = warn.mock.calls
+      .map(([m]) => String(m))
+      .filter((m) => m.includes(`ColumnChart#${id}:`) && m.includes('x.time.utc'));
+    warn.mockRestore();
+    return msgs;
+  };
+
+  it.each([
+    ['year-month', 'utc-hint-ym', ['2025-01', '2025-02', '2025-03']],
+    ['year', 'utc-hint-y', ['2025', '2026', '2027']],
+    [
+      'UTC midnight',
+      'utc-hint-midnight',
+      ['2025-01-01T00:00:00.000Z', '2025-01-02T00:00:00.000Z', '2025-01-03T00:00:00.000Z'],
+    ],
+  ])('warns for %s ISO values (review-3 R1)', (_label, id, dates) => {
+    const msgs = utcHints(id, dates);
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0]).toContain(`"${dates[0]}"`);
+  });
+
+  it('does not warn for real UTC timestamps such as 14:37Z (review-3 R1)', () => {
+    expect(
+      utcHints('utc-hint-instant', [
+        '2025-01-01T14:37:00Z',
+        '2025-01-02T14:37:00Z',
+        '2025-01-03T14:37:00Z',
+      ])
+    ).toStrictEqual([]);
+  });
 });

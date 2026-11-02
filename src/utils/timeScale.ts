@@ -10,7 +10,7 @@ import {
 import { useEffect, useMemo } from 'react';
 
 import type { AxisConfig } from '@/types';
-import { warnOnceInDev } from '@/utils/devEnvironment';
+import { isDevEnvironment, warnOnceInDev } from '@/utils/devEnvironment';
 
 /**
  * Shared time-axis helpers for charts whose x axis is normally a category
@@ -314,9 +314,11 @@ export const useTimeAxisWarnings = <TData,>(
   const isTime = x.scalingFunction === 'time';
   const { key, start, end } = x;
   const { format, isISO, utc, barWidth } = x.time ?? {};
+  // The scan parses every row, so skip it entirely outside development
+  // rather than computing issues only to drop the warnings (review-3 R4).
   const issuesKey = useMemo(
     () =>
-      isTime
+      isTime && isDevEnvironment()
         ? JSON.stringify(
             getTimeAxisIssues(
               data,

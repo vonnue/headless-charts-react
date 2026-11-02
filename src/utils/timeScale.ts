@@ -158,13 +158,16 @@ export interface TimeBarLayout {
 /**
  * Lays out bars/boxes on a time axis (review F1/F2 on #7/#16).
  *
- * The dates are treated as `steps + 1` equal slots across the plot, where
- * `steps` is the date span in cadence units (see `medianCadenceMs`), so a
- * regular series fills the plot the way a band scale would:
- * `slot = range / (steps + 1)` and `width = slot * (1 - paddingRatio)`.
- * The domain is then widened by half a slot at each unpinned end, rather than
- * shrinking the range, so each mark is centred on its tick and neighbours are
- * at least `slot * paddingRatio` apart.
+ * The dates are treated as `steps + padSlots` equal slots across the plot,
+ * where `steps` is the date span in cadence units (see `medianCadenceMs`) and
+ * `padSlots` is half a slot for each end not pinned by `x.start` / `x.end`
+ * (so 1 when neither is pinned). A regular series then fills the plot the way
+ * a band scale would: `slot = range / (steps + padSlots)` and
+ * `width = slot * (1 - paddingRatio)`. The domain is widened by half a slot
+ * at each unpinned end, rather than shrinking the range, so each mark is
+ * centred on its tick and neighbours are at least `slot * paddingRatio`
+ * apart. At a pinned end the first/last mark is centred on the boundary when
+ * its date equals the pinned value, so it can overhang by half a mark.
  *
  * `explicitWidth` (`x.time.barWidth`) replaces the cadence width when it is
  * finite and > 0, clamped to the slot so marks never overlap. With fewer
@@ -184,9 +187,15 @@ export const createTimeBarLayout = <TData,>(
   const cadence = medianCadenceMs(data.map(toDate));
   const steps = (t1 - t0) / cadence;
   const rows = data.filter((d) => toDate(d) != null).length;
+  // Half a slot of padding at each unpinned end only: `padTimeDomain` leaves
+  // ends pinned by `x.start` / `x.end` alone, so the slot must not reserve
+  // room there either, or the width no longer matches the tick spacing
+  // (review-2 N2).
+  const padSlots =
+    (Number.isFinite(x.start) ? 0 : 0.5) + (Number.isFinite(x.end) ? 0 : 0.5);
   const slotPx =
-    Number.isFinite(steps) && steps > 0
-      ? rangePx / (steps + 1)
+    Number.isFinite(steps) && steps > 0 && steps + padSlots > 0
+      ? rangePx / (steps + padSlots)
       : rangePx / Math.max(1, rows);
   const explicit = validBarWidth(explicitWidth);
   const width =

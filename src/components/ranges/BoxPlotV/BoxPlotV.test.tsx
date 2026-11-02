@@ -912,3 +912,89 @@ describe('BoxPlotV time mode keeps edge boxes inside the plot (#16)', () => {
     expect(axisEnd).toBeCloseTo(RANGE_END + 0.5, 6);
   });
 });
+
+describe('BoxPlotV time mode with x.start / x.end pinned (review-2 N2)', () => {
+  // Explicit size so JSDOM gives d3 a real range: [40, 480].
+  const CHART_SIZE = { width: '500px', height: '300px' };
+  const RANGE_START = 40;
+  const RANGE_END = 480;
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const days = [1, 2, 3, 4, 5].map((d) => Date.UTC(2025, 0, d));
+  const rows = days.map((t, i) => ({ date: new Date(t).toISOString().slice(0, 10), ...({ min: 10 + i, q1: 20 + i, mid: 30 + i, q3: 40 + i, max: 50 + i }) }));
+// Date-keyed x of each rendered x-axis tick, read from the tick <g> transform
+  // and d3's bound datum. d3-axis adds a 0.5px crisp-edge offset.
+  const pinnedTickXs = (container: HTMLElement) =>
+    new Map(
+      Array.from(container.querySelectorAll('.axis--x .tick')).map((t) => [
+        (t as unknown as { __data__: Date }).__data__.getTime(),
+        Number(/translate\(([-\d.]+)/.exec(t.getAttribute('transform') || '')![1]) - 0.5,
+      ])
+    );
+
+  const marksOf = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('.box-plot-box')).map((r) => ({
+      left: Number(r.getAttribute('x')),
+      width: Number(r.getAttribute('width')),
+    }));
+
+  it('pinned half a day outside the data: marks on their ticks, no overhang, correct width', () => {
+    const { container } = render(
+      <BoxPlotV
+        id='boxplot-pinned-pad'
+        style={CHART_SIZE}
+        data={rows}
+        x={{
+          key: 'date',
+          scalingFunction: 'time',
+          start: days[0] - DAY_MS / 2,
+          end: days[4] + DAY_MS / 2,
+          time: { isISO: true, utc: true },
+        }}
+        y={{ key: 'mid', minKey: 'min', maxKey: 'max', midKey: 'mid', boxStart: 'q1', boxEnd: 'q3', min: 0 }}
+      />
+    );
+
+    // 5 steps between the pins and no padded ends: 5 slots of 88px
+    const slot = (RANGE_END - RANGE_START) / 5;
+    const marks = marksOf(container);
+    expect(marks).toHaveLength(5);
+    const ticks = pinnedTickXs(container);
+    marks.forEach((m, i) => {
+      expect(m.width).toBeCloseTo(slot * 0.8, 6);
+      const centre = m.left + m.width / 2;
+      expect(centre).toBeCloseTo(RANGE_START + slot / 2 + slot * i, 6);
+      const tick = ticks.get(days[i]);
+      expect(tick).toBeDefined();
+      expect(Math.abs(centre - tick!)).toBeLessThanOrEqual(1);
+    });
+    expect(Math.min(...marks.map((m) => m.left))).toBeGreaterThanOrEqual(RANGE_START - 1e-6);
+    expect(Math.max(...marks.map((m) => m.left + m.width))).toBeLessThanOrEqual(RANGE_END + 1e-6);
+  });
+
+  it('pinned at the first/last date: width follows the real tick spacing', () => {
+    const { container } = render(
+      <BoxPlotV
+        id='boxplot-pinned-ends'
+        style={CHART_SIZE}
+        data={rows}
+        x={{
+          key: 'date',
+          scalingFunction: 'time',
+          start: days[0],
+          end: days[4],
+          time: { isISO: true, utc: true },
+        }}
+        y={{ key: 'mid', minKey: 'min', maxKey: 'max', midKey: 'mid', boxStart: 'q1', boxEnd: 'q3', min: 0 }}
+      />
+    );
+
+    // 4 steps, no padded ends: spacing = range / 4; bars are 80% of it
+    const spacing = (RANGE_END - RANGE_START) / 4;
+    const marks = marksOf(container);
+    expect(marks).toHaveLength(5);
+    marks.forEach((m, i) => {
+      expect(m.width).toBeCloseTo(spacing * 0.8, 6);
+      expect(m.left + m.width / 2).toBeCloseTo(RANGE_START + spacing * i, 6);
+    });
+  });
+});

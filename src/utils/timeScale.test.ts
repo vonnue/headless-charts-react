@@ -324,6 +324,69 @@ describe('createTimeBarLayout (F1/F2: one scale, slots, no overlap)', () => {
   });
 });
 
+describe('createTimeBarLayout with x.start / x.end pinned (review-2 N2)', () => {
+  const RANGE: [number, number] = [40, 460];
+  const HALF_DAY = DAY_MS / 2;
+  const rows = Array.from({ length: 5 }, (_, i) => ({ date: utcDay(1 + i) }));
+  const layoutFor = (start?: number, end?: number) => {
+    const x: AxisConfig<{ date: Date }> = { key: 'date', scalingFunction: 'time', start, end };
+    return createTimeBarLayout(rows, x, makeDateAccessor<{ date: Date }>(x), RANGE, 0.2);
+  };
+  const centersOf = (layout: ReturnType<typeof layoutFor>) =>
+    rows.map((r) => layout.scale(r.date));
+
+  it('pinned at the first/last date: the slot is the real tick spacing (no padding slots)', () => {
+    const layout = layoutFor(utcDay(1).getTime(), utcDay(5).getTime());
+    const centers = centersOf(layout);
+
+    // 4 steps, no padded ends: 420 / 4 = 105px, not 420 / 5 = 84px
+    expect(layout.slotPx).toBeCloseTo(105, 6);
+    expect(layout.width).toBeCloseTo(84, 6);
+    centers.forEach((c, i) => expect(c).toBeCloseTo(40 + 105 * i, 6));
+    for (let i = 1; i < centers.length; i++) {
+      expect(centers[i] - centers[i - 1] - layout.width).toBeCloseTo(105 * 0.2, 6);
+    }
+    // Documented: a mark on a pinned boundary overhangs by half a bar
+    expect(centers[0] - layout.width / 2).toBeCloseTo(40 - 42, 6);
+  });
+
+  it('pinned half a cadence outside the data: marks on their ticks, no overhang, correct width', () => {
+    const layout = layoutFor(
+      utcDay(1).getTime() - HALF_DAY,
+      utcDay(5).getTime() + HALF_DAY
+    );
+    const centers = centersOf(layout);
+
+    // 5 steps between the pins, no padded ends: 5 slots of 84px
+    expect(layout.slotPx).toBeCloseTo(84, 6);
+    expect(layout.width).toBeCloseTo(67.2, 6);
+    expect(layout.scale.domain().map(Number)).toStrictEqual([
+      utcDay(1).getTime() - HALF_DAY,
+      utcDay(5).getTime() + HALF_DAY,
+    ]);
+    centers.forEach((c, i) => expect(c).toBeCloseTo(40 + 42 + 84 * i, 6));
+    expect(centers[0] - layout.width / 2).toBeGreaterThanOrEqual(40 - 1e-6);
+    expect(centers[4] + layout.width / 2).toBeLessThanOrEqual(460 + 1e-6);
+  });
+
+  it.each([
+    ['start', utcDay(1).getTime() - HALF_DAY, undefined],
+    ['end', undefined, utcDay(5).getTime() + HALF_DAY],
+  ])('only %s pinned: half a padding slot on the free end', (_side, start, end) => {
+    const layout = layoutFor(start, end);
+    const centers = centersOf(layout);
+
+    // 4.5 steps + 0.5 padding slot = 5 slots of 84px
+    expect(layout.slotPx).toBeCloseTo(84, 6);
+    expect(layout.width).toBeCloseTo(67.2, 6);
+    for (let i = 1; i < centers.length; i++) {
+      expect(centers[i] - centers[i - 1]).toBeCloseTo(84, 6);
+    }
+    expect(centers[0] - layout.width / 2).toBeGreaterThanOrEqual(40 - 1e-6);
+    expect(centers[4] + layout.width / 2).toBeLessThanOrEqual(460 + 1e-6);
+  });
+});
+
 describe('getTimeAxisIssues (F4/F6 dev warnings)', () => {
   const x: AxisConfig = { key: 'date', scalingFunction: 'time', time: { isISO: true } };
 

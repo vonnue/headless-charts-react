@@ -723,3 +723,62 @@ describe('BoxPlotV', () => {
     });
   });
 });
+
+describe('BoxPlotV time mode keeps edge boxes inside the plot (#16)', () => {
+  // Explicit size so JSDOM gives d3 a real range: [margin.left, width -
+  // margin.right] = [40, 480] with BoxPlotV's default margins (40 / 20).
+  const CHART_SIZE = { width: '500px', height: '300px' };
+  const RANGE_START = 40;
+  const RANGE_END = 480;
+  // Uneven gaps; the first/last rows sit exactly on the domain ends.
+  const edgeData = ['2025-01-06', '2025-01-13', '2025-02-03', '2025-02-10'].map(
+    (weekStart, i) => ({
+      weekStart,
+      min: 10 + i,
+      firstQuartile: 20 + i,
+      mid: 30 + i,
+      lastQuartile: 40 + i,
+      max: 50 + i,
+    })
+  );
+
+  // d3-axis draws the domain line as `M{start}.5,6V0.5H{end}.5V6`.
+  const xAxisSpan = (container: HTMLElement) => {
+    const d = container.querySelector('.axis--x path.domain')?.getAttribute('d') ?? '';
+    const match = /^M(-?[\d.]+),[\d.-]+V[\d.-]+H(-?[\d.]+)/.exec(d);
+    return match ? [Number(match[1]), Number(match[2])] : [NaN, NaN];
+  };
+
+  it('every box lies within the x range while the axis still spans it fully', () => {
+    const { container } = render(
+      <BoxPlotV
+        id='edge-boxplot'
+        style={CHART_SIZE}
+        data={edgeData}
+        x={{ key: 'weekStart', scalingFunction: 'time' }}
+        y={{
+          key: 'mid',
+          minKey: 'min',
+          maxKey: 'max',
+          midKey: 'mid',
+          boxStart: 'firstQuartile',
+          boxEnd: 'lastQuartile',
+          min: 0,
+        }}
+      />
+    );
+
+    const boxes = Array.from(container.querySelectorAll('.box-plot-box'));
+    expect(boxes).toHaveLength(edgeData.length);
+    const lefts = boxes.map((r) => Number(r.getAttribute('x')));
+    const rights = boxes.map(
+      (r) => Number(r.getAttribute('x')) + Number(r.getAttribute('width'))
+    );
+    expect(Math.min(...lefts)).toBeCloseTo(RANGE_START, 6);
+    expect(Math.max(...rights)).toBeCloseTo(RANGE_END, 6);
+
+    const [axisStart, axisEnd] = xAxisSpan(container);
+    expect(axisStart).toBeCloseTo(RANGE_START + 0.5, 6);
+    expect(axisEnd).toBeCloseTo(RANGE_END + 0.5, 6);
+  });
+});

@@ -959,3 +959,43 @@ describe('LollipopVChart', () => {
     });
   });
 });
+
+describe('LollipopVChart time mode keeps edge symbols inside the plot (#16)', () => {
+
+  // d3-axis draws the domain line as `M{start}.5,6V0.5H{end}.5V6`.
+  const xAxisSpan = (container: HTMLElement) => {
+    const d = container.querySelector('.axis--x path.domain')?.getAttribute('d') ?? '';
+    const match = /^M(-?[\d.]+),[\d.-]+V[\d.-]+H(-?[\d.]+)/.exec(d);
+    return match ? [Number(match[1]), Number(match[2])] : [NaN, NaN];
+  };
+
+  it('edge symbols sit SYMBOL_INSET in from the range ends while the axis spans it fully', () => {
+    const { container } = render(
+      <LollipopVChart
+        id='edge-lollipop'
+        style={CHART_SIZE}
+        data={[
+          { date: '2025-01-06', value: 10 },
+          { date: '2025-01-08', value: 20 },
+          { date: '2025-01-27', value: 15 },
+        ]}
+        x={{ key: 'date', scalingFunction: 'time' }}
+        y={{ key: 'value' }}
+        shape='star'
+      />
+    );
+
+    const centers = Array.from(container.querySelectorAll('path.symbols')).map((p) =>
+      Number(/translate\((-?[\d.]+)/.exec(p.getAttribute('transform') ?? '')?.[1])
+    );
+    expect(centers).toHaveLength(3);
+    // The star is the widest symbol (~9.44px bounding radius at size 100), so
+    // a 10px inset keeps every shape's full outline inside [40, 460].
+    expect(Math.min(...centers)).toBeCloseTo(RANGE_START + SYMBOL_INSET, 6);
+    expect(Math.max(...centers)).toBeCloseTo(RANGE_END - SYMBOL_INSET, 6);
+
+    const [axisStart, axisEnd] = xAxisSpan(container);
+    expect(axisStart).toBeCloseTo(RANGE_START + 0.5, 6);
+    expect(axisEnd).toBeCloseTo(RANGE_END + 0.5, 6);
+  });
+});

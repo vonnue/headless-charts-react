@@ -844,3 +844,46 @@ describe('ColumnChartStacked', () => {
     });
   });
 });
+
+describe('ColumnChartStacked time mode keeps edge marks inside the plot (#16)', () => {
+  // Explicit size so JSDOM gives d3 a real range: [margin.left, width -
+  // margin.right] = [40, 460] with the default margins.
+  const CHART_SIZE = { width: '500px', height: '300px' };
+  const RANGE_START = 40;
+  const RANGE_END = 460;
+  // Uneven gaps, and the first/last rows sit exactly on the domain ends,
+  // which is where an un-inset centered mark would overhang the axis.
+  const edgeData = [
+    { date: '2025-01-01', a: 10, b: 5 },
+    { date: '2025-01-02', a: 20, b: 6 },
+    { date: '2025-01-05', a: 15, b: 7 },
+    { date: '2025-01-06', a: 12, b: 8 },
+  ];
+
+  // d3-axis draws the domain line as `M{start}.5,6V0.5H{end}.5V6`.
+  const xAxisSpan = (container: HTMLElement) => {
+    const d = container.querySelector('.axis--x path.domain')?.getAttribute('d') ?? '';
+    const match = /^M(-?[\d.]+),[\d.-]+V[\d.-]+H(-?[\d.]+)/.exec(d);
+    return match ? [Number(match[1]), Number(match[2])] : [NaN, NaN];
+  };
+
+  it('every bar lies within the x range while the axis still spans it fully', () => {
+    const { container } = render(<ColumnChartStacked id='edge-stacked' style={CHART_SIZE} data={edgeData} x={{ key: 'date', scalingFunction: 'time' }} y={[{ key: 'a' }, { key: 'b' }]} />);
+
+    const rects = Array.from(container.querySelectorAll('rect'));
+    expect(rects.length).toBeGreaterThan(0);
+    const lefts = rects.map((r) => Number(r.getAttribute('x')));
+    const rights = rects.map(
+      (r) => Number(r.getAttribute('x')) + Number(r.getAttribute('width'))
+    );
+    expect(Math.min(...lefts)).toBeGreaterThanOrEqual(RANGE_START - 1e-6);
+    expect(Math.max(...rights)).toBeLessThanOrEqual(RANGE_END + 1e-6);
+    // The edge bars are flush with the range ends, not pulled in further.
+    expect(Math.min(...lefts)).toBeCloseTo(RANGE_START, 6);
+    expect(Math.max(...rights)).toBeCloseTo(RANGE_END, 6);
+
+    const [axisStart, axisEnd] = xAxisSpan(container);
+    expect(axisStart).toBeCloseTo(RANGE_START + 0.5, 6);
+    expect(axisEnd).toBeCloseTo(RANGE_END + 0.5, 6);
+  });
+});

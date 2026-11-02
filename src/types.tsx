@@ -7,10 +7,18 @@ export interface AxisConfig<TData = any> {
   /** Data key to map to this axis */
   key: Extract<keyof TData, string> | string;
 
-  /** Starting value for the axis domain (for continuous/value axes) */
+  /**
+   * Starting value for the axis domain (for continuous/value axes). On a
+   * time axis (epoch ms) a pinned start gets no edge padding, so a mark whose
+   * date equals it is centred on the boundary and may overhang by half a bar.
+   */
   start?: number;
 
-  /** Ending value for the axis domain (for continuous/value axes) */
+  /**
+   * Ending value for the axis domain (for continuous/value axes). On a time
+   * axis (epoch ms) a pinned end gets no edge padding, so a mark whose date
+   * equals it is centred on the boundary and may overhang by half a bar.
+   */
   end?: number;
 
   /** Scaling function type (for continuous axes) */

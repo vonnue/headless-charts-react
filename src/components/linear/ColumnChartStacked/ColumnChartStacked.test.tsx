@@ -189,18 +189,20 @@ describe('ColumnChartStacked', () => {
     const DEFAULT_PADDING_BAR = 0.2;
     const DAY_MS = 24 * 60 * 60 * 1000;
 
-    // The span is laid out as (span / cadence) steps plus one slot, so the
-    // first and last dates get a full slot each (half on each side of the
-    // mark). That is what keeps the edge bars inside the plot.
-    const slotPx = (cadenceMs: number, domainSpanMs: number) =>
-      PLOT_WIDTH / (domainSpanMs / cadenceMs + 1);
+    // The span is laid out as (span / cadence) steps plus half a slot for
+    // each unpinned end, so the first and last dates get a full slot each
+    // (half on each side of the mark). That is what keeps the edge bars
+    // inside the plot. Pinned ends (x.start / x.end) get no padding slot.
+    const slotPx = (cadenceMs: number, domainSpanMs: number, padSlots = 1) =>
+      PLOT_WIDTH / (domainSpanMs / cadenceMs + padSlots);
 
     /** Bar width the spec's algorithm should produce for a given cadence. */
     const expectedBarWidth = (
       cadenceMs: number,
       domainSpanMs: number,
-      paddingBar = DEFAULT_PADDING_BAR
-    ) => slotPx(cadenceMs, domainSpanMs) * (1 - paddingBar);
+      paddingBar = DEFAULT_PADDING_BAR,
+      padSlots = 1
+    ) => slotPx(cadenceMs, domainSpanMs, padSlots) * (1 - paddingBar);
 
 
     const spanMs = (rows: { date: string }[]) =>
@@ -623,9 +625,13 @@ describe('ColumnChartStacked', () => {
         6
       );
       expect(centre).toBeGreaterThan(RANGE_START);
-      // The slot still comes from the cadence over the pinned span.
+      // The slot still comes from the cadence over the pinned span, with no
+      // padding slot at either pinned end (review-2 N2).
       const cadence = spanMs(evenlySpacedTimeData) / 3;
-      expect(width).toBeCloseTo(expectedBarWidth(cadence, customEnd - customStart), 6);
+      expect(width).toBeCloseTo(
+        expectedBarWidth(cadence, customEnd - customStart, DEFAULT_PADDING_BAR, 0),
+        6
+      );
     });
 
     it('renders time mode with waterfall enabled', () => {
@@ -1010,5 +1016,91 @@ describe('ColumnChartStacked time mode keeps edge marks inside the plot (#16)', 
     const [axisStart, axisEnd] = xAxisSpan(container);
     expect(axisStart).toBeCloseTo(RANGE_START + 0.5, 6);
     expect(axisEnd).toBeCloseTo(RANGE_END + 0.5, 6);
+  });
+});
+
+describe('ColumnChartStacked time mode with x.start / x.end pinned (review-2 N2)', () => {
+  // Explicit size so JSDOM gives d3 a real range: [40, 460].
+  const CHART_SIZE = { width: '500px', height: '300px' };
+  const RANGE_START = 40;
+  const RANGE_END = 460;
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const days = [1, 2, 3, 4, 5].map((d) => Date.UTC(2025, 0, d));
+  const rows = days.map((t, i) => ({ date: new Date(t).toISOString().slice(0, 10), ...({ a: 10 + i }) }));
+// Date-keyed x of each rendered x-axis tick, read from the tick <g> transform
+  // and d3's bound datum. d3-axis adds a 0.5px crisp-edge offset.
+  const pinnedTickXs = (container: HTMLElement) =>
+    new Map(
+      Array.from(container.querySelectorAll('.axis--x .tick')).map((t) => [
+        (t as unknown as { __data__: Date }).__data__.getTime(),
+        Number(/translate\(([-\d.]+)/.exec(t.getAttribute('transform') || '')![1]) - 0.5,
+      ])
+    );
+
+  const marksOf = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('rect')).map((r) => ({
+      left: Number(r.getAttribute('x')),
+      width: Number(r.getAttribute('width')),
+    }));
+
+  it('pinned half a day outside the data: marks on their ticks, no overhang, correct width', () => {
+    const { container } = render(
+      <ColumnChartStacked
+        id='stacked-pinned-pad'
+        style={CHART_SIZE}
+        data={rows}
+        x={{
+          key: 'date',
+          scalingFunction: 'time',
+          start: days[0] - DAY_MS / 2,
+          end: days[4] + DAY_MS / 2,
+          time: { isISO: true, utc: true },
+        }}
+        y={[{ key: 'a' }]}
+      />
+    );
+
+    // 5 steps between the pins and no padded ends: 5 slots of 84px
+    const slot = (RANGE_END - RANGE_START) / 5;
+    const marks = marksOf(container);
+    expect(marks).toHaveLength(5);
+    const ticks = pinnedTickXs(container);
+    marks.forEach((m, i) => {
+      expect(m.width).toBeCloseTo(slot * 0.8, 6);
+      const centre = m.left + m.width / 2;
+      expect(centre).toBeCloseTo(RANGE_START + slot / 2 + slot * i, 6);
+      const tick = ticks.get(days[i]);
+      expect(tick).toBeDefined();
+      expect(Math.abs(centre - tick!)).toBeLessThanOrEqual(1);
+    });
+    expect(Math.min(...marks.map((m) => m.left))).toBeGreaterThanOrEqual(RANGE_START - 1e-6);
+    expect(Math.max(...marks.map((m) => m.left + m.width))).toBeLessThanOrEqual(RANGE_END + 1e-6);
+  });
+
+  it('pinned at the first/last date: width follows the real tick spacing', () => {
+    const { container } = render(
+      <ColumnChartStacked
+        id='stacked-pinned-ends'
+        style={CHART_SIZE}
+        data={rows}
+        x={{
+          key: 'date',
+          scalingFunction: 'time',
+          start: days[0],
+          end: days[4],
+          time: { isISO: true, utc: true },
+        }}
+        y={[{ key: 'a' }]}
+      />
+    );
+
+    // 4 steps, no padded ends: spacing = range / 4; bars are 80% of it
+    const spacing = (RANGE_END - RANGE_START) / 4;
+    const marks = marksOf(container);
+    expect(marks).toHaveLength(5);
+    marks.forEach((m, i) => {
+      expect(m.width).toBeCloseTo(spacing * 0.8, 6);
+      expect(m.left + m.width / 2).toBeCloseTo(RANGE_START + spacing * i, 6);
+    });
   });
 });

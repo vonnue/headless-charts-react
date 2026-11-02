@@ -2,7 +2,8 @@
  * AreaChart: extra coverage from review 1 of #9 (F2, F4).
  *
  * - An x.key change after mount redraws to match a fresh mount.
- * - Toggling zooming off removes the zoom listeners bound to the svg itself.
+ * - Toggling zooming off removes the zoom listeners bound to the svg itself,
+ *   so wheel events are no longer cancelled.
  * - Inline config literals stay bounded (no render loop) and leave exactly one
  *   tooltip element, removed on unmount.
  */
@@ -38,6 +39,14 @@ const oracle = (props: AreaProps): string => {
 const svgListener = (id: string, type: string) =>
   select(document.getElementById(id) as Element).on(type);
 
+// d3-zoom cancels a zoom-in wheel event while zoom is bound (deltaY +100 at the
+// minimum scale returns early, so it would prove nothing).
+const wheelPrevented = (id: string): boolean => {
+  const ev = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100 });
+  document.getElementById(id)!.dispatchEvent(ev);
+  return ev.defaultPrevented;
+};
+
 describe('AreaChart redraw (review follow-ups)', () => {
   beforeEach(() => {
     document.querySelectorAll('[id^="tooltip"]').forEach((el) => el.remove());
@@ -56,9 +65,11 @@ describe('AreaChart redraw (review follow-ups)', () => {
     const base = { id: 'a12', data: DATA, x: X_YEAR, y: Y_AB, style: S };
     const { rerender } = render(<AreaChart {...base} zooming={ZOOM} />);
     expect(svgListener('a12', 'wheel.zoom')).toBeTypeOf('function');
+    expect(wheelPrevented('a12')).toBe(true);
     rerender(<AreaChart {...base} />);
     expect(svgListener('a12', 'wheel.zoom')).toBeUndefined();
     expect(svgListener('a12', 'mousedown.zoom')).toBeUndefined();
+    expect(wheelPrevented('a12')).toBe(false); // the page scrolls again
   });
 
   it('A13: inline literals stay bounded and leave one tooltip element', () => {

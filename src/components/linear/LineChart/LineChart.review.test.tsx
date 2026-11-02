@@ -3,7 +3,8 @@
  *
  * - x.key, showGuideLines and y-axis label changes after mount redraw to match
  *   a fresh mount of the same props (oracle: whole svg markup, ids normalised).
- * - Toggling tooltip/zooming off removes the listeners bound to the svg itself.
+ * - Toggling tooltip/zooming off removes the listeners bound to the svg itself,
+ *   so wheel events are no longer cancelled.
  * - A drawing change after mount redraws to match a fresh mount, and running
  *   draw transitions are interrupted on redraw and on unmount.
  *   (jsdom has no SVG geometry, so getTotalLength is stubbed for these.)
@@ -44,6 +45,14 @@ const oracle = (props: LineProps): string => {
 const svgListener = (id: string, type: string) =>
   select(document.getElementById(id) as Element).on(type);
 
+// d3-zoom cancels a zoom-in wheel event while zoom is bound (deltaY +100 at the
+// minimum scale returns early, so it would prove nothing).
+const wheelPrevented = (id: string): boolean => {
+  const ev = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100 });
+  document.getElementById(id)!.dispatchEvent(ev);
+  return ev.defaultPrevented;
+};
+
 // d3-transition keeps its schedule on the node; interrupt() deletes it.
 const hasTransition = (node: Element | null): boolean =>
   node !== null && '__transition' in node;
@@ -82,12 +91,14 @@ describe('LineChart redraw (review follow-ups)', () => {
     const { rerender } = render(<LineChart {...base} tooltip={TIP} zooming={ZOOM} />);
     expect(svgListener('l18', 'mousemove')).toBeTypeOf('function');
     expect(svgListener('l18', 'wheel.zoom')).toBeTypeOf('function');
+    expect(wheelPrevented('l18')).toBe(true);
 
     rerender(<LineChart {...base} />);
     expect(svgListener('l18', 'mouseover')).toBeUndefined();
     expect(svgListener('l18', 'mousemove')).toBeUndefined();
     expect(svgListener('l18', 'mouseleave')).toBeUndefined();
     expect(svgListener('l18', 'wheel.zoom')).toBeUndefined();
+    expect(wheelPrevented('l18')).toBe(false); // the page scrolls again
 
     rerender(<LineChart {...base} zooming={ZOOM} />);
     expect(svgListener('l18', 'wheel.zoom')).toBeTypeOf('function');

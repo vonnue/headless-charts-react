@@ -1,6 +1,6 @@
 import { max, min } from 'd3-array';
 import { scaleBand, scaleLinear } from 'd3-scale';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
 
@@ -358,9 +358,6 @@ const BarChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart]);
 
   return (

@@ -11,7 +11,7 @@ import {
   symbolWye,
 } from 'd3-shape';
 import { max, min } from 'd3-array';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
 
@@ -538,9 +538,6 @@ const ScatterPlot = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart]);
   return (
     <svg

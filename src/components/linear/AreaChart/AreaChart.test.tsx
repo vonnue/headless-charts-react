@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import AreaChart from '.';
 import data from './data.json';
@@ -236,5 +236,54 @@ describe('AreaChart time scale domain (#16)', () => {
     expect(xs.length).toBeGreaterThan(0);
     expect(Math.min(...xs)).toBeCloseTo(40, 6);
     expect(Math.max(...xs)).toBeCloseTo(580, 6);
+  });
+});
+
+/**
+ * Tooltip lifecycle inside AreaChart (spec: specs/issue-8.md, C5–C6)
+ *
+ * Re-render:   className-only rerenders with the same data keep one tooltip.
+ * Data change: the tooltip survives and is populated on the next mousemove
+ *              (which data it shows is #9's concern, see A6).
+ */
+const TIP_S = { width: '400px', height: '200px' };
+const TIP_DATA = [
+  { year: 2020, a: 1, b: 2 },
+  { year: 2021, a: 3, b: 4 },
+  { year: 2022, a: 5, b: 1 },
+];
+const TIP_DATA_2 = [...TIP_DATA, { year: 2023, a: 50, b: 9 }, { year: 2024, a: 7, b: 9 }];
+const TIP_X = { key: 'year' };
+const TIP_Y = [{ key: 'a' }, { key: 'b' }];
+const TIP = {};
+const count = (id: string): number => document.querySelectorAll(`[id="tooltip-${id}"]`).length;
+
+describe('AreaChart tooltip lifecycle', () => {
+  beforeEach(() => {
+    document.querySelectorAll('[id^="tooltip"]').forEach((el) => el.remove());
+  });
+
+  it('C5: keeps one tooltip after 5 className-only rerenders with the same data', () => {
+    const props = { id: 'c5', data: TIP_DATA, x: TIP_X, y: TIP_Y, tooltip: TIP, style: TIP_S };
+    const { rerender } = render(<AreaChart {...props} />);
+
+    for (let i = 0; i < 5; i++) rerender(<AreaChart {...props} className={`c${i}`} />);
+
+    expect(count('c5')).toBe(1);
+  });
+
+  it('C6: keeps a connected, populated tooltip after a data change', () => {
+    const props = { id: 'c6', x: TIP_X, y: TIP_Y, tooltip: TIP, style: TIP_S };
+    const { rerender } = render(<AreaChart {...props} data={TIP_DATA} />);
+    rerender(<AreaChart {...props} data={TIP_DATA_2} />);
+    const firstArea = document.querySelector('#c6 .area path');
+    if (!firstArea) throw new Error('no area path');
+
+    fireEvent.mouseMove(firstArea, { clientX: 379, clientY: 50 });
+
+    const el = document.getElementById('tooltip-c6');
+    expect(count('c6')).toBe(1);
+    expect(el?.isConnected).toBe(true);
+    expect(el?.innerHTML).not.toBe('');
   });
 });

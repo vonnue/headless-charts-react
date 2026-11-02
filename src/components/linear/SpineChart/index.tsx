@@ -2,7 +2,7 @@ import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { defaultChartClassNames } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 import { max, sum } from 'd3-array';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { useCallback, useEffect } from 'react';
@@ -336,9 +336,6 @@ const SpineChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart, id]);
 
   /* eslint-enable */

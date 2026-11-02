@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { max, min } from 'd3-array';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import { scaleLinear, scalePoint } from 'd3-scale';
 import {
   symbol,
@@ -248,9 +248,6 @@ const LollipopHChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart, id]);
   return (
     <svg

@@ -1,5 +1,5 @@
 import { max, min } from 'd3-array';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
 import { scaleBand, scaleLinear } from 'd3-scale';
@@ -315,9 +315,6 @@ const ColumnChartGrouped = <TData = any,>({
   }, [data, onMouseOver, onMouseMove, onMouseLeave]);
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart, id]);
   /* eslint-enable */
   return (

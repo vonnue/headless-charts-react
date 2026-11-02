@@ -1,6 +1,6 @@
 import { Arc, SymbolType, arc, symbol, symbolTriangle } from 'd3';
 import { ScaleLinear, scaleLinear } from 'd3-scale';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { Axis } from 'd3-axis';
@@ -255,7 +255,6 @@ const SpeedometerChart = <TData = any,>({
   useEffect(() => {
     refreshChart();
     return () => {
-      selectAll(`#tooltip-${id}`).remove();
       if (dataGroupRef.current) select(dataGroupRef.current).interrupt();
     };
   }, [data, max, refreshChart, id]);

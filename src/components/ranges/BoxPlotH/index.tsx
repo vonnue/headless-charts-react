@@ -2,7 +2,7 @@ import { ZoomTransform, zoom } from 'd3-zoom';
 import { max, min } from 'd3-array';
 import { scaleBand, scaleLinear } from 'd3-scale';
 // pointer,
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
 
@@ -388,9 +388,6 @@ const BoxPlotH = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart]);
 
   return (

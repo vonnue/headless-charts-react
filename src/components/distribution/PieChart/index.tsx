@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { arc, pie } from 'd3';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import { useCallback, useEffect, useRef } from 'react';
 import useTooltip from '@/hooks/useTooltip';
 
@@ -366,9 +366,6 @@ const PieChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart]);
 
   return (

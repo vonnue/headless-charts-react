@@ -15,7 +15,8 @@ import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
-import { resolveBound } from '@/utils/domain';
+import { warnOnceInDev } from '@/utils/devEnvironment';
+import { isFiniteNumber, resolveBound } from '@/utils/domain';
 import {
   createTimeXScale,
   makeDateAccessor,
@@ -34,9 +35,9 @@ export interface LollipopChartClassNames {
 
 export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
-  /** Fallback value-axis start, used only when `y.start` is not finite. Prefer `y.start`. */
+  /** @deprecated Use `y.start`. Used only when `y.start` is not finite. */
   valueMin?: number;
-  /** Fallback value-axis end, used only when `y.end` is not finite. Prefer `y.end`. */
+  /** @deprecated Use `y.end`. Used only when `y.end` is not finite. */
   valueMax?: number;
   id: string;
   className?: string;
@@ -205,6 +206,17 @@ const LollipopVChart = <TData = any,>({
         ? timeX(d)
         : (bandXFn(String((d as Record<string, unknown>)[x.key])) ?? 0) +
           bandXFn.bandwidth() / 2;
+
+    if (isFiniteNumber(y.start) && isFiniteNumber(valueMin) && y.start !== valueMin)
+      warnOnceInDev(
+        `lollipopv-${id}-start`,
+        `LollipopVChart "${id}": y.start (${y.start}) overrides valueMin (${valueMin}). valueMin is deprecated; use y.start.`
+      );
+    if (isFiniteNumber(y.end) && isFiniteNumber(valueMax) && y.end !== valueMax)
+      warnOnceInDev(
+        `lollipopv-${id}-end`,
+        `LollipopVChart "${id}": y.end (${y.end}) overrides valueMax (${valueMax}). valueMax is deprecated; use y.end.`
+      );
 
     // y.start/y.end pin the value axis; the older valueMin/valueMax props
     // apply only when the matching y bound is not finite.

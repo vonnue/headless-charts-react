@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
 import LollipopVChart from '.';
 import { tickPositions } from '@/test-utils/axisTicks';
+import { resetDevWarnings } from '@/utils/devEnvironment';
 
 // 500x300, default margin 40, padding 0 → y range [260, 40].
 const style = { width: '500px', height: '300px' };
@@ -22,6 +23,11 @@ const yTicks = (container: HTMLElement) =>
   tickPositions(container.querySelector('[data-testid="y-axis"]'), 'vertical');
 
 describe('LollipopVChart y start/end domain (F4)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    resetDevWarnings();
+  });
+
   it('honours y.end, including a narrowing one', () => {
     const { container } = render(
       <LollipopVChart
@@ -90,5 +96,43 @@ describe('LollipopVChart y start/end domain (F4)', () => {
     const ticks = yTicks(container);
     expect(ticks.get('10')).toBeCloseTo(BOTTOM, 2);
     expect(ticks.get('30')).toBeCloseTo(TOP, 2);
+  });
+
+  it('warns once in dev when y bounds override the deprecated valueMin/valueMax', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const props = {
+      style,
+      id: 'lollipop-v-deprecated',
+      data,
+      shape: 'circle' as const,
+      valueMin: 0,
+      valueMax: 100,
+      x,
+      y: { key: 'v', start: 5, end: 50, axis: yAxis },
+    };
+    const { rerender } = render(<LollipopVChart {...props} />);
+    rerender(<LollipopVChart {...props} data={[...data]} />);
+
+    const messages = warn.mock.calls.map(([m]) => String(m));
+    expect(messages).toHaveLength(2);
+    expect(messages[0]).toContain('y.start (5) overrides valueMin (0)');
+    expect(messages[1]).toContain('y.end (50) overrides valueMax (100)');
+  });
+
+  it('does not warn when only the deprecated props are set, or they match', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <LollipopVChart
+        style={style}
+        id='lollipop-v-legacy-only'
+        data={data}
+        shape='circle'
+        valueMin={0}
+        valueMax={100}
+        x={x}
+        y={{ key: 'v', end: 100, axis: yAxis }}
+      />
+    );
+    expect(warn).not.toHaveBeenCalled();
   });
 });

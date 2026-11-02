@@ -1,30 +1,28 @@
 ---
 name: issue-7-time-scaling
-description: Scope and known-tracked defects for GitHub issue #7 (x.scalingFunction 'time' across ColumnChart, ColumnChartStacked, LollipopVChart, BoxPlotV) — includes two issues that must NOT be re-flagged in review
+description: Historical — issue #7 (x.scalingFunction 'time' for ColumnChart, ColumnChartStacked, LollipopVChart, BoxPlotV) is merged; #15 and #16 are fixed, so edge-mark overhang and the isISO story bug ARE flaggable again
 type: project
 ---
 
-GitHub issue #7 adds `x.scalingFunction: 'time'` to ColumnChart,
-ColumnChartStacked, LollipopVChart and BoxPlotV, on branch
-`issue-7-time-scaling`. AreaChart is the pre-existing reference
-implementation for the time-scale pattern.
+**Historical note.** Issue #7 landed on main in PR #26 (branch
+`fix/issue-7-time-scaling`, a re-land of #24). It added
+`x.scalingFunction: 'time'` to ColumnChart, ColumnChartStacked, LollipopVChart
+and BoxPlotV, with time-bar slot layout and a padded domain. AreaChart was the
+reference implementation for the time-scale pattern.
 
-**Two defects are already filed and must not be re-reported when reviewing
-any chart on this branch:**
+What changed since the earlier version of this note:
 
-- **#15** — `AreaChart.time.stories.tsx` nests `isISO` wrongly.
-- **#16** — `scaleTime().nice()` is called *before* `.domain()` is set, so it
-  is a no-op. Cross-cutting across every time-scaled chart. The visible
-  symptom is that the first and last data points land exactly on the range
-  ends, so centered marks (bars, box plots, lollipop heads) overhang the plot
-  bounds. Expected; already tracked.
+- **#15** (`AreaChart.time.stories.tsx` set `isISO` on the wrong prop path) is
+  closed — fixed in the #7 work.
+- **#16** (`scaleTime().nice()` called before `.domain()`, a no-op) is closed —
+  the dead `.nice()` calls were removed in PR #29.
+- **Edge-mark overhang is no longer expected.** If centered marks (bars, box
+  plots, lollipop heads) on a time-scaled chart overhang the plot bounds,
+  flag it — that is a regression, not a tracked issue.
+- The catalog (AGENTS.md, catalog.json) was regenerated in the same PR, so
+  catalog snapshot failures are no longer an "expected pending state" for this
+  work. In general they are only expected mid-pipeline, before the
+  `chart-catalog-editor` stage has run on the change under review.
 
-Per CLAUDE.md the `chart-catalog-editor` stage runs *after* code review, so
-during review `yarn vitest run src/catalog/catalog.generated.test.ts` failing
-its two snapshots (AGENTS.md + catalog.json missing the new time variants) is
-the expected pending state, not a regression — do not hand-edit those files
-or the `/* catalog:start */` JSDoc blocks.
-
-Reviews cleared so far: ColumnChart, ColumnChartStacked, LollipopVChart
-(2026-08-09). BoxPlotV had a mean-vs-median cadence bug that was fixed in
-`96fe391`.
+Still open as of this note: #25 (default `x.time.utc` to true when `isISO` is
+set; next major).

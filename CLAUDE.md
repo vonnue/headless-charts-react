@@ -54,8 +54,6 @@ dataviz-spec-architect
                            v
               main session (merge tests + impl, iterate til green)
                            v
-              storybook-render-auditor <-> main session (real-browser render check, loop til clean)
-                           v
               d3-react-code-reviewer <-> main session (loop til clean)
                            v
               chart-catalog-editor
@@ -75,17 +73,11 @@ review and update the catalog; they never commit or push.
    main session writes the implementation (and stories) from the same spec.
 3. The main session merges tests + implementation, runs them, iterates until
    green.
-4. `storybook-render-auditor` renders the affected stories in a real browser
-   (Playwright) and checks structural invariants plus visual regression
-   against committed baselines — jsdom-based unit tests can pass while the
-   real rendered chart is broken, since jsdom has no layout engine. Iterates
-   with the main session until clean; anything unrelated to the current
-   change goes to `issue-writer` instead of blocking this stage.
-5. `d3-react-code-reviewer` reviews; back-and-forth with the main session
+4. `d3-react-code-reviewer` reviews; back-and-forth with the main session
    until the review is clean.
-6. `chart-catalog-editor` once code is settled — see "Editing charts" below
+5. `chart-catalog-editor` once code is settled — see "Editing charts" below
    for what it updates and regenerates.
-7. Before committing or opening a PR, the main session runs the same checks
+6. Before committing or opening a PR, the main session runs the same checks
    as CI, and all must pass:
    `yarn tsc --noEmit && yarn lint && yarn test:hooks && yarn vitest run && yarn docs:check && yarn vite build`
 
@@ -95,8 +87,12 @@ violations, run `yarn lint:prune` and commit the smaller file. Never run
 fix it. Any diff that *increases* counts in `eslint-suppressions.json` must be
 called out for review.
 
-Also runnable standalone (not just as a pipeline stage): `/storybook-render-audit`
-sanity-checks the current state of Storybook, scoped or full-library.
+**Optional real-browser render audit.** `/storybook-render-audit` (the
+`storybook-render-auditor` agent, `yarn test:storybook-render`) renders stories
+in Playwright's Chromium and checks structural invariants plus visual
+regression against committed baselines, which jsdom unit tests can't see. It is
+not yet a required pipeline stage; scope it to the stories you touched with
+`STORYBOOK_AUDIT_FILTER`.
 
 **Safety hook requirements.** The PreToolUse Bash hook
 (`.claude/hooks/subagent-block-risky-actions.sh`) needs Claude Code >= 2.1.295,

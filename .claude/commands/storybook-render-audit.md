@@ -8,10 +8,9 @@ Arguments (`$ARGUMENTS`), if given, scope the audit — e.g. a chart name, story
 fragment, or story-id substring/regex. Pass it through as `STORYBOOK_AUDIT_FILTER`. With
 no arguments, audit the full story library.
 
-1. **Confirm Storybook's dev server is fresh**, not one that's been running through
-   config/dependency changes without a restart (its Vite dependency cache can desync and
-   produce unrelated errors that look like real failures). If unsure, restart it:
-   `lsof -ti :6006 | xargs -r kill && (nohup yarn storybook > /tmp/storybook.log 2>&1 &) && sleep 10`.
+1. **No server setup needed.** Playwright starts its own fresh Storybook on port 6106
+   (`STORYBOOK_AUDIT_PORT` to change it), so leave any `yarn storybook` on :6006 alone.
+   If 6106 is busy, find out what is using it rather than killing it blindly.
 2. **Launch the `storybook-render-auditor` agent**, passing the scope (`$ARGUMENTS` if
    given) and the reason you're running it (standalone sanity check vs. auditing a
    specific just-merged change — the agent's failure-handling differs slightly by

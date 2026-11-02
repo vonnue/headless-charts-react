@@ -160,9 +160,6 @@
     },
     "@typescript-eslint/no-unused-expressions": {
       "count": 4
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 1
     }
   },
   "src/components/linear/BarChart/BarChart.stories.tsx": {
@@ -236,9 +233,6 @@
     },
     "@typescript-eslint/no-unused-expressions": {
       "count": 19
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 2
     }
   },
   "src/components/linear/LollipopHChart/LollipopHChart.stories.tsx": {

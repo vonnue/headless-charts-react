@@ -16,7 +16,7 @@ import {
 import { max, min, minIndex } from 'd3-array';
 import { pointer, select, selectAll } from 'd3-selection';
 import { scaleLinear, scaleTime } from 'd3';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { timeParse, isoParse } from 'd3-time-format';
 import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types';
@@ -42,6 +42,16 @@ export interface LineChartProps<TData = any> extends ChartProps<TData> {
     showText?: boolean;
   }>;
 }
+
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const EMPTY_DATA: unknown[] = [];
+const DEFAULT_DRAWING = {};
+const DEFAULT_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
+const DEFAULT_MARGIN = { top: 40, bottom: 40, left: 40, right: 20 };
+const DEFAULT_REFERENCE_LINES: NonNullable<LineChartProps['referenceLines']> =
+  [];
+const DEFAULT_STYLE = {};
 
 /* catalog:start */
 /**
@@ -169,35 +179,25 @@ export interface LineChartProps<TData = any> extends ChartProps<TData> {
  */
 /* catalog:end */
 const LineChart = <TData = any,>({
-  data = [],
+  data = EMPTY_DATA as TData[],
   id,
   className,
   x,
   y,
   tooltip,
-  drawing = {},
+  drawing = DEFAULT_DRAWING,
   zooming,
-  padding = {
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  margin = {
-    top: 40,
-    bottom: 40,
-    left: 40,
-    right: 20,
-  },
-  referenceLines = [],
+  padding = DEFAULT_PADDING,
+  margin = DEFAULT_MARGIN,
+  referenceLines = DEFAULT_REFERENCE_LINES,
   yLeftLabel,
   yRightLabel,
-  style = {},
+  style = DEFAULT_STYLE,
   reverse = false,
   showGuideLines = false,
 }: LineChartProps<TData>) => {
   const d3Format = x.time?.format || '%Y-%m-%d';
-  const parseDate = timeParse(d3Format);
+  const parseDate = useMemo(() => timeParse(d3Format), [d3Format]);
 
   const refreshChart = useCallback(() => {
     const shapeMapping = {
@@ -871,14 +871,30 @@ const LineChart = <TData = any,>({
       }
       svg.call(zoomFunc);
     }
-  }, []);
+  }, [
+    id,
+    data,
+    x,
+    y,
+    tooltip,
+    drawing,
+    zooming,
+    padding,
+    margin,
+    referenceLines,
+    yLeftLabel,
+    yRightLabel,
+    reverse,
+    showGuideLines,
+    parseDate,
+  ]);
 
   useEffect(() => {
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();
     };
-  }, [data, refreshChart]);
+  }, [refreshChart, id]);
 
   return (
     <svg

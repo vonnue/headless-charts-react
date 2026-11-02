@@ -9,7 +9,7 @@ import {
   stackOrderInsideOut,
   stackOrderReverse,
 } from 'd3';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   AxisConfig,
@@ -49,6 +49,14 @@ export interface AreaChartProps<TData = any> extends ChartProps<TData> {
     max?: number;
   };
 }
+
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const EMPTY_DATA: unknown[] = [];
+const DEFAULT_STACKING: AreaChartProps['stacking'] = { type: 'normal' };
+const DEFAULT_PADDING = { top: 0, right: 0, bottom: 0, left: 0 };
+const DEFAULT_MARGIN = { top: 20, right: 20, bottom: 20, left: 40 };
+const DEFAULT_STYLE = {};
 
 /* catalog:start */
 /**
@@ -170,34 +178,22 @@ export interface AreaChartProps<TData = any> extends ChartProps<TData> {
  */
 /* catalog:end */
 const AreaChart = <TData = any,>({
-  data = [],
+  data = EMPTY_DATA as TData[],
   id,
   className,
   x,
   y,
-  stacking = {
-    type: 'normal',
-  },
+  stacking = DEFAULT_STACKING,
   tooltip,
 
-  padding = {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
-  margin = {
-    top: 20,
-    right: 20,
-    bottom: 20,
-    left: 40,
-  },
+  padding = DEFAULT_PADDING,
+  margin = DEFAULT_MARGIN,
   zooming,
-  style = {},
+  style = DEFAULT_STYLE,
 }: AreaChartProps<TData>) => {
   const d3Format = x.time?.format || '%Y-%m-%d';
-  const formatDate = timeFormat(d3Format);
-  const parseDate = timeParse(d3Format);
+  const formatDate = useMemo(() => timeFormat(d3Format), [d3Format]);
+  const parseDate = useMemo(() => timeParse(d3Format), [d3Format]);
 
   const { onMouseOver, onMouseLeave } = useTooltip({
     id,
@@ -213,6 +209,14 @@ const AreaChart = <TData = any,>({
         .map((column) => `${column.key}: ${d[column.key]}`)
         .join('<br/>')}`;
     },
+  });
+
+  // The D3 listeners call the latest handlers through this ref, so the
+  // handlers (new each render) don't need to be refreshChart deps. Declared
+  // before the draw effect so it is current when that effect runs.
+  const tooltipHandlers = useRef({ onMouseOver, onMouseLeave });
+  useEffect(() => {
+    tooltipHandlers.current = { onMouseOver, onMouseLeave };
   });
 
   const refreshChart = useCallback(() => {
@@ -399,12 +403,12 @@ const AreaChart = <TData = any,>({
               ? d1
               : d0;
 
-          onMouseOver(event, closestData);
+          tooltipHandlers.current.onMouseOver(event, closestData);
         })
         .on('mouseenter', (event: MouseEvent) => {
-          onMouseOver(event, data[0]);
+          tooltipHandlers.current.onMouseOver(event, data[0]);
         })
-        .on('mouseleave', onMouseLeave);
+        .on('mouseleave', () => tooltipHandlers.current.onMouseLeave());
     };
     redraw();
 
@@ -437,11 +441,11 @@ const AreaChart = <TData = any,>({
       }
       svg.call(zoomFunc);
     }
-  }, []);
+  }, [id, data, x, y, stacking, padding, margin, zooming, parseDate]);
 
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart]);
+  }, [refreshChart, id]);
 
   return (
     <svg

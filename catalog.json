@@ -1268,7 +1268,7 @@
         {
           "kind": "option",
           "name": "Fixed value range",
-          "how": "Pass `valueMin` and `valueMax` to pin the value axis."
+          "how": "Set `y.start` and `y.end` to pin the value axis (0 counts, and a range narrower than the data is honoured). The older `valueMin`/`valueMax` props apply only when the matching `y` bound is unset or not finite."
         },
         {
           "kind": "chart-type",

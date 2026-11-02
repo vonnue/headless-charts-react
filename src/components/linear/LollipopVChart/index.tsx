@@ -15,6 +15,7 @@ import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { resolveBound } from '@/utils/domain';
 import {
   createTimeXScale,
   makeDateAccessor,
@@ -33,7 +34,9 @@ export interface LollipopChartClassNames {
 
 export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
+  /** Fallback value-axis start, used only when `y.start` is not finite. Prefer `y.start`. */
   valueMin?: number;
+  /** Fallback value-axis end, used only when `y.end` is not finite. Prefer `y.end`. */
   valueMax?: number;
   id: string;
   className?: string;
@@ -127,7 +130,7 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
 /* catalog:end */
 const LollipopVChart = <TData = any,>({
   data = [],
-  //   valueMin,
+  valueMin,
   valueMax,
   id,
   className,
@@ -203,12 +206,16 @@ const LollipopVChart = <TData = any,>({
         : (bandXFn(String((d as Record<string, unknown>)[x.key])) ?? 0) +
           bandXFn.bandwidth() / 2;
 
-    const minValue = Number.isFinite(y.start)
-      ? y.start
-      : min(rows, (d) => (d as any)[y.key]);
-    const maxValue = Number.isFinite(valueMax)
-      ? valueMax
-      : max(rows, (d) => (d as any)[y.key]);
+    // y.start/y.end pin the value axis; the older valueMin/valueMax props
+    // apply only when the matching y bound is not finite.
+    const minValue = resolveBound(
+      y.start,
+      resolveBound(valueMin, min(rows, (d) => (d as any)[y.key]))
+    );
+    const maxValue = resolveBound(
+      y.end,
+      resolveBound(valueMax, max(rows, (d) => (d as any)[y.key]))
+    );
 
     const yFn = scaleLinear()
       .domain([minValue, maxValue])
@@ -299,6 +306,7 @@ const LollipopVChart = <TData = any,>({
     data,
     id,
     shape,
+    valueMin,
     valueMax,
     x,
     y,

@@ -7,6 +7,7 @@ import { drawAxis } from '@/hooks/useAxis';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { useCallback, useEffect } from 'react';
 import { defaultChartClassNames, bin1D } from '@/utils';
+import { pinnedEnd, pinnedStart } from '@/utils/domain';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -170,10 +171,8 @@ const BarChart = <TData = any,>({
       effectiveY = y;
     }
 
-    const minStart = min(
-        effectiveX
-          .map((column: BarAxisConfig) => column.start)
-          .filter((v): v is number => v !== undefined)
+    const minStart = pinnedStart(
+        effectiveX.map((column: BarAxisConfig) => column.start)
       ),
       minX = min(
         effectiveX
@@ -185,11 +184,7 @@ const BarChart = <TData = any,>({
           .map((column) => max(effectiveData, (d: any) => d[column.key]))
           .filter((v): v is number => v !== undefined)
       ),
-      maxEnd = max(
-        effectiveX
-          .map((column: BarAxisConfig) => column.end || maxX)
-          .filter((v): v is number => v !== undefined)
-      ),
+      maxEnd = pinnedEnd(effectiveX.map((column: BarAxisConfig) => column.end)),
       areAllGreaterThanZero = (minX ?? 0) > 0;
 
     const xFnRange =
@@ -205,12 +200,8 @@ const BarChart = <TData = any,>({
 
     const xFn = scaleLinear()
       .domain([
-        Number.isFinite(minStart)
-          ? minStart!
-          : areAllGreaterThanZero
-          ? 0
-          : minX ?? 0,
-        Number.isFinite(maxEnd) ? maxEnd! : maxX ?? 0,
+        minStart ?? (areAllGreaterThanZero ? 0 : minX ?? 0),
+        maxEnd ?? maxX ?? 0,
       ])
       .range(xFnRange);
 

@@ -139,3 +139,42 @@ describe('LineChart', () => {
     expect(svg).toBeTruthy();
   });
 });
+
+// #16: the time scale must use the raw data extent, not a niced one.
+describe('LineChart time scale domain (#16)', () => {
+  const timeData = [
+    { date: '2020-01-15', value: 10 },
+    { date: '2020-02-10', value: 20 },
+    { date: '2020-03-17', value: 15 },
+  ];
+
+  it('maps the first and last dates to the edges of the x range (not niced)', () => {
+    const { container } = render(
+      <LineChart
+        id='line-chart-time-domain'
+        data={timeData}
+        style={{ width: '600px', height: '400px' }}
+        margin={{ top: 40, right: 20, bottom: 40, left: 40 }}
+        padding={{ top: 0, right: 0, bottom: 0, left: 0 }}
+        x={{
+          key: 'date',
+          scalingFunction: 'time',
+          time: { format: '%Y-%m-%d' },
+        }}
+        y={[{ key: 'value', symbol: 'none' }]}
+      />
+    );
+
+    const svg = container.querySelector('#line-chart-time-domain');
+    const d = svg?.querySelector('.left-series')?.getAttribute('d') ?? '';
+    // Read only M/L coordinates so the test doesn't depend on the curve type.
+    const xs = Array.from(d.matchAll(/[ML]([-\d.e]+),/g), (m) => Number(m[1]));
+
+    // Explicit margin.left = 40, margin.right = 20, padding = 0 → range [40, 580].
+    // A niced domain would round 2020-01-15 / 2020-03-17 out to month
+    // boundaries and pull the end points inwards.
+    expect(xs.length).toBeGreaterThan(0);
+    expect(Math.min(...xs)).toBeCloseTo(40, 6);
+    expect(Math.max(...xs)).toBeCloseTo(580, 6);
+  });
+});

@@ -18,6 +18,7 @@ import { defaultChartClassNames } from '@/utils';
 import {
   createTimeXScale,
   makeDateAccessor,
+  timePosition,
   padTimeDomain,
   useTimeAxisWarnings,
 } from '@/utils/timeScale';
@@ -195,9 +196,10 @@ const LollipopVChart = <TData = any,>({
       .range(xRange);
     const xFn = timeXFn ?? bandXFn;
 
+    const timeX = timeXFn ? timePosition(timeXFn, toDateTime) : undefined;
     const stemX = (d: TData): number =>
-      timeXFn
-        ? timeXFn(toDateTime(d) as Date)
+      timeX
+        ? timeX(d)
         : (bandXFn(String((d as Record<string, unknown>)[x.key])) ?? 0) +
           bandXFn.bandwidth() / 2;
 

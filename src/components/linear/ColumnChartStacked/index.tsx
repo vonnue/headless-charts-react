@@ -15,6 +15,7 @@ import { defaultChartClassNames } from '@/utils';
 import {
   createTimeBarLayout,
   makeDateAccessor,
+  timePosition,
   makeDateFormatter,
   useTimeAxisWarnings,
   warnIfBarWidthCapped,
@@ -212,7 +213,8 @@ const ColumnChartStacked = <TData = any,>({
       const timeXFn = layout.scale;
       xFn = timeXFn;
       barWidth = layout.width;
-      barX = (d) => timeXFn(toDateTime(d) as Date) - barWidth / 2;
+      const timeX = timePosition(timeXFn, toDateTime);
+      barX = (d) => timeX(d) - barWidth / 2;
     } else {
       const bandXFn = scaleBand<string>()
         .domain(rows.map((d) => (d as any)[x.key]))

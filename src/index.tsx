@@ -17,6 +17,7 @@ export { default as TimeLineChart } from '@/components/linear/TimeLineChart';
 // Hooks
 export { default as useAxis, drawAxis } from '@/hooks/useAxis';
 export { default as useTooltip } from '@/hooks/useTooltip';
+export type { UseTooltipResult, TooltipSelection } from '@/hooks/useTooltip';
 
 // Types
 export type { AxisConfig, SeriesAxisConfig, TooltipConfig, ChartProps, GaugeProps } from '@/types';

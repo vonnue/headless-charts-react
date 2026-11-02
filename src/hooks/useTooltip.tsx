@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { deepValue, mergeTailwindClasses } from '@/utils';
-import { pointer, select } from 'd3-selection';
+import { Selection, pointer, select } from 'd3-selection';
 import { TooltipConfig } from '@/types';
 
 /** @deprecated Use TooltipConfig from '../types' instead */
@@ -22,7 +22,55 @@ interface TooltipState {
   /** Latest config, so handlers read current props. */
   tooltip?: TooltipObjectType;
   defaultHtml?: TooltipProps['defaultHtml'];
+  /** True once the missing-event warning has been logged by this instance. */
+  warnedMissingEvent: boolean;
 }
+
+/** A d3 selection of the tooltip element (empty if there is none). */
+export type TooltipSelection = Selection<HTMLElement | null, unknown, null, undefined>;
+
+export interface UseTooltipResult {
+  /**
+   * Selection of the tooltip element as it was in the DOM at render time:
+   * empty on the first render and on the render where `id` changes.
+   * @deprecated Use `getTooltipDiv()`, which returns the live element and is
+   * safe to call from effects (including mount effects) and from callbacks
+   * captured on the first render.
+   */
+  tooltipDiv: TooltipSelection;
+  /**
+   * Returns a selection of the live tooltip element, creating (or re-creating)
+   * it if needed. Empty before mount and after unmount.
+   */
+  getTooltipDiv: () => TooltipSelection;
+  onMouseOver: (event: unknown, d: unknown) => void;
+  /** Must be called with the mouse event; without one it does nothing. */
+  onMouseMove: (event?: unknown, d?: unknown) => void;
+  onMouseLeave: () => void;
+}
+
+// Module-local declaration so this compiles without @types/node.
+declare const process: { env?: { NODE_ENV?: string } } | undefined;
+
+/**
+ * Dev-only gate, as for the box plot config warnings. `process.env.NODE_ENV`
+ * is left as-is in the library build and replaced by the consumer's bundler,
+ * so warnings show in their dev builds and are dropped from production. With
+ * no `process` at all (unbundled ESM) it is false.
+ */
+const isDevEnvironment = (): boolean => {
+  try {
+    return process!.env!.NODE_ENV !== 'production';
+  } catch {
+    return false;
+  }
+};
+
+// useLayoutEffect in the browser so the config is current before any event
+// can fire after a commit; useEffect on the server, where React 18 warns about
+// useLayoutEffect.
+const useIsomorphicLayoutEffect =
+  typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /** The element a hook with this config would use, if it already exists. */
 const findExisting = (id: string | undefined, tooltip?: TooltipObjectType) =>
@@ -64,21 +112,27 @@ const ensureElement = (state: TooltipState, id?: string): HTMLDivElement => {
  * hook created it. Handlers always act on the live element and re-create it if
  * something removed it in the meantime. They are no-ops after unmount.
  *
- * `tooltipDiv` is read-only and reflects the DOM at render time: it is an
- * empty selection on the first render, before the element exists.
+ * Use `getTooltipDiv()` to reach the element from effects or callbacks. The
+ * deprecated `tooltipDiv` reflects the DOM at render time and is an empty
+ * selection on the first render, before the element exists.
  */
-const useTooltip = ({ tooltip, defaultHtml, id }: TooltipProps) => {
+const useTooltip = ({
+  tooltip,
+  defaultHtml,
+  id,
+}: TooltipProps): UseTooltipResult => {
   const stateRef = useRef<TooltipState>({
     element: null,
     owned: false,
     mounted: false,
     tooltip,
     defaultHtml,
+    warnedMissingEvent: false,
   });
 
-  // Declared before the [id] effect so the element is created with the
-  // current config. Runs after every render.
-  useEffect(() => {
+  // Runs after every render, before the [id] effect, so the element is
+  // created with the current config.
+  useIsomorphicLayoutEffect(() => {
     stateRef.current.tooltip = tooltip;
     stateRef.current.defaultHtml = defaultHtml;
   });
@@ -96,9 +150,16 @@ const useTooltip = ({ tooltip, defaultHtml, id }: TooltipProps) => {
   }, [id]);
 
   // A DOM read, not a write; nothing exists during SSR.
-  const tooltipDiv = select(
+  const tooltipDiv: TooltipSelection = select(
     typeof document === 'undefined' ? null : findExisting(id, tooltip)
   );
+
+  const getTooltipDiv = (): TooltipSelection => {
+    const state = stateRef.current;
+    return select<HTMLElement | null, unknown>(
+      state.mounted ? ensureElement(state, id) : null
+    );
+  };
 
   const onMouseOver = (event: any, d: any) => {
     const state = stateRef.current;
@@ -134,10 +195,20 @@ const useTooltip = ({ tooltip, defaultHtml, id }: TooltipProps) => {
   };
 
   // D3 calls this as (event, datum); the datum is unused. Without an event it
-  // is a no-op (it no longer reads the deprecated global `window.event`).
-  const onMouseMove: (event?: unknown, d?: unknown) => void = (event) => {
+  // is a no-op (it no longer reads the deprecated global `window.event`) and
+  // warns once per instance in development.
+  const onMouseMove: UseTooltipResult['onMouseMove'] = (event) => {
     const state = stateRef.current;
-    if (!state.mounted || !event) return;
+    if (!state.mounted) return;
+    if (!event) {
+      if (!state.warnedMissingEvent && isDevEnvironment()) {
+        state.warnedMissingEvent = true;
+        console.warn(
+          '[headless-charts] useTooltip: onMouseMove must be called with the mouse event (e.g. `.on("mousemove", onMouseMove)`); without one the tooltip is not moved.'
+        );
+      }
+      return;
+    }
     const div = select(ensureElement(state, id));
     const [bX, bY] = pointer(event, select('body'));
     div.style('left', `${bX + 10}px`);
@@ -155,7 +226,7 @@ const useTooltip = ({ tooltip, defaultHtml, id }: TooltipProps) => {
     div.style('left', `-1000px`);
   };
 
-  return { tooltipDiv, onMouseOver, onMouseMove, onMouseLeave };
+  return { tooltipDiv, getTooltipDiv, onMouseOver, onMouseMove, onMouseLeave };
 };
 
 export default useTooltip;

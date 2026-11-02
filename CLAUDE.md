@@ -87,6 +87,14 @@ violations, run `yarn lint:prune` and commit the smaller file. Never run
 fix it. Any diff that *increases* counts in `eslint-suppressions.json` must be
 called out for review.
 
+**Safety hook requirements.** The PreToolUse Bash hook
+(`.claude/hooks/subagent-block-risky-actions.sh`) needs Claude Code >= 2.1.295,
+`bash` and `jq`. Because `.claude/settings.json` sets `"onFailure": "block"`, a
+broken hook (lost exec bit, missing `bash`, a crash or a timeout) blocks every
+Bash call, including the main session's. If all Bash calls start failing with
+`blocking because onFailure is "block"`, fix the hook rather than removing the
+setting.
+
 ## Editing charts
 
 When adding a chart, or changing what a chart is for:

@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import { AUDIT_BASE_URL, AUDIT_PORT } from './tests/storybook-render-audit/shared';
 
 // Config for the Storybook render audit only (tests/storybook-render-audit/).
 // This project renders every story in a real browser and checks structural
@@ -6,15 +7,25 @@ import { defineConfig } from '@playwright/test';
 // jsdom-based unit tests in vite.config.ts.
 export default defineConfig({
   testDir: 'tests/storybook-render-audit',
+  globalSetup: './tests/storybook-render-audit/global-setup.ts',
+  // One test per story (see render.spec.ts), so stories run across workers
+  // and a retry reruns only the story that failed.
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [['list']],
-  // This one test loops over every audited story (each needs ~1.2s to let
-  // D3 transitions settle, plus navigation/networkidle), not the per-test
-  // budget a unit test needs. Measured: a full 272-story run took ~10.1min,
-  // right at a 10min timeout — 20min gives real margin.
-  timeout: 20 * 60_000,
+  // Per story: navigation + networkidle + ~1.2s for D3 transitions to settle.
+  timeout: 60_000,
+  // Never write a missing baseline as a side effect of a normal run — on a
+  // platform without baselines the run would otherwise "pass" against images
+  // it just generated. Only `yarn test:storybook-render:update`
+  // (--update-snapshots) creates or changes baselines.
+  updateSnapshots: 'none',
+  // Baselines are per platform (`<story-id>-<platform>.png`): font
+  // rasterisation differs between macOS and Linux by far more than the
+  // 60px budget below, so one shared image can't serve both. See
+  // tests/storybook-render-audit/README.md.
+  snapshotPathTemplate: '{testDir}/{testFileName}-snapshots/{arg}-{platform}{ext}',
   expect: {
     // An absolute pixel budget, not a ratio: screenshots are cropped to just
     // the <svg>, and a ratio large enough to absorb font-antialiasing noise
@@ -27,14 +38,17 @@ export default defineConfig({
     toHaveScreenshot: { maxDiffPixels: 60 },
   },
   use: {
-    baseURL: 'http://localhost:6006',
+    baseURL: AUDIT_BASE_URL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'yarn storybook',
-    url: 'http://localhost:6006',
-    reuseExistingServer: true,
-    timeout: 60_000,
+    // Playwright owns a fresh server on a dedicated port. Set
+    // STORYBOOK_AUDIT_REUSE=1 to attach to one you already started on that
+    // port (only if you know it is fresh — see the agent's notes).
+    command: `yarn storybook --ci -p ${AUDIT_PORT}`,
+    url: `${AUDIT_BASE_URL}/index.json`,
+    reuseExistingServer: !!process.env.STORYBOOK_AUDIT_REUSE,
+    timeout: 120_000,
   },
 });

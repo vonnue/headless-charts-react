@@ -2,6 +2,7 @@
 // configTypes.test-d.ts (Vitest typecheck).
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
+import { StrictMode } from 'react';
 
 import BoxPlotH from './BoxPlotH';
 import type { BoxPlotHSummaryProps } from './BoxPlotH';
@@ -275,6 +276,23 @@ describe('BoxPlot dev-only config warnings', () => {
     expect(warn).toHaveBeenLastCalledWith(
       expect.stringContaining('valueKey "salry"'),
     );
+  });
+
+  it('does not repeat a warning on remount or StrictMode double effects (review-3 R3)', () => {
+    const warn = spyWarn();
+    const el = (
+      <BoxPlotH
+        id='bp-h-remount'
+        data={rawRows}
+        valueKey=''
+        y={{ key: 'age', bin: { count: 3 } }}
+        x={{}}
+      />
+    );
+    render(<StrictMode>{el}</StrictMode>).unmount();
+    render(el);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('BoxPlotH#bp-h-remount'));
   });
 
   it('is silent when NODE_ENV is production', () => {

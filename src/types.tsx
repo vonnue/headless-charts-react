@@ -55,6 +55,16 @@ export interface AxisConfig<TData = any> {
 }
 
 /**
+ * Axis configuration for a value axis whose position is driven by other keys
+ * (e.g. box-plot statistic keys or range from/to keys), so `key` is not read
+ * and may be omitted. Every `AxisConfig` is assignable to this type.
+ */
+export type ValueAxisConfig<TData = unknown> = Omit<AxisConfig<TData>, 'key'> & {
+  /** Data key — not read by charts that use this config; optional */
+  key?: Extract<keyof TData, string> | string;
+};
+
+/**
  * Extended axis configuration for multi-series charts (line, area)
  */
 export interface SeriesAxisConfig<TData = any> extends AxisConfig<TData> {

@@ -22,13 +22,13 @@ const meta: ChartMeta = {
         role: 'value',
         required: true,
         description:
-          'Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. When `y.bin` is set these are computed internally and can be omitted.',
+          'Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. No `key` is needed — positions come from the statistic keys. When `y.bin` and `valueKey` are both set the statistics are computed internally and these keys can be omitted; `y.bin` without `valueKey` is ignored and all five are still required.',
       },
       {
         prop: 'valueKey',
         role: 'quantitative',
         required: false,
-        description: 'With `y.bin` set, names the raw continuous field the box statistics are computed from.',
+        description: 'Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `y.bin` is ignored.',
       },
     ],
     rowCount: { ideal: [2, 20], max: 30 },
@@ -73,7 +73,7 @@ const meta: ChartMeta = {
       aliases: ['box plot from raw data', 'grouped distribution plot'],
       summary:
         'Bins a continuous field into groups and computes each group’s min, quartiles and median from the raw rows, rather than taking pre-aggregated statistics.',
-      how: 'Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. The statistic keys on `x` are then computed internally and can be omitted.',
+      how: 'Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `x` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `x` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`.',
       useWhen: [
         'The data is raw observations and the statistics have not been computed upstream',
         'The grouping field is continuous, e.g. distribution of salary by age band',

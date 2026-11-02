@@ -1,6 +1,6 @@
 import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { Selection } from 'd3-selection';
-import { AxisConfig } from '@/types';
+import { ValueAxisConfig } from '@/types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AxisScale = any;
@@ -9,7 +9,8 @@ export type AxisScale = any;
 export interface DrawAxisOptions<TData = any> {
   g: Selection<SVGGElement, unknown, any, any>;
   scale: AxisScale;
-  config: AxisConfig<TData>;
+  /** Only `axis` settings are read, so `key` is optional */
+  config: ValueAxisConfig<TData>;
   dimensions: {
     width: number;
     height: number;

@@ -293,7 +293,7 @@
   },
   "src/components/ranges/BoxPlotH/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 38
+      "count": 36
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -306,7 +306,7 @@
   },
   "src/components/ranges/BoxPlotV/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 38
+      "count": 36
     },
     "react-hooks/exhaustive-deps": {
       "count": 1

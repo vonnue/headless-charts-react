@@ -22,13 +22,13 @@ const meta: ChartMeta = {
         role: 'value',
         required: true,
         description:
-          'Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. When `x.bin` is set these are computed internally and can be omitted.',
+          'Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. No `key` is needed — positions come from the statistic keys. When `x.bin` and `valueKey` are both set the statistics are computed internally and these keys can be omitted; `x.bin` without `valueKey` is ignored and all five are still required.',
       },
       {
         prop: 'valueKey',
         role: 'quantitative',
         required: false,
-        description: 'With `x.bin` set, names the raw continuous field the box statistics are computed from.',
+        description: 'Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `x.bin` is ignored.',
       },
     ],
     rowCount: { ideal: [2, 15], max: 25 },
@@ -73,7 +73,7 @@ const meta: ChartMeta = {
       aliases: ['vertical box plot from raw data', 'distribution by band'],
       summary:
         'Bins a continuous field into groups along the x axis and computes each group’s quartiles from the raw rows.',
-      how: 'Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. The statistic keys on `y` are then computed internally and can be omitted. Use `bin.thresholds` for explicit band edges.',
+      how: 'Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `y` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `y` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges.',
       useWhen: [
         'The data is raw observations and no statistics have been computed upstream',
         'The grouping field is continuous, e.g. salary distribution by age band',

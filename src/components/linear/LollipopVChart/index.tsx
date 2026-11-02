@@ -15,6 +15,13 @@ import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import {
+  createTimeXScale,
+  makeDateAccessor,
+  timePosition,
+  padTimeDomain,
+  useTimeAxisWarnings,
+} from '@/utils/timeScale';
 import { twMerge } from 'tailwind-merge';
 import { drawAxis } from '@/hooks/useAxis';
 
@@ -71,7 +78,17 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
  * **Avoid when**
  * - Several measures need comparing per category — use ColumnChart
  * - Category labels are long — use LollipopHChart
- * - The axis is continuous time — use LineChart
+ * - The axis is dense continuous time and the trend matters more than
+ *   individual values — use LineChart; for a modest number of dated values
+ *   use the time-scaled variant (`x.scalingFunction: "time"`)
+ *
+ * **Specialised types**
+ * - Time-scaled lollipop chart — Set `x.scalingFunction: "time"` with
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar
+ *   width to derive — `x.time.barWidth` is not used by this chart. Set
+ *   `x.time.utc: true` when dates are UTC instants or calendar days —
+ *   otherwise they are parsed, placed and labelled in the viewer's local
+ *   time zone.
  *
  * Also called: vertical lollipop chart, stem and dot chart.
  *
@@ -86,6 +103,18 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
  *   shape="circle"
  *   x={{ key: 'name', axis: { location: 'bottom' } }}
  *   y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
+ * />
+ * ```
+ *
+ * @example Time-scaled lollipop chart
+ * ```tsx
+ * <LollipopVChart
+ *   id="weekly-readings"
+ *   className="w-full h-64"
+ *   data={data}
+ *   shape="circle"
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+ *   y={{ key: 'reading', start: 0 }}
  * />
  * ```
  *
@@ -120,6 +149,7 @@ const LollipopVChart = <TData = any,>({
   y = { key: 'y', axis: { location: 'left' } },
   style = {},
 }: LollipopVChartProps<TData>) => {
+  useTimeAxisWarnings('LollipopVChart', id, data, x, { checkBarWidth: false });
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     // Clear svg
@@ -127,8 +157,6 @@ const LollipopVChart = <TData = any,>({
 
     const width = +svg.style('width').split('px')[0];
     const height = +svg.style('height').split('px')[0];
-
-    data.sort((a, b) => (b as any)[y.key] - (a as any)[y.key]);
 
     const shapeMapping = {
       circle: symbolCircle,
@@ -140,19 +168,47 @@ const LollipopVChart = <TData = any,>({
       wye: symbolWye,
     };
 
+    const toDateTime = makeDateAccessor<TData>(x);
+    const isTimeX = x.scalingFunction === 'time';
+    // In time mode rows without a readable date are not drawn (dev warning
+    // from useTimeAxisWarnings)
+    const rows = isTimeX ? data.filter((d) => toDateTime(d) != null) : data;
+    // Sorts in place, as before: in band mode `rows` is `data`, and the band
+    // domain follows this order
+    rows.sort((a, b) => (b as any)[y.key] - (a as any)[y.key]);
+    const xRange: [number, number] = [
+      (margin.left ?? 0) + (padding.left ?? 0),
+      width - (margin.right ?? 0) - (padding.right ?? 0),
+    ];
+
+    // In time mode one scale positions the stems *and* draws the axis, so
+    // stems sit on their ticks. Its date domain is padded by SYMBOL_INSET_PX
+    // at each unpinned end so edge symbols don't overhang the plot (#16):
+    // the largest bounding radius among this component's symbol shapes at the
+    // fixed size=100 used below (star is the widest at ~9.44px; 10px covers
+    // all of them).
+    const SYMBOL_INSET_PX = 10;
+    const timeXFn = isTimeX
+      ? padTimeDomain(createTimeXScale(rows, x, toDateTime, xRange), SYMBOL_INSET_PX, x)
+      : undefined;
+    const bandXFn = scaleBand()
+      .domain(rows.map((d) => String((d as Record<string, unknown>)[x.key])))
+      .range(xRange);
+    const xFn = timeXFn ?? bandXFn;
+
+    const timeX = timeXFn ? timePosition(timeXFn, toDateTime) : undefined;
+    const stemX = (d: TData): number =>
+      timeX
+        ? timeX(d)
+        : (bandXFn(String((d as Record<string, unknown>)[x.key])) ?? 0) +
+          bandXFn.bandwidth() / 2;
+
     const minValue = Number.isFinite(y.start)
       ? y.start
-      : min(data, (d) => (d as any)[y.key]);
+      : min(rows, (d) => (d as any)[y.key]);
     const maxValue = Number.isFinite(valueMax)
       ? valueMax
-      : max(data, (d) => (d as any)[y.key]);
-
-    const xFn = scaleBand()
-      .domain(data.map((d) => (d as any)[x.key]))
-      .range([
-        (margin.left ?? 0) + (padding.left ?? 0),
-        width - (margin.right ?? 0) - (padding.right ?? 0),
-      ]);
+      : max(rows, (d) => (d as any)[y.key]);
 
     const yFn = scaleLinear()
       .domain([minValue, maxValue])
@@ -189,7 +245,7 @@ const LollipopVChart = <TData = any,>({
     const drawLinesAndCircles = () => {
       const pointGroup = dataGroup
         .selectAll('.line')
-        .data(data)
+        .data(rows)
         .enter()
         .append('g');
 
@@ -201,10 +257,10 @@ const LollipopVChart = <TData = any,>({
           twMerge('line stroke-current', classNames?.points, classNames?.lines)
         )
         // @ts-ignore
-        .attr('x1', (d) => xFn((d as any)[x.key]) + xFn.bandwidth() / 2)
+        .attr('x1', (d) => stemX(d))
         .attr('y1', () => yFn(minValue))
         // @ts-ignore
-        .attr('x2', (d) => xFn((d as any)[x.key]) + xFn.bandwidth() / 2)
+        .attr('x2', (d) => stemX(d))
         .attr('y2', () => yFn(minValue))
         .transition()
         .duration(1000)
@@ -221,7 +277,7 @@ const LollipopVChart = <TData = any,>({
           'transform',
           (d) =>
             //@ts-ignore
-            `translate(${xFn((d as any)[x.key]) + xFn.bandwidth() / 2},${yFn(
+            `translate(${stemX(d)},${yFn(
               minValue
             )})`
         )
@@ -231,7 +287,7 @@ const LollipopVChart = <TData = any,>({
           'transform',
           (d) =>
             // @ts-ignore
-            `translate(${xFn((d as any)[x.key]) + xFn.bandwidth() / 2},${yFn(
+            `translate(${stemX(d)},${yFn(
               (d as any)[y.key]
             )} )`
         );

@@ -748,6 +748,25 @@
           "kind": "option",
           "name": "Whole numbers",
           "how": "Set `wholeNumbers` to force integer ticks on the value axis."
+        },
+        {
+          "kind": "chart-type",
+          "name": "Time-scaled column chart",
+          "aliases": [
+            "time series column chart"
+          ],
+          "summary": "A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
+          "useWhen": [
+            "The x values are real dates and spacing between bars should be proportional to elapsed time, not category index",
+            "Some periods are missing and the gap should read as whitespace rather than being silently collapsed",
+            "Axis ticks should fall on real date boundaries"
+          ],
+          "avoidWhen": [
+            "Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead",
+            "The categories are ordinal labels rather than true dates, e.g. \"Q1\"/\"Q2\" — use a plain ColumnChart"
+          ],
+          "example": "<ColumnChart\n  id=\"daily-signups\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={[{ key: 'signups', className: 'fill-purple-600' }]}\n/>"
         }
       ]
     },
@@ -804,7 +823,7 @@
         "Individual segments need precise comparison across categories — only the bottom segment shares a baseline; use ColumnChart grouped",
         "Category labels are long or numerous — use BarChartStacked",
         "There is one category only — use PieChart",
-        "The axis is continuous time — use AreaChart, which reads as a flow rather than discrete totals"
+        "The axis is dense continuous time and the flow matters more than each period's total — use AreaChart; for a modest number of dated periods use the time-scaled variant (`x.scalingFunction: \"time\"`)"
       ],
       "alternatives": [
         {
@@ -817,7 +836,7 @@
         },
         {
           "name": "AreaChart",
-          "when": "the axis is continuous time"
+          "when": "the axis is dense continuous time and the flow matters more than per-period totals"
         },
         {
           "name": "PieChart",
@@ -860,6 +879,25 @@
           "kind": "option",
           "name": "Reference lines",
           "how": "Pass `referenceLines={[{ y: 100, className: \"stroke-red-500\" }]}`."
+        },
+        {
+          "kind": "chart-type",
+          "name": "Time-scaled stacked column chart",
+          "aliases": [
+            "time series stacked column chart"
+          ],
+          "summary": "A stacked column chart whose x axis parses real dates and spaces bars proportionally to elapsed time.",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
+          "useWhen": [
+            "The total per period matters and periods are real, possibly unevenly spaced dates",
+            "Some periods are missing and the gap should read as whitespace",
+            "Axis ticks should fall on real date boundaries"
+          ],
+          "avoidWhen": [
+            "Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use AreaChart instead",
+            "Combined with `waterfall` — a running total's step order rarely aligns cleanly with calendar spacing; prefer a plain categorical waterfall"
+          ],
+          "example": "<ColumnChartStacked\n  id=\"daily-revenue-split\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={[\n    { key: 'macbook', className: 'fill-purple-800' },\n    { key: 'iphone', className: 'fill-purple-600' },\n  ]}\n/>"
         }
       ]
     },
@@ -1191,7 +1229,7 @@
       "avoidWhen": [
         "Several measures need comparing per category — use ColumnChart",
         "Category labels are long — use LollipopHChart",
-        "The axis is continuous time — use LineChart"
+        "The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: \"time\"`)"
       ],
       "alternatives": [
         {
@@ -1231,6 +1269,24 @@
           "kind": "option",
           "name": "Fixed value range",
           "how": "Pass `valueMin` and `valueMax` to pin the value axis."
+        },
+        {
+          "kind": "chart-type",
+          "name": "Time-scaled lollipop chart",
+          "aliases": [
+            "time series lollipop chart"
+          ],
+          "summary": "A vertical lollipop chart whose x axis parses real dates and positions each stem proportionally to elapsed time, rather than as an equal-width slot.",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone.",
+          "useWhen": [
+            "Values are one-per-date and spacing between stems should be proportional to elapsed time",
+            "Category labels are dates rather than names"
+          ],
+          "avoidWhen": [
+            "Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled ColumnChart overlaps the same way)",
+            "The axis is continuous time with many points and the trend matters more than individual values — use LineChart"
+          ],
+          "example": "<LollipopVChart\n  id=\"weekly-readings\"\n  className=\"w-full h-64\"\n  data={data}\n  shape=\"circle\"\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{ key: 'reading', start: 0 }}\n/>"
         }
       ]
     },
@@ -2085,6 +2141,24 @@
           "kind": "option",
           "name": "Per-row colours",
           "how": "Put a `className` field on each row to colour boxes individually."
+        },
+        {
+          "kind": "chart-type",
+          "name": "Time-scaled box plot (vertical)",
+          "aliases": [
+            "time series box plot"
+          ],
+          "summary": "A vertical box plot whose x axis parses real dates and spaces boxes proportionally to elapsed time.",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
+          "useWhen": [
+            "Groups are periods (weeks, months) with real dates and spacing should reflect elapsed time",
+            "Some periods have no data and that gap should be visible rather than silently skipped"
+          ],
+          "avoidWhen": [
+            "Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping boxes; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow boxes)",
+            "Raw rows need binning — `x.bin` and `valueKey` are ignored on a time axis (with a dev warning) and summary mode is used, so `y` must name all five stat keys; pre-compute per-period statistics or drop `scalingFunction: \"time\"`"
+          ],
+          "example": "<BoxPlotV\n  id=\"weekly-latency-spread\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    min: 0,\n  }}\n/>"
         }
       ]
     },

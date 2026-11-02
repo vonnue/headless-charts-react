@@ -2,11 +2,24 @@ import { max, min } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
-import { scaleBand, scaleLinear } from 'd3-scale';
+import {
+  scaleBand,
+  scaleLinear,
+  type ScaleBand,
+  type ScaleTime,
+} from 'd3-scale';
 import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, bin1D } from '@/utils';
+import {
+  createTimeBarLayout,
+  makeDateAccessor,
+  timePosition,
+  makeDateFormatter,
+  useTimeAxisWarnings,
+  warnIfBarWidthCapped,
+} from '@/utils/timeScale';
 import { twMerge } from 'tailwind-merge';
 
 export interface ColumnChartGroupedProps<TData = any> extends ChartProps<TData> {
@@ -58,6 +71,18 @@ interface drawHLineProps {
  * - Histogram — Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{
  *   key: "count" }]}`. Pass the raw rows as `data` — binning and counting
  *   happen internally. Use `bin.thresholds` for explicit edges.
+ * - Time-scaled column chart — Set `x.scalingFunction: "time"` with
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from
+ *   the median gap between dates (one slot per step); `x.time.barWidth`
+ *   (positive pixels) overrides it but is capped at one slot, so it can
+ *   narrow bars but never widen them past their slot. Set `x.time.utc: true`
+ *   when dates are UTC instants or calendar days — otherwise they are
+ *   parsed, placed and labelled in the viewer's local time zone. Pinned
+ *   `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly
+ *   on a pinned end is centred on the plot edge and overhangs it by half a
+ *   bar; to keep edge marks inside, pin half a step outside the data (e.g.
+ *   `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1
+ *   Jan 2025).
  *
  * Also called: vertical bar chart, grouped column chart, clustered column chart.
  *
@@ -85,6 +110,17 @@ interface drawHLineProps {
  *   data={rawRows}
  *   x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}
  *   y={[{ key: 'count', className: 'text-blue-500' }]}
+ * />
+ * ```
+ *
+ * @example Time-scaled column chart
+ * ```tsx
+ * <ColumnChart
+ *   id="daily-signups"
+ *   className="w-full h-64"
+ *   data={data}
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+ *   y={[{ key: 'signups', className: 'fill-purple-600' }]}
  * />
  * ```
  *
@@ -119,14 +155,23 @@ const ColumnChartGrouped = <TData = any,>({
   style = {},
   wholeNumbers = false,
 }: ColumnChartGroupedProps<TData>) => {
+  const isTimeX = x.scalingFunction === 'time';
+
+  const formatDate = makeDateFormatter(x);
+  const toDateTime = makeDateAccessor<TData>(x);
+  useTimeAxisWarnings('ColumnChart', id, data, x);
+
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
-    defaultHtml: (d: any) =>
-      `${d[x.key]} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`,
+    defaultHtml: (d: any) => {
+      const date = isTimeX ? toDateTime(d) : null;
+      const xValue = date ? formatDate(date) : d[x.key];
+      return `${xValue} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`;
+    },
   });
 
-  const isBinned = x.bin != null;
+  const isBinned = x.bin != null && x.scalingFunction !== 'time';
 
   const refreshChart = useCallback(() => {
     /* eslint-disable */
@@ -145,7 +190,9 @@ const ColumnChartGrouped = <TData = any,>({
       effectiveX = { ...x, bin: undefined };
       effectiveY = [{ key: 'count', className: y[0]?.className }];
     } else {
-      effectiveData = data;
+      // In time mode rows without a readable date are not drawn (dev warning
+      // from useTimeAxisWarnings)
+      effectiveData = isTimeX ? data.filter((d) => toDateTime(d) != null) : data;
       effectiveX = x;
       effectiveY = y;
     }
@@ -168,14 +215,42 @@ const ColumnChartGrouped = <TData = any,>({
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
 
-    const xFn = scaleBand()
-      // @ts-ignore
-      .domain(effectiveData.map((d) => (d as any)[effectiveX.key]))
-      .range([
-        (margin.left ?? 0) + (padding.left ?? 0),
-        width - (margin.right ?? 0) - (padding.right ?? 0),
-      ])
-      .padding(paddingBar);
+    const paddingBarValue = paddingBar;
+
+    const xRange: [number, number] = [
+      (margin.left ?? 0) + (padding.left ?? 0),
+      width - (margin.right ?? 0) - (padding.right ?? 0),
+    ];
+
+    // In time mode one scale positions the bars *and* draws the axis, so bars
+    // sit on their ticks; its domain is padded so edge bars stay inside (#16).
+    let xFn: ScaleBand<string> | ScaleTime<number, number>;
+    let barX: (d: TData) => number;
+    let barWidth: number;
+    if (isTimeX) {
+      const layout = createTimeBarLayout(
+        effectiveData,
+        x,
+        toDateTime,
+        xRange,
+        paddingBarValue,
+        x.time?.barWidth
+      );
+      warnIfBarWidthCapped('ColumnChart', id, layout);
+      const timeXFn = layout.scale;
+      xFn = timeXFn;
+      barWidth = layout.width;
+      const timeX = timePosition(timeXFn, toDateTime);
+      barX = (d) => timeX(d) - barWidth / 2;
+    } else {
+      const bandXFn = scaleBand<string>()
+        .domain(effectiveData.map((d) => (d as any)[effectiveX.key]))
+        .range(xRange)
+        .padding(paddingBarValue);
+      xFn = bandXFn;
+      barWidth = bandXFn.bandwidth();
+      barX = (d) => bandXFn((d as any)[effectiveX.key]) || 0;
+    }
 
     const yFn = scaleLinear()
       // @ts-ignore
@@ -207,16 +282,12 @@ const ColumnChartGrouped = <TData = any,>({
             }`
         )
         // @ts-ignore
-        .attr(
-          'x',
-          (d) =>
-            (xFn((d as any)[effectiveX.key]) || 0) + (i * xFn.bandwidth()) / effectiveY.length
-        )
+        .attr('x', (d: any) => barX(d) + (i * barWidth) / effectiveY.length)
         .attr('y', (d) =>
           // @ts-ignore
           drawing && drawing.duration ? yFn(0) : yFn((d as any)[column.key])
         )
-        .attr('width', xFn.bandwidth() / effectiveY.length)
+        .attr('width', barWidth / effectiveY.length)
         .attr('height', (d) =>
           drawing && drawing.duration
             ? 0

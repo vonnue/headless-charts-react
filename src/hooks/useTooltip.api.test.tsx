@@ -6,8 +6,9 @@
  *   and stays a no-op; with an event it does not warn;
  * - getTooltipDiv() is live in a child component's mount effect and in a
  *   layout effect declared after the hook (the [id] effect is a layout effect);
- * - server rendering logs nothing, with and without `window` (the hook picks
- *   useEffect over useLayoutEffect when there is no `window`).
+ * - server rendering logs nothing, and without `window` the hook never calls
+ *   useLayoutEffect (React 18 warns about it on the server; 19 does not, so
+ *   the no-window test spies on it instead of relying on the warning).
  */
 import { useEffect, useLayoutEffect } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -117,7 +118,7 @@ describe('useTooltip onMouseMove without an event', () => {
 });
 
 describe('useTooltip server rendering', () => {
-  it('renders to a string without logging', () => {
+  it('renders to a string without logging (smoke test)', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const Probe = () => {
@@ -129,9 +130,15 @@ describe('useTooltip server rendering', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
-  it('renders to a string without logging when there is no window', async () => {
+  it('never calls useLayoutEffect and logs nothing when there is no window', async () => {
     vi.stubGlobal('window', undefined);
     vi.resetModules();
+    const layoutEffect = vi.fn();
+    vi.doMock('react', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('react')>();
+      layoutEffect.mockImplementation(actual.useLayoutEffect);
+      return { ...actual, useLayoutEffect: layoutEffect };
+    });
     try {
       const { default: useServerTooltip } = await import('./useTooltip');
       const error = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -143,8 +150,10 @@ describe('useTooltip server rendering', () => {
       expect(renderToString(<Probe />)).toContain('ok');
       expect(error).not.toHaveBeenCalled();
       expect(warn).not.toHaveBeenCalled();
+      expect(layoutEffect).not.toHaveBeenCalled();
       expect(el()).toBeNull();
     } finally {
+      vi.doUnmock('react');
       vi.unstubAllGlobals();
       vi.resetModules();
     }

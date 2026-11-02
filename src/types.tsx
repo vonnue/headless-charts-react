@@ -39,7 +39,10 @@ export interface AxisConfig<TData = any> {
      * Local-time caveat: without `utc`, ISO instants such as
      * `2024-12-31T00:00:00Z` are drawn and labelled in the viewer's zone, so
      * west of UTC they land on (and read as) Dec 30. Set `utc: true` when the
-     * data holds UTC instants or date-only values meant as calendar days.
+     * data holds calendar days: date-only values (`2024`, `2024-12`,
+     * `2024-12-31`) or UTC-midnight instants. In development, `isISO` data of
+     * that shape without `utc` logs a one-time hint. Timestamps at other times
+     * of day are usually best left in the viewer's local time.
      *
      * Read by ColumnChart, ColumnChartStacked, LollipopVChart and BoxPlotV.
      */

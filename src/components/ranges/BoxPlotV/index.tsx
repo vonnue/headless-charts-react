@@ -202,7 +202,20 @@ const BoxPlotV = <TData = any,>({
     timeMode: isTimeX,
   });
   useTimeAxisWarnings('BoxPlotV', id, data, x);
-  const toDateTime = useMemo(() => makeDateAccessor<TData>(x), [x]);
+  // Keyed on the fields the parser reads, so an inline `x` object literal
+  // doesn't rebuild the accessor on every render.
+  const xKey = x.key;
+  const xTimeFormat = x.time?.format;
+  const xTimeIsISO = x.time?.isISO;
+  const xTimeUtc = x.time?.utc;
+  const toDateTime = useMemo(
+    () =>
+      makeDateAccessor<TData>({
+        key: xKey,
+        time: { format: xTimeFormat, isISO: xTimeIsISO, utc: xTimeUtc },
+      }),
+    [xKey, xTimeFormat, xTimeIsISO, xTimeUtc]
+  );
   const formatDate = makeDateFormatter(x);
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,

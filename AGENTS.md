@@ -662,7 +662,7 @@ A grouped column chart whose x axis parses real dates and spaces bars proportion
   id="daily-signups"
   className="w-full h-64"
   data={data}
-  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={[{ key: 'signups', className: 'fill-purple-600' }]}
 />
 ```
@@ -786,7 +786,7 @@ A stacked column chart whose x axis parses real dates and spaces bars proportion
   id="daily-revenue-split"
   className="w-full h-64"
   data={data}
-  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={[
     { key: 'macbook', className: 'fill-purple-800' },
     { key: 'iphone', className: 'fill-purple-600' },
@@ -1115,7 +1115,7 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
   className="w-full h-64"
   data={data}
   shape="circle"
-  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={{ key: 'reading', start: 0 }}
 />
 ```
@@ -1862,7 +1862,7 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
   id="weekly-latency-spread"
   className="w-full h-64"
   data={data}
-  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={{
     minKey: 'min',
     maxKey: 'max',

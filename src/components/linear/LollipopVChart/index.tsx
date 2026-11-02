@@ -112,7 +112,7 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
  *   className="w-full h-64"
  *   data={data}
  *   shape="circle"
- *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
  *   y={{ key: 'reading', start: 0 }}
  * />
  * ```

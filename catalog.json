@@ -766,7 +766,7 @@
             "Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead",
             "The categories are ordinal labels rather than true dates, e.g. \"Q1\"/\"Q2\" — use a plain ColumnChart"
           ],
-          "example": "<ColumnChart\n  id=\"daily-signups\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}\n  y={[{ key: 'signups', className: 'fill-purple-600' }]}\n/>"
+          "example": "<ColumnChart\n  id=\"daily-signups\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={[{ key: 'signups', className: 'fill-purple-600' }]}\n/>"
         }
       ]
     },
@@ -897,7 +897,7 @@
             "Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use AreaChart instead",
             "Combined with `waterfall` — a running total's step order rarely aligns cleanly with calendar spacing; prefer a plain categorical waterfall"
           ],
-          "example": "<ColumnChartStacked\n  id=\"daily-revenue-split\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}\n  y={[\n    { key: 'macbook', className: 'fill-purple-800' },\n    { key: 'iphone', className: 'fill-purple-600' },\n  ]}\n/>"
+          "example": "<ColumnChartStacked\n  id=\"daily-revenue-split\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={[\n    { key: 'macbook', className: 'fill-purple-800' },\n    { key: 'iphone', className: 'fill-purple-600' },\n  ]}\n/>"
         }
       ]
     },
@@ -1286,7 +1286,7 @@
             "Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled ColumnChart overlaps the same way)",
             "The axis is continuous time with many points and the trend matters more than individual values — use LineChart"
           ],
-          "example": "<LollipopVChart\n  id=\"weekly-readings\"\n  className=\"w-full h-64\"\n  data={data}\n  shape=\"circle\"\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}\n  y={{ key: 'reading', start: 0 }}\n/>"
+          "example": "<LollipopVChart\n  id=\"weekly-readings\"\n  className=\"w-full h-64\"\n  data={data}\n  shape=\"circle\"\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{ key: 'reading', start: 0 }}\n/>"
         }
       ]
     },
@@ -2158,7 +2158,7 @@
             "Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping boxes; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow boxes)",
             "Raw rows need binning — `x.bin` and `valueKey` are ignored on a time axis (with a dev warning) and summary mode is used, so `y` must name all five stat keys; pre-compute per-period statistics or drop `scalingFunction: \"time\"`"
           ],
-          "example": "<BoxPlotV\n  id=\"weekly-latency-spread\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}\n  y={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    min: 0,\n  }}\n/>"
+          "example": "<BoxPlotV\n  id=\"weekly-latency-spread\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    min: 0,\n  }}\n/>"
         }
       ]
     },

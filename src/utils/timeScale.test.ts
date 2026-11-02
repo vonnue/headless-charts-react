@@ -11,6 +11,7 @@ import {
   makeDateParser,
   medianCadenceMs,
   padTimeDomain,
+  utcSuggestionSample,
   validBarWidth,
 } from './timeScale';
 
@@ -404,6 +405,34 @@ describe('getTimeAxisIssues (F4/F6 dev warnings)', () => {
     ]);
     expect(getTimeAxisIssues([], bad, false)).toStrictEqual([]);
     expect(getTimeAxisIssues([], { ...x, time: { barWidth: 8 } }, true)).toStrictEqual([]);
+  });
+});
+
+describe('utcSuggestionSample (review-2 N1: date-only ISO without utc)', () => {
+  const iso: AxisConfig = { key: 'date', scalingFunction: 'time', time: { isISO: true } };
+
+  it.each([
+    [['2025-01-01', '2025-01-02']],
+    [['2025-01-01T00:00:00Z', '2025-01-02T00:00:00.000Z']],
+    [['2025-01-01T00:00:00+00:00', '2025-01-02T00:00:00-0000']],
+  ])('suggests utc when every value is date-only or UTC: %j', (dates) => {
+    const data = dates.map((date) => ({ date }));
+    expect(utcSuggestionSample(data, iso)).toBe(dates[0]);
+    expect(getTimeAxisIssues(data, iso, true)).toStrictEqual([
+      { issue: 'suggest-utc', detail: dates[0] },
+    ]);
+  });
+
+  it('stays quiet with utc: true, without isISO, for offset datetimes, mixed values or no data', () => {
+    const dateOnly = [{ date: '2025-01-01' }, { date: '2025-01-02' }];
+    expect(utcSuggestionSample(dateOnly, { ...iso, time: { isISO: true, utc: true } })).toBeUndefined();
+    expect(utcSuggestionSample(dateOnly, { ...iso, time: {} })).toBeUndefined();
+    expect(
+      utcSuggestionSample([{ date: '2025-01-01T09:00:00+05:30' }], iso)
+    ).toBeUndefined();
+    expect(utcSuggestionSample([{ date: '2025-01-01T09:00:00' }], iso)).toBeUndefined();
+    expect(utcSuggestionSample([{ date: '2025-01-01' }, { date: utcDay(2) }], iso)).toBeUndefined();
+    expect(utcSuggestionSample([], iso)).toBeUndefined();
   });
 });
 

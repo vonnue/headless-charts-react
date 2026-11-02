@@ -149,5 +149,22 @@ for c in 'git log --grep push' 'git stash push' 'git stash list' 'git config --g
   case_ allow "$A" "$c"
 done
 
+# --- Review-3: quoted option values with spaces, and $IFS as a separator ---
+for c in 'git -C "my dir" push' "git -C 'x y' push" 'git -c "user.name=A B" commit -m x' \
+  'git --git-dir "a b/.git" push' 'gh -R "o/r" pr create' 'git${IFS}push' 'git$IFS push'; do
+  case_ block "$A" "$c"
+done
+for c in 'git -C "my dir" status' 'git -c "a=b c" log' 'git log --grep "fix push"' 'echo "$IFS"'; do
+  case_ allow "$A" "$c"
+done
+# Over-long commands are denied up front (bash's quote strip is quadratic, and a
+# timed-out hook fails open); the main thread is never capped.
+f="$TMP/big.txt"
+head -c 524289 /dev/zero | tr '\0' '"' >"$f"
+jq -cn --arg a "$A" --rawfile c "$f" '{agent_type:$a, tool_input:{command:$c}}' >"$TMP/big.json"
+check block "subagent command over 512 KB" "$PATH" "$TMP/big.json"
+jq -cn --rawfile c "$f" '{tool_input:{command:$c}}' >"$TMP/big.json"
+check allow "main-thread command over 512 KB" "$PATH" "$TMP/big.json"
+
 printf '%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

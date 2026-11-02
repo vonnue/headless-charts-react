@@ -53,6 +53,9 @@ AGENT_TYPE="$(jq -r '.agent_type // empty' <<<"$INPUT")" || deny "could not pars
 [ -z "$AGENT_TYPE" ] && exit 0
 CMD="$(jq -r '.tool_input.command // empty' <<<"$INPUT")" || deny "could not parse hook input as JSON."
 [ -z "$CMD" ] && exit 0
+# bash's ${var//pat/} below is quadratic in the number of matches (400 KB of
+# quotes takes ~45 s), and a hook that hits its timeout doesn't block. Cap the size.
+[ "${#CMD}" -le 524288 ] || deny "command is longer than 512 KB; write long scripts to a file with the Write tool and run that."
 
 # Deliberately conservative: git/gh may be preceded by any separator,
 # whitespace, quote, `(`, `$(`, `{`, or a wrapper (command/env/exec/...),
@@ -60,8 +63,10 @@ CMD="$(jq -r '.tool_input.command // empty' <<<"$INPUT")" || deny "could not par
 # -c k=v, --git-dir=x, -R owner/repo). So `echo git push` blocks too.
 PRE='(^|[;&|`({"'"'"'!$[:space:]]|\$\()[[:space:]]*((command|env|exec|sudo|nohup|xargs|time)[[:space:]]+([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*)?'
 END='([[:space:];&|)}<>"'"'"'`]|$)'
-GITBIN='([^[:space:];&|]*/)?git([[:space:]]+(-[Cc][[:space:]]*[^[:space:]]+|--(git-dir|work-tree|namespace|exec-path|config-env|super-prefix)[[:space:]]+[^[:space:]]+|--[a-z-]+(=[^[:space:]]+)?|-[a-zA-Z]))*[[:space:]]+'
-GHBIN='([^[:space:];&|]*/)?gh([[:space:]]+(-R[[:space:]]*[^[:space:]]+|--repo([[:space:]]+|=)[^[:space:]]+))*[[:space:]]+'
+# An option value: unquoted chars, or a "..."/'...' span that may hold spaces.
+VAL='([^[:space:]"'"'"']|"[^"]*"|'"'"'[^'"'"']*'"'"')+'
+GITBIN="([^[:space:];&|]*/)?git([[:space:]]+(-[Cc][[:space:]]*${VAL}|--(git-dir|work-tree|namespace|exec-path|config-env|super-prefix)[[:space:]]+${VAL}|--[a-z-]+(=${VAL})?|-[a-zA-Z]))*[[:space:]]+"
+GHBIN="([^[:space:];&|]*/)?gh([[:space:]]+(-R[[:space:]]*${VAL}|--repo([[:space:]]+|=)${VAL}))*[[:space:]]+"
 GIT_RISKY_RE="${PRE}${GITBIN}(push|commit|send-pack|http-push)${END}"
 # git aliases can smuggle push/commit: `git config alias.p push`, `git -c alias.p=push p`.
 GIT_ALIAS_RE='alias\.[^[:space:]=]+([[:space:]]+|=)[^[:space:]]*(push|commit|send-pack)'
@@ -72,13 +77,22 @@ GH_OTHER_RISKY_RE="${PRE}${GHBIN}(issue[[:space:]]+(close|delete|transfer|lock|u
 FLAT_CMD="${CMD//$'\\\n'/ }"
 FLAT_CMD="${FLAT_CMD//[$'\n\r']/;}"
 # Drop quotes and backslashes so 'git', "git", g"i"t, \git and $'git' all read as git.
-NORM_CMD="${FLAT_CMD//[\"\'\\]/}"
+# Read ${IFS}/$IFS as a space.
+NORM_CMD="${FLAT_CMD//\$\{IFS\}/ }"
+NORM_CMD="${NORM_CMD//\$IFS/ }"
+NORM_CMD="${NORM_CMD//[\"\'\\]/}"
 
 # grep exits 1 for "no match" and >1 for errors; an error inside `if` would
 # otherwise read as "no match" and allow the call.
 matches() {
   local rc=0
   grep -Eiq -- "$1" <<<"$NORM_CMD" || rc=$?
+  [ "$rc" -le 1 ] || deny "pattern match failed (grep exit $rc)."
+  [ "$rc" -eq 0 ] && return 0
+  # Also match the unstripped command, so quoted option values that contain
+  # spaces (git -C "my dir" push) still tokenize correctly.
+  rc=0
+  grep -Eiq -- "$1" <<<"$FLAT_CMD" || rc=$?
   [ "$rc" -le 1 ] || deny "pattern match failed (grep exit $rc)."
   return "$rc"
 }

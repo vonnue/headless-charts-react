@@ -82,8 +82,10 @@ export type BoxPlotHProps<TData = any> =
  *
  * **Specialised types**
  * - Binned box plot — Set `bin` on the `y` (category) config and pass
- *   `valueKey` naming the field to summarise. The statistic keys on `x` are
- *   then computed internally and can be omitted.
+ *   `valueKey` naming the field to summarise. Both are needed: the statistic
+ *   keys on `x` are then computed internally and can be omitted (any given
+ *   are ignored). `bin` without `valueKey` is ignored, and `x` still needs
+ *   `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`.
  *
  * Also called: horizontal box plot, box and whisker plot, quartile plot.
  *

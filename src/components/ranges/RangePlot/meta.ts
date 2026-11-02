@@ -21,7 +21,7 @@ const meta: ChartMeta = {
         role: 'value',
         required: true,
         description:
-          'Config naming the interval endpoints: `minKey` and `maxKey`. Pin the axis with `start` and `end`.',
+          'Config naming the interval endpoints: `minKey` and `maxKey`. No `key` is needed on `x`. Pin the axis with `start` and `end`.',
       },
     ],
     rowCount: { ideal: [3, 25], max: 40 },

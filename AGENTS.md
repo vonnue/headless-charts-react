@@ -27,8 +27,8 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | BarChart, horizontal bar chart, grouped bar chart, ranked bar chart | [`BarChart`](#barchart) | Base component, no extra configuration |
 | BarChartStacked, stacked bar chart, horizontal stacked bar chart | [`BarChartStacked`](#barchartstacked) | Base component, no extra configuration |
 | Binned 2D histogram, binned heatmap, two-dimensional histogram | [`WaffleChart`](#wafflechart) | Set `bin` on `x` and/or `y`; each cell then shows the count for that (xBin, yBin) pair rather than a value from the data. |
-| Binned box plot (vertical), vertical box plot from raw data, distribution by band | [`BoxPlotV`](#boxplotv) | Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. The statistic keys on `y` are then computed internally and can be omitted. Use `bin.thresholds` for explicit band edges. |
-| Binned box plot, box plot from raw data, grouped distribution plot | [`BoxPlotH`](#boxploth) | Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. The statistic keys on `x` are then computed internally and can be omitted. |
+| Binned box plot (vertical), vertical box plot from raw data, distribution by band | [`BoxPlotV`](#boxplotv) | Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `y` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `y` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges. |
+| Binned box plot, box plot from raw data, grouped distribution plot | [`BoxPlotH`](#boxploth) | Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `x` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `x` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. |
 | BoxPlotH, horizontal box plot, box and whisker plot, quartile plot | [`BoxPlotH`](#boxploth) | Base component, no extra configuration |
 | BoxPlotV, vertical box plot, box and whisker chart, box chart | [`BoxPlotV`](#boxplotv) | Base component, no extra configuration |
 | Bubble chart, bubble plot, proportional symbol chart | [`ScatterPlot`](#scatterplot) | Add `size={{ key: "population", min: 2, max: 20 }}`. Radius is scaled between `min` and `max` pixels. |
@@ -1602,8 +1602,8 @@ Horizontal box-and-whisker marks summarising the spread of a measure per group: 
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
 | `y` | category | yes | Key holding the group label; one box per group. Set `bin` here to group a continuous field into bands instead. |
-| `x` | value | yes | Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. When `y.bin` is set these are computed internally and can be omitted. |
-| `valueKey` | quantitative | no | With `y.bin` set, names the raw continuous field the box statistics are computed from. |
+| `x` | value | yes | Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. No `key` is needed — positions come from the statistic keys. When `y.bin` and `valueKey` are both set the statistics are computed internally and these keys can be omitted; `y.bin` without `valueKey` is ignored and all five are still required. |
+| `valueKey` | quantitative | no | Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `y.bin` is ignored. |
 
 **Required props:** `id`, `data`, `x`, `y`
 
@@ -1630,7 +1630,7 @@ Bins a continuous field into groups and computes each group’s min, quartiles a
 
 **Also called:** box plot from raw data, grouped distribution plot
 
-**Configuration:** Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. The statistic keys on `x` are then computed internally and can be omitted.
+**Configuration:** Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `x` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `x` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`.
 
 **Use when**
 
@@ -1694,8 +1694,8 @@ Vertical box-and-whisker marks summarising the spread of a measure per group: mi
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
 | `x` | category | yes | Key holding the group label; one box per group. Set `bin` here to group a continuous field into bands instead. |
-| `y` | value | yes | Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. When `x.bin` is set these are computed internally and can be omitted. |
-| `valueKey` | quantitative | no | With `x.bin` set, names the raw continuous field the box statistics are computed from. |
+| `y` | value | yes | Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. No `key` is needed — positions come from the statistic keys. When `x.bin` and `valueKey` are both set the statistics are computed internally and these keys can be omitted; `x.bin` without `valueKey` is ignored and all five are still required. |
+| `valueKey` | quantitative | no | Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `x.bin` is ignored. |
 
 **Required props:** `id`, `data`, `x`, `y`
 
@@ -1722,7 +1722,7 @@ Bins a continuous field into groups along the x axis and computes each group’s
 
 **Also called:** vertical box plot from raw data, distribution by band
 
-**Configuration:** Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. The statistic keys on `y` are then computed internally and can be omitted. Use `bin.thresholds` for explicit band edges.
+**Configuration:** Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `y` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `y` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges.
 
 **Use when**
 
@@ -1783,7 +1783,7 @@ A tapered mark per category running from one value to another, where the widenin
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
 | `y` | category | yes | Key holding the category label; one comet per row. |
-| `x` | value | yes | Config naming the endpoints: `fromKey` (tail) and `toKey` (head). The taper runs from tail to head. |
+| `x` | value | yes | Config naming the endpoints: `fromKey` (tail) and `toKey` (head). The taper runs from tail to head. No `key` is needed on `x`. |
 
 **Required props:** `id`, `data`, `x`, `y`
 
@@ -1838,7 +1838,7 @@ A dumbbell per category: two endpoints joined by a bar, showing the interval bet
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
 | `y` | category | yes | Key holding the category label; one range per row. |
-| `x` | value | yes | Config naming the interval endpoints: `minKey` and `maxKey`. Pin the axis with `start` and `end`. |
+| `x` | value | yes | Config naming the interval endpoints: `minKey` and `maxKey`. No `key` is needed on `x`. Pin the axis with `start` and `end`. |
 
 **Required props:** `id`, `data`, `x`, `y`, `shape`
 

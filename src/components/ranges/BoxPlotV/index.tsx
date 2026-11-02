@@ -79,9 +79,11 @@ export type BoxPlotVProps<TData = any> =
  *
  * **Specialised types**
  * - Binned box plot (vertical) — Set `bin` on the `x` (category) config and
- *   pass `valueKey` naming the field to summarise. The statistic keys on `y`
- *   are then computed internally and can be omitted. Use `bin.thresholds`
- *   for explicit band edges.
+ *   pass `valueKey` naming the field to summarise. Both are needed: the
+ *   statistic keys on `y` are then computed internally and can be omitted
+ *   (any given are ignored). `bin` without `valueKey` is ignored, and `y`
+ *   still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use
+ *   `bin.thresholds` for explicit band edges.
  *
  * Also called: vertical box plot, box and whisker chart, box chart.
  *

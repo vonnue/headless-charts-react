@@ -21,7 +21,7 @@ const meta: ChartMeta = {
         role: 'value',
         required: true,
         description:
-          'Config naming the endpoints: `fromKey` (tail) and `toKey` (head). The taper runs from tail to head.',
+          'Config naming the endpoints: `fromKey` (tail) and `toKey` (head). The taper runs from tail to head. No `key` is needed on `x`.',
       },
     ],
     rowCount: { ideal: [3, 20], max: 30 },

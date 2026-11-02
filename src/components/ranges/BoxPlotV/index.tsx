@@ -96,9 +96,12 @@ export type BoxPlotVProps<TData = any> =
  *   still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use
  *   `bin.thresholds` for explicit band edges.
  * - Time-scaled box plot (vertical) — Set `x.scalingFunction: "time"` with
- *   `x.time.format`, or `x.time.isISO` for ISO strings. Box width is
- *   inferred from the data's date cadence; override with `x.time.barWidth`
- *   (pixels).
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from
+ *   the median gap between dates (one slot per step); `x.time.barWidth`
+ *   (positive pixels) overrides it but is capped at one slot, so it can
+ *   narrow boxes but never widen them past their slot. Set `x.time.utc:
+ *   true` when dates are UTC instants or calendar days — otherwise they are
+ *   parsed, placed and labelled in the viewer's local time zone.
  *
  * Also called: vertical box plot, box and whisker chart, box chart.
  *

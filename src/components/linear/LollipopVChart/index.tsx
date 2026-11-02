@@ -77,12 +77,17 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
  * **Avoid when**
  * - Several measures need comparing per category — use ColumnChart
  * - Category labels are long — use LollipopHChart
- * - The axis is continuous time — use LineChart
+ * - The axis is dense continuous time and the trend matters more than
+ *   individual values — use LineChart; for a modest number of dated values
+ *   use the time-scaled variant (`x.scalingFunction: "time"`)
  *
  * **Specialised types**
  * - Time-scaled lollipop chart — Set `x.scalingFunction: "time"` with
  *   `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar
- *   width to derive — `x.time.barWidth` is not used by this chart.
+ *   width to derive — `x.time.barWidth` is not used by this chart. Set
+ *   `x.time.utc: true` when dates are UTC instants or calendar days —
+ *   otherwise they are parsed, placed and labelled in the viewer's local
+ *   time zone.
  *
  * Also called: vertical lollipop chart, stem and dot chart.
  *

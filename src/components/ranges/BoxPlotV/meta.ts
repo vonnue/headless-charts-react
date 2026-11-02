@@ -98,14 +98,14 @@ const meta: ChartMeta = {
       aliases: ['time series box plot'],
       summary:
         'A vertical box plot whose x axis parses real dates and spaces boxes proportionally to elapsed time.',
-      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width is inferred from the data\'s date cadence; override with `x.time.barWidth` (pixels).',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer\'s local time zone.',
       useWhen: [
         'Groups are periods (weeks, months) with real dates and spacing should reflect elapsed time',
         'Some periods have no data and that gap should be visible rather than silently skipped',
       ],
       avoidWhen: [
-        'Cadence is highly irregular — a single inferred box width will misrepresent some periods; pin it with `x.time.barWidth`',
-        'The category axis is binned via `x.bin` — binning and time scaling are mutually exclusive; use one or the other',
+        'Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping boxes; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow boxes)',
+        'Raw rows need binning — `x.bin` and `valueKey` are ignored on a time axis (with a dev warning) and summary mode is used, so `y` must name all five stat keys; pre-compute per-period statistics or drop `scalingFunction: "time"`',
       ],
       example: `<BoxPlotV
   id="weekly-latency-spread"

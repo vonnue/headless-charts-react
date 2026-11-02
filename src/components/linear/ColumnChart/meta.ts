@@ -91,14 +91,14 @@ const meta: ChartMeta = {
       aliases: ['time series column chart'],
       summary:
         'A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.',
-      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data\'s date cadence; override with `x.time.barWidth` (pixels).',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer\'s local time zone.',
       useWhen: [
         'The x values are real dates and spacing between bars should be proportional to elapsed time, not category index',
         'Some periods are missing and the gap should read as whitespace rather than being silently collapsed',
         'Axis ticks should fall on real date boundaries',
       ],
       avoidWhen: [
-        'Cadence is highly irregular (e.g. mixed daily and monthly points) — a single inferred bar width will misrepresent some periods; pin it with `x.time.barWidth` or use LineChart instead',
+        'Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead',
         'The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain ColumnChart',
       ],
       example: `<ColumnChart

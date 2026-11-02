@@ -210,11 +210,13 @@ describe('AreaChart time scale domain (#16)', () => {
   ];
 
   it('maps the first and last dates to the edges of the x range (not niced)', () => {
-    render(
+    const { container } = render(
       <AreaChart
         id='area-chart-time-domain'
         data={timeData}
         style={{ width: '600px', height: '400px' }}
+        margin={{ top: 40, right: 20, bottom: 40, left: 40 }}
+        padding={{ top: 0, right: 0, bottom: 0, left: 0 }}
         x={{
           key: 'date',
           scalingFunction: 'time',
@@ -224,11 +226,11 @@ describe('AreaChart time scale domain (#16)', () => {
       />
     );
 
-    const svg = screen.getByTestId('area-chart-time-domain');
-    const d = svg.querySelector('.area path')?.getAttribute('d') ?? '';
+    const svg = container.querySelector('#area-chart-time-domain');
+    const d = svg?.querySelector('.area path')?.getAttribute('d') ?? '';
     const xs = Array.from(d.matchAll(/[ML]([-\d.e]+),/g), (m) => Number(m[1]));
 
-    // margin.left = 40, margin.right = 20, padding = 0 → range [40, 580].
+    // Explicit margin.left = 40, margin.right = 20, padding = 0 → range [40, 580].
     // A niced domain would round the dates out to month boundaries and pull
     // the area's edges inwards.
     expect(xs.length).toBeGreaterThan(0);

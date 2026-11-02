@@ -189,6 +189,7 @@ const BoxPlotV = <TData = any,>({
     categoryConfig: x,
     valueConfig: y,
     valueKey,
+    timeMode: isTimeX,
   });
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,

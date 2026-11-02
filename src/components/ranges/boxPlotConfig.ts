@@ -127,7 +127,10 @@ export const isDevEnvironment = (): boolean => {
 };
 
 export type BoxPlotConfigIssue =
-  'missing-stat-keys' | 'no-binned-values' | 'bin-without-valuekey';
+  | 'missing-stat-keys'
+  | 'no-binned-values'
+  | 'bin-without-valuekey'
+  | 'bin-ignored-in-time-mode';
 
 const ISSUE_MESSAGES: Record<BoxPlotConfigIssue, (detail: string) => string> = {
   'missing-stat-keys': () =>
@@ -136,6 +139,8 @@ const ISSUE_MESSAGES: Record<BoxPlotConfigIssue, (detail: string) => string> = {
     `valueKey "${detail}" produced no numeric values to summarise (empty or misspelled?); nothing is drawn`,
   'bin-without-valuekey': () =>
     'bin is set on the category axis but valueKey is missing, so bin is ignored and summary mode is used',
+  'bin-ignored-in-time-mode': () =>
+    "bin/valueKey are ignored when x.scalingFunction is 'time' (bin labels aren't dates); summary mode is used, so y needs the stat keys",
 };
 
 /** Logs one configuration warning (no-op outside development). */
@@ -157,6 +162,7 @@ export const getBoxPlotConfigIssues = ({
   hasBin,
   statKeysPresent,
   valueKey,
+  timeMode = false,
 }: {
   data: unknown[];
   /** `bin` is set on the category axis */
@@ -164,7 +170,18 @@ export const getBoxPlotConfigIssues = ({
   /** hasStatKeys(valueConfig) */
   statKeysPresent: boolean;
   valueKey: string | undefined;
+  /**
+   * The category axis is a time axis (BoxPlotV `x.scalingFunction: 'time'`),
+   * where binning is never applied.
+   */
+  timeMode?: boolean;
 }): BoxPlotConfigIssue[] => {
+  if (timeMode) {
+    const issues: BoxPlotConfigIssue[] = [];
+    if (hasBin || valueKey !== undefined) issues.push('bin-ignored-in-time-mode');
+    if (!statKeysPresent) issues.push('missing-stat-keys');
+    return issues;
+  }
   const binValueKey = getBinValueKey(
     hasBin ? { bin: { count: 0 } } : {},
     valueKey,
@@ -197,21 +214,28 @@ export const useBoxPlotConfigWarnings = <TData = unknown>(
     categoryConfig,
     valueConfig,
     valueKey,
+    timeMode = false,
   }: {
     data: TData[];
     categoryConfig: Pick<AxisConfig, 'bin'>;
     valueConfig: BoxPlotBinnedValueConfig<TData>;
     valueKey: string | undefined;
+    /** See getBoxPlotConfigIssues */
+    timeMode?: boolean;
   },
 ): void => {
   const hasBin = categoryConfig.bin != null;
   const statKeysPresent = hasStatKeys(valueConfig);
   const issuesKey = useMemo(
     () =>
-      getBoxPlotConfigIssues({ data, hasBin, statKeysPresent, valueKey }).join(
-        '|',
-      ),
-    [data, hasBin, statKeysPresent, valueKey],
+      getBoxPlotConfigIssues({
+        data,
+        hasBin,
+        statKeysPresent,
+        valueKey,
+        timeMode,
+      }).join('|'),
+    [data, hasBin, statKeysPresent, valueKey, timeMode],
   );
 
   useEffect(() => {

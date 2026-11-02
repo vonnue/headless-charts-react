@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 
 import BoxPlotV from '.';
@@ -575,6 +575,7 @@ describe('BoxPlotV', () => {
       // `valueKey` is required for BoxPlotV's binning branch to engage at all
       // (`isBinned && valueKey`), so it must be supplied here — without it the
       // assertion would hold whether or not the time guard exists.
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       render(
         <BoxPlotV
           id='time-with-bin-box-plot'
@@ -595,6 +596,14 @@ describe('BoxPlotV', () => {
       expect(rectsOf('time-with-bin-box-plot').length).toBe(
         evenlySpacedWeeklyData.length
       );
+      // ...and the ignored bin/valueKey are explained once in development
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "BoxPlotV#time-with-bin-box-plot: bin/valueKey are ignored when x.scalingFunction is 'time'"
+        )
+      );
+      warn.mockRestore();
     });
 
     it('x.bin still bins when scalingFunction is not "time" (control for the guard)', () => {

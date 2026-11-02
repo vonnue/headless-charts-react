@@ -27,14 +27,14 @@ export interface BoxPlotClassNames {
   data?: string;
 }
 
-interface BoxPlotHBaseProps<TData = any> extends ChartProps<TData> {
+interface BoxPlotHBaseProps<TData> extends ChartProps<TData> {
   data: TData[];
   classNames?: BoxPlotClassNames;
   tooltip?: TooltipConfig;
 }
 
 /** Summary mode: each row already carries the statistics named on `x`. */
-export interface BoxPlotHSummaryProps<TData = any> extends BoxPlotHBaseProps<TData> {
+export interface BoxPlotHSummaryProps<TData = unknown> extends BoxPlotHBaseProps<TData> {
   x: BoxPlotValueConfig<TData>;
   y: AxisConfig<TData>;
   /** Only takes effect together with `y.bin` (see binned mode) */
@@ -46,7 +46,7 @@ export interface BoxPlotHSummaryProps<TData = any> extends BoxPlotHBaseProps<TDa
  * summarise. Statistics are computed internally, so the stat keys on `x`
  * may be omitted (any that are given are ignored).
  */
-export interface BoxPlotHBinnedProps<TData = any> extends BoxPlotHBaseProps<TData> {
+export interface BoxPlotHBinnedProps<TData = unknown> extends BoxPlotHBaseProps<TData> {
   x: BoxPlotBinnedValueConfig<TData>;
   y: BoxPlotBinnedCategoryConfig<TData>;
   /** The continuous value field to compute box stats from */

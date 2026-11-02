@@ -5,7 +5,7 @@ import { deepValue } from '@/utils';
 import type { BinStatsResult } from '@/utils';
 
 /** Row fields holding the pre-computed box statistics (summary mode) */
-export interface BoxPlotStatKeys<TData = any> {
+export interface BoxPlotStatKeys<TData = unknown> {
   minKey: Extract<keyof TData, string> | string;
   maxKey: Extract<keyof TData, string> | string;
   boxStart: Extract<keyof TData, string> | string;
@@ -18,7 +18,7 @@ export interface BoxPlotStatKeys<TData = any> {
  * axis (positions come from the statistic keys), so it is optional.
  */
 export interface BoxPlotValueAxisBase<
-  TData = any,
+  TData = unknown,
 > extends ValueAxisConfig<TData> {
   min?: number;
   max?: number;
@@ -27,15 +27,15 @@ export interface BoxPlotValueAxisBase<
 }
 
 /** Value-axis config in summary mode: every stat key is required */
-export type BoxPlotValueConfig<TData = any> = BoxPlotValueAxisBase<TData> &
+export type BoxPlotValueConfig<TData = unknown> = BoxPlotValueAxisBase<TData> &
   BoxPlotStatKeys<TData>;
 
 /** Value-axis config in binned mode: stat keys are computed, so optional */
-export type BoxPlotBinnedValueConfig<TData = any> =
+export type BoxPlotBinnedValueConfig<TData = unknown> =
   BoxPlotValueAxisBase<TData> & Partial<BoxPlotStatKeys<TData>>;
 
 /** Category-axis config in binned mode: `bin` is required */
-export type BoxPlotBinnedCategoryConfig<TData = any> = AxisConfig<TData> & {
+export type BoxPlotBinnedCategoryConfig<TData = unknown> = AxisConfig<TData> & {
   bin: NonNullable<AxisConfig<TData>['bin']>;
 };
 
@@ -63,7 +63,7 @@ export const getBinValueKey = (
     : undefined;
 
 /** Type guard: does the value-axis config carry every stat key? */
-export const hasStatKeys = <TData = any>(
+export const hasStatKeys = <TData = unknown>(
   config: BoxPlotBinnedValueConfig<TData>,
 ): config is BoxPlotValueConfig<TData> =>
   !!(
@@ -80,7 +80,7 @@ export const hasStatKeys = <TData = any>(
  * null when they are missing (only reachable by bypassing the props types), so
  * callers can skip drawing rather than render NaN geometry.
  */
-export const resolveValueConfig = <TData = any>(
+export const resolveValueConfig = <TData = unknown>(
   config: BoxPlotBinnedValueConfig<TData>,
   binned: boolean,
 ): BoxPlotValueConfig<TData> | null => {
@@ -189,7 +189,7 @@ export const getBoxPlotConfigIssues = ({
  * config changes, not on every render (inline `x`/`y` objects change identity
  * every render).
  */
-export const useBoxPlotConfigWarnings = <TData = any>(
+export const useBoxPlotConfigWarnings = <TData = unknown>(
   chart: 'BoxPlotH' | 'BoxPlotV',
   id: string,
   {

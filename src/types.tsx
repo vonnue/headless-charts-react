@@ -59,7 +59,7 @@ export interface AxisConfig<TData = any> {
  * (e.g. box-plot statistic keys or range from/to keys), so `key` is not read
  * and may be omitted. Every `AxisConfig` is assignable to this type.
  */
-export type ValueAxisConfig<TData = any> = Omit<AxisConfig<TData>, 'key'> & {
+export type ValueAxisConfig<TData = unknown> = Omit<AxisConfig<TData>, 'key'> & {
   /** Data key — not read by charts that use this config; optional */
   key?: Extract<keyof TData, string> | string;
 };

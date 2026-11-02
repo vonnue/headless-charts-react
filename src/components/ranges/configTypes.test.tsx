@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
 import BoxPlotH from './BoxPlotH';
+import type { BoxPlotHSummaryProps } from './BoxPlotH';
 import BoxPlotV from './BoxPlotV';
 import CometPlot from './CometPlot';
 import RangePlot from './RangePlot';
@@ -172,13 +173,15 @@ describe('BoxPlot dev-only config warnings', () => {
   });
 
   it('warns when stat keys are missing (types bypassed) and draws nothing', () => {
+    // Deliberately bypass the props union: a summary config with no stat keys
+    const missingStatKeys = { min: 0 } as unknown as BoxPlotHSummaryProps['x'];
     const warn = spyWarn();
     render(
       <BoxPlotH
         id='bp-h-no-stats'
         data={summaryRows}
         y={{ key: 'label' }}
-        x={{ min: 0 } as any}
+        x={missingStatKeys}
       />,
     );
     expect(

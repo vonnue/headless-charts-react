@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
 import ColumnChart from '.';
 import { tickPositions } from '@/test-utils/axisTicks';
+import { resetDevWarnings } from '@/utils/devEnvironment';
 
 // 400px tall, margin top 20 / bottom 40, padding 0 → y range [360, 20].
 const layout = {
@@ -17,6 +18,11 @@ const yTicks = (container: HTMLElement) =>
   tickPositions(container.querySelector('[data-testid="y-axis"]'), 'vertical');
 
 describe('ColumnChart start/end domain (F4)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    resetDevWarnings();
+  });
+
   it('treats y end = 0 as a real bound, not as unset', () => {
     const { container } = render(
       <ColumnChart
@@ -88,5 +94,46 @@ describe('ColumnChart start/end domain (F4)', () => {
     const ticks = yTicks(container);
     expect(ticks.get('0')).toBeCloseTo(BOTTOM, 2);
     expect(ticks.get('10')).toBeCloseTo(TOP, 2);
+  });
+
+  it('end = 0 on all-positive data: no negative heights, and a dev warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { container } = render(
+      <ColumnChart
+        {...layout}
+        id='column-inverted'
+        data={[
+          { name: 'a', v: 5 },
+          { name: 'b', v: 10 },
+        ]}
+        x={{ key: 'name' }}
+        y={[{ key: 'v', end: 0 }]}
+      />
+    );
+    // Start falls back to the data min (5), so the domain is [5, 0].
+    const heights = Array.from(container.querySelectorAll('rect')).map((r) =>
+      Number(r.getAttribute('height'))
+    );
+    expect(heights.length).toBeGreaterThan(0);
+    heights.forEach((h) => expect(h).toBeGreaterThanOrEqual(0));
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain(
+      'ColumnChart "column-inverted": y start (5) > end (0)'
+    );
+  });
+
+  it('draws no y ticks for empty data', () => {
+    const { container } = render(
+      <ColumnChart
+        {...layout}
+        id='column-empty'
+        data={[]}
+        x={{ key: 'name' }}
+        y={[{ key: 'v' }]}
+      />
+    );
+    const axis = container.querySelector('[data-testid="y-axis"]');
+    expect(axis?.textContent ?? '').not.toContain('0.000000');
+    expect(yTicks(container).size).toBe(0);
   });
 });

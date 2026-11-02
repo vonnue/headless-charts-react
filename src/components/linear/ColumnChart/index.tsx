@@ -12,6 +12,7 @@ import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, bin1D } from '@/utils';
+import { warnOnceInDev } from '@/utils/devEnvironment';
 import { pinnedEnd, pinnedStart } from '@/utils/domain';
 import {
   createTimeBarLayout,
@@ -250,12 +251,22 @@ const ColumnChartGrouped = <TData = any,>({
       barX = (d) => bandXFn((d as any)[effectiveX.key]) || 0;
     }
 
+    // Empty data leaves the end NaN (no ticks), as before the domain typing.
+    const yStart = minStart ?? (minY || 0);
+    const yEnd = maxEnd ?? maxY ?? NaN;
+    if (yStart > yEnd)
+      warnOnceInDev(
+        `col-${id}-inverted`,
+        `ColumnChart "${id}": y start (${yStart}) > end (${yEnd}); bars cannot render on an inverted axis.`
+      );
+
+    const plotBottom = height - (margin.bottom ?? 0) - (padding.bottom ?? 0);
     const yFn = scaleLinear()
-      .domain([minStart ?? (minY || 0), maxEnd ?? maxY ?? 0])
-      .range([
-        height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
-        (margin.top ?? 0) + (padding.top ?? 0),
-      ]);
+      .domain([yStart, yEnd])
+      .range([plotBottom, (margin.top ?? 0) + (padding.top ?? 0)]);
+    // Columns grow up from the plot bottom; an inverted axis would give a
+    // negative height (invalid SVG), so clamp to 0.
+    const columnHeight = (value: number) => Math.max(0, plotBottom - yFn(value));
 
     effectiveY.map((column, i) => {
       const barsG = g.append('g');
@@ -286,11 +297,7 @@ const ColumnChartGrouped = <TData = any,>({
           drawing && drawing.duration
             ? 0
             : (d as any)[column.key]
-            ? // @ts-ignore
-              height -
-              (margin.bottom ?? 0) -
-              (padding.bottom ?? 0) -
-              yFn((d as any)[column.key])
+            ? columnHeight((d as any)[column.key])
             : 0
         )
         .on('mouseenter', onMouseOver)
@@ -305,11 +312,7 @@ const ColumnChartGrouped = <TData = any,>({
           .attr('y', (d) => yFn((d as any)[column.key]))
           .attr('height', (d) =>
             Number.isFinite((d as any)[column.key])
-              ? // @ts-ignore
-                height -
-                (margin.bottom ?? 0) -
-                (padding.bottom ?? 0) -
-                yFn((d as any)[column.key])
+              ? columnHeight((d as any)[column.key])
               : 0
           );
     });

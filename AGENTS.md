@@ -65,11 +65,11 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Step chart, step line chart, staircase chart | [`LineChart`](#linechart) | Set `curve: "step"` on each series. |
 | Streamgraph, stream graph, theme river, stream chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "streamgraph" }}`. Bands are ordered inside-out and offset by wiggle. |
 | Time-scaled area chart, time series area chart | [`AreaChart`](#areachart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. |
-| Time-scaled box plot (vertical), time series box plot | [`BoxPlotV`](#boxplotv) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels). |
-| Time-scaled column chart, time series column chart | [`ColumnChart`](#columnchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels). |
+| Time-scaled box plot (vertical), time series box plot | [`BoxPlotV`](#boxplotv) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. |
+| Time-scaled column chart, time series column chart | [`ColumnChart`](#columnchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. |
 | Time-scaled line chart, time series chart, time series line chart | [`LineChart`](#linechart) | Set `x.scalingFunction: "time"` and `x.time.format` (or `x.time.isISO`) to parse date strings. |
-| Time-scaled lollipop chart, time series lollipop chart | [`LollipopVChart`](#lollipopvchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. |
-| Time-scaled stacked column chart, time series stacked column chart | [`ColumnChartStacked`](#columnchartstacked) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels). |
+| Time-scaled lollipop chart, time series lollipop chart | [`LollipopVChart`](#lollipopvchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. |
+| Time-scaled stacked column chart, time series stacked column chart | [`ColumnChartStacked`](#columnchartstacked) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. |
 | TimeLineChart, timeline, event plot, activity timeline | [`TimeLineChart`](#timelinechart) | Base component, no extra configuration |
 | WaffleChart, heatmap, categorical heatmap, matrix chart, grid chart, tile chart | [`WaffleChart`](#wafflechart) | Base component, no extra configuration |
 | Waterfall chart, waterfall, bridge chart, cascade chart, flying bricks chart | [`ColumnChartStacked`](#columnchartstacked) | Set `waterfall` on a ColumnChartStacked. Each `y` series becomes a step in the sequence rather than a segment stacked from the baseline. |
@@ -644,7 +644,7 @@ A grouped column chart whose x axis parses real dates and spaces bars proportion
 
 **Also called:** time series column chart
 
-**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels).
+**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone.
 
 **Use when**
 
@@ -654,7 +654,7 @@ A grouped column chart whose x axis parses real dates and spaces bars proportion
 
 **Do not use when**
 
-- Cadence is highly irregular (e.g. mixed daily and monthly points) — a single inferred bar width will misrepresent some periods; pin it with `x.time.barWidth` or use LineChart instead
+- Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead
 - The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain ColumnChart
 
 ```tsx
@@ -698,7 +698,7 @@ Vertical bars where each measure stacks on the previous one, showing both the to
 - Individual segments need precise comparison across categories — only the bottom segment shares a baseline; use ColumnChart grouped
 - Category labels are long or numerous — use BarChartStacked
 - There is one category only — use PieChart
-- The axis is continuous time — use AreaChart, which reads as a flow rather than discrete totals
+- The axis is dense continuous time and the flow matters more than each period's total — use AreaChart; for a modest number of dated periods use the time-scaled variant (`x.scalingFunction: "time"`)
 
 **Data**
 
@@ -768,7 +768,7 @@ A stacked column chart whose x axis parses real dates and spaces bars proportion
 
 **Also called:** time series stacked column chart
 
-**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels).
+**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone.
 
 **Use when**
 
@@ -778,7 +778,7 @@ A stacked column chart whose x axis parses real dates and spaces bars proportion
 
 **Do not use when**
 
-- Cadence is highly irregular — a single inferred bar width will misrepresent some periods; pin it with `x.time.barWidth` or use AreaChart instead
+- Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use AreaChart instead
 - Combined with `waterfall` — a running total's step order rarely aligns cleanly with calendar spacing; prefer a plain categorical waterfall
 
 ```tsx
@@ -802,7 +802,7 @@ A stacked column chart whose x axis parses real dates and spaces bars proportion
 
 - [`ColumnChart`](#columnchart) — segments must be compared precisely across categories
 - [`BarChartStacked`](#barchartstacked) — long category labels
-- [`AreaChart`](#areachart) — the axis is continuous time
+- [`AreaChart`](#areachart) — the axis is dense continuous time and the flow matters more than per-period totals
 - [`PieChart`](#piechart) — a single whole at one point in time
 
 ### LineChart
@@ -1064,7 +1064,7 @@ Vertical stems ending in a symbol, marking one value per category with far less 
 
 - Several measures need comparing per category — use ColumnChart
 - Category labels are long — use LollipopHChart
-- The axis is continuous time — use LineChart
+- The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: "time"`)
 
 **Data**
 
@@ -1097,7 +1097,7 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
 
 **Also called:** time series lollipop chart
 
-**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart.
+**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone.
 
 **Use when**
 
@@ -1106,7 +1106,7 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
 
 **Do not use when**
 
-- Multiple rows can share the exact same date — stems would overlap with no automatic separation; use ColumnChart in time mode instead
+- Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled ColumnChart overlaps the same way)
 - The axis is continuous time with many points and the trend matters more than individual values — use LineChart
 
 ```tsx
@@ -1845,7 +1845,7 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
 
 **Also called:** time series box plot
 
-**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width is inferred from the data's date cadence; override with `x.time.barWidth` (pixels).
+**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone.
 
 **Use when**
 
@@ -1854,8 +1854,8 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
 
 **Do not use when**
 
-- Cadence is highly irregular — a single inferred box width will misrepresent some periods; pin it with `x.time.barWidth`
-- The category axis is binned via `x.bin` — binning and time scaling are mutually exclusive; use one or the other
+- Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping boxes; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow boxes)
+- Raw rows need binning — `x.bin` and `valueKey` are ignored on a time axis (with a dev warning) and summary mode is used, so `y` must name all five stat keys; pre-compute per-period statistics or drop `scalingFunction: "time"`
 
 ```tsx
 <BoxPlotV

@@ -58,17 +58,21 @@ interface drawHLineProps {
  *   bottom segment shares a baseline; use ColumnChart grouped
  * - Category labels are long or numerous — use BarChartStacked
  * - There is one category only — use PieChart
- * - The axis is continuous time — use AreaChart, which reads as a flow
- *   rather than discrete totals
+ * - The axis is dense continuous time and the flow matters more than each
+ *   period's total — use AreaChart; for a modest number of dated periods use
+ *   the time-scaled variant (`x.scalingFunction: "time"`)
  *
  * **Specialised types**
  * - Waterfall chart — Set `waterfall` on a ColumnChartStacked. Each `y`
  *   series becomes a step in the sequence rather than a segment stacked from
  *   the baseline.
  * - Time-scaled stacked column chart — Set `x.scalingFunction: "time"` with
- *   `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is
- *   inferred from the data's date cadence; override with `x.time.barWidth`
- *   (pixels).
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from
+ *   the median gap between dates (one slot per step); `x.time.barWidth`
+ *   (positive pixels) overrides it but is capped at one slot, so it can
+ *   narrow bars but never widen them past their slot. Set `x.time.utc: true`
+ *   when dates are UTC instants or calendar days — otherwise they are
+ *   parsed, placed and labelled in the viewer's local time zone.
  *
  * Also called: stacked column chart, stacked bar chart (vertical).
  *
@@ -122,7 +126,8 @@ interface drawHLineProps {
  * @see ColumnChart — segments must be compared precisely across
  *   categories
  * @see BarChartStacked — long category labels
- * @see AreaChart — the axis is continuous time
+ * @see AreaChart — the axis is dense continuous time and the flow matters
+ *   more than per-period totals
  * @see PieChart — a single whole at one point in time
  */
 /* catalog:end */

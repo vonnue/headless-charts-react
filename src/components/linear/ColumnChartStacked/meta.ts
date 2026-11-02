@@ -35,12 +35,12 @@ const meta: ChartMeta = {
     'Individual segments need precise comparison across categories — only the bottom segment shares a baseline; use ColumnChart grouped',
     'Category labels are long or numerous — use BarChartStacked',
     'There is one category only — use PieChart',
-    'The axis is continuous time — use AreaChart, which reads as a flow rather than discrete totals',
+    'The axis is dense continuous time and the flow matters more than each period\'s total — use AreaChart; for a modest number of dated periods use the time-scaled variant (`x.scalingFunction: "time"`)',
   ],
   alternatives: [
     { name: 'ColumnChart', when: 'segments must be compared precisely across categories' },
     { name: 'BarChartStacked', when: 'long category labels' },
-    { name: 'AreaChart', when: 'the axis is continuous time' },
+    { name: 'AreaChart', when: 'the axis is dense continuous time and the flow matters more than per-period totals' },
     { name: 'PieChart', when: 'a single whole at one point in time' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],
@@ -98,14 +98,14 @@ const meta: ChartMeta = {
       aliases: ['time series stacked column chart'],
       summary:
         'A stacked column chart whose x axis parses real dates and spaces bars proportionally to elapsed time.',
-      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is inferred from the data\'s date cadence; override with `x.time.barWidth` (pixels).',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer\'s local time zone.',
       useWhen: [
         'The total per period matters and periods are real, possibly unevenly spaced dates',
         'Some periods are missing and the gap should read as whitespace',
         'Axis ticks should fall on real date boundaries',
       ],
       avoidWhen: [
-        'Cadence is highly irregular — a single inferred bar width will misrepresent some periods; pin it with `x.time.barWidth` or use AreaChart instead',
+        'Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use AreaChart instead',
         'Combined with `waterfall` — a running total\'s step order rarely aligns cleanly with calendar spacing; prefer a plain categorical waterfall',
       ],
       example: `<ColumnChartStacked

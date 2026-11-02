@@ -70,9 +70,12 @@ interface drawHLineProps {
  *   key: "count" }]}`. Pass the raw rows as `data` — binning and counting
  *   happen internally. Use `bin.thresholds` for explicit edges.
  * - Time-scaled column chart — Set `x.scalingFunction: "time"` with
- *   `x.time.format`, or `x.time.isISO` for ISO strings. Bar width is
- *   inferred from the data's date cadence; override with `x.time.barWidth`
- *   (pixels).
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from
+ *   the median gap between dates (one slot per step); `x.time.barWidth`
+ *   (positive pixels) overrides it but is capped at one slot, so it can
+ *   narrow bars but never widen them past their slot. Set `x.time.utc: true`
+ *   when dates are UTC instants or calendar days — otherwise they are
+ *   parsed, placed and labelled in the viewer's local time zone.
  *
  * Also called: vertical bar chart, grouped column chart, clustered column chart.
  *

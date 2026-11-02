@@ -41,7 +41,7 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Several measures need comparing per category — use ColumnChart',
     'Category labels are long — use LollipopHChart',
-    'The axis is continuous time — use LineChart',
+    'The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: "time"`)',
   ],
   alternatives: [
     { name: 'ColumnChart', when: 'multiple measures per category, or magnitude should read as area' },
@@ -68,13 +68,13 @@ const meta: ChartMeta = {
       aliases: ['time series lollipop chart'],
       summary:
         'A vertical lollipop chart whose x axis parses real dates and positions each stem proportionally to elapsed time, rather than as an equal-width slot.',
-      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart.',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer\'s local time zone.',
       useWhen: [
         'Values are one-per-date and spacing between stems should be proportional to elapsed time',
         'Category labels are dates rather than names',
       ],
       avoidWhen: [
-        'Multiple rows can share the exact same date — stems would overlap with no automatic separation; use ColumnChart in time mode instead',
+        'Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled ColumnChart overlaps the same way)',
         'The axis is continuous time with many points and the trend matters more than individual values — use LineChart',
       ],
       example: `<LollipopVChart

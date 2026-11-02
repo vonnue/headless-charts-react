@@ -318,6 +318,52 @@ describe('BoxPlot dev-only config warnings', () => {
       }),
     ).toEqual([]);
   });
+
+  it('reports bin-ignored-in-time-mode when bin or valueKey meet a time axis', () => {
+    const base = { data: rawRows, statKeysPresent: true, timeMode: true };
+    expect(
+      getBoxPlotConfigIssues({ ...base, hasBin: true, valueKey: 'salary' }),
+    ).toEqual(['bin-ignored-in-time-mode']);
+    expect(
+      getBoxPlotConfigIssues({ ...base, hasBin: false, valueKey: 'salary' }),
+    ).toEqual(['bin-ignored-in-time-mode']);
+    expect(
+      getBoxPlotConfigIssues({ ...base, hasBin: true, valueKey: undefined }),
+    ).toEqual(['bin-ignored-in-time-mode']);
+    // Binned-style config with no stat keys draws nothing in time mode: say so
+    expect(
+      getBoxPlotConfigIssues({
+        ...base,
+        hasBin: true,
+        statKeysPresent: false,
+        valueKey: 'salary',
+      }),
+    ).toEqual(['bin-ignored-in-time-mode', 'missing-stat-keys']);
+    expect(
+      getBoxPlotConfigIssues({ ...base, hasBin: false, valueKey: undefined }),
+    ).toEqual([]);
+  });
+
+  it('warns that bin is ignored on a time-scaled BoxPlotV', () => {
+    const warn = spyWarn();
+    render(
+      <BoxPlotV
+        id='bp-v-time-bin'
+        data={[
+          { day: '2024-01-01', ...summaryRows[0] },
+          { day: '2024-01-02', ...summaryRows[1] },
+        ]}
+        valueKey='lo'
+        x={{ key: 'day', scalingFunction: 'time', bin: { count: 3 } }}
+        y={statKeys}
+      />,
+    );
+    expect(document.querySelectorAll('#bp-v-time-bin .box-plot-box')).toHaveLength(2);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('BoxPlotV#bp-v-time-bin: bin/valueKey are ignored'),
+    );
+  });
 });
 
 describe('range charts without x.key', () => {

@@ -12,7 +12,7 @@
       "count": 3
     },
     "react-hooks/exhaustive-deps": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/distribution/ScatterPlot/Scatterplot.tooltip.stories.tsx": {
@@ -28,7 +28,7 @@
       "count": 2
     },
     "react-hooks/exhaustive-deps": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/distribution/WaffleChart/WaffleChart.tooltip.stories.tsx": {
@@ -41,7 +41,7 @@
       "count": 12
     },
     "react-hooks/exhaustive-deps": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/flow/Network/index.tsx": {
@@ -56,9 +56,6 @@
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 2
     }
   },
   "src/components/gauges/BulletChart/index.tsx": {
@@ -85,9 +82,6 @@
   "src/components/gauges/PizzaChart/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 13
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 1
     }
   },
   "src/components/gauges/RadarChart/index.tsx": {
@@ -168,7 +162,7 @@
       "count": 4
     },
     "react-hooks/exhaustive-deps": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/linear/BarChart/BarChart.stories.tsx": {
@@ -189,7 +183,7 @@
       "count": 2
     },
     "react-hooks/exhaustive-deps": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/linear/BarChartStacked/BarChartStacked.tooltip.stories.tsx": {
@@ -205,7 +199,7 @@
       "count": 8
     },
     "react-hooks/exhaustive-deps": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/linear/ColumnChart/ColumnChartGrouped.stories.tsx": {
@@ -294,9 +288,6 @@
   "src/components/ranges/BoxPlotH/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 36
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 1
     }
   },
   "src/components/ranges/BoxPlotV/BoxPlotV.stories.tsx": {
@@ -307,9 +298,6 @@
   "src/components/ranges/BoxPlotV/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 36
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 1
     }
   },
   "src/components/ranges/CometPlot/CometPlot.stories.tsx": {
@@ -330,9 +318,6 @@
   "src/components/ranges/RangePlot/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 4
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 1
     }
   },
   "src/hooks/useAxis.test.tsx": {
@@ -353,9 +338,6 @@
   "src/hooks/useTooltip.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    },
-    "@typescript-eslint/no-unused-expressions": {
-      "count": 1
     }
   },
   "src/types.tsx": {

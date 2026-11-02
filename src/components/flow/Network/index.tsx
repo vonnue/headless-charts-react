@@ -181,30 +181,32 @@ const Network = <TData = any,>({
   zooming = {},
   ...props
 }: NetworkProps<TData>) => {
+  // Top-level hook calls (Rules of Hooks). Both share `id`, so the second
+  // adopts the element the first creates: one #tooltip-${id} per chart.
+  const {
+    onMouseLeave: onMouseLeaveNode,
+    onMouseMove: onMouseMoveNode,
+    onMouseOver: onMouseOverNode,
+  } = useTooltip({
+    tooltip: nodeDef?.tooltip,
+    defaultHtml: (d: any) => `${d[nodeDef?.idKey]}`,
+    id,
+  });
+
+  const {
+    onMouseLeave: onMouseLeaveEdge,
+    onMouseMove: onMouseMoveEdge,
+    onMouseOver: onMouseOverEdge,
+  } = useTooltip({
+    tooltip: edgeDef?.tooltip,
+    defaultHtml: (d: any) => {
+      return `${d.source[nodeDef.idKey]} -> ${d.target[nodeDef.idKey]}`;
+    },
+    id,
+  });
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
-
-    const {
-      onMouseLeave: onMouseLeaveNode,
-      onMouseMove: onMouseMoveNode,
-      onMouseOver: onMouseOverNode,
-    } = useTooltip({
-      tooltip: nodeDef?.tooltip,
-      defaultHtml: (d: any) => `${d[nodeDef?.idKey]}`,
-      id,
-    });
-
-    const {
-      onMouseLeave: onMouseLeaveEdge,
-      onMouseMove: onMouseMoveEdge,
-      onMouseOver: onMouseOverEdge,
-    } = useTooltip({
-      tooltip: edgeDef?.tooltip,
-      defaultHtml: (d: any) => {
-        return `${d.source[nodeDef.idKey]} -> ${d.target[nodeDef.idKey]}`;
-      },
-      id,
-    });
 
     svg.selectAll('*').remove();
 

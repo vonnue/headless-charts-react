@@ -1,6 +1,6 @@
 import { max, min } from 'd3-array';
 import { scaleLinear, scaleTime } from 'd3';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import {
   stack,
   stackOffsetDiverging,
@@ -441,9 +441,6 @@ const AreaChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart]);
 
   return (

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import { arc, interpolateNumber, pie, scaleLinear, transition } from 'd3';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
 import useTooltip from '@/hooks/useTooltip';
 
@@ -206,9 +206,6 @@ const PizzaChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [refreshChart]);
 
   return (

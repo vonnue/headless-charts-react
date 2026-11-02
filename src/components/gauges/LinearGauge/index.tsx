@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { ValueFn, select, selectAll } from 'd3';
+import { ValueFn, select } from 'd3';
 
 import { GaugeProps } from '@/types';
 import { scaleLinear } from 'd3';
@@ -209,9 +209,6 @@ const LinearGauge = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, max, refreshChart, id]);
 
   return (

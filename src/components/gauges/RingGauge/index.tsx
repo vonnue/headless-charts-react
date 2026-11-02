@@ -1,6 +1,6 @@
 import { PieArcDatum, arc } from 'd3-shape';
 import { useCallback, useEffect, useRef } from 'react';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 
 import { defaultChartClassNames } from '@/utils';
 import { GaugeProps } from '@/types';
@@ -263,9 +263,6 @@ const RingGauge = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart, id]);
   return (
     <svg

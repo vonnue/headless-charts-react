@@ -1,4 +1,4 @@
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import { useCallback, useEffect } from 'react';
 import useTooltip from '@/hooks/useTooltip';
 import { scaleSequential } from 'd3-scale';
@@ -414,9 +414,6 @@ const WaffleChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart]);
 
   return (

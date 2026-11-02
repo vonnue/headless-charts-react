@@ -333,9 +333,6 @@ const RangePlot = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart]);
   return (
     <svg

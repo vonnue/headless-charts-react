@@ -1,7 +1,7 @@
 import { ZoomTransform, zoom } from 'd3-zoom';
 import { max, min } from 'd3-array';
 import { scaleBand, scaleLinear } from 'd3-scale';
-import { select, selectAll } from 'd3-selection';
+import { select } from 'd3-selection';
 import {
   symbol,
   symbolCircle,
@@ -320,9 +320,6 @@ const RangePlot = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-    return () => {
-      selectAll(`#tooltip-${id}`).remove();
-    };
   }, [data, refreshChart, id]);
 
   return (

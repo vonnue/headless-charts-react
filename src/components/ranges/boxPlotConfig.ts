@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { AxisConfig, ValueAxisConfig } from '@/types';
 import { deepValue } from '@/utils';
 import type { BinStatsResult } from '@/utils';
-import { isDevEnvironment } from '@/utils/devEnvironment';
+import { isDevEnvironment, warnOnceInDev } from '@/utils/devEnvironment';
 
 /** Row fields holding the pre-computed box statistics (summary mode) */
 export interface BoxPlotStatKeys<TData = unknown> {
@@ -125,18 +125,21 @@ const ISSUE_MESSAGES: Record<BoxPlotConfigIssue, (detail: string) => string> = {
     "bin/valueKey are ignored when x.scalingFunction is 'time' (bin labels aren't dates); summary mode is used, so y needs the stat keys",
 };
 
-/** Logs one configuration warning (no-op outside development). */
+/**
+ * Logs one configuration warning, in development only and once per chart, id,
+ * issue and detail (via `warnOnceInDev`), so remounts and StrictMode double
+ * effects don't repeat it.
+ */
 export const warnBoxPlotConfig = (
   chart: 'BoxPlotH' | 'BoxPlotV',
   id: string,
   issue: BoxPlotConfigIssue,
   detail = '',
-): void => {
-  if (!isDevEnvironment()) return;
-  console.warn(
+): void =>
+  warnOnceInDev(
+    `${chart}#${id}:${issue}:${detail}`,
     `[headless-charts] ${chart}#${id}: ${ISSUE_MESSAGES[issue](detail)}`,
   );
-};
 
 /** Pure check: which misconfigurations apply? Uses the same predicates as rendering. */
 export const getBoxPlotConfigIssues = ({

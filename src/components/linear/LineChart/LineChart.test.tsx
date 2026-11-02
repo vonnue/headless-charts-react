@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, render } from '@testing-library/react';
 
 import LineChart from '.';
 
@@ -249,5 +250,239 @@ describe('LineChart time scale domain (#16)', () => {
     expect(xs.length).toBeGreaterThan(0);
     expect(Math.min(...xs)).toBeCloseTo(40, 6);
     expect(Math.max(...xs)).toBeCloseTo(580, 6);
+  });
+});
+
+/**
+ * LineChart redraw with current props (spec: specs/issue-9.md, L1–L15)
+ *
+ * Happy path:  a data change redraws series and circles to match a fresh mount
+ *              of the same props (the "oracle", rendered as `<id>-oracle`).
+ * Props:       series count, right-axis series, margin, reverse, reference
+ *              lines and `id` changes are honoured after mount.
+ * Structure:   repeated redraws leave exactly one root `g`, one `.left-g`, one
+ *              `.group` per series and one clipPath (no stacking).
+ * Edge cases:  empty <-> non-empty data, shrinking data, StrictMode.
+ * Tooltip:     after a data change the tooltip shows the new data (L10) and
+ *              exactly one tooltip element survives (L11).
+ * Guards:      className-only rerender keeps the same series node (L9).
+ */
+const S = { width: '400px', height: '200px' };
+const X = { key: 'year' };
+const d1 = [
+  { year: 2020, a: 1, b: 2 },
+  { year: 2021, a: 3, b: 4 },
+  { year: 2022, a: 5, b: 1 },
+];
+const d2 = [
+  { year: 2020, a: 10, b: 2 },
+  { year: 2021, a: 30, b: 4 },
+  { year: 2022, a: 5, b: 1 },
+  { year: 2023, a: 50, b: 9 },
+  { year: 2024, a: 7, b: 9 },
+];
+const d3 = [
+  { year: 2020, a: 2, b: 3 },
+  { year: 2021, a: 4, b: 1 },
+];
+const EMPTY: typeof d1 = [];
+const Y_A = [{ key: 'a' }];
+const Y_AB = [{ key: 'a' }, { key: 'b' }];
+const Y_A_CIRCLE = [{ key: 'a', symbol: 'circle' as const }];
+const Y_A_RIGHT_B = [{ key: 'a' }, { key: 'b', axis: { location: 'right' as const } }];
+const M1 = { top: 40, bottom: 40, left: 40, right: 20 };
+const M2 = { top: 10, bottom: 30, left: 60, right: 10 };
+const NO_REFS: Array<{ yLeft?: number; className?: string }> = [];
+const REFS = [{ yLeft: 3, className: 'ref' }];
+const TIP = {};
+
+type LineProps = Parameters<typeof LineChart>[0];
+
+const ds = (id: string, selector: string): Array<string | null> =>
+  Array.from(document.querySelectorAll(`#${id} ${selector}`)).map((el) => el.getAttribute('d'));
+
+const oracle = (props: LineProps): Array<string | null> => {
+  const id = `${props.id}-oracle`;
+  render(<LineChart {...props} id={id} />);
+  return ds(id, '.left-series');
+};
+
+describe('LineChart redraw with current props', () => {
+  beforeEach(() => {
+    document.querySelectorAll('[id^="tooltip"]').forEach((el) => el.remove());
+  });
+
+  it('L1: redraws the series for new data to match a fresh mount', () => {
+    const base = { id: 'l1', x: X, y: Y_A, style: S };
+    const { rerender } = render(<LineChart {...base} data={d1} />);
+    const before = ds('l1', '.left-series');
+
+    rerender(<LineChart {...base} data={d2} />);
+
+    const after = ds('l1', '.left-series');
+    expect(after).not.toStrictEqual(before);
+    expect(after).toStrictEqual(oracle({ ...base, data: d2 }));
+  });
+
+  it('L2: draws one circle per point after data grows', () => {
+    const base = { id: 'l2', x: X, y: Y_A_CIRCLE, style: S };
+    const { rerender } = render(<LineChart {...base} data={d1} />);
+
+    rerender(<LineChart {...base} data={d2} />);
+
+    expect(document.querySelectorAll('#l2 .left-circles')).toHaveLength(5);
+  });
+
+  it('L3: removes circles and redraws the series when data shrinks', () => {
+    const base = { id: 'l3', x: X, y: Y_A_CIRCLE, style: S };
+    const { rerender } = render(<LineChart {...base} data={d2} />);
+
+    rerender(<LineChart {...base} data={d3} />);
+
+    expect(document.querySelectorAll('#l3 .left-circles')).toHaveLength(2);
+    expect(ds('l3', '.left-series')).toStrictEqual(oracle({ ...base, data: d3 }));
+  });
+
+  it('L4: drops a series when y shrinks with the same data', () => {
+    const base = { id: 'l4', x: X, data: d1, style: S };
+    const { rerender } = render(<LineChart {...base} y={Y_AB} />);
+
+    rerender(<LineChart {...base} y={Y_A} />);
+
+    expect(document.querySelectorAll('#l4 .left-series')).toHaveLength(1);
+  });
+
+  it('L5: adds a right-axis series and its axis', () => {
+    const base = { id: 'l5', x: X, data: d1, style: S };
+    const { rerender } = render(<LineChart {...base} y={Y_A} />);
+
+    rerender(<LineChart {...base} y={Y_A_RIGHT_B} />);
+
+    expect(document.querySelectorAll('#l5 .right-series')).toHaveLength(1);
+    expect(document.querySelector('#l5 .axis--right-y')).not.toBeNull();
+  });
+
+  it('L6: keeps a single structure across repeated data changes', () => {
+    const base = { id: 'l6', x: X, y: Y_AB, style: S };
+    const { rerender } = render(<LineChart {...base} data={d1} />);
+    rerender(<LineChart {...base} data={d2} />);
+    rerender(<LineChart {...base} data={d3} />);
+
+    rerender(<LineChart {...base} data={d2} />);
+
+    const svg = document.getElementById('l6');
+    expect({
+      rootG: svg?.querySelectorAll(':scope > g').length,
+      leftG: svg?.querySelectorAll('.left-g').length,
+      groups: svg?.querySelectorAll('.left-g > .group').length,
+      clipPaths: svg?.querySelectorAll('clipPath').length,
+    }).toStrictEqual({ rootG: 1, leftG: 1, groups: 2, clipPaths: 1 });
+    expect(ds('l6', '.left-series')).toStrictEqual(oracle({ ...base, data: d2 }));
+  });
+
+  it('L7: honours a margin change after mount', () => {
+    const base = { id: 'l7', x: X, y: Y_A, data: d1, style: S };
+    const { rerender } = render(<LineChart {...base} margin={M1} />);
+
+    rerender(<LineChart {...base} margin={M2} />);
+
+    expect(ds('l7', '.left-series')).toStrictEqual(oracle({ ...base, margin: M2 }));
+  });
+
+  it('L8: honours a reverse change after mount', () => {
+    const base = { id: 'l8', x: X, y: Y_A, data: d1, style: S };
+    const { rerender } = render(<LineChart {...base} reverse={false} />);
+
+    rerender(<LineChart {...base} reverse />);
+
+    expect(ds('l8', '.left-series')).toStrictEqual(oracle({ ...base, reverse: true }));
+  });
+
+  it('L9: keeps the same series node on a className-only rerender', () => {
+    const base = { id: 'l9', x: X, y: Y_A, data: d1, style: S };
+    const { rerender } = render(<LineChart {...base} className='one' />);
+    const before = document.querySelector('#l9 .left-series');
+
+    rerender(<LineChart {...base} className='two' />);
+
+    expect(document.querySelector('#l9 .left-series')).toBe(before);
+  });
+
+  it('L10: shows the new data in the tooltip after a data change', () => {
+    const base = { id: 'l10', x: X, y: Y_A, tooltip: TIP, style: S };
+    const { rerender } = render(<LineChart {...base} data={d1} />);
+    rerender(<LineChart {...base} data={d2} />);
+    const svg = document.getElementById('l10');
+    if (!svg) throw new Error('no svg');
+
+    fireEvent.mouseMove(svg, { clientX: 10000, clientY: 50 });
+
+    expect(document.getElementById('tooltip-l10')?.innerHTML).toContain('year: 2024');
+  });
+
+  it('L11: keeps one tooltip element across data changes and removes it on unmount', () => {
+    const base = { id: 'l11', x: X, y: Y_A, tooltip: TIP, style: S };
+    const count = () => document.querySelectorAll('[id="tooltip-l11"]').length;
+    const { rerender, unmount } = render(<LineChart {...base} data={d1} />);
+    const counts = [count()];
+    rerender(<LineChart {...base} data={d2} />);
+    counts.push(count());
+    rerender(<LineChart {...base} data={d3} />);
+    counts.push(count());
+
+    unmount();
+
+    expect(counts).toStrictEqual([1, 1, 1]);
+    expect(count()).toBe(0);
+  });
+
+  it('L12: draws reference lines added after mount', () => {
+    const base = { id: 'l12', x: X, y: Y_A, data: d1, style: S };
+    const { rerender } = render(<LineChart {...base} referenceLines={NO_REFS} />);
+
+    rerender(<LineChart {...base} referenceLines={REFS} />);
+
+    expect(document.querySelector('#l12 .reference-line')).not.toBeNull();
+  });
+
+  it('L13: goes from empty to data and back without throwing', () => {
+    const base = { id: 'l13', x: X, y: Y_A, style: S };
+    const { rerender } = render(<LineChart {...base} data={EMPTY} />);
+
+    expect(() => rerender(<LineChart {...base} data={d1} />)).not.toThrow();
+    const withData = ds('l13', '.left-series');
+    expect(() => rerender(<LineChart {...base} data={EMPTY} />)).not.toThrow();
+
+    expect(withData).toStrictEqual(oracle({ ...base, data: d1 }));
+  });
+
+  it('L14: redraws for new data under StrictMode without duplicating groups', () => {
+    const base = { id: 'l14', x: X, y: Y_AB, style: S };
+    const { rerender } = render(
+      <StrictMode>
+        <LineChart {...base} data={d1} />
+      </StrictMode>
+    );
+
+    rerender(
+      <StrictMode>
+        <LineChart {...base} data={d2} />
+      </StrictMode>
+    );
+
+    expect(document.querySelectorAll('#l14 .left-g > .group')).toHaveLength(Y_AB.length);
+    expect(ds('l14', '.left-series')).toStrictEqual(oracle({ ...base, data: d2 }));
+  });
+
+  it('L15: draws into the new svg when the id changes', () => {
+    const base = { x: X, y: Y_A, data: d1, style: S };
+    const { rerender } = render(<LineChart {...base} id='l-a' />);
+
+    rerender(<LineChart {...base} id='l-b' />);
+
+    expect(document.querySelector('#l-b .left-series')).not.toBeNull();
+    // Beyond the spec's assertion: the svg node is reused, so the old drawing
+    // would satisfy the line above; the tooltip id proves a redraw with the new id.
+    expect({ a: document.getElementById('tooltip-l-a'), b: document.getElementById('tooltip-l-b') !== null }).toStrictEqual({ a: null, b: true });
   });
 });

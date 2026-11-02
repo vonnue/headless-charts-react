@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
@@ -330,5 +331,216 @@ describe('AreaChart time scaling stories (#15)', () => {
 
     const paths = areaPathData('buggy-time-area-chart');
     expect(paths.some((d) => d.includes('NaN'))).toBe(true);
+  });
+});
+
+/**
+ * AreaChart redraw with current props (spec: specs/issue-9.md, A1–A10)
+ *
+ * Happy path:  a data change redraws every `.area path` to match a fresh mount
+ *              of the same props (the "oracle", rendered as `<id>-oracle-N`).
+ * Props:       y series count, stacking type and x scale changes after mount.
+ * Structure:   repeated redraws keep one root `g`, one `.area`, one clipPath
+ *              and one path per series.
+ * Edge cases:  shrinking data, empty -> data, StrictMode.
+ * Tooltip:     after a data change the tooltip shows the new nearest x (A6).
+ * Guards:      className-only rerender keeps the same area node (A7).
+ */
+const AS = { width: '400px', height: '200px' };
+const AX = { key: 'year' };
+const AX_TIME = { key: 'date', scalingFunction: 'time' as const, time: { isISO: true } };
+const ad1 = [
+  { year: 2020, a: 1, b: 2 },
+  { year: 2021, a: 3, b: 4 },
+  { year: 2022, a: 5, b: 1 },
+];
+const ad2 = [
+  { year: 2020, a: 10, b: 2 },
+  { year: 2021, a: 30, b: 4 },
+  { year: 2022, a: 5, b: 1 },
+  { year: 2023, a: 50, b: 9 },
+  { year: 2024, a: 7, b: 9 },
+];
+const ad3 = [
+  { year: 2020, a: 2, b: 3 },
+  { year: 2021, a: 4, b: 1 },
+];
+const AD_EMPTY: typeof ad1 = [];
+// A2 needs a third key; d1 from the spec only has `a` and `b`.
+const AD_ABC = [
+  { year: 2020, a: 1, b: 2, c: 3 },
+  { year: 2021, a: 3, b: 4, c: 1 },
+  { year: 2022, a: 5, b: 1, c: 2 },
+];
+const AD_DATES = [
+  { year: 2020, date: '2020-01-01', a: 1, b: 2 },
+  { year: 2021, date: '2021-01-01', a: 3, b: 4 },
+  { year: 2022, date: '2022-01-01', a: 5, b: 1 },
+];
+const AY_A = [{ key: 'a' }];
+const AY_AB = [{ key: 'a' }, { key: 'b' }];
+const AY_ABC = [{ key: 'a' }, { key: 'b' }, { key: 'c' }];
+const STACK_NORMAL = { type: 'normal' as const };
+const STACK_100 = { type: '100%' as const };
+const STACK_STREAM = { type: 'streamgraph' as const };
+const STACK_DIVERGING = { type: 'diverging' as const };
+const ATIP = {};
+
+type AreaProps = Parameters<typeof AreaChart>[0];
+
+const areaDs = (id: string): Array<string | null> =>
+  Array.from(document.querySelectorAll(`#${id} .area path`)).map((el) => el.getAttribute('d'));
+
+let oracleSeq = 0;
+const areaOracle = (props: AreaProps): Array<string | null> => {
+  const id = `${props.id}-oracle-${oracleSeq++}`;
+  render(<AreaChart {...props} id={id} />);
+  return areaDs(id);
+};
+
+describe('AreaChart redraw with current props', () => {
+  beforeEach(() => {
+    document.querySelectorAll('[id^="tooltip"]').forEach((el) => el.remove());
+  });
+
+  it('A1: redraws every area for new data to match a fresh mount', () => {
+    const base = { id: 'a1', x: AX, y: AY_AB, style: AS };
+    const { rerender } = render(<AreaChart {...base} data={ad1} />);
+    const before = areaDs('a1');
+
+    rerender(<AreaChart {...base} data={ad2} />);
+
+    const after = areaDs('a1');
+    expect(after[0]).not.toBe(before[0]);
+    expect(after).toStrictEqual(areaOracle({ ...base, data: ad2 }));
+  });
+
+  it('A2: draws one path per series as y changes 2 -> 1 -> 3', () => {
+    const base = { id: 'a2', x: AX, data: AD_ABC, style: AS };
+    const { rerender } = render(<AreaChart {...base} y={AY_AB} />);
+    const counts = [areaDs('a2').length];
+    rerender(<AreaChart {...base} y={AY_A} />);
+    counts.push(areaDs('a2').length);
+
+    rerender(<AreaChart {...base} y={AY_ABC} />);
+    counts.push(areaDs('a2').length);
+
+    expect(counts).toStrictEqual([2, 1, 3]);
+  });
+
+  it('A3: follows stacking type changes and normalises the 100% axis', () => {
+    const base = { id: 'a3', x: AX, y: AY_AB, data: ad1, style: AS };
+    const { rerender } = render(<AreaChart {...base} stacking={STACK_NORMAL} />);
+    const results: Array<{ type: string; matches: boolean }> = [];
+    let maxTick100 = Number.NaN;
+
+    for (const stacking of [STACK_100, STACK_STREAM, STACK_DIVERGING]) {
+      rerender(<AreaChart {...base} stacking={stacking} />);
+      if (stacking === STACK_100) {
+        const ticks = Array.from(document.querySelectorAll('#a3 [data-testid="y-axis"] .tick text')).map((t) =>
+          Number(t.textContent?.replace(/,/g, '').replace('−', '-'))
+        );
+        maxTick100 = Math.max(...ticks);
+      }
+      const current = areaDs('a3');
+      results.push({ type: stacking.type, matches: JSON.stringify(current) === JSON.stringify(areaOracle({ ...base, stacking })) });
+    }
+
+    expect(results).toStrictEqual([
+      { type: '100%', matches: true },
+      { type: 'streamgraph', matches: true },
+      { type: 'diverging', matches: true },
+    ]);
+    expect(maxTick100).toBeLessThanOrEqual(1);
+  });
+
+  it('A4: matches a fresh mount through shrink and regrow', () => {
+    const base = { id: 'a4', x: AX, y: AY_AB, style: AS };
+    const { rerender } = render(<AreaChart {...base} data={ad2} />);
+    rerender(<AreaChart {...base} data={ad3} />);
+    const shrunk = areaDs('a4');
+
+    rerender(<AreaChart {...base} data={ad2} />);
+
+    expect(shrunk).toStrictEqual(areaOracle({ ...base, data: ad3 }));
+    expect(areaDs('a4')).toStrictEqual(areaOracle({ ...base, data: ad2 }));
+  });
+
+  it('A5: keeps a single structure across repeated data changes', () => {
+    const base = { id: 'a5', x: AX, y: AY_AB, style: AS };
+    const { rerender } = render(<AreaChart {...base} data={ad1} />);
+    rerender(<AreaChart {...base} data={ad2} />);
+
+    rerender(<AreaChart {...base} data={ad3} />);
+
+    const svg = document.getElementById('a5');
+    expect({
+      rootG: svg?.querySelectorAll(':scope > g').length,
+      area: svg?.querySelectorAll('.area').length,
+      clipPaths: svg?.querySelectorAll('clipPath').length,
+      paths: svg?.querySelectorAll('.area path').length,
+    }).toStrictEqual({ rootG: 1, area: 1, clipPaths: 1, paths: AY_AB.length });
+    expect(areaDs('a5')).toStrictEqual(areaOracle({ ...base, data: ad3 }));
+  });
+
+  it('A6: shows the new data in the tooltip after a data change', () => {
+    const base = { id: 'a6', x: AX, y: AY_AB, tooltip: ATIP, style: AS };
+    const { rerender } = render(<AreaChart {...base} data={ad1} />);
+    rerender(<AreaChart {...base} data={ad2} />);
+    const firstArea = document.querySelector('#a6 .area path');
+    if (!firstArea) throw new Error('no area path');
+
+    fireEvent.mouseMove(firstArea, { clientX: 379, clientY: 50 });
+
+    const tips = document.querySelectorAll('[id="tooltip-a6"]');
+    expect(tips).toHaveLength(1);
+    expect(tips[0].isConnected).toBe(true);
+    expect(tips[0].innerHTML.startsWith('2024')).toBe(true);
+  });
+
+  it('A7: keeps the same area node on a className-only rerender', () => {
+    const base = { id: 'a7', x: AX, y: AY_AB, data: ad1, style: AS };
+    const { rerender } = render(<AreaChart {...base} className='one' />);
+    const before = document.querySelector('#a7 .area path');
+
+    rerender(<AreaChart {...base} className='two' />);
+
+    expect(document.querySelector('#a7 .area path')).toBe(before);
+  });
+
+  it('A8: switches to a time scale when x changes after mount', () => {
+    const base = { id: 'a8', y: AY_AB, data: AD_DATES, style: AS };
+    const { rerender } = render(<AreaChart {...base} x={AX} />);
+
+    rerender(<AreaChart {...base} x={AX_TIME} />);
+
+    expect(areaDs('a8')).toStrictEqual(areaOracle({ ...base, x: AX_TIME }));
+  });
+
+  it('A9: redraws for new data under StrictMode', () => {
+    const base = { id: 'a9', x: AX, y: AY_AB, style: AS };
+    const { rerender } = render(
+      <StrictMode>
+        <AreaChart {...base} data={ad1} />
+      </StrictMode>
+    );
+
+    rerender(
+      <StrictMode>
+        <AreaChart {...base} data={ad2} />
+      </StrictMode>
+    );
+
+    expect(document.querySelectorAll('#a9 .area')).toHaveLength(1);
+    expect(areaDs('a9')).toStrictEqual(areaOracle({ ...base, data: ad2 }));
+  });
+
+  it('A10: draws areas when data goes from empty to non-empty', () => {
+    const base = { id: 'a10', x: AX, y: AY_AB, style: AS };
+    const { rerender } = render(<AreaChart {...base} data={AD_EMPTY} />);
+
+    rerender(<AreaChart {...base} data={ad1} />);
+
+    expect(areaDs('a10')).toStrictEqual(areaOracle({ ...base, data: ad1 }));
   });
 });

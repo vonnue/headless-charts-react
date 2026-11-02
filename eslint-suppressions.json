@@ -330,11 +330,6 @@
       "count": 4
     }
   },
-  "src/hooks/useTooltip.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "src/hooks/useTooltip.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3

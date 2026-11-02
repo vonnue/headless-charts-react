@@ -105,7 +105,7 @@ const meta: ChartMeta = {
   id="daily-signups"
   className="w-full h-64"
   data={data}
-  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={[{ key: 'signups', className: 'fill-purple-600' }]}
 />`,
     },

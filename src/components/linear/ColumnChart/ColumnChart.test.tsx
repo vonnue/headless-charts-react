@@ -1028,3 +1028,55 @@ describe('ColumnChart time mode with x.start / x.end pinned (review-2 N2)', () =
     });
   });
 });
+
+describe('ColumnChart suggests x.time.utc for date-only ISO data (review-2 N1)', () => {
+  const CHART_SIZE = { width: '500px', height: '300px' };
+  const rows = ['2025-01-01', '2025-01-02', '2025-01-03'].map((date, i) => ({ date, a: i + 1 }));
+
+  it('warns once in dev when isISO dates are date-only and utc is off', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rerender } = render(
+      <ColumnChart
+        id='utc-hint-column'
+        style={CHART_SIZE}
+        data={rows}
+        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+        y={[{ key: 'a' }]}
+      />
+    );
+    rerender(
+      <ColumnChart
+        id='utc-hint-column'
+        style={CHART_SIZE}
+        data={[...rows]}
+        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+        y={[{ key: 'a' }]}
+      />
+    );
+
+    const msgs = warn.mock.calls
+      .map(([m]) => String(m))
+      .filter((m) => m.includes('ColumnChart#utc-hint-column') && m.includes('x.time.utc'));
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0]).toContain('"2025-01-01"');
+    warn.mockRestore();
+  });
+
+  it('does not warn when x.time.utc is set', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <ColumnChart
+        id='utc-hint-column-off'
+        style={CHART_SIZE}
+        data={rows}
+        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+        y={[{ key: 'a' }]}
+      />
+    );
+
+    expect(
+      warn.mock.calls.some(([m]) => String(m).includes('ColumnChart#utc-hint-column-off'))
+    ).toBe(false);
+    warn.mockRestore();
+  });
+});

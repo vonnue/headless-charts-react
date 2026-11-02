@@ -19,3 +19,17 @@ export const isDevEnvironment = (): boolean => {
     return false;
   }
 };
+
+const warnedKeys = new Set<string>();
+
+/**
+ * `console.warn(message)` in development only, and at most once per `key` for
+ * the lifetime of the page, so a warning computed during a redraw (resize,
+ * re-render, StrictMode double effects) is not repeated. Callers put whatever
+ * makes the problem distinct (chart, id, offending value) into `key`.
+ */
+export const warnOnceInDev = (key: string, message: string): void => {
+  if (!isDevEnvironment() || warnedKeys.has(key)) return;
+  warnedKeys.add(key);
+  console.warn(message);
+};

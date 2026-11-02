@@ -703,7 +703,9 @@ describe('BoxPlotV', () => {
           x={{
             key: 'weekStart',
             scalingFunction: 'time',
-            time: { isISO: true },
+            // utc: true so the date-only utc hint (review-2 N1) stays out of
+            // this test's warning count
+            time: { isISO: true, utc: true },
             bin: { count: 3 }, // ignored in time mode
           }}
           y={timeYConfig}

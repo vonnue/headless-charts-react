@@ -111,7 +111,7 @@ const meta: ChartMeta = {
   id="weekly-latency-spread"
   className="w-full h-64"
   data={data}
-  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={{
     minKey: 'min',
     maxKey: 'max',

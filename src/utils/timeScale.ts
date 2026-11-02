@@ -10,7 +10,7 @@ import {
 import { useEffect, useMemo } from 'react';
 
 import type { AxisConfig } from '@/types';
-import { isDevEnvironment } from '@/utils/devEnvironment';
+import { warnOnceInDev } from '@/utils/devEnvironment';
 
 /**
  * Shared time-axis helpers for charts whose x axis is normally a category
@@ -209,7 +209,29 @@ export const createTimeBarLayout = <TData,>(
   };
 };
 
-export type TimeAxisIssue = 'dropped-rows' | 'invalid-bar-width';
+export type TimeAxisIssue = 'dropped-rows' | 'invalid-bar-width' | 'suggest-utc';
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+const UTC_SUFFIX = /(Z|[+-]00:?00)$/;
+
+/**
+ * The first x value when `x.time.isISO` is set without `x.time.utc` and every
+ * x value is a date-only ISO string or a UTC instant (`Z` / `+00:00`), else
+ * undefined. `isoParse` reads those as UTC, but the axis and tooltip are in
+ * local time, so outside UTC the marks, ticks and labels land a day off
+ * (review-2 N1).
+ */
+export const utcSuggestionSample = <TData,>(
+  data: TData[],
+  x: TimeAxis
+): string | undefined => {
+  if (!x.time?.isISO || x.time?.utc || data.length === 0) return undefined;
+  const values = data.map((d) => (d as Record<string, unknown>)[x.key]);
+  const allUtc = values.every(
+    (v) => typeof v === 'string' && (DATE_ONLY.test(v) || UTC_SUFFIX.test(v))
+  );
+  return allUtc ? String(values[0]) : undefined;
+};
 
 /** Pure check behind `useTimeAxisWarnings`. */
 export const getTimeAxisIssues = <TData,>(
@@ -225,6 +247,8 @@ export const getTimeAxisIssues = <TData,>(
   if (checkBarWidth && barWidth !== undefined && validBarWidth(barWidth) === undefined) {
     issues.push({ issue: 'invalid-bar-width', detail: String(barWidth) });
   }
+  const utcSample = utcSuggestionSample(data, x);
+  if (utcSample !== undefined) issues.push({ issue: 'suggest-utc', detail: utcSample });
   return issues;
 };
 
@@ -233,12 +257,16 @@ const TIME_ISSUE_MESSAGES: Record<TimeAxisIssue, (key: string, detail: string) =
     `${detail} row(s) have an x.${key} value that isn't a valid date for the time axis (check x.time.format / isISO); they are not drawn`,
   'invalid-bar-width': (_key, detail) =>
     `x.time.barWidth must be a positive number of pixels, got ${detail}; it is ignored and the width is inferred from the date cadence`,
+  'suggest-utc': (key, detail) =>
+    `x.${key} values are date-only or UTC ISO strings (e.g. "${detail}") but x.time.utc is off, so they are placed and labelled in the viewer's local time zone; west of UTC they show as the previous day. Set x.time.utc: true`,
 };
 
 /**
  * Dev-only warnings for a time x axis: rows dropped because their date can't
- * be read, and an unusable `x.time.barWidth`. Logged once per distinct
- * problem, not on every render. No-op unless `x.scalingFunction` is 'time'.
+ * be read, an unusable `x.time.barWidth`, and date-only/UTC ISO strings
+ * without `x.time.utc`. Logged once per distinct problem (via
+ * `warnOnceInDev`), not on every render. No-op unless `x.scalingFunction` is
+ * 'time'.
  */
 export const useTimeAxisWarnings = <TData,>(
   chart: string,
@@ -265,10 +293,10 @@ export const useTimeAxisWarnings = <TData,>(
   );
 
   useEffect(() => {
-    if (!isDevEnvironment()) return;
     (JSON.parse(issuesKey) as { issue: TimeAxisIssue; detail: string }[]).forEach(
       ({ issue, detail }) =>
-        console.warn(
+        warnOnceInDev(
+          `${chart}#${id}:${issue}:${String(key)}:${detail}`,
           `[headless-charts] ${chart}#${id}: ${TIME_ISSUE_MESSAGES[issue](String(key), detail)}`
         )
     );

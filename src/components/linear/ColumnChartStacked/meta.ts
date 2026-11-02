@@ -112,7 +112,7 @@ const meta: ChartMeta = {
   id="daily-revenue-split"
   className="w-full h-64"
   data={data}
-  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={[
     { key: 'macbook', className: 'fill-purple-800' },
     { key: 'iphone', className: 'fill-purple-600' },

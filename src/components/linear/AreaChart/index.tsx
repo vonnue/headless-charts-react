@@ -26,6 +26,16 @@ import { zoom } from 'd3-zoom';
 import * as d3 from 'd3';
 import { drawAxis } from '@/hooks/useAxis';
 
+/**
+ * Props for AreaChart.
+ *
+ * Performance: the chart redraws whenever `data`, `x`, `y`, `stacking`,
+ * `padding`, `margin` or `zooming` change by reference. Hoist these config
+ * objects and arrays to module scope or wrap them in `useMemo`; inline
+ * literals (e.g. `x={{ key: 'year' }}`) are new on every parent render, so the
+ * chart is torn down and redrawn each time, which resets the zoom. `className`,
+ * `style` and the tooltip callbacks do not trigger a redraw.
+ */
 export interface AreaChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   id: string;
@@ -221,7 +231,8 @@ const AreaChart = <TData = any,>({
 
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
-    // Clear svg
+    // Clear svg; zoom listeners live on the svg and survive the remove().
+    svg.on('.zoom', null);
     svg.selectAll('*').remove();
 
     const width = +svg.style('width').split('px')[0],

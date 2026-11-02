@@ -26,6 +26,17 @@ import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 import { drawAxis } from '@/hooks/useAxis';
 
+/**
+ * Props for LineChart.
+ *
+ * Performance: the chart redraws whenever `data`, `x`, `y`, `tooltip`,
+ * `drawing`, `zooming`, `padding`, `margin` or `referenceLines` change by
+ * reference. Hoist these config objects and arrays to module scope or wrap
+ * them in `useMemo`; inline literals (e.g. `x={{ key: 'year' }}`) are new on
+ * every parent render, so the chart is torn down and redrawn each time, which
+ * resets the zoom and replays the drawing animation. `className` and `style`
+ * do not trigger a redraw.
+ */
 export interface LineChartProps<TData = any> extends ChartProps<TData> {
   x: AxisConfig<TData>;
   y: Array<SeriesAxisConfig<TData>>;
@@ -257,8 +268,10 @@ const LineChart = <TData = any,>({
     const allLeftY = y.filter((column) => column.axis?.location !== 'right'),
       allRightY = y.filter((column) => column.axis?.location === 'right');
     const svg = select(`#${id}`);
-    // Clear svg
-
+    // Clear svg: stop in-flight transitions, drop listeners bound to the svg
+    // itself (tooltip + zoom survive selectAll('*').remove()), then children.
+    svg.selectAll('*').interrupt();
+    svg.on('.zoom', null).on('mouseover mousemove mouseleave', null);
     svg.selectAll('*').remove();
 
     const width = +svg.style('width').split('px')[0],
@@ -891,7 +904,11 @@ const LineChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`);
     return () => {
+      svg.selectAll('*').interrupt();
       selectAll(`#tooltip-${id}`).remove();
     };
   }, [refreshChart, id]);

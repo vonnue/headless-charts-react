@@ -1,14 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { scaleTime } from 'd3-scale';
 
 import type { AxisConfig } from '@/types';
 import {
+  createTimeBarLayout,
   createTimeXScale,
-  insetTimeScale,
+  getTimeAxisIssues,
   makeDateAccessor,
+  makeDateFormatter,
+  makeDateParser,
   medianCadenceMs,
-  timeMarkWidth,
+  padTimeDomain,
+  validBarWidth,
 } from './timeScale';
+
+// Module-local declaration so this compiles without @types/node.
+declare const process: { env: Record<string, string | undefined> };
 
 type Row = { date: string };
 
@@ -19,7 +26,7 @@ describe('makeDateAccessor', () => {
   it('parses ISO timestamps when x.time.isISO is set', () => {
     const toDate = makeDateAccessor<Row>({ key: 'date', time: { isISO: true } });
 
-    expect(toDate({ date: '2025-01-06T08:30:00.000Z' }).getTime()).toBe(
+    expect(toDate({ date: '2025-01-06T08:30:00.000Z' })!.getTime()).toBe(
       Date.UTC(2025, 0, 6, 8, 30)
     );
   });
@@ -27,7 +34,7 @@ describe('makeDateAccessor', () => {
   it('uses x.time.format when isISO is not set', () => {
     const toDate = makeDateAccessor<Row>({ key: 'date', time: { format: '%d/%m/%Y' } });
 
-    const parsed = toDate({ date: '06/01/2025' });
+    const parsed = toDate({ date: '06/01/2025' })!;
     expect([parsed.getFullYear(), parsed.getMonth(), parsed.getDate()]).toStrictEqual([
       2025, 0, 6,
     ]);
@@ -36,10 +43,16 @@ describe('makeDateAccessor', () => {
   it("defaults to '%Y-%m-%d' when no time config is given", () => {
     const toDate = makeDateAccessor<Row>({ key: 'date' });
 
-    const parsed = toDate({ date: '2025-01-06' });
+    const parsed = toDate({ date: '2025-01-06' })!;
     expect([parsed.getFullYear(), parsed.getMonth(), parsed.getDate()]).toStrictEqual([
       2025, 0, 6,
     ]);
+  });
+
+  it('parses x.time.format in UTC when x.time.utc is set', () => {
+    const toDate = makeDateAccessor<Row>({ key: 'date', time: { utc: true } });
+
+    expect(toDate({ date: '2025-01-06' })!.getTime()).toBe(Date.UTC(2025, 0, 6));
   });
 
   it('returns null for a value the configured format cannot parse', () => {
@@ -50,6 +63,44 @@ describe('makeDateAccessor', () => {
   });
 });
 
+describe('makeDateParser (F6: Date and number inputs)', () => {
+  const parse = makeDateParser({ key: 'date', time: { isISO: true } });
+
+  it('passes valid Date objects through', () => {
+    const d = utcDay(6);
+    expect(parse(d)).toBe(d);
+  });
+
+  it('reads finite numbers as epoch milliseconds', () => {
+    expect(parse(Date.UTC(2025, 0, 6))!.getTime()).toBe(Date.UTC(2025, 0, 6));
+  });
+
+  it.each([
+    ['an invalid Date', new Date(NaN)],
+    ['NaN', NaN],
+    ['Infinity', Infinity],
+    ['null', null],
+    ['undefined', undefined],
+    ['an object', {}],
+    ['a boolean', true],
+    ['an unparseable string', 'not a date'],
+  ])('returns null for %s', (_label, value) => {
+    expect(parse(value)).toBeNull();
+  });
+});
+
+describe('makeDateFormatter', () => {
+  const d = new Date(2025, 0, 6, 9, 30);
+
+  it('prefers tooltipFormat, then format, then %Y-%m-%d', () => {
+    expect(makeDateFormatter({ key: 'k' })(d)).toBe('2025-01-06');
+    expect(makeDateFormatter({ key: 'k', time: { format: '%d/%m' } })(d)).toBe('06/01');
+    expect(
+      makeDateFormatter({ key: 'k', time: { format: '%d/%m', tooltipFormat: '%b %d %H:%M' } })(d)
+    ).toBe('Jan 06 09:30');
+  });
+});
+
 describe('createTimeXScale', () => {
   const rows: Row[] = [
     { date: '2025-01-13T00:00:00.000Z' },
@@ -57,7 +108,7 @@ describe('createTimeXScale', () => {
     { date: '2025-01-27T00:00:00.000Z' },
   ];
   const x: AxisConfig<Row> = { key: 'date', scalingFunction: 'time', time: { isISO: true } };
-  const toDate = makeDateAccessor(x);
+  const toDate = makeDateAccessor<Row>(x);
 
   it('spans the earliest to the latest date, regardless of row order', () => {
     const scale = createTimeXScale(rows, x, toDate, [40, 460]);
@@ -69,17 +120,29 @@ describe('createTimeXScale', () => {
     expect(scale.range()).toStrictEqual([40, 460]);
   });
 
-  it('maps the domain ends exactly onto the range ends (no .nice(), see #16)', () => {
-    // Off-boundary instants: .nice() would round these out to whole days
-    // and move the first/last dates inward from the range ends.
+  it('skips rows whose date is null', () => {
+    const scale = createTimeXScale(
+      [...rows, { date: 'garbage' }],
+      x,
+      toDate,
+      [40, 460]
+    );
+
+    expect(scale.domain().map((d) => d.getTime())).toStrictEqual([
+      utcDay(6).getTime(),
+      utcDay(27).getTime(),
+    ]);
+  });
+
+  it('maps the domain ends exactly onto the range ends (no .nice())', () => {
     const offBoundary: Row[] = [
       { date: '2025-01-06T07:13:00.000Z' },
       { date: '2025-01-09T19:47:00.000Z' },
     ];
     const scale = createTimeXScale(offBoundary, x, toDate, [40, 460]);
 
-    expect(scale(toDate(offBoundary[0]))).toBeCloseTo(40, 6);
-    expect(scale(toDate(offBoundary[1]))).toBeCloseTo(460, 6);
+    expect(scale(toDate(offBoundary[0])!)).toBeCloseTo(40, 6);
+    expect(scale(toDate(offBoundary[1])!)).toBeCloseTo(460, 6);
   });
 
   it('uses x.start and x.end over the data extent when given', () => {
@@ -136,88 +199,196 @@ describe('medianCadenceMs', () => {
   });
 });
 
-describe('timeMarkWidth', () => {
-  // 4 days over 400px -> 100px per day.
-  const scale = scaleTime().domain([utcDay(1), utcDay(5)]).range([0, 400]);
-  const dailyDates = [utcDay(1), utcDay(2), utcDay(3), utcDay(4), utcDay(5)];
-
-  it('is one cadence step in px, shrunk by paddingRatio', () => {
-    expect(
-      timeMarkWidth({ scale, dates: dailyDates, rowCount: 5, paddingRatio: 0.2 })
-    ).toBeCloseTo(80, 6);
-  });
-
-  it('uses the explicit width as-is, without padding', () => {
-    expect(
-      timeMarkWidth({
-        scale,
-        dates: dailyDates,
-        rowCount: 5,
-        paddingRatio: 0.5,
-        explicitWidth: 13,
-      })
-    ).toBe(13);
-  });
-
-  it('falls back to range / rowCount when there is no cadence', () => {
-    const sameDay = [utcDay(1), utcDay(1), utcDay(1), utcDay(1)];
-
-    expect(
-      timeMarkWidth({ scale, dates: sameDay, rowCount: 4, paddingRatio: 0.2 })
-    ).toBeCloseTo(80, 6);
-  });
-
-  it('treats rowCount 0 as 1 in the fallback', () => {
-    expect(timeMarkWidth({ scale, dates: [], rowCount: 0, paddingRatio: 0 })).toBe(400);
-  });
-
-  it('never goes below 1px', () => {
-    expect(
-      timeMarkWidth({ scale, dates: dailyDates, rowCount: 5, paddingRatio: 1 })
-    ).toBe(1);
-  });
-
-  it('ignores a non-finite explicit width', () => {
-    expect(
-      timeMarkWidth({
-        scale,
-        dates: dailyDates,
-        rowCount: 5,
-        paddingRatio: 0,
-        explicitWidth: NaN,
-      })
-    ).toBeCloseTo(100, 6);
+describe('validBarWidth (F4)', () => {
+  it.each([
+    [12, 12],
+    [0.5, 0.5],
+    [0, undefined],
+    [-4, undefined],
+    [NaN, undefined],
+    [Infinity, undefined],
+    [undefined, undefined],
+    ['12', undefined],
+  ])('validBarWidth(%s) -> %s', (input, expected) => {
+    expect(validBarWidth(input)).toBe(expected);
   });
 });
 
-describe('insetTimeScale', () => {
+describe('padTimeDomain', () => {
   const scale = scaleTime().domain([utcDay(1), utcDay(5)]).range([40, 460]);
+  const x = { start: undefined, end: undefined };
 
-  it('pulls the range in by insetPx on each side and keeps the domain', () => {
-    const inset = insetTimeScale(scale, 10);
+  it('widens the domain so insetPx is free at each end; range unchanged', () => {
+    const padded = padTimeDomain(scale, 10, x);
 
-    expect(inset.range()).toStrictEqual([50, 450]);
-    expect(inset.domain()).toStrictEqual(scale.domain());
-    expect(inset(utcDay(1))).toBeCloseTo(50, 6);
-    expect(inset(utcDay(5))).toBeCloseTo(450, 6);
+    expect(padded.range()).toStrictEqual([40, 460]);
+    expect(padded(utcDay(1))).toBeCloseTo(50, 6);
+    expect(padded(utcDay(5))).toBeCloseTo(450, 6);
+    // the original (unpadded) scale is untouched
+    expect(scale.domain()).toStrictEqual([utcDay(1), utcDay(5)]);
   });
 
-  it('returns a copy and leaves the original (axis) scale untouched', () => {
-    insetTimeScale(scale, 10);
+  it('leaves ends pinned by x.start / x.end alone', () => {
+    const padded = padTimeDomain(scale, 10, { start: utcDay(1).getTime(), end: undefined });
 
-    expect(scale.range()).toStrictEqual([40, 460]);
+    expect(padded(utcDay(1))).toBeCloseTo(40, 6);
+    expect(padded(utcDay(5))).toBeCloseTo(450, 6);
   });
 
   it('clamps so the two ends never cross on a tiny range', () => {
     const tiny = scaleTime().domain([utcDay(1), utcDay(5)]).range([0, 10]);
-    const [start, end] = insetTimeScale(tiny, 50).range();
+    const padded = padTimeDomain(tiny, 50, x);
 
-    expect(start).toBeLessThan(end);
-    expect(start).toBeCloseTo(4.5, 6);
-    expect(end).toBeCloseTo(5.5, 6);
+    expect(padded(utcDay(1))).toBeCloseTo(4.5, 6);
+    expect(padded(utcDay(5))).toBeCloseTo(5.5, 6);
   });
 
-  it('is a no-op copy for a zero inset', () => {
-    expect(insetTimeScale(scale, 0).range()).toStrictEqual([40, 460]);
+  it('is a no-op copy for a zero inset or a single-date domain', () => {
+    expect(padTimeDomain(scale, 0, x).domain()).toStrictEqual(scale.domain());
+    const single = scaleTime().domain([utcDay(1), utcDay(1)]).range([40, 460]);
+    expect(padTimeDomain(single, 10, x).domain()).toStrictEqual(single.domain());
+  });
+});
+
+describe('createTimeBarLayout (F1/F2: one scale, slots, no overlap)', () => {
+  const RANGE: [number, number] = [40, 460]; // 420px, as ColumnChart in a 500px svg
+  const x: AxisConfig<{ date: Date }> = { key: 'date', scalingFunction: 'time' };
+  const toDate = makeDateAccessor<{ date: Date }>(x);
+  const daily = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ date: utcDay(1 + i) }));
+
+  it.each([
+    [5, 67.2, 16.8],
+    [2, 168, 42],
+  ])('N=%i over 420px with padding 0.2: width %f, gap %f', (n, width, gap) => {
+    const rows = daily(n);
+    const layout = createTimeBarLayout(rows, x, toDate, RANGE, 0.2);
+    const centers = rows.map((r) => layout.scale(r.date));
+
+    expect(layout.width).toBeCloseTo(width, 6);
+    expect(centers[1] - centers[0] - layout.width).toBeCloseTo(gap, 6);
+  });
+
+  it.each([2, 3, 4, 5])(
+    'N=%i evenly spaced: no overlap, gap >= slot * padding, edges inside the range',
+    (n) => {
+      const p = 0.2;
+      const rows = daily(n);
+      const layout = createTimeBarLayout(rows, x, toDate, RANGE, p);
+      const lefts = rows.map((r) => layout.scale(r.date) - layout.width / 2);
+
+      for (let i = 1; i < n; i++) {
+        expect(lefts[i] - (lefts[i - 1] + layout.width)).toBeGreaterThanOrEqual(
+          layout.slotPx * p - 1e-6
+        );
+      }
+      expect(lefts[0]).toBeGreaterThanOrEqual(RANGE[0] - 1e-6);
+      expect(lefts[n - 1] + layout.width).toBeLessThanOrEqual(RANGE[1] + 1e-6);
+    }
+  );
+
+  it('returns the scale the axis draws with: its range is the full plot', () => {
+    const layout = createTimeBarLayout(daily(4), x, toDate, RANGE, 0.2);
+
+    expect(layout.scale.range()).toStrictEqual(RANGE);
+  });
+
+  it('uses an explicit barWidth, capped at one slot', () => {
+    const rows = daily(5); // slot = 84px
+    expect(createTimeBarLayout(rows, x, toDate, RANGE, 0.2, 30).width).toBe(30);
+    expect(createTimeBarLayout(rows, x, toDate, RANGE, 0.2, 500).width).toBeCloseTo(84, 6);
+  });
+
+  it.each([NaN, Infinity, 0, -10])('ignores an unusable barWidth (%s)', (bad) => {
+    expect(createTimeBarLayout(daily(5), x, toDate, RANGE, 0.2, bad).width).toBeCloseTo(
+      67.2,
+      6
+    );
+  });
+
+  it('centres a single date in the plot', () => {
+    const rows = daily(1);
+    const layout = createTimeBarLayout(rows, x, toDate, RANGE, 0.2);
+
+    expect(layout.scale(rows[0].date)).toBeCloseTo(250, 6);
+    expect(layout.width).toBeCloseTo(336, 6);
+  });
+
+  it('keeps the slot from the cadence when a period is missing', () => {
+    // Days 1, 2, 3 and 5: cadence 1 day, span 4 steps -> 5 slots of 84px
+    const rows = [1, 2, 3, 5].map((d) => ({ date: utcDay(d) }));
+    const layout = createTimeBarLayout(rows, x, toDate, RANGE, 0.2);
+
+    expect(layout.slotPx).toBeCloseTo(84, 6);
+    expect(layout.scale(rows[0].date) - layout.width / 2).toBeCloseTo(40 + 8.4, 6);
+  });
+});
+
+describe('getTimeAxisIssues (F4/F6 dev warnings)', () => {
+  const x: AxisConfig = { key: 'date', scalingFunction: 'time', time: { isISO: true } };
+
+  it('counts rows whose date cannot be read', () => {
+    const data = [{ date: '2025-01-01' }, { date: 'nope' }, { date: null }, { date: utcDay(3) }];
+    expect(getTimeAxisIssues(data, x, true)).toStrictEqual([
+      { issue: 'dropped-rows', detail: '2' },
+    ]);
+  });
+
+  it('flags an unusable barWidth only when the chart reads it', () => {
+    const bad = { ...x, time: { ...x.time, barWidth: -3 } };
+    expect(getTimeAxisIssues([], bad, true)).toStrictEqual([
+      { issue: 'invalid-bar-width', detail: '-3' },
+    ]);
+    expect(getTimeAxisIssues([], bad, false)).toStrictEqual([]);
+    expect(getTimeAxisIssues([], { ...x, time: { barWidth: 8 } }, true)).toStrictEqual([]);
+  });
+});
+
+describe('x.time.utc in a non-UTC time zone (F3)', () => {
+  const originalTZ = process.env.TZ;
+  beforeAll(() => {
+    process.env.TZ = 'America/New_York';
+  });
+  afterAll(() => {
+    process.env.TZ = originalTZ;
+  });
+
+  const nye = new Date(Date.UTC(2024, 11, 31)).toISOString(); // 2024-12-31T00:00:00.000Z
+
+  it('precondition: the zone is behind UTC, so local time reads Dec 30', () => {
+    expect(new Date(nye).getDate()).toBe(30);
+  });
+
+  it('default (local) formatting shows the previous day: the documented caveat', () => {
+    const x: AxisConfig = { key: 'date', time: { isISO: true } };
+    expect(makeDateFormatter(x)(makeDateParser(x)(nye)!)).toBe('2024-12-30');
+  });
+
+  it('utc: true formats the UTC calendar day', () => {
+    const x: AxisConfig = { key: 'date', time: { isISO: true, utc: true } };
+    expect(makeDateFormatter(x)(makeDateParser(x)(nye)!)).toBe('2024-12-31');
+  });
+
+  it('utc: true parses format strings as UTC midnight', () => {
+    const x: AxisConfig = { key: 'date', time: { utc: true } };
+    expect(makeDateParser(x)('2024-12-31')!.toISOString()).toBe(nye);
+  });
+
+  it('utc: true gives a scaleUtc whose ticks fall on UTC midnights', () => {
+    const x: AxisConfig = { key: 'date', time: { isISO: true, utc: true } };
+    const toDate = makeDateAccessor<{ date: string }>(x);
+    const rows = [0, 1, 2, 3].map((i) => ({
+      date: new Date(Date.UTC(2024, 11, 29 + i)).toISOString(),
+    }));
+    const scale = createTimeXScale(rows, x, toDate, [0, 300]);
+    const ticks = scale.ticks(4);
+
+    expect(ticks.length).toBeGreaterThan(0);
+    ticks.forEach((t) => expect(t.getUTCHours()).toBe(0));
+    // UTC multi-format labels 2025-01-01T00:00Z as the year boundary
+    expect(scale.tickFormat()(ticks[ticks.length - 1])).toBe('2025');
+    // local scaleTime would put ticks on New York midnights (05:00 UTC)
+    const local = createTimeXScale(rows, { ...x, time: { isISO: true } }, toDate, [0, 300]);
+    local.ticks(4).forEach((t) => expect(t.getUTCHours()).toBe(5));
   });
 });

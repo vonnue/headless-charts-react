@@ -1,18 +1,23 @@
 import { ZoomTransform, zoom } from 'd3-zoom';
 import { max, min } from 'd3-array';
-import { scaleBand, scaleLinear, type ScaleTime } from 'd3-scale';
+import {
+  scaleBand,
+  scaleLinear,
+  type ScaleBand,
+  type ScaleTime,
+} from 'd3-scale';
 import { select, selectAll } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { defaultChartClassNames, binDataStats } from '@/utils';
 import {
-  createTimeXScale,
-  insetTimeScale,
+  createTimeBarLayout,
   makeDateAccessor,
-  timeMarkWidth,
+  makeDateFormatter,
+  useTimeAxisWarnings,
 } from '@/utils/timeScale';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
@@ -191,6 +196,9 @@ const BoxPlotV = <TData = any,>({
     valueKey,
     timeMode: isTimeX,
   });
+  useTimeAxisWarnings('BoxPlotV', id, data, x);
+  const toDateTime = useMemo(() => makeDateAccessor<TData>(x), [x]);
+  const formatDate = makeDateFormatter(x);
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
@@ -204,7 +212,8 @@ const BoxPlotV = <TData = any,>({
         boxEnd: be,
         midKey: md,
       } = resolved;
-      return `min: ${d[mk].toFixed(0)} <br/> range: ${+d[bs].toFixed(
+      const date = isTimeX ? toDateTime(d) : null;
+      return `${date ? `${formatDate(date)} <br/> ` : ''}min: ${d[mk].toFixed(0)} <br/> range: ${+d[bs].toFixed(
         0
       )} to ${+d[be].toFixed(0)} <br/> mid: ${d[md].toFixed(
         0
@@ -229,11 +238,12 @@ const BoxPlotV = <TData = any,>({
     const effectiveData: any[] =
       binValueKey !== undefined
         ? toBinnedRows(binDataStats(data, x, binValueKey), x.key)
-        : data;
+        : isTimeX
+          ? // rows without a readable date are not drawn (dev warning from
+            // useTimeAxisWarnings)
+            data.filter((d) => toDateTime(d) != null)
+          : data;
 
-    const toDateTime = makeDateAccessor(x);
-
-    const isTimeX = x.scalingFunction === 'time';
     const paddingBarValue = padding.bar || 0.2;
 
     const xRange: [number, number] = [
@@ -241,32 +251,36 @@ const BoxPlotV = <TData = any,>({
       width - (margin.right ?? 0) - (padding.right || 0),
     ];
 
-    // In time mode the axis is drawn from the full margin-to-margin `xFn`, but
-    // boxes and whiskers are centered on their date and positioned with `markXFn`, a
-    // copy inset by half a mark width so the edge marks don't overhang the
-    // plot (#16).
-    let xFn: any;
-    let markXFn: ScaleTime<number, number> | undefined;
-    let finalBarWidth = 0;
+    // In time mode one scale positions the boxes *and* draws the axis, so
+    // boxes sit on their ticks; its domain is padded so edge boxes stay
+    // inside (#16).
+    let xFn: ScaleBand<string> | ScaleTime<number, number>;
+    let boxLeft: (d: any) => number;
+    let boxWidth: number;
     if (isTimeX) {
-      const timeXFn = createTimeXScale(effectiveData, x, toDateTime, xRange);
-      finalBarWidth = timeMarkWidth({
-        scale: timeXFn,
-        dates: effectiveData.map(toDateTime),
-        rowCount: effectiveData.length,
-        paddingRatio: paddingBarValue,
-        explicitWidth: x.time?.barWidth,
-      });
-      markXFn = insetTimeScale(timeXFn, finalBarWidth / 2);
+      const layout = createTimeBarLayout(
+        effectiveData,
+        x,
+        toDateTime,
+        xRange,
+        paddingBarValue,
+        x.time?.barWidth
+      );
+      const timeXFn = layout.scale;
       xFn = timeXFn;
+      boxWidth = layout.width;
+      boxLeft = (d) => timeXFn(toDateTime(d) as Date) - boxWidth / 2;
     } else {
-      xFn = scaleBand()
+      const bandXFn = scaleBand<string>()
         .domain(effectiveData.map((d: any) => d[x.key]))
         .range(xRange)
         .padding(paddingBarValue);
+      xFn = bandXFn;
+      boxWidth = bandXFn.bandwidth();
+      boxLeft = (d) => bandXFn(d[x.key]) ?? 0;
     }
-
-    const centerX = (d: TData): number => (markXFn ? markXFn(toDateTime(d)) : NaN);
+    const boxCenter = (d: any) => boxLeft(d) + boxWidth / 2;
+    const boxRight = (d: any) => boxLeft(d) + boxWidth;
 
     const yFn = scaleLinear()
       .domain([
@@ -306,8 +320,8 @@ const BoxPlotV = <TData = any,>({
     dotRowsG
       .append('line')
       .attr('clip-path', 'url(#clip)')
-      .attr('x1', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
-      .attr('x2', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
+      .attr('x1', boxCenter)
+      .attr('x2', boxCenter)
       .attr('y1', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
@@ -319,8 +333,8 @@ const BoxPlotV = <TData = any,>({
     dotRowsG
       .append('line')
       .attr('clip-path', 'url(#clip)')
-      .attr('x1', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
-      .attr('x2', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
+      .attr('x1', boxLeft)
+      .attr('x2', boxLeft)
       .attr('y1', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.minKey]))
       .attr('class', (d: any) =>
@@ -328,10 +342,8 @@ const BoxPlotV = <TData = any,>({
       )
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
-      .attr('x2', (d: any) =>
-        isTimeX ? centerX(d) + finalBarWidth / 2 : xFn(d[x.key]) + xFn.bandwidth()
-      );
+      .attr('x1', boxLeft)
+      .attr('x2', boxRight);
 
     // Mid lines
     dotRowsG
@@ -339,15 +351,13 @@ const BoxPlotV = <TData = any,>({
       .attr('clip-path', 'url(#clip)')
       .attr('y1', (d: any) => yFn(d[effectiveY.midKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.midKey]))
-      .attr('x1', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
-      .attr('x2', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
+      .attr('x1', boxCenter)
+      .attr('x2', boxCenter)
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
-      .attr('x2', (d: any) =>
-        isTimeX ? centerX(d) + finalBarWidth / 2 : xFn(d[x.key]) + xFn.bandwidth()
-      );
+      .attr('x1', boxLeft)
+      .attr('x2', boxRight);
 
     // End lines
     dotRowsG
@@ -355,15 +365,13 @@ const BoxPlotV = <TData = any,>({
       .attr('clip-path', 'url(#clip)')
       .attr('y1', (d: any) => yFn(d[effectiveY.maxKey]))
       .attr('y2', (d: any) => yFn(d[effectiveY.maxKey]))
-      .attr('x1', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
-      .attr('x2', (d: any) => (isTimeX ? centerX(d) : xFn(d[x.key]) + xFn.bandwidth() / 2))
+      .attr('x1', boxCenter)
+      .attr('x2', boxCenter)
       .attr('class', twMerge('box-plot-line stroke-current', classNames?.data))
       .transition()
       .duration(1000)
-      .attr('x1', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
-      .attr('x2', (d: any) =>
-        isTimeX ? centerX(d) + finalBarWidth / 2 : xFn(d[x.key]) + xFn.bandwidth()
-      );
+      .attr('x1', boxLeft)
+      .attr('x2', boxRight);
 
     // Mid rects
     dotRowsG
@@ -377,8 +385,8 @@ const BoxPlotV = <TData = any,>({
       )
       .attr('clip-path', 'url(#clip)')
       .attr('y', () => height - (margin.bottom ?? 0) - (padding.bottom || 0))
-      .attr('x', (d: any) => (isTimeX ? centerX(d) - finalBarWidth / 2 : xFn(d[x.key])))
-      .attr('width', isTimeX ? finalBarWidth : xFn.bandwidth())
+      .attr('x', boxLeft)
+      .attr('width', boxWidth)
       .transition()
       .duration(1000)
       .attr('y', (d: any) => yFn(d[effectiveY.boxEnd]))
@@ -431,6 +439,8 @@ const BoxPlotV = <TData = any,>({
     data,
     id,
     isBinned,
+    isTimeX,
+    toDateTime,
     binValueKey,
     margin,
     padding,

@@ -2,18 +2,21 @@ import { max, sum } from 'd3-array';
 import { select, selectAll } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
-import { scaleBand, scaleLinear, type ScaleTime } from 'd3-scale';
-import { timeFormat } from 'd3-time-format';
+import {
+  scaleBand,
+  scaleLinear,
+  type ScaleBand,
+  type ScaleTime,
+} from 'd3-scale';
 import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import {
-  DEFAULT_TIME_FORMAT,
-  createTimeXScale,
-  insetTimeScale,
+  createTimeBarLayout,
   makeDateAccessor,
-  timeMarkWidth,
+  makeDateFormatter,
+  useTimeAxisWarnings,
 } from '@/utils/timeScale';
 import { transition } from 'd3';
 import { twMerge } from 'tailwind-merge';
@@ -148,16 +151,18 @@ const ColumnChartStacked = <TData = any,>({
   drawing = undefined,
   style = {},
 }: ColumnChartStackedProps<TData>) => {
-  const formatDate = timeFormat(x.time?.format || DEFAULT_TIME_FORMAT);
-  const toDateTime = makeDateAccessor(x);
+  const formatDate = makeDateFormatter(x);
+  const toDateTime = makeDateAccessor<TData>(x);
 
   const isTimeX = x.scalingFunction === 'time';
+  useTimeAxisWarnings('ColumnChartStacked', id, data, x);
 
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
     defaultHtml: (d: any) => {
-      const xValue = isTimeX ? formatDate(toDateTime(d)) : d[x.key];
+      const date = isTimeX ? toDateTime(d) : null;
+      const xValue = date ? formatDate(date) : d[x.key];
       return `${xValue} <br/> ${y.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`;
     },
   });
@@ -178,32 +183,43 @@ const ColumnChartStacked = <TData = any,>({
       width - (margin.right ?? 0) - (padding.right ?? 0),
     ];
 
-    // In time mode the axis is drawn from the full margin-to-margin `xFn`, but
-    // bars are centered on their date and positioned with `markXFn`, a
-    // copy inset by half a mark width so the edge marks don't overhang the
-    // plot (#16).
-    let xFn: any;
-    let markXFn: ScaleTime<number, number> | undefined;
-    let finalBarWidth = 0;
+    // In time mode rows without a readable date are not drawn (dev warning
+    // from useTimeAxisWarnings)
+    const rows = isTimeX ? data.filter((d) => toDateTime(d) != null) : data;
+
+    // In time mode one scale positions the bars *and* draws the axis, so bars
+    // sit on their ticks; its domain is padded so edge bars stay inside (#16).
+    let xFn: ScaleBand<string> | ScaleTime<number, number>;
+    let barX: (d: TData) => number;
+    let barWidth: number;
     if (isTimeX) {
-      const timeXFn = createTimeXScale(data, x, toDateTime, xRange);
-      finalBarWidth = timeMarkWidth({
-        scale: timeXFn,
-        dates: data.map(toDateTime),
-        rowCount: data.length,
-        paddingRatio: paddingBarValue,
-        explicitWidth: x.time?.barWidth,
-      });
-      markXFn = insetTimeScale(timeXFn, finalBarWidth / 2);
+      const layout = createTimeBarLayout(
+        rows,
+        x,
+        toDateTime,
+        xRange,
+        paddingBarValue,
+        x.time?.barWidth
+      );
+      const timeXFn = layout.scale;
       xFn = timeXFn;
+      barWidth = layout.width;
+      barX = (d) => timeXFn(toDateTime(d) as Date) - barWidth / 2;
     } else {
-      xFn = scaleBand()
-        .domain(data.map((d) => (d as any)[x.key]))
+      const bandXFn = scaleBand<string>()
+        .domain(rows.map((d) => (d as any)[x.key]))
         .range(xRange)
         .padding(paddingBarValue);
+      xFn = bandXFn;
+      barWidth = bandXFn.bandwidth();
+      barX = (d) => bandXFn((d as any)[x.key]) || 0;
     }
-
-    const centerX = (d: TData): number => (markXFn ? markXFn(toDateTime(d)) : NaN);
+    // Waterfall steps share one bar slot; never a negative width
+    const waterfallWidth = Math.max(
+      0,
+      // @ts-ignore
+      barWidth / y.length - ((waterfall && waterfall.padding) || 0)
+    );
 
     const yFnRange = [
       height - (margin.bottom ?? 0) - (padding.bottom ?? 0),
@@ -212,7 +228,7 @@ const ColumnChartStacked = <TData = any,>({
 
     const yFn = scaleLinear()
       // @ts-ignore
-      .domain([0, max(data.map((d) => sum(y.map((value) => d[value.key]))))])
+      .domain([0, max(rows.map((d) => sum(y.map((value) => (d as any)[value.key]))))])
       .range(yFnRange);
 
     y.map((column, i) => {
@@ -221,32 +237,15 @@ const ColumnChartStacked = <TData = any,>({
 
       const bars = barsG
         .selectAll('g')
-        .data(data)
+        .data(rows)
         .enter()
         .append('rect')
         .attr('class', `${column.className} fill-current`)
         .attr('z-index', 100 - i)
-        .attr('x', (d: any) =>
-          isTimeX
-            ? centerX(d) -
-              finalBarWidth / 2 +
-              (waterfall ? i * (finalBarWidth / y.length) : 0)
-            : (xFn((d as any)[x.key]) || 0) +
-              (waterfall ? (xFn.bandwidth() / y.length) * i : 0)
-        )
+        .attr('x', (d: any) => barX(d) + (waterfall ? (barWidth / y.length) * i : 0))
         .attr('y', (d: any) => yFn(sum(beforeColumns.map((c: any) => d[c]))))
         .style('z-index', 10 + i)
-        .attr('width', () =>
-          isTimeX
-            ? waterfall
-              ? // @ts-ignore
-                finalBarWidth / y.length - (waterfall.padding || 0)
-              : finalBarWidth
-            : waterfall
-            ? // @ts-ignore
-              xFn.bandwidth() / y.length - (waterfall.padding || 0)
-            : xFn.bandwidth()
-        )
+        .attr('width', waterfall ? waterfallWidth : barWidth)
         .attr('height', (d: any) =>
           drawing?.duration ? 0 : yFn(0) - yFn((d as any)[column.key])
         )

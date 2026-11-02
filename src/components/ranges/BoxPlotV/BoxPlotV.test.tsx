@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 
 import BoxPlotV from '.';
 import data from '../sample.json';
@@ -386,21 +386,13 @@ describe('BoxPlotV', () => {
         .map((xPos, i) => xPos - xPositions[i]);
       gaps.forEach((gap) => expect(gap).toBeCloseTo(gaps[0], 6));
 
-      // Cross-check against the algorithm's own math rather than deriving
-      // width from the observed gap: the component insets the usable range
-      // by half a box width on each side (see #16), so the *rendered* gap
-      // and the *cadence-derived* width come from different ranges (inset
-      // vs full) and are not related by a simple ratio.
-      const domainSpanMs =
-        new Date(evenlySpacedWeeklyData[3].weekStart).getTime() -
-        new Date(evenlySpacedWeeklyData[0].weekStart).getTime();
-      const cadenceMs = domainSpanMs / (evenlySpacedWeeklyData.length - 1);
-      const expectedWidth = PLOT_WIDTH * (cadenceMs / domainSpanMs) * 0.8;
-      const expectedGap =
-        (PLOT_WIDTH - expectedWidth) * (cadenceMs / domainSpanMs);
-
-      expect(widths[0]).toBeCloseTo(expectedWidth, 6);
-      expect(gaps[0]).toBeCloseTo(expectedGap, 6);
+      // 3 weekly steps -> 4 slots of 135px across 540px. Boxes take 80% of
+      // a slot (108px) and sit one slot apart, half a slot in from each end.
+      const slot = PLOT_WIDTH / 4;
+      expect(widths[0]).toBeCloseTo(slot * 0.8, 6);
+      expect(gaps[0]).toBeCloseTo(slot, 6);
+      expect(xPositions[0]).toBeCloseTo(RANGE_START + slot * 0.1, 6);
+      expect(xPositions[3] + widths[3]).toBeCloseTo(RANGE_END - slot * 0.1, 6);
     });
 
     it('padding.bar is applied to the inferred width', () => {
@@ -418,18 +410,8 @@ describe('BoxPlotV', () => {
       const rects = rectsOf('padding-bar-box-plot');
       const width = numAttr(rects[0], 'width');
 
-      // Computed independently from cadence/domain/plot-width rather than
-      // derived from the observed gap between boxes — see #16, the width
-      // is computed against the full (uninset) range, so it isn't simply
-      // "observed gap * (1 - paddingBar)" once the range is inset for
-      // rendering.
-      const domainSpanMs =
-        new Date(evenlySpacedWeeklyData[3].weekStart).getTime() -
-        new Date(evenlySpacedWeeklyData[0].weekStart).getTime();
-      const cadenceMs = domainSpanMs / (evenlySpacedWeeklyData.length - 1);
-      const expectedWidth = PLOT_WIDTH * (cadenceMs / domainSpanMs) * 0.5;
-
-      expect(width).toBeCloseTo(expectedWidth, 6);
+      // One slot (540 / 4 = 135px) less padding.bar 0.5.
+      expect(width).toBeCloseTo((PLOT_WIDTH / 4) * 0.5, 6);
     });
 
     it('unevenly-spaced dates leave a proportionally larger gap where a period is missing', () => {
@@ -480,20 +462,15 @@ describe('BoxPlotV', () => {
       const rects = rectsOf('median-gap-box-plot');
       const width = numAttr(rects[0], 'width');
 
-      // Computed independently from the known median gap (7d) rather than
-      // from an observed on-screen gap: the component insets the usable
-      // range by half a box width on each side (see #16), so the width
-      // (computed against the full, uninset range) and a rendered gap
-      // (computed against the inset range) aren't related by a simple
-      // ratio anymore.
+      // A cadence of c days over the 42-day span gives 42/c steps, laid out
+      // as 42/c + 1 slots.
       const domainSpanMs =
         new Date(medianProbeData[3].weekStart).getTime() -
         new Date(medianProbeData[0].weekStart).getTime(); // 42 days
-      const medianGapMs = 7 * DAY_MS;
-      const meanGapMs = 14 * DAY_MS;
-      const expectedWidth =
-        PLOT_WIDTH * (medianGapMs / domainSpanMs) * 0.8;
-      const meanBasedWidth = PLOT_WIDTH * (meanGapMs / domainSpanMs) * 0.8;
+      const widthFor = (gapMs: number) =>
+        (PLOT_WIDTH / (domainSpanMs / gapMs + 1)) * 0.8;
+      const expectedWidth = widthFor(7 * DAY_MS);
+      const meanBasedWidth = widthFor(14 * DAY_MS);
 
       expect(width).toBeCloseTo(expectedWidth, 6);
       // Guard against a mean-based (14d) or max-based (28d) inference.
@@ -525,6 +502,147 @@ describe('BoxPlotV', () => {
       rects.forEach((rect) => {
         expect(numAttr(rect, 'width')).toBeCloseTo(explicitBarWidth, 6);
       });
+    });
+
+    it('boxes are centred on their axis ticks within 1px', () => {
+      // d3's weekly ticks fall on Sundays, so use Sunday week starts.
+      const sundays = evenlySpacedWeeklyData.map((d, i) => ({
+        ...d,
+        weekStart: `2025-01-${String(5 + 7 * i).padStart(2, '0')}`,
+      }));
+      render(
+        <BoxPlotV
+          id='ticks-box-plot'
+          style={chartStyle}
+          data={sundays}
+          x={{ key: 'weekStart', scalingFunction: 'time', time: { utc: true } }}
+          y={timeYConfig}
+        />
+      );
+
+      const svg = document.getElementById('ticks-box-plot')!;
+      const ticks = new Map(
+        Array.from(svg.querySelectorAll('.axis--x .tick')).map((t) => [
+          (t as unknown as { __data__: Date }).__data__.getTime(),
+          Number(/translate\(([-\d.]+)/.exec(t.getAttribute('transform') || '')![1]) - 0.5,
+        ])
+      );
+      const rects = rectsOf('ticks-box-plot');
+      let matched = 0;
+      sundays.forEach((row, i) => {
+        const tickX = ticks.get(Date.parse(`${row.weekStart}T00:00:00Z`));
+        if (tickX === undefined) return;
+        matched++;
+        const centre = numAttr(rects[i], 'x') + numAttr(rects[i], 'width') / 2;
+        expect(Math.abs(centre - tickX)).toBeLessThanOrEqual(1);
+      });
+      expect(matched).toBeGreaterThanOrEqual(2);
+    });
+
+    it.each([2, 3, 4])(
+      'N=%i evenly spaced dates: boxes do not overlap and stay inside the plot',
+      (n) => {
+        const rows = evenlySpacedWeeklyData.slice(0, n);
+        render(
+          <BoxPlotV
+            id={`overlap-box-plot-${n}`}
+            style={chartStyle}
+            data={rows}
+            x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+            y={timeYConfig}
+          />
+        );
+
+        const slot = PLOT_WIDTH / n;
+        const rects = rectsOf(`overlap-box-plot-${n}`);
+        const lefts = rects.map((r) => numAttr(r, 'x'));
+        const widths = rects.map((r) => numAttr(r, 'width'));
+        for (let i = 1; i < n; i++) {
+          expect(lefts[i] - (lefts[i - 1] + widths[i - 1])).toBeGreaterThanOrEqual(
+            slot * 0.2 - 1e-6
+          );
+        }
+        expect(lefts[0]).toBeGreaterThanOrEqual(RANGE_START - 1e-6);
+        expect(lefts[n - 1] + widths[n - 1]).toBeLessThanOrEqual(RANGE_END + 1e-6);
+      }
+    );
+
+    it('caps an explicit barWidth at one slot and ignores a non-positive one', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(
+        <BoxPlotV
+          id='wide-box-plot'
+          style={chartStyle}
+          data={evenlySpacedWeeklyData}
+          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, barWidth: 999 } }}
+          y={timeYConfig}
+        />
+      );
+      render(
+        <BoxPlotV
+          id='negative-box-plot'
+          style={chartStyle}
+          data={evenlySpacedWeeklyData}
+          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, barWidth: -5 } }}
+          y={timeYConfig}
+        />
+      );
+
+      rectsOf('wide-box-plot').forEach((r) =>
+        expect(numAttr(r, 'width')).toBeCloseTo(PLOT_WIDTH / 4, 6)
+      );
+      rectsOf('negative-box-plot').forEach((r) =>
+        expect(numAttr(r, 'width')).toBeCloseTo((PLOT_WIDTH / 4) * 0.8, 6)
+      );
+      expect(
+        warn.mock.calls.some(([m]) =>
+          String(m).includes('BoxPlotV#negative-box-plot: x.time.barWidth')
+        )
+      ).toBe(true);
+      warn.mockRestore();
+    });
+
+    it('drops rows whose date cannot be read, with a dev warning (F6)', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(
+        <BoxPlotV
+          id='dropped-box-plot'
+          style={chartStyle}
+          data={[...evenlySpacedWeeklyData, { ...evenlySpacedWeeklyData[0], weekStart: '??' }]}
+          x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true } }}
+          y={timeYConfig}
+        />
+      );
+
+      const rects = rectsOf('dropped-box-plot');
+      expect(rects).toHaveLength(evenlySpacedWeeklyData.length);
+      rects.forEach((r) => expect(Number.isFinite(numAttr(r, 'x'))).toBe(true));
+      expect(
+        warn.mock.calls.some(([m]) => String(m).includes('BoxPlotV#dropped-box-plot: 1 row(s)'))
+      ).toBe(true);
+      warn.mockRestore();
+    });
+
+    it('tooltip leads with the formatted date in time mode (F8)', () => {
+      render(
+        <BoxPlotV
+          id='tooltip-box-plot'
+          style={chartStyle}
+          data={evenlySpacedWeeklyData}
+          x={{
+            key: 'weekStart',
+            scalingFunction: 'time',
+            time: { tooltipFormat: '%b %d, %Y' },
+          }}
+          y={timeYConfig}
+          tooltip={{}}
+        />
+      );
+
+      const target = document.querySelector('#tooltip-box-plot g.data > g')!;
+      fireEvent.mouseEnter(target);
+      const tips = Array.from(document.querySelectorAll('#tooltip-tooltip-box-plot'));
+      expect(tips.some((t) => t.innerHTML.startsWith('Jan 06, 2025 <br>'))).toBe(true);
     });
 
     it('single data point does not throw and renders a real (unclamped) width', () => {
@@ -783,8 +901,11 @@ describe('BoxPlotV time mode keeps edge boxes inside the plot (#16)', () => {
     const rights = boxes.map(
       (r) => Number(r.getAttribute('x')) + Number(r.getAttribute('width'))
     );
-    expect(Math.min(...lefts)).toBeCloseTo(RANGE_START, 6);
-    expect(Math.max(...rights)).toBeCloseTo(RANGE_END, 6);
+    // Weekly cadence over 5 weeks -> 6 slots of 440/6px; boxes are 80% of
+    // a slot, so each edge box keeps 10% of a slot to the plot edge.
+    const slot = (RANGE_END - RANGE_START) / 6;
+    expect(Math.min(...lefts)).toBeCloseTo(RANGE_START + slot * 0.1, 6);
+    expect(Math.max(...rights)).toBeCloseTo(RANGE_END - slot * 0.1, 6);
 
     const [axisStart, axisEnd] = xAxisSpan(container);
     expect(axisStart).toBeCloseTo(RANGE_START + 0.5, 6);

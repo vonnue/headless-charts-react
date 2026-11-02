@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
 import ColumnChartStacked from '.';
@@ -189,12 +189,19 @@ describe('ColumnChartStacked', () => {
     const DEFAULT_PADDING_BAR = 0.2;
     const DAY_MS = 24 * 60 * 60 * 1000;
 
+    // The span is laid out as (span / cadence) steps plus one slot, so the
+    // first and last dates get a full slot each (half on each side of the
+    // mark). That is what keeps the edge bars inside the plot.
+    const slotPx = (cadenceMs: number, domainSpanMs: number) =>
+      PLOT_WIDTH / (domainSpanMs / cadenceMs + 1);
+
     /** Bar width the spec's algorithm should produce for a given cadence. */
     const expectedBarWidth = (
       cadenceMs: number,
       domainSpanMs: number,
       paddingBar = DEFAULT_PADDING_BAR
-    ) => (PLOT_WIDTH * (cadenceMs / domainSpanMs)) * (1 - paddingBar);
+    ) => slotPx(cadenceMs, domainSpanMs) * (1 - paddingBar);
+
 
     const spanMs = (rows: { date: string }[]) =>
       new Date(rows[rows.length - 1].date).getTime() -
@@ -294,27 +301,17 @@ describe('ColumnChartStacked', () => {
         expect(width).toBeCloseTo(barWidth, 6);
       }
 
-      // Bars are centered marks, so a bar at the domain's min/max would
-      // overhang the range edge by half its width; the component insets the
-      // usable range by half a bar width on each side to prevent that (see
-      // #16), which is why the slot spacing is computed from the *inset*
-      // plot width, not the raw one.
-      const slot = (PLOT_WIDTH - barWidth) * (cadence / domainSpan);
+      // 3 one-year steps -> 4 slots of 130px; bars are 104px, centres one
+      // slot apart starting half a slot in, so the edge bars keep half the
+      // padding gap (13px) to the plot edge.
+      const slot = slotPx(cadence, domainSpan);
+      expect(slot).toBeCloseTo(130, 6);
       const deltas = xPositions.slice(1).map((x, i) => x - xPositions[i]);
       for (const delta of deltas) {
         expect(delta).toBeCloseTo(slot, 6);
       }
-      // With the inset applied, the first/last bar's centre lands exactly
-      // half a bar width in from the original range edge — confirms the
-      // #16 fix rather than the old (buggy) "centre lands on the edge"
-      // behaviour that let bars overhang.
-      expect(xPositions[0] + barWidth / 2).toBeCloseTo(
-        RANGE_START + barWidth / 2,
-        6
-      );
-      expect(
-        xPositions[xPositions.length - 1] + barWidth / 2
-      ).toBeCloseTo(RANGE_END - barWidth / 2, 6);
+      expect(xPositions[0]).toBeCloseTo(RANGE_START + 13, 6);
+      expect(xPositions[xPositions.length - 1] + barWidth).toBeCloseTo(RANGE_END - 13, 6);
     });
 
     it('creates visible whitespace at gaps between unevenly-spaced dates', () => {
@@ -342,18 +339,17 @@ describe('ColumnChartStacked', () => {
 
       // All bars share one width (the median cadence, one year); the
       // whitespace between them is therefore purely a function of elapsed
-      // time, and must be proportional to the number of years skipped. The
-      // component insets the usable range by half a bar width on each side
-      // (see #16), so elapsed time maps to the *inset* plot width, not the
-      // raw one.
+      // time, and must be proportional to the number of years skipped.
+      // Elapsed time maps at one slot per cadence.
       const domainSpan = spanMs(unevenlySpacedTimeData);
+      const cadence = 365 * DAY_MS;
       const barWidth = positions[0].width;
-      const insetPlotWidth = PLOT_WIDTH - barWidth;
+      expect(barWidth).toBeCloseTo(expectedBarWidth(cadence, domainSpan), 6);
       const yearPx = (rows: number) =>
-        insetPlotWidth *
+        slotPx(cadence, domainSpan) *
         ((new Date(unevenlySpacedTimeData[rows].date).getTime() -
           new Date(unevenlySpacedTimeData[rows - 1].date).getTime()) /
-          domainSpan);
+          cadence);
 
       const gaps = positions
         .slice(1)
@@ -579,13 +575,14 @@ describe('ColumnChartStacked', () => {
       const xs = firstSeries.map((r) => Number(r.getAttribute('x')));
       const width = Number(firstSeries[0].getAttribute('width'));
       for (const value of xs) expect(value).not.toBeNaN();
-      // Two equal one-year gaps -> one even step. The component insets the
-      // usable range by half a bar width on each side (see #16), so the
-      // outer bars' centres land half a bar width in from the range ends,
-      // not flush against them.
-      expect(xs[1] - xs[0]).toBeCloseTo(xs[2] - xs[1], 6);
-      expect(xs[0] + width / 2).toBeCloseTo(RANGE_START + width / 2, 6);
-      expect(xs[2] + width / 2).toBeCloseTo(RANGE_END - width / 2, 6);
+      // Two equal one-year gaps -> 3 slots; centres one slot apart starting
+      // half a slot in from the range start.
+      const slot = PLOT_WIDTH / 3;
+      expect(width).toBeCloseTo(slot * (1 - DEFAULT_PADDING_BAR), 6);
+      expect(xs[1] - xs[0]).toBeCloseTo(slot, 6);
+      expect(xs[2] - xs[1]).toBeCloseTo(slot, 6);
+      expect(xs[0] + width / 2).toBeCloseTo(RANGE_START + slot / 2, 6);
+      expect(xs[2] + width / 2).toBeCloseTo(RANGE_END - slot / 2, 6);
     });
 
     it('respects x.start and x.end for axis domain in time mode', () => {
@@ -615,24 +612,20 @@ describe('ColumnChartStacked', () => {
         evenlySpacedTimeData.length * timeSeriesArgs.y.length
       );
 
-      // The domain is wider than the data, so the first bar is no longer
-      // flush against the range start the way it is when the domain is
-      // inferred — its centre sits proportionally inside the custom domain.
-      // The component also insets the usable range by half a bar width on
-      // each side (see #16), so the mapping uses the inset sub-range, not
-      // the raw [RANGE_START, RANGE_END].
+      // Both ends are pinned, so the domain is used as given (no padding):
+      // the centre sits proportionally inside [start, end] on the full range.
       const first = rects[0];
       const width = Number(first.getAttribute('width'));
       const centre = Number(first.getAttribute('x')) + width / 2;
       const t0 = new Date(evenlySpacedTimeData[0].date).getTime();
-      const insetPlotWidth = PLOT_WIDTH - width;
       expect(centre).toBeCloseTo(
-        RANGE_START +
-          width / 2 +
-          insetPlotWidth * ((t0 - customStart) / (customEnd - customStart)),
+        RANGE_START + PLOT_WIDTH * ((t0 - customStart) / (customEnd - customStart)),
         6
       );
       expect(centre).toBeGreaterThan(RANGE_START);
+      // The slot still comes from the cadence over the pinned span.
+      const cadence = spanMs(evenlySpacedTimeData) / 3;
+      expect(width).toBeCloseTo(expectedBarWidth(cadence, customEnd - customStart), 6);
     });
 
     it('renders time mode with waterfall enabled', () => {
@@ -810,6 +803,137 @@ describe('ColumnChartStacked', () => {
       }
     });
 
+    it('bars are centred on their axis ticks within 1px', () => {
+      const utcDaily = [1, 2, 3, 4, 5].map((d) => ({
+        date: new Date(Date.UTC(2025, 0, d)).toISOString(),
+        iphone: 10 * d,
+        macbook: 5,
+        services: 2,
+      }));
+      render(
+        <ColumnChartStacked
+          id='time-stacked-ticks'
+          data={utcDaily}
+          style={chartStyle}
+          {...timeSeriesArgs}
+          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+        />
+      );
+
+      const svg = document.getElementById('time-stacked-ticks')!;
+      const ticks = new Map(
+        Array.from(svg.querySelectorAll('.axis--x .tick')).map((t) => [
+          (t as unknown as { __data__: Date }).__data__.getTime(),
+          Number(/translate\(([-\d.]+)/.exec(t.getAttribute('transform') || '')![1]) - 0.5,
+        ])
+      );
+      const rects = Array.from(svg.querySelectorAll('rect')).slice(0, utcDaily.length);
+      let matched = 0;
+      utcDaily.forEach((row, i) => {
+        const tickX = ticks.get(Date.parse(row.date));
+        if (tickX === undefined) return;
+        matched++;
+        const centre =
+          Number(rects[i].getAttribute('x')) + Number(rects[i].getAttribute('width')) / 2;
+        expect(Math.abs(centre - tickX)).toBeLessThanOrEqual(1);
+      });
+      expect(matched).toBeGreaterThanOrEqual(2);
+    });
+
+    it.each([2, 3, 4, 5])(
+      'N=%i evenly spaced dates: stacks do not overlap and stay inside the plot',
+      (n) => {
+        const rows = evenlySpacedTimeData
+          .concat([{ date: '2024-12-31T23:59:59.000Z', iphone: 1, macbook: 1, services: 1 }])
+          .slice(0, n);
+        render(
+          <ColumnChartStacked
+            id={`time-stacked-overlap-${n}`}
+            data={rows}
+            style={chartStyle}
+            {...timeSeriesArgs}
+          />
+        );
+
+        // Years are 365 or 366 days, so the slot is the plot over (steps + 1)
+        // with steps = span / median gap — about n, not exactly.
+        const first = Array.from(
+          document.getElementById(`time-stacked-overlap-${n}`)!.querySelectorAll('rect')
+        ).slice(0, n);
+        const lefts = first.map((r) => Number(r.getAttribute('x')));
+        const widths = first.map((r) => Number(r.getAttribute('width')));
+        const slot = widths[0] / (1 - DEFAULT_PADDING_BAR);
+        for (let i = 1; i < n; i++) {
+          const gap = lefts[i] - (lefts[i - 1] + widths[i - 1]);
+          expect(gap).toBeGreaterThanOrEqual(slot * DEFAULT_PADDING_BAR - 1e-6);
+        }
+        expect(lefts[0]).toBeGreaterThanOrEqual(RANGE_START - 1e-6);
+        expect(lefts[n - 1] + widths[n - 1]).toBeLessThanOrEqual(RANGE_END + 1e-6);
+      }
+    );
+
+    it('caps an explicit barWidth at one slot', () => {
+      render(
+        <ColumnChartStacked
+          id='time-stacked-wide'
+          data={evenlySpacedTimeData}
+          style={chartStyle}
+          {...timeSeriesArgs}
+          x={{ ...timeSeriesArgs.x, time: { isISO: true, barWidth: 10_000 } }}
+        />
+      );
+
+      // 4 yearly dates -> 4 slots of 130px.
+      document
+        .querySelectorAll('#time-stacked-wide rect')
+        .forEach((r) => expect(Number(r.getAttribute('width'))).toBeCloseTo(130, 6));
+    });
+
+    it('clamps waterfall bar width at 0 when waterfall.padding exceeds it (F4)', () => {
+      render(
+        <ColumnChartStacked
+          id='time-stacked-waterfall-clamp'
+          data={evenlySpacedTimeData}
+          style={chartStyle}
+          {...timeSeriesArgs}
+          // The prop is typed boolean, but the component also reads an object's
+          // `padding` (pre-existing, @ts-ignore'd in the component).
+          waterfall={{ padding: 500 } as unknown as boolean}
+        />
+      );
+
+      const widths = Array.from(
+        document.querySelectorAll('#time-stacked-waterfall-clamp rect')
+      ).map((r) => Number(r.getAttribute('width')));
+      expect(widths.length).toBeGreaterThan(0);
+      widths.forEach((w) => expect(w).toBe(0));
+    });
+
+    it('drops rows whose date cannot be read, with a dev warning (F6)', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(
+        <ColumnChartStacked
+          id='time-stacked-dropped'
+          data={[
+            ...evenlySpacedTimeData,
+            { date: 'garbage', iphone: 1e6, macbook: 1, services: 1 },
+          ]}
+          style={chartStyle}
+          {...timeSeriesArgs}
+        />
+      );
+
+      const rects = Array.from(document.querySelectorAll('#time-stacked-dropped rect'));
+      expect(rects).toHaveLength(evenlySpacedTimeData.length * timeSeriesArgs.y.length);
+      rects.forEach((r) => expect(Number.isFinite(Number(r.getAttribute('x')))).toBe(true));
+      expect(
+        warn.mock.calls.some(([m]) =>
+          String(m).includes('ColumnChartStacked#time-stacked-dropped: 1 row(s)')
+        )
+      ).toBe(true);
+      warn.mockRestore();
+    });
+
     it('renders with both explicit barWidth and custom paddingBar (barWidth takes precedence)', () => {
       const explicitBarWidth = 35;
       render(
@@ -878,9 +1002,10 @@ describe('ColumnChartStacked time mode keeps edge marks inside the plot (#16)', 
     );
     expect(Math.min(...lefts)).toBeGreaterThanOrEqual(RANGE_START - 1e-6);
     expect(Math.max(...rights)).toBeLessThanOrEqual(RANGE_END + 1e-6);
-    // The edge bars are flush with the range ends, not pulled in further.
-    expect(Math.min(...lefts)).toBeCloseTo(RANGE_START, 6);
-    expect(Math.max(...rights)).toBeCloseTo(RANGE_END, 6);
+    // Jan 1 -> Jan 6 at a 1-day cadence is 5 steps = 6 slots of 70px; bars
+    // are 56px, so each edge bar keeps half the 14px padding gap (7px).
+    expect(Math.min(...lefts)).toBeCloseTo(RANGE_START + 7, 6);
+    expect(Math.max(...rights)).toBeCloseTo(RANGE_END - 7, 6);
 
     const [axisStart, axisEnd] = xAxisSpan(container);
     expect(axisStart).toBeCloseTo(RANGE_START + 0.5, 6);

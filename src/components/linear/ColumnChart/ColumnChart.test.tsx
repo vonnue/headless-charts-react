@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render } from '@testing-library/react';
 
 import ColumnChart from '.';
 import data from './sample.json';
@@ -155,6 +155,22 @@ describe('ColumnChart', () => {
         (r) => parseFloat(r.getAttribute('width') || '0')
       );
 
+    // Date-keyed x of each rendered x-axis tick, read from the tick <g>
+    // transform and d3's bound datum. d3-axis adds a 0.5px crisp-edge offset.
+    const tickXs = (svgId: string) =>
+      new Map(
+        Array.from(
+          document.getElementById(svgId)!.querySelectorAll('.axis--x .tick')
+        ).map((t) => [
+          (t as unknown as { __data__: Date }).__data__.getTime(),
+          Number(/translate\(([-\d.]+)/.exec(t.getAttribute('transform') || '')![1]) - 0.5,
+        ])
+      );
+
+    // 5 daily dates over 420px: steps = 4, so 5 slots of 84px.
+    const SLOT_5 = RANGE_SPAN / 5;
+    const WIDTH_5 = SLOT_5 * (1 - DEFAULT_PADDING_BAR); // 67.2
+
     const centersOf = (svgId: string) =>
       Array.from(document.getElementById(svgId)!.querySelectorAll('rect')).map(
         (r) =>
@@ -214,7 +230,7 @@ describe('ColumnChart', () => {
       expect(rects?.length).toBeGreaterThan(0);
     });
 
-    it('infers bar width from the data cadence, less paddingBar', () => {
+    it('infers bar width from one slot of the cadence, less paddingBar', () => {
       render(
         <ColumnChart
           id='time-column-widths'
@@ -229,21 +245,15 @@ describe('ColumnChart', () => {
         />
       );
 
-      // 5 points one day apart spanning a 4-day domain across a 420px range
-      // => one day is 105px, and a bar takes (1 - paddingBar) of that slot.
-      const slotWidthPx = RANGE_SPAN / 4;
-      const expectedWidth = slotWidthPx * (1 - DEFAULT_PADDING_BAR);
-
+      // 5 points one day apart = 4 steps, laid out as 5 slots of 84px; a bar
+      // takes (1 - paddingBar) of its slot: 67.2px, leaving a 16.8px gap.
       const widths = widthsOf('time-column-widths');
       expect(widths).toHaveLength(timeSeriesDataISO.length);
-      // Pin the actual value, not just `> 0` — a bare positivity check is
-      // satisfied by the `Math.max(1, ...)` floor and would not notice the
-      // cadence inference being broken or removed.
-      widths.forEach((width) => expect(width).toBeCloseTo(expectedWidth, 6));
-      expect(expectedWidth).toBeGreaterThan(1);
+      widths.forEach((width) => expect(width).toBeCloseTo(67.2, 6));
+      expect(WIDTH_5).toBeCloseTo(67.2, 6);
     });
 
-    it('positions bars with correct x coordinate based on time scale', () => {
+    it('centres every bar on its date in slot-spaced steps, edges inside the plot', () => {
       render(
         <ColumnChart
           id='time-column-positions'
@@ -258,37 +268,80 @@ describe('ColumnChart', () => {
         />
       );
 
-      // Each bar is centered on its own date. Bars are centered marks, so a
-      // bar at the domain start/end would overhang the range edge by half
-      // its width; the component insets the usable range by half a bar
-      // width on each side to prevent that (see #16), which is why the day
-      // spacing here is computed from the *inset* span, not the raw one.
-      const expectedWidth = (RANGE_SPAN / 4) * (1 - DEFAULT_PADDING_BAR);
-      const inset = expectedWidth / 2;
-      const insetStart = RANGE_START + inset;
-      const dayPx = (RANGE_SPAN - expectedWidth) / 4;
-
+      // Half a slot of domain padding at each end: centres at 82, 166, ... 418.
       const centers = centersOf('time-column-positions');
-      const expectedCenters = [0, 1, 2, 3, 4].map(
-        (i) => insetStart + i * dayPx
-      );
-
-      expect(centers).toHaveLength(timeSeriesDataISO.length);
+      expect(centers).toHaveLength(5);
       centers.forEach((center, i) =>
-        expect(center).toBeCloseTo(expectedCenters[i], 6)
+        expect(center).toBeCloseTo(RANGE_START + SLOT_5 / 2 + i * SLOT_5, 6)
+      );
+      // The edge bars keep half the padding gap to the plot edge.
+      expect(centers[0] - WIDTH_5 / 2).toBeCloseTo(RANGE_START + 8.4, 6);
+      expect(centers[4] + WIDTH_5 / 2).toBeCloseTo(RANGE_END - 8.4, 6);
+    });
+
+    it.each([
+      ['UTC ISO instants with x.time.utc', { isISO: true, utc: true }, timeSeriesDataISO],
+      ['local-time format strings', { format: '%Y-%m-%d' }, timeSeriesData],
+    ])('bars are centred on their axis ticks within 1px (%s)', (_label, time, rows) => {
+      render(
+        <ColumnChart
+          id='time-column-ticks'
+          style={CHART_SIZE}
+          data={rows}
+          x={{ key: 'date', scalingFunction: 'time', time }}
+          y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+        />
       );
 
-      // With the inset applied, the first bar's left edge lands exactly on
-      // the original range start rather than overhanging it — confirms the
-      // #16 fix rather than the old (buggy) "just clamp to >= 0" approach.
-      const firstX = parseFloat(
-        document
-          .getElementById('time-column-positions')!
-          .querySelector('rect')!
-          .getAttribute('x') || '0'
-      );
-      expect(firstX).toBeCloseTo(RANGE_START, 6);
+      // Axis and bars share one scale, so a tick on a data date sits under
+      // that date's bar.
+      const ticks = tickXs('time-column-ticks');
+      const centers = centersOf('time-column-ticks');
+      const parse = (d: string) =>
+        'isISO' in time ? new Date(d).getTime() : new Date(`${d}T00:00:00`).getTime();
+      let matched = 0;
+      rows.forEach((row, i) => {
+        const tickX = ticks.get(parse(row.date));
+        if (tickX === undefined) return;
+        matched++;
+        expect(Math.abs(centers[i] - tickX)).toBeLessThanOrEqual(1);
+      });
+      expect(matched).toBeGreaterThanOrEqual(2);
     });
+
+    it.each([2, 3, 4, 5])(
+      'N=%i evenly spaced dates: bars do not overlap and stay inside the plot',
+      (n) => {
+        const rows = timeSeriesDataISO.slice(0, n);
+        render(
+          <ColumnChart
+            id={`time-column-overlap-${n}`}
+            style={CHART_SIZE}
+            data={rows}
+            x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+            y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+          />
+        );
+
+        const slot = RANGE_SPAN / n;
+        const rects = Array.from(
+          document.getElementById(`time-column-overlap-${n}`)!.querySelectorAll('rect')
+        );
+        const lefts = rects.map((r) => Number(r.getAttribute('x')));
+        const widths = rects.map((r) => Number(r.getAttribute('width')));
+        for (let i = 1; i < n; i++) {
+          const gap = lefts[i] - (lefts[i - 1] + widths[i - 1]);
+          expect(gap).toBeGreaterThanOrEqual(slot * DEFAULT_PADDING_BAR - 1e-6);
+        }
+        expect(lefts[0]).toBeGreaterThanOrEqual(RANGE_START - 1e-6);
+        expect(lefts[n - 1] + widths[n - 1]).toBeLessThanOrEqual(RANGE_END + 1e-6);
+        if (n === 2) {
+          // 2 slots of 210px: 168px bars, 42px between them.
+          expect(widths[0]).toBeCloseTo(168, 6);
+          expect(lefts[1] - (lefts[0] + widths[0])).toBeCloseTo(42, 6);
+        }
+      }
+    );
 
     it('evenly-spaced dates produce equal bar widths', () => {
       render(
@@ -337,10 +390,10 @@ describe('ColumnChart', () => {
         />
       );
 
-      // Domain spans 11 days (Jan 1 -> Jan 12) across a 420px range.
-      const dayPx = RANGE_SPAN / 11;
+      // Domain spans 11 days (Jan 1 -> Jan 12). With cadence c days there
+      // are 11/c steps, laid out as 11/c + 1 slots across 420px.
       const widthFor = (gapDays: number) =>
-        gapDays * dayPx * (1 - DEFAULT_PADDING_BAR);
+        (RANGE_SPAN / (11 / gapDays + 1)) * (1 - DEFAULT_PADDING_BAR);
 
       const widths = widthsOf('time-column-median');
       expect(widths).toHaveLength(medianProbeData.length);
@@ -455,6 +508,119 @@ describe('ColumnChart', () => {
       });
     });
 
+    it('caps an explicit barWidth at one slot so bars cannot overlap', () => {
+      render(
+        <ColumnChart
+          id='time-column-wide'
+          style={CHART_SIZE}
+          data={timeSeriesDataISO}
+          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, barWidth: 500 } }}
+          y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+        />
+      );
+
+      widthsOf('time-column-wide').forEach((w) => expect(w).toBeCloseTo(SLOT_5, 6));
+    });
+
+    it.each([0, -20, NaN, Infinity])(
+      'ignores an unusable barWidth (%s) with a dev warning',
+      (barWidth) => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        render(
+          <ColumnChart
+            id='time-column-bad-width'
+            style={CHART_SIZE}
+            data={timeSeriesDataISO}
+            x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, barWidth } }}
+            y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+          />
+        );
+
+        widthsOf('time-column-bad-width').forEach((w) => expect(w).toBeCloseTo(WIDTH_5, 6));
+        expect(
+          warn.mock.calls.some(([m]) =>
+            String(m).includes('ColumnChart#time-column-bad-width') &&
+            String(m).includes('barWidth')
+          )
+        ).toBe(true);
+        warn.mockRestore();
+      }
+    );
+
+    it('accepts Date objects and epoch-ms numbers as x values (F6)', () => {
+      const asDates = timeSeriesDataISO.map((d) => ({ ...d, date: new Date(d.date) }));
+      const asNumbers = timeSeriesDataISO.map((d) => ({ ...d, date: Date.parse(d.date) }));
+      render(
+        <ColumnChart
+          id='time-column-dates'
+          style={CHART_SIZE}
+          data={asDates}
+          x={{ key: 'date', scalingFunction: 'time' }}
+          y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+        />
+      );
+      render(
+        <ColumnChart
+          id='time-column-numbers'
+          style={CHART_SIZE}
+          data={asNumbers}
+          x={{ key: 'date', scalingFunction: 'time' }}
+          y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+        />
+      );
+
+      const expected = [0, 1, 2, 3, 4].map((i) => RANGE_START + SLOT_5 / 2 + i * SLOT_5);
+      [centersOf('time-column-dates'), centersOf('time-column-numbers')].forEach((cs) => {
+        expect(cs).toHaveLength(5);
+        cs.forEach((c, i) => expect(c).toBeCloseTo(expected[i], 6));
+      });
+    });
+
+    it('drops rows whose date cannot be read, with one dev warning (F6)', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(
+        <ColumnChart
+          id='time-column-dropped'
+          style={CHART_SIZE}
+          data={[...timeSeriesDataISO, { date: 'not-a-date', iphone: 999, macbook: 999 }]}
+          x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+          y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+        />
+      );
+
+      const rects = document.getElementById('time-column-dropped')!.querySelectorAll('rect');
+      expect(rects).toHaveLength(5);
+      rects.forEach((r) => expect(Number.isFinite(Number(r.getAttribute('x')))).toBe(true));
+      const msgs = warn.mock.calls
+        .map(([m]) => String(m))
+        .filter((m) => m.includes('ColumnChart#time-column-dropped'));
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0]).toMatch(/1 row/);
+      warn.mockRestore();
+    });
+
+    it('tooltip shows the formatted date, honouring x.time.tooltipFormat (F8)', () => {
+      render(
+        <ColumnChart
+          id='time-column-tooltip'
+          style={CHART_SIZE}
+          data={timeSeriesData}
+          x={{
+            key: 'date',
+            scalingFunction: 'time',
+            time: { format: '%Y-%m-%d', tooltipFormat: '%d %b %Y' },
+          }}
+          y={[{ key: 'iphone', className: 'fill-blue-500' }]}
+          tooltip={{}}
+        />
+      );
+
+      const rect = document.getElementById('time-column-tooltip')!.querySelector('rect')!;
+      fireEvent.mouseEnter(rect);
+      const tips = Array.from(document.querySelectorAll('#tooltip-time-column-tooltip'));
+      expect(tips.some((t) => t.innerHTML.startsWith('01 Jan 2025'))).toBe(true);
+    });
+
     it('single data point does not throw and produces positive width', () => {
       const singlePointData = [{ date: '2025-01-01T00:00:00.000Z', iphone: 100, macbook: 80 }];
 
@@ -538,8 +704,8 @@ describe('ColumnChart', () => {
         />
       );
 
-      // Domain spans 2 days across 420px => one day is 210px.
-      const dayPx = RANGE_SPAN / 2;
+      // Domain spans 2 one-day steps => 3 slots of 140px.
+      const dayPx = RANGE_SPAN / 3;
       const widths = widthsOf('time-column-dupes');
       expect(widths).toHaveLength(duplicateDatesData.length);
       widths.forEach((width) =>
@@ -599,9 +765,7 @@ describe('ColumnChart', () => {
 
       // ...and the bars are still time-positioned, not band-positioned.
       const widths = widthsOf('time-column-no-bin');
-      widths.forEach((width) =>
-        expect(width).toBeCloseTo(((RANGE_SPAN / 4) * (1 - DEFAULT_PADDING_BAR)) / 2, 6)
-      );
+      widths.forEach((width) => expect(width).toBeCloseTo(WIDTH_5 / 2, 6));
     });
 
     it('multiple y series in time mode spreads bars horizontally', () => {
@@ -632,21 +796,16 @@ describe('ColumnChart', () => {
       // so rects 0-4 are series 0 and rects 5-9 are series 1.
       expect(rects).toHaveLength(10);
 
-      // Each sub-bar takes 1/n of the group width, and the group is centered
-      // on the date. Day spacing is computed from the range as inset by the
-      // group's half-width on each side (see #16) — the group width plays
-      // the same role here that a single series' bar width does elsewhere.
-      const groupWidth = (RANGE_SPAN / 4) * (1 - DEFAULT_PADDING_BAR);
+      // Each sub-bar takes 1/n of the group width, and the group is centred
+      // on the date; the group width is one slot less paddingBar.
+      const groupWidth = WIDTH_5;
       const subWidth = groupWidth / 2;
       rects.forEach((r) => expect(wOf(r)).toBeCloseTo(subWidth, 6));
-
-      const insetStart = RANGE_START + groupWidth / 2;
-      const dayPx = (RANGE_SPAN - groupWidth) / 4;
 
       for (let i = 0; i < 5; i++) {
         const first = rects[i];
         const second = rects[i + 5];
-        const center = insetStart + i * dayPx;
+        const center = RANGE_START + SLOT_5 / 2 + i * SLOT_5;
 
         // Group is centered on the date...
         expect(xOf(first)).toBeCloseTo(center - groupWidth / 2, 6);
@@ -773,9 +932,10 @@ describe('ColumnChart time mode keeps edge marks inside the plot (#16)', () => {
     );
     expect(Math.min(...lefts)).toBeGreaterThanOrEqual(RANGE_START - 1e-6);
     expect(Math.max(...rights)).toBeLessThanOrEqual(RANGE_END + 1e-6);
-    // The edge bars are flush with the range ends, not pulled in further.
-    expect(Math.min(...lefts)).toBeCloseTo(RANGE_START, 6);
-    expect(Math.max(...rights)).toBeCloseTo(RANGE_END, 6);
+    // Jan 1 -> Jan 6 at a 1-day cadence is 5 steps = 6 slots of 70px; bars
+    // are 56px, so each edge bar keeps half the 14px padding gap (7px).
+    expect(Math.min(...lefts)).toBeCloseTo(RANGE_START + 7, 6);
+    expect(Math.max(...rights)).toBeCloseTo(RANGE_END - 7, 6);
 
     const [axisStart, axisEnd] = xAxisSpan(container);
     expect(axisStart).toBeCloseTo(RANGE_START + 0.5, 6);

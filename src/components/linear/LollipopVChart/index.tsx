@@ -17,8 +17,9 @@ import { AxisConfig, ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import {
   createTimeXScale,
-  insetTimeScale,
   makeDateAccessor,
+  padTimeDomain,
+  useTimeAxisWarnings,
 } from '@/utils/timeScale';
 import { twMerge } from 'tailwind-merge';
 import { drawAxis } from '@/hooks/useAxis';
@@ -142,6 +143,7 @@ const LollipopVChart = <TData = any,>({
   y = { key: 'y', axis: { location: 'left' } },
   style = {},
 }: LollipopVChartProps<TData>) => {
+  useTimeAxisWarnings('LollipopVChart', id, data, x, { checkBarWidth: false });
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     // Clear svg
@@ -149,8 +151,6 @@ const LollipopVChart = <TData = any,>({
 
     const width = +svg.style('width').split('px')[0];
     const height = +svg.style('height').split('px')[0];
-
-    data.sort((a, b) => (b as any)[y.key] - (a as any)[y.key]);
 
     const shapeMapping = {
       circle: symbolCircle,
@@ -162,39 +162,46 @@ const LollipopVChart = <TData = any,>({
       wye: symbolWye,
     };
 
-    const minValue = Number.isFinite(y.start)
-      ? y.start
-      : min(data, (d) => (d as any)[y.key]);
-    const maxValue = Number.isFinite(valueMax)
-      ? valueMax
-      : max(data, (d) => (d as any)[y.key]);
-
-    const toDateTime = makeDateAccessor(x);
+    const toDateTime = makeDateAccessor<TData>(x);
     const isTimeX = x.scalingFunction === 'time';
+    // In time mode rows without a readable date are not drawn (dev warning
+    // from useTimeAxisWarnings)
+    const rows = isTimeX ? data.filter((d) => toDateTime(d) != null) : data;
+    // Sorts in place, as before: in band mode `rows` is `data`, and the band
+    // domain follows this order
+    rows.sort((a, b) => (b as any)[y.key] - (a as any)[y.key]);
     const xRange: [number, number] = [
       (margin.left ?? 0) + (padding.left ?? 0),
       width - (margin.right ?? 0) - (padding.right ?? 0),
     ];
 
-    // In time mode the axis is drawn from the full margin-to-margin `xFn`,
-    // but each stem's symbol is centered on its date and positioned with
-    // `markXFn`, a copy inset so edge symbols don't overhang the plot (#16).
-    // The inset is the largest bounding radius among this component's symbol
-    // shapes at the fixed size=100 used below (star is the widest at ~9.44px;
-    // 10px covers all of them).
+    // In time mode one scale positions the stems *and* draws the axis, so
+    // stems sit on their ticks. Its date domain is padded by SYMBOL_INSET_PX
+    // at each unpinned end so edge symbols don't overhang the plot (#16):
+    // the largest bounding radius among this component's symbol shapes at the
+    // fixed size=100 used below (star is the widest at ~9.44px; 10px covers
+    // all of them).
     const SYMBOL_INSET_PX = 10;
-    const timeXFn = isTimeX ? createTimeXScale(data, x, toDateTime, xRange) : undefined;
-    const markXFn = timeXFn ? insetTimeScale(timeXFn, SYMBOL_INSET_PX) : undefined;
+    const timeXFn = isTimeX
+      ? padTimeDomain(createTimeXScale(rows, x, toDateTime, xRange), SYMBOL_INSET_PX, x)
+      : undefined;
     const bandXFn = scaleBand()
-      .domain(data.map((d) => String((d as Record<string, unknown>)[x.key])))
+      .domain(rows.map((d) => String((d as Record<string, unknown>)[x.key])))
       .range(xRange);
     const xFn = timeXFn ?? bandXFn;
 
     const stemX = (d: TData): number =>
-      markXFn
-        ? markXFn(toDateTime(d))
+      timeXFn
+        ? timeXFn(toDateTime(d) as Date)
         : (bandXFn(String((d as Record<string, unknown>)[x.key])) ?? 0) +
           bandXFn.bandwidth() / 2;
+
+    const minValue = Number.isFinite(y.start)
+      ? y.start
+      : min(rows, (d) => (d as any)[y.key]);
+    const maxValue = Number.isFinite(valueMax)
+      ? valueMax
+      : max(rows, (d) => (d as any)[y.key]);
 
     const yFn = scaleLinear()
       .domain([minValue, maxValue])
@@ -231,7 +238,7 @@ const LollipopVChart = <TData = any,>({
     const drawLinesAndCircles = () => {
       const pointGroup = dataGroup
         .selectAll('.line')
-        .data(data)
+        .data(rows)
         .enter()
         .append('g');
 

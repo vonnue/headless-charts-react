@@ -9,7 +9,7 @@ import {
   stackOrderInsideOut,
   stackOrderReverse,
 } from 'd3';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   AxisConfig,
@@ -26,6 +26,16 @@ import { zoom } from 'd3-zoom';
 import * as d3 from 'd3';
 import { drawAxis } from '@/hooks/useAxis';
 
+/**
+ * Props for AreaChart.
+ *
+ * Performance: the chart redraws whenever `data`, `x`, `y`, `stacking`,
+ * `padding`, `margin` or `zooming` change by reference. Hoist these config
+ * objects and arrays to module scope or wrap them in `useMemo`; inline
+ * literals (e.g. `x={{ key: 'year' }}`) are new on every parent render, so the
+ * chart is torn down and redrawn each time, which resets the zoom. `className`,
+ * `style` and the tooltip callbacks do not trigger a redraw.
+ */
 export interface AreaChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
   id: string;
@@ -49,6 +59,14 @@ export interface AreaChartProps<TData = any> extends ChartProps<TData> {
     max?: number;
   };
 }
+
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const EMPTY_DATA: unknown[] = [];
+const DEFAULT_STACKING: AreaChartProps['stacking'] = { type: 'normal' };
+const DEFAULT_PADDING = { top: 0, right: 0, bottom: 0, left: 0 };
+const DEFAULT_MARGIN = { top: 20, right: 20, bottom: 20, left: 40 };
+const DEFAULT_STYLE = {};
 
 /* catalog:start */
 /**
@@ -170,34 +188,22 @@ export interface AreaChartProps<TData = any> extends ChartProps<TData> {
  */
 /* catalog:end */
 const AreaChart = <TData = any,>({
-  data = [],
+  data = EMPTY_DATA as TData[],
   id,
   className,
   x,
   y,
-  stacking = {
-    type: 'normal',
-  },
+  stacking = DEFAULT_STACKING,
   tooltip,
 
-  padding = {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
-  margin = {
-    top: 20,
-    right: 20,
-    bottom: 20,
-    left: 40,
-  },
+  padding = DEFAULT_PADDING,
+  margin = DEFAULT_MARGIN,
   zooming,
-  style = {},
+  style = DEFAULT_STYLE,
 }: AreaChartProps<TData>) => {
   const d3Format = x.time?.format || '%Y-%m-%d';
-  const formatDate = timeFormat(d3Format);
-  const parseDate = timeParse(d3Format);
+  const formatDate = useMemo(() => timeFormat(d3Format), [d3Format]);
+  const parseDate = useMemo(() => timeParse(d3Format), [d3Format]);
 
   const { onMouseOver, onMouseLeave } = useTooltip({
     id,
@@ -215,9 +221,18 @@ const AreaChart = <TData = any,>({
     },
   });
 
+  // The D3 listeners call the latest handlers through this ref, so the
+  // handlers (new each render) don't need to be refreshChart deps. Declared
+  // before the draw effect so it is current when that effect runs.
+  const tooltipHandlers = useRef({ onMouseOver, onMouseLeave });
+  useEffect(() => {
+    tooltipHandlers.current = { onMouseOver, onMouseLeave };
+  });
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
-    // Clear svg
+    // Clear svg; zoom listeners live on the svg and survive the remove().
+    svg.on('.zoom', null);
     svg.selectAll('*').remove();
 
     const width = +svg.style('width').split('px')[0],
@@ -399,12 +414,12 @@ const AreaChart = <TData = any,>({
               ? d1
               : d0;
 
-          onMouseOver(event, closestData);
+          tooltipHandlers.current.onMouseOver(event, closestData);
         })
         .on('mouseenter', (event: MouseEvent) => {
-          onMouseOver(event, data[0]);
+          tooltipHandlers.current.onMouseOver(event, data[0]);
         })
-        .on('mouseleave', onMouseLeave);
+        .on('mouseleave', () => tooltipHandlers.current.onMouseLeave());
     };
     redraw();
 
@@ -437,11 +452,11 @@ const AreaChart = <TData = any,>({
       }
       svg.call(zoomFunc);
     }
-  }, []);
+  }, [id, data, x, y, stacking, padding, margin, zooming, parseDate]);
 
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart]);
+  }, [refreshChart, id]);
 
   return (
     <svg

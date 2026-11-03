@@ -31,3 +31,9 @@ storybook-static
 .claude/agent-memory/.run-markers
 # Agent review/hand-off scratch files
 .handoff/
+
+# Playwright run output — the baseline screenshots in
+# tests/storybook-render-audit/*-snapshots/ ARE committed (they're the
+# regression baseline, not run output); only these are not.
+playwright-report
+test-results

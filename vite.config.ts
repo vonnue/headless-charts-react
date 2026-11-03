@@ -62,7 +62,13 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'jsdom',
-          exclude: ['**/node_modules/**', '**/dist/**'],
+          exclude: [
+            '**/node_modules/**',
+            '**/dist/**',
+            // Playwright's own test runner (real-browser render audit), not
+            // vitest's — see playwright.config.ts.
+            'tests/storybook-render-audit/**',
+          ],
           setupFiles: ['/src/setupTests.tsx'],
           // Type-level tests (*.test-d.ts) run under `vitest run` in the unit
           // project only (the storybook project doesn't inherit them). Type

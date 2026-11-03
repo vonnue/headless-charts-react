@@ -1,0 +1,2 @@
+- [multi-search-duplicate-detection](feedback_multi_search_terms.md) — search with 2–3 distinct angles (symptom, technical term, category) to catch paraphrased duplicates
+- [verify-root-causes-before-filing](feedback_verify_root_causes_in_code.md) — read implementation code to find shared root causes and secondary issues that symptoms miss

@@ -1,0 +1,3 @@
+# Screenshot baselines for the Storybook render audit: never diff or
+# line-ending-convert them as text.
+*.png binary

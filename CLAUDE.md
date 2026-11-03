@@ -87,6 +87,13 @@ violations, run `yarn lint:prune` and commit the smaller file. Never run
 fix it. Any diff that *increases* counts in `eslint-suppressions.json` must be
 called out for review.
 
+**Optional real-browser render audit.** `/storybook-render-audit` (the
+`storybook-render-auditor` agent, `yarn test:storybook-render`) renders stories
+in Playwright's Chromium and checks structural invariants plus visual
+regression against committed baselines, which jsdom unit tests can't see. It is
+not yet a required pipeline stage; scope it to the stories you touched with
+`STORYBOOK_AUDIT_FILTER`.
+
 **Safety hook requirements.** The PreToolUse Bash hook
 (`.claude/hooks/subagent-block-risky-actions.sh`) needs Claude Code >= 2.1.295,
 `bash` and `jq`. Because `.claude/settings.json` sets `"onFailure": "block"`, a

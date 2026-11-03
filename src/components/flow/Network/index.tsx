@@ -23,7 +23,7 @@ import {
 import useTooltip from '@/hooks/useTooltip';
 
 import { ChartProps, TooltipConfig } from '@/types';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { drag } from 'd3';
 import { scaleLinear } from 'd3-scale';
 import { select } from 'd3-selection';
@@ -57,6 +57,14 @@ interface ShapeType<TData = any> {
   default?: string;
 }
 
+/**
+ * Props for Network.
+ *
+ * Performance: the graph redraws (and restarts its simulation) whenever `id`,
+ * `nodes`, `edges`, `nodeDef`, `edgeDef`, `padding`, `margin`, `dragging` or
+ * `zooming` change by reference. Hoist them to module scope or wrap them in
+ * `useMemo`; inline literals are new on every parent render.
+ */
 export interface NetworkProps<TData = any> extends ChartProps<TData> {
   id: string;
   className?: string;
@@ -102,6 +110,30 @@ export interface NetworkProps<TData = any> extends ChartProps<TData> {
     classNameMap?: object; // Provide mapping to style by this key
     tooltip?: TooltipConfig;
   };
+}
+
+// Module-level defaults keep the refresh deps stable when a prop is omitted;
+// inline default literals would be new on every render and force a redraw.
+const DEFAULT_DRAGGING: NonNullable<NetworkProps['dragging']> = {
+  enabled: false,
+  snapToNewPosition: false,
+};
+const DEFAULT_SPACING = { top: 30, right: 30, bottom: 30, left: 30 };
+const DEFAULT_NODE_DEF: NetworkProps['nodeDef'] = { idKey: 'id' };
+const DEFAULT_EDGE_DEF: NetworkProps['edgeDef'] = {
+  sourceKey: 'source',
+  targetKey: 'target',
+};
+const DEFAULT_ZOOMING: NonNullable<NetworkProps['zooming']> = {};
+
+type TooltipHandler = (event: unknown, d: unknown) => void;
+interface TooltipHandlers {
+  overNode: TooltipHandler;
+  moveNode: TooltipHandler;
+  leaveNode: () => void;
+  overEdge: TooltipHandler;
+  moveEdge: TooltipHandler;
+  leaveEdge: () => void;
 }
 
 /* catalog:start */
@@ -155,30 +187,12 @@ const Network = <TData = any,>({
   className,
   nodes,
   edges,
-  dragging = {
-    enabled: false,
-    snapToNewPosition: false,
-  },
-  padding = {
-    top: 30,
-    right: 30,
-    bottom: 30,
-    left: 30,
-  },
-  margin = {
-    top: 30,
-    right: 30,
-    bottom: 30,
-    left: 30,
-  },
-  nodeDef = {
-    idKey: 'id',
-  },
-  edgeDef = {
-    sourceKey: 'source',
-    targetKey: 'target',
-  },
-  zooming = {},
+  dragging = DEFAULT_DRAGGING,
+  padding = DEFAULT_SPACING,
+  margin = DEFAULT_SPACING,
+  nodeDef = DEFAULT_NODE_DEF,
+  edgeDef = DEFAULT_EDGE_DEF,
+  zooming = DEFAULT_ZOOMING,
   ...props
 }: NetworkProps<TData>) => {
   // Top-level hook calls (Rules of Hooks). Both share `id`, so the second
@@ -205,6 +219,22 @@ const Network = <TData = any,>({
     id,
   });
 
+  // The hook handlers are new each render but read the latest config, so the
+  // d3 listeners call them through a ref instead of making them redraw deps.
+  const tooltipHandlers = useRef<TooltipHandlers | null>(null);
+  useLayoutEffect(() => {
+    tooltipHandlers.current = {
+      overNode: onMouseOverNode,
+      moveNode: onMouseMoveNode,
+      leaveNode: onMouseLeaveNode,
+      overEdge: onMouseOverEdge,
+      moveEdge: onMouseMoveEdge,
+      leaveEdge: onMouseLeaveEdge,
+    };
+  });
+
+  // Redraws from scratch whenever a drawing input changes, and returns the
+  // simulation so the effect can stop it before the next draw and on unmount.
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
@@ -437,23 +467,26 @@ const Network = <TData = any,>({
         )
       );
 
-    nodeDef?.tooltip &&
+    if (nodeDef?.tooltip) {
       node
-        .on('mouseover', onMouseOverNode)
-        .on('mousemove', onMouseMoveNode)
-        .on('mouseleave', onMouseLeaveNode);
+        .on('mouseover', (e, d) => tooltipHandlers.current?.overNode(e, d))
+        .on('mousemove', (e, d) => tooltipHandlers.current?.moveNode(e, d))
+        .on('mouseleave', () => tooltipHandlers.current?.leaveNode());
+    }
 
-    edgeDef?.tooltip &&
+    if (edgeDef?.tooltip) {
       link
-        .on('mouseover', onMouseOverEdge)
-        .on('mousemove', onMouseMoveEdge)
-        .on('mouseleave', onMouseLeaveEdge);
+        .on('mouseover', (e, d) => tooltipHandlers.current?.overEdge(e, d))
+        .on('mousemove', (e, d) => tooltipHandlers.current?.moveEdge(e, d))
+        .on('mouseleave', () => tooltipHandlers.current?.leaveEdge());
+    }
 
-    dragging.enabled &&
+    if (dragging.enabled) {
       node.call(
         // @ts-ignore
         drag().on('start', dragstarted).on('drag', dragged).on('end', dragended)
       );
+    }
 
     simulation.on('tick', ticked);
 
@@ -496,10 +529,15 @@ const Network = <TData = any,>({
       // @ts-ignore
       svg.call(zoomFn);
     }
-  }, []);
+
+    return simulation;
+  }, [id, nodes, edges, nodeDef, edgeDef, padding, margin, dragging, zooming]);
 
   useEffect(() => {
-    refreshChart();
+    const simulation = refreshChart();
+    return () => {
+      simulation.stop();
+    };
   }, [refreshChart]);
 
   return (

@@ -4,7 +4,7 @@
  * Tooltip hooks:  node and edge tooltips share one `#tooltip-<id>` element
  *                 (both hooks are called with the same id at the top level);
  *                 it is removed on unmount and mounting does not throw.
- * Out of scope:   Network layout, dragging, zooming and its `[]` refresh deps.
+ * Redraw lifecycle (#10) is covered in Network.effects.test.tsx.
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';

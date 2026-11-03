@@ -16,7 +16,7 @@ import { useCallback, useEffect } from 'react';
 import { AxisConfig, ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import { warnOnceInDev } from '@/utils/devEnvironment';
-import { isFiniteNumber, resolveBound } from '@/utils/domain';
+import { clampToDomain, isFiniteNumber, resolveBound } from '@/utils/domain';
 import {
   createTimeXScale,
   makeDateAccessor,
@@ -260,7 +260,27 @@ const LollipopVChart = <TData = any,>({
       orientation: 'vertical',
     });
 
-    const dataGroup = g.append('g');
+    // Marks are clipped to the plot area so a pinned y.start/y.end that
+    // narrows the axis can't draw stems or symbols over the axes or margins
+    // (#32). The rect is grown by SYMBOL_INSET_PX so symbols sitting on the
+    // plot edge aren't cut in half. The id is per chart because clipPath ids
+    // are page-global.
+    const plotTop = (margin.top ?? 0) + (padding.top ?? 0);
+    const plotBottom = height - (margin.bottom ?? 0) - (padding.bottom ?? 0);
+    const clipId = `${id}-plot-clip`;
+    svg
+      .append('clipPath')
+      .attr('id', clipId)
+      .append('rect')
+      .attr('x', xRange[0] - SYMBOL_INSET_PX)
+      .attr('y', plotTop - SYMBOL_INSET_PX)
+      .attr('width', Math.max(0, xRange[1] - xRange[0] + 2 * SYMBOL_INSET_PX))
+      .attr('height', Math.max(0, plotBottom - plotTop + 2 * SYMBOL_INSET_PX));
+
+    const dataGroup = g
+      .append('g')
+      .attr('class', 'marks')
+      .attr('clip-path', `url(#${clipId})`);
     const drawLinesAndCircles = () => {
       const pointGroup = dataGroup
         .selectAll('.line')
@@ -283,7 +303,10 @@ const LollipopVChart = <TData = any,>({
         .attr('y2', () => yFn(minValue))
         .transition()
         .duration(1000)
-        .attr('y1', (d) => yFn((d as any)[y.key]));
+        // Stems run from the domain minimum (the x axis) to the value clamped
+        // into the domain, so a value below y.start can't draw a stem under
+        // the axis (#32).
+        .attr('y1', (d) => yFn(clampToDomain((d as any)[y.key], yFn.domain())));
 
       pointGroup
         .append('path')

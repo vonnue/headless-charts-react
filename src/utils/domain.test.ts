@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { isFiniteNumber, pinnedEnd, pinnedStart, resolveBound } from './domain';
+import {
+  clampToDomain,
+  isFiniteNumber,
+  pinnedEnd,
+  pinnedStart,
+  resolveBound,
+} from './domain';
 
 describe('domain bound helpers', () => {
   it('isFiniteNumber accepts finite numbers only', () => {
@@ -27,5 +33,19 @@ describe('domain bound helpers', () => {
     expect(pinnedEnd([0, -3])).toBe(0);
     expect(pinnedStart([undefined, NaN])).toBeUndefined();
     expect(pinnedEnd([])).toBeUndefined();
+  });
+});
+
+describe('clampToDomain', () => {
+  it('clamps into the domain in either order and keeps in-range values', () => {
+    expect(clampToDomain(5, [10, 20])).toBe(10);
+    expect(clampToDomain(25, [10, 20])).toBe(20);
+    expect(clampToDomain(15, [10, 20])).toBe(15);
+    expect(clampToDomain(25, [20, 10])).toBe(20);
+    expect(clampToDomain(0, [-5, 5])).toBe(0);
+  });
+
+  it('returns a non-finite value unchanged', () => {
+    expect(clampToDomain(NaN, [0, 1])).toBeNaN();
   });
 });

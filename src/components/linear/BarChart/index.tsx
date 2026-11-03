@@ -7,7 +7,7 @@ import { drawAxis } from '@/hooks/useAxis';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { useCallback, useEffect } from 'react';
 import { defaultChartClassNames, bin1D } from '@/utils';
-import { pinnedEnd, pinnedStart } from '@/utils/domain';
+import { clampToDomain, pinnedEnd, pinnedStart } from '@/utils/domain';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -216,6 +216,23 @@ const BarChart = <TData = any,>({
 
     const g = svg.append('g');
 
+    // Marks are clipped to the plot area so a pinned x.start/x.end that
+    // narrows the axis can't draw bars over the axes or margins (#32). The id
+    // is per chart because clipPath ids are page-global.
+    const plotLeft = (margin.left ?? 0) + (padding?.left ?? 0),
+      plotRight = width - (margin.right ?? 0) - (padding?.right ?? 0),
+      plotTop = (margin.top ?? 0) + (padding?.top ?? 0),
+      plotBottom = height - (margin.bottom ?? 0) - (padding?.bottom ?? 0);
+    const clipId = `${id}-plot-clip`;
+    svg
+      .append('clipPath')
+      .attr('id', clipId)
+      .append('rect')
+      .attr('x', plotLeft)
+      .attr('y', plotTop)
+      .attr('width', Math.max(0, plotRight - plotLeft))
+      .attr('height', Math.max(0, plotBottom - plotTop));
+
     // Determine x-axis location from first x column that has axis config
     const xAxisLocation = effectiveX.find((col) => col.axis?.location)?.axis?.location || 'bottom';
     const xAxisLabel = isBinned ? 'Count' : effectiveX.map((column) => column.axis?.label || column.key || '').join(', ');
@@ -261,8 +278,31 @@ const BarChart = <TData = any,>({
       orientation: 'vertical',
     });
 
+    const marksG = g
+      .append('g')
+      .attr('class', 'marks')
+      .attr('clip-path', `url(#${clipId})`);
+
+    // Bars grow from 0 clamped into the visible domain, so with x.start > 0
+    // they start on the axis instead of left of the plot, and their far end
+    // is clamped too, so no bar is wider than the plot (#32).
+    const xDomain = xFn.domain();
+    const baseline = clampToDomain(0, xDomain);
+    const clamped = (value: number) => clampToDomain(value, xDomain);
+    const barX = (value: number) =>
+      direction === 'left' || value < 0 ? xFn(clamped(value)) : xFn(baseline);
+    const barWidth = (value: number) =>
+      Math.max(
+        0,
+        direction === 'left'
+          ? xFn(baseline) - xFn(clamped(Math.abs(value)))
+          : value < 0
+          ? xFn(baseline) - xFn(clamped(value))
+          : xFn(clamped(value)) - xFn(baseline)
+      );
+
     effectiveX.map((column, i) => {
-      const barsG = g.append('g');
+      const barsG = marksG.append('g');
 
       const bars = barsG
         .selectAll('g')
@@ -280,24 +320,14 @@ const BarChart = <TData = any,>({
         )
         .attr('rx', column.rx || 0)
         .attr('x', (d: any) =>
-          drawing.duration
-            ? xFn(0)
-            : direction === 'left' || d[column.key] < 0
-            ? xFn(d[column.key])
-            : xFn(0)
+          drawing.duration ? xFn(baseline) : barX(d[column.key])
         )
         .attr(
           'y',
           (d: any) => (yFn(d[effectiveY.key]) || 0) + (i * yFn.bandwidth()) / effectiveX.length
         )
         .attr('width', (d: any) =>
-          drawing?.duration
-            ? 0
-            : direction === 'left'
-            ? xFn(0) - xFn(Math.abs(d[column.key]))
-            : d[column.key] < 0
-            ? xFn(0) - xFn(d[column.key])
-            : xFn(Math.abs(d[column.key])) - xFn(0)
+          drawing?.duration ? 0 : barWidth(d[column.key])
         )
         .attr('height', yFn.bandwidth() / effectiveX.length - (effectiveY?.padding ?? 0))
         .on('mouseenter', onMouseOver)
@@ -313,14 +343,8 @@ const BarChart = <TData = any,>({
           .delay(
             (_: any, idx: number) => i * (drawing.delay || 100) + idx * 100
           )
-          .attr('x', (d: any) =>
-            direction === 'left' || d[column.key] < 0
-              ? xFn(d[column.key])
-              : xFn(0)
-          )
-          .attr('width', (d: any) =>
-            Math.abs(xFn(0) - xFn(Math.abs(d[column.key])))
-          );
+          .attr('x', (d: any) => barX(d[column.key]))
+          .attr('width', (d: any) => barWidth(d[column.key]));
 
       dataLabel &&
         barsG

@@ -40,7 +40,7 @@ describe('ColumnChart', () => {
     render(<ColumnChart {...defaultArgs} />);
 
     const svg = document.getElementById('column-chart');
-    const rects = svg?.querySelectorAll('rect');
+    const rects = svg?.querySelectorAll('.marks rect');
     // Should have bars for each data point * each Y series
     expect(rects?.length).toBeGreaterThanOrEqual(data.length);
   });
@@ -164,7 +164,7 @@ describe('ColumnChart', () => {
     ];
 
     const widthsOf = (svgId: string) =>
-      Array.from(document.getElementById(svgId)!.querySelectorAll('rect')).map(
+      Array.from(document.getElementById(svgId)!.querySelectorAll('.marks rect')).map(
         (r) => parseFloat(r.getAttribute('width') || '0')
       );
 
@@ -185,7 +185,7 @@ describe('ColumnChart', () => {
     const WIDTH_5 = SLOT_5 * (1 - DEFAULT_PADDING_BAR); // 67.2
 
     const centersOf = (svgId: string) =>
-      Array.from(document.getElementById(svgId)!.querySelectorAll('rect')).map(
+      Array.from(document.getElementById(svgId)!.querySelectorAll('.marks rect')).map(
         (r) =>
           parseFloat(r.getAttribute('x') || '0') +
           parseFloat(r.getAttribute('width') || '0') / 2
@@ -214,7 +214,7 @@ describe('ColumnChart', () => {
       expect(svg?.tagName).toBe('svg');
 
       // Should render bars for time series data
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
       expect(rects?.length).toBeGreaterThan(0);
     });
 
@@ -239,7 +239,7 @@ describe('ColumnChart', () => {
       const svg = document.getElementById('time-column-format');
       expect(svg).toBeTruthy();
 
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
       expect(rects?.length).toBeGreaterThan(0);
     });
 
@@ -338,7 +338,7 @@ describe('ColumnChart', () => {
 
         const slot = RANGE_SPAN / n;
         const rects = Array.from(
-          document.getElementById(`time-column-overlap-${n}`)!.querySelectorAll('rect')
+          document.getElementById(`time-column-overlap-${n}`)!.querySelectorAll('.marks rect')
         );
         const lefts = rects.map((r) => Number(r.getAttribute('x')));
         const widths = rects.map((r) => Number(r.getAttribute('width')));
@@ -372,7 +372,7 @@ describe('ColumnChart', () => {
       );
 
       const svg = document.getElementById('time-column-even');
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
 
       // With evenly-spaced dates (1 day apart), all bars should have same width
       const widths: number[] = [];
@@ -434,7 +434,7 @@ describe('ColumnChart', () => {
       );
 
       const svg = document.getElementById('time-column-sparse');
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
 
       expect(rects?.length).toBeGreaterThan(0);
 
@@ -483,7 +483,7 @@ describe('ColumnChart', () => {
       );
 
       const svg = document.getElementById('time-column-explicit-width');
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
 
       // All bars should have width equal to explicitWidth
       rects?.forEach((rect) => {
@@ -512,7 +512,7 @@ describe('ColumnChart', () => {
       );
 
       const svg = document.getElementById('time-column-width-no-padding');
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
 
       // Despite high paddingBar, bars should still have the explicit width
       rects?.forEach((rect) => {
@@ -629,7 +629,7 @@ describe('ColumnChart', () => {
         />
       );
 
-      const rects = document.getElementById('time-column-dropped')!.querySelectorAll('rect');
+      const rects = document.getElementById('time-column-dropped')!.querySelectorAll('.marks rect');
       expect(rects).toHaveLength(5);
       rects.forEach((r) => expect(Number.isFinite(Number(r.getAttribute('x')))).toBe(true));
       const msgs = warn.mock.calls
@@ -656,7 +656,7 @@ describe('ColumnChart', () => {
         />
       );
 
-      const rect = document.getElementById('time-column-tooltip')!.querySelector('rect')!;
+      const rect = document.getElementById('time-column-tooltip')!.querySelector('.marks rect')!;
       fireEvent.mouseEnter(rect);
       const tips = Array.from(document.querySelectorAll('#tooltip-time-column-tooltip'));
       expect(tips.some((t) => t.innerHTML.startsWith('01 Jan 2025'))).toBe(true);
@@ -770,7 +770,7 @@ describe('ColumnChart', () => {
       const svg = document.getElementById('column-non-time');
       expect(svg).toBeTruthy();
 
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
       expect(rects?.length).toBeGreaterThanOrEqual(defaultArgs.data.length);
     });
 
@@ -801,7 +801,7 @@ describe('ColumnChart', () => {
       // bins rendered as a single synthetic `count` series. Asserting the
       // exact bar count (rows x series) is what proves the guard held —
       // `> 0` would pass either way.
-      const rects = svg!.querySelectorAll('rect');
+      const rects = svg!.querySelectorAll('.marks rect');
       expect(rects.length).toBe(timeSeriesDataISO.length * 2);
 
       // ...and the bars are still time-positioned, not band-positioned.
@@ -828,7 +828,7 @@ describe('ColumnChart', () => {
       );
 
       const rects = Array.from(
-        document.getElementById('time-column-multi-series')!.querySelectorAll('rect')
+        document.getElementById('time-column-multi-series')!.querySelectorAll('.marks rect')
       );
       const xOf = (r: Element) => parseFloat(r.getAttribute('x') || '0');
       const wOf = (r: Element) => parseFloat(r.getAttribute('width') || '0');
@@ -879,7 +879,7 @@ describe('ColumnChart', () => {
       expect(svg).toBeTruthy();
 
       // Should still render successfully with inferred width
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
       expect(rects?.length).toBeGreaterThan(0);
 
       rects?.forEach((rect) => {
@@ -916,7 +916,7 @@ describe('ColumnChart', () => {
 
       const formatSvg = document.getElementById('time-column-format-mode');
       expect(formatSvg).toBeTruthy();
-      expect(formatSvg?.querySelectorAll('rect').length).toBeGreaterThan(0);
+      expect(formatSvg?.querySelectorAll('.marks rect').length).toBeGreaterThan(0);
 
       // Render with ISO
       render(
@@ -935,7 +935,7 @@ describe('ColumnChart', () => {
 
       const isoSvg = document.getElementById('time-column-iso-mode');
       expect(isoSvg).toBeTruthy();
-      expect(isoSvg?.querySelectorAll('rect').length).toBeGreaterThan(0);
+      expect(isoSvg?.querySelectorAll('.marks rect').length).toBeGreaterThan(0);
     });
   });
 });
@@ -965,7 +965,7 @@ describe('ColumnChart time mode keeps edge marks inside the plot (#16)', () => {
   it('every bar lies within the x range while the axis still spans it fully', () => {
     const { container } = render(<ColumnChart id='edge-column' style={CHART_SIZE} data={edgeData} x={{ key: 'date', scalingFunction: 'time' }} y={[{ key: 'a' }, { key: 'b' }]} />);
 
-    const rects = Array.from(container.querySelectorAll('rect'));
+    const rects = Array.from(container.querySelectorAll('.marks rect'));
     expect(rects.length).toBeGreaterThan(0);
     const lefts = rects.map((r) => Number(r.getAttribute('x')));
     const rights = rects.map(
@@ -1011,7 +1011,7 @@ describe('ColumnChart time mode with x.start / x.end pinned (review-2 N2)', () =
     const last = PINNED_DAYS[PINNED_DAYS.length - 1];
     expectPinnedHalfStepOutside(
       pinnedChart('column-pinned-pad', first - DAY_MS / 2, last + DAY_MS / 2),
-      'rect',
+      '.marks rect',
       RANGE
     );
   });
@@ -1019,7 +1019,7 @@ describe('ColumnChart time mode with x.start / x.end pinned (review-2 N2)', () =
   it('pinned at the first/last date: width follows the real tick spacing', () => {
     const first = PINNED_DAYS[0];
     const last = PINNED_DAYS[PINNED_DAYS.length - 1];
-    expectPinnedOnDataEnds(pinnedChart('column-pinned-ends', first, last), 'rect', RANGE);
+    expectPinnedOnDataEnds(pinnedChart('column-pinned-ends', first, last), '.marks rect', RANGE);
   });
 });
 

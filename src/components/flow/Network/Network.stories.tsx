@@ -22,8 +22,8 @@ export const Default = meta.story({
       idKey: 'name',
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });
@@ -41,8 +41,8 @@ export const Styling = meta.story({
       },
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
       classNameKey: 'type',
       classNameMap: {
         friend: 'stroke-gray-700',
@@ -76,8 +76,8 @@ export const EdgeSize = meta.story({
     ...NodeSize.input.args,
     id: 'edge-size-network',
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
       size: {
         key: 'value',
         min: 1,

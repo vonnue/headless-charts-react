@@ -45,11 +45,8 @@
     }
   },
   "src/components/flow/Network/index.tsx": {
-    "@typescript-eslint/ban-ts-comment": {
-      "count": 15
-    },
     "@typescript-eslint/no-explicit-any": {
-      "count": 25
+      "count": 4
     }
   },
   "src/components/gauges/BulletChart/index.tsx": {
@@ -343,11 +340,6 @@
   },
   "src/utils/deepValue.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "src/utils/mergeTailwindClasses.tsx": {
-    "@typescript-eslint/no-unused-expressions": {
       "count": 1
     }
   }

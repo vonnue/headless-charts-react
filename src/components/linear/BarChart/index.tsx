@@ -216,6 +216,23 @@ const BarChart = <TData = any,>({
 
     const g = svg.append('g');
 
+    // Marks are clipped to the plot area so a pinned x.start/x.end that
+    // narrows the axis can't draw bars over the axes or margins (#32). The id
+    // is per chart because clipPath ids are page-global.
+    const plotLeft = (margin.left ?? 0) + (padding?.left ?? 0),
+      plotRight = width - (margin.right ?? 0) - (padding?.right ?? 0),
+      plotTop = (margin.top ?? 0) + (padding?.top ?? 0),
+      plotBottom = height - (margin.bottom ?? 0) - (padding?.bottom ?? 0);
+    const clipId = `${id}-plot-clip`;
+    svg
+      .append('clipPath')
+      .attr('id', clipId)
+      .append('rect')
+      .attr('x', plotLeft)
+      .attr('y', plotTop)
+      .attr('width', Math.max(0, plotRight - plotLeft))
+      .attr('height', Math.max(0, plotBottom - plotTop));
+
     // Determine x-axis location from first x column that has axis config
     const xAxisLocation = effectiveX.find((col) => col.axis?.location)?.axis?.location || 'bottom';
     const xAxisLabel = isBinned ? 'Count' : effectiveX.map((column) => column.axis?.label || column.key || '').join(', ');
@@ -261,8 +278,13 @@ const BarChart = <TData = any,>({
       orientation: 'vertical',
     });
 
+    const marksG = g
+      .append('g')
+      .attr('class', 'marks')
+      .attr('clip-path', `url(#${clipId})`);
+
     effectiveX.map((column, i) => {
-      const barsG = g.append('g');
+      const barsG = marksG.append('g');
 
       const bars = barsG
         .selectAll('g')

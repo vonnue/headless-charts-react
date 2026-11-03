@@ -156,7 +156,7 @@ const TIP = {};
 const count = (id: string): number => document.querySelectorAll(`[id="tooltip-${id}"]`).length;
 const tooltipOf = (id: string): HTMLElement | null => document.getElementById(`tooltip-${id}`);
 const lastRect = (id: string): Element => {
-  const rects = document.querySelectorAll(`#${id} rect`);
+  const rects = document.querySelectorAll(`#${id} .marks rect`);
   const rect = rects[rects.length - 1];
   if (!rect) throw new Error(`no rect in #${id}`);
   return rect;

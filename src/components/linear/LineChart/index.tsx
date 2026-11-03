@@ -419,9 +419,12 @@ const LineChart = <TData = any,>({
       });
     }
 
+    // Per-chart id: clipPath ids are page-global, so a shared 'clip' made
+    // every chart on the page use the first chart's rect (#32).
+    const clipId = `${id}-plot-clip`;
     svg
       .append('clipPath')
-      .attr('id', 'clip')
+      .attr('id', clipId)
       .append('rect')
       .attr('x', margin?.left ?? 0)
       .attr('y', margin?.top ?? 0)
@@ -431,7 +434,7 @@ const LineChart = <TData = any,>({
     const leftG = g
       .append('g')
       .attr('class', 'left-g')
-      .attr('clip-path', 'url(#clip)');
+      .attr('clip-path', `url(#${clipId})`);
 
     const drawLeftSeries = () => {
       zooming &&
@@ -470,7 +473,7 @@ const LineChart = <TData = any,>({
           .attr('class', `left-series stroke-current ${column.className || ''}`)
           .datum(seriesData)
           .attr('fill', 'none')
-          .attr('clip-path', 'url(#clip)')
+          .attr('clip-path', `url(#${clipId})`)
           //@ts-ignore
           .attr('d', newLine);
 
@@ -530,7 +533,7 @@ const LineChart = <TData = any,>({
     const rightG = g
       .append('g')
       .attr('class', 'right-g')
-      .attr('clip-path', 'url(#clip)');
+      .attr('clip-path', `url(#${clipId})`);
 
     const drawRightSeries = () => {
       zooming &&
@@ -567,7 +570,7 @@ const LineChart = <TData = any,>({
           )
           .datum(seriesData)
           .attr('fill', 'none')
-          .attr('clip-path', 'url(#clip)')
+          .attr('clip-path', `url(#${clipId})`)
           // @ts-ignore
           .attr('d', newLine);
 
@@ -731,7 +734,7 @@ const LineChart = <TData = any,>({
         .attr('x2', direction === 'left' ? x : width + (margin?.left ?? 0))
         .attr('y1', y)
         .attr('y2', y)
-        .attr('clip-path', 'url(#clip)')
+        .attr('clip-path', `url(#${clipId})`)
         .attr('stroke', '#dddddd');
       dashed && horizontalLine.style('stroke-dasharray', '10,5');
     }
@@ -754,7 +757,7 @@ const LineChart = <TData = any,>({
         .attr('y1', y)
         .attr('y2', height + (margin?.top ?? 0))
         .attr('stroke', 'currentColor')
-        .attr('clip-path', 'url(#clip)')
+        .attr('clip-path', `url(#${clipId})`)
         .style('stroke-width', 1);
       dashed && verticalLine.style('stroke-dasharray', '10,7');
     }

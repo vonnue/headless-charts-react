@@ -268,8 +268,26 @@ const ColumnChartGrouped = <TData = any,>({
     // negative height (invalid SVG), so clamp to 0.
     const columnHeight = (value: number) => Math.max(0, plotBottom - yFn(value));
 
+    // Marks are clipped to the plot area so a pinned y.start/y.end that
+    // narrows the axis can't draw columns over the axes or margins (#32). The
+    // id is per chart because clipPath ids are page-global.
+    const plotTop = (margin.top ?? 0) + (padding.top ?? 0);
+    const clipId = `${id}-plot-clip`;
+    svg
+      .append('clipPath')
+      .attr('id', clipId)
+      .append('rect')
+      .attr('x', xRange[0])
+      .attr('y', plotTop)
+      .attr('width', Math.max(0, xRange[1] - xRange[0]))
+      .attr('height', Math.max(0, plotBottom - plotTop));
+    const marksG = g
+      .append('g')
+      .attr('class', 'marks')
+      .attr('clip-path', `url(#${clipId})`);
+
     effectiveY.map((column, i) => {
-      const barsG = g.append('g');
+      const barsG = marksG.append('g');
 
       const bars = barsG
         .selectAll('g')
@@ -331,7 +349,7 @@ const ColumnChartGrouped = <TData = any,>({
         .attr('x2', direction === 'left' ? x : width + (margin.left ?? 0))
         .attr('y1', y)
         .attr('y2', y)
-        .attr('clip-path', 'url(#clip)')
+        .attr('clip-path', `url(#${clipId})`)
         .attr('stroke', '#dddddd');
       dashed && horizontalLine.style('stroke-dasharray', '10,5');
     }

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { arc, pie } from 'd3';
 import { select } from 'd3-selection';
-import { useCallback, useEffect, useRef } from 'react';
-import useTooltip from '@/hooks/useTooltip';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import useTooltip, { UseTooltipResult } from '@/hooks/useTooltip';
 
 import { ChartProps, TooltipConfig } from '@/types';
 import { deepValue } from '@/utils';
@@ -59,6 +59,26 @@ export interface PieChartProps<TData = any> extends ChartProps<TData> {
   };
   sort?: boolean;
 }
+
+type TooltipHandlers = Pick<
+  UseTooltipResult,
+  'onMouseOver' | 'onMouseMove' | 'onMouseLeave'
+>;
+
+// Module-level defaults, so a render without these props passes the same
+// objects each time and does not recreate refreshChart (a full redraw).
+const DEFAULT_CLASS_NAME_MAP: ClassNameMap = {};
+const DEFAULT_PADDING = { left: 0, top: 0, right: 0, bottom: 0 };
+const DEFAULT_MARGIN = { left: 40, right: 40, top: 40, bottom: 40 };
+const DEFAULT_STYLE = {};
+const DEFAULT_TITLE = {
+  text: null,
+  className: 'text-center text-base font-bold',
+};
+const DEFAULT_SUBTITLE = {
+  text: null,
+  className: 'text-center text-sm font-normal',
+};
 
 /* catalog:start */
 /**
@@ -144,23 +164,13 @@ const PieChart = <TData = any,>({
   data,
   id,
   className = '',
-  classNameMap = {},
-  padding = {
-    left: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
-  },
+  classNameMap = DEFAULT_CLASS_NAME_MAP,
+  padding = DEFAULT_PADDING,
   paddingAngle = 2,
   startAngle = 0,
   endAngle = 360 + startAngle,
   cornerRadius = 0,
-  margin = {
-    left: 40,
-    right: 40,
-    top: 40,
-    bottom: 40,
-  },
+  margin = DEFAULT_MARGIN,
   innerRadius = 0,
   outerRadius = 1,
   nameKey = 'name',
@@ -168,15 +178,9 @@ const PieChart = <TData = any,>({
   drawing,
   tooltip,
   labels,
-  style = {},
-  title = {
-    text: null,
-    className: 'text-center text-base font-bold',
-  },
-  subtitle = {
-    text: null,
-    className: 'text-center text-sm font-normal',
-  },
+  style = DEFAULT_STYLE,
+  title = DEFAULT_TITLE,
+  subtitle = DEFAULT_SUBTITLE,
   sort = true,
 }: PieChartProps<TData>) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
@@ -185,10 +189,18 @@ const PieChart = <TData = any,>({
     defaultHtml: (d: any) => `${d.data[nameKey]} = ${d.value}`,
   });
 
+  // The hook handlers are new each render but read the latest config, so the
+  // d3 listeners call them through a ref instead of making them redraw deps.
+  const tooltipHandlers = useRef<TooltipHandlers | null>(null);
+  useLayoutEffect(() => {
+    tooltipHandlers.current = { onMouseOver, onMouseMove, onMouseLeave };
+  });
+
   const previousArcs = useRef<any[]>([]);
 
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
+    svg.selectAll('*').interrupt();
     svg.selectAll('*').remove();
 
     const width = +svg.style('width').split('px')[0];
@@ -231,6 +243,11 @@ const PieChart = <TData = any,>({
         .outerRadius(radius * labels.radius);
 
     const arcs = pieFn(data as any);
+    // Each draw animates from the arcs the previous draw ended on. Saved now,
+    // not after the animation, so no timer is needed and a redraw mid-way
+    // still starts from the last drawn data.
+    const prev = previousArcs.current;
+    previousArcs.current = arcs;
 
     const pathsG = g
       .append('g')
@@ -258,13 +275,13 @@ const PieChart = <TData = any,>({
       )
       // @ts-ignore
       .attr('d', (d) => arcFn(d))
-      .on('mouseenter', onMouseOver)
-      .on('mousemove', onMouseMove)
-      .on('mouseleave', onMouseLeave)
+      .on('mouseenter', (e, d) => tooltipHandlers.current?.onMouseOver(e, d))
+      .on('mousemove', (e, d) => tooltipHandlers.current?.onMouseMove(e, d))
+      .on('mouseleave', () => tooltipHandlers.current?.onMouseLeave())
       .transition()
       .duration(drawing?.duration || 0)
       .attrTween('d', function (d) {
-        const previousArc = previousArcs.current.find(
+        const previousArc = prev.find(
           (a) => a.data[nameKey] === d.data[nameKey]
         );
 
@@ -279,10 +296,6 @@ const PieChart = <TData = any,>({
         // @ts-ignore
         return (t) => arcFn(i(t));
       });
-
-    const timeOut = setTimeout(() => {
-      previousArcs.current = arcs;
-    }, drawing?.duration);
 
     const labelsG = labelArc && pathsG.append('g').attr('class', 'labels');
 
@@ -340,10 +353,6 @@ const PieChart = <TData = any,>({
         .duration(drawing?.duration || 0)
         .attr('opacity', 1)
         .text(subtitle.text);
-
-    return () => {
-      clearTimeout(timeOut);
-    };
   }, [
     id,
     startAngle,
@@ -352,9 +361,10 @@ const PieChart = <TData = any,>({
     margin,
     innerRadius,
     cornerRadius,
-    onMouseLeave,
-    onMouseMove,
-    onMouseOver,
+    outerRadius,
+    sort,
+    title,
+    subtitle,
     labels,
     data,
     padding,
@@ -366,7 +376,13 @@ const PieChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`);
+    return () => {
+      svg.selectAll('*').interrupt();
+    };
+  }, [refreshChart, id]);
 
   return (
     <svg

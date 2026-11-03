@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
+import { select } from 'd3-selection';
 
 import PieChart from '.';
 import data from './sample.json';
@@ -138,5 +139,62 @@ describe('PieChart tooltip lifecycle (spec: specs/issue-8.md)', () => {
     unmount();
 
     expect(document.querySelectorAll('[id="tooltip-c7-pie"]')).toHaveLength(0);
+  });
+});
+
+describe('PieChart redraw lifecycle (#12)', () => {
+  const defaultArgs = {
+    id: 'pie-chart',
+    data,
+    nameKey: 'name',
+    valueKey: 'Y2022',
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const slices = (id: string) =>
+    Array.from(document.querySelectorAll<SVGPathElement>(`#${id} path`));
+
+  const animated = { duration: 1000 };
+
+  it('draws the new data when rerendered with new data', () => {
+    const { rerender } = render(<PieChart {...defaultArgs} id='pie-new' />);
+    const next = data.slice(0, 3).map((d) => ({ ...d, Y2022: d.Y2022 * 2 }));
+    rerender(<PieChart {...defaultArgs} id='pie-new' data={next} />);
+
+    // jsdom has no layout (radius 0), so check the data bound to the slices.
+    const bound = slices('pie-new').map(
+      (p) => select<SVGPathElement, { data: unknown }>(p).datum().data
+    );
+    expect(bound).toHaveLength(3);
+    expect(bound).toEqual(expect.arrayContaining(next));
+  });
+
+  it('leaves no pending timers after unmount', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const { unmount } = render(
+      <PieChart {...defaultArgs} id='pie-timers' drawing={animated} />
+    );
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('does not redraw when rerendered with the same props', () => {
+    const { rerender } = render(<PieChart {...defaultArgs} id='pie-same' />);
+    const before = document.querySelector('#pie-same > g');
+    rerender(<PieChart {...defaultArgs} id='pie-same' />);
+    expect(document.querySelector('#pie-same > g')).toBe(before);
+  });
+
+  it('interrupts running transitions on unmount', () => {
+    const { unmount } = render(
+      <PieChart {...defaultArgs} id='pie-interrupt' drawing={animated} />
+    );
+    const paths = slices('pie-interrupt');
+    expect(paths.some((p) => Reflect.has(p, '__transition'))).toBe(true);
+    unmount();
+    expect(paths.some((p) => Reflect.has(p, '__transition'))).toBe(false);
   });
 });

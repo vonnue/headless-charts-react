@@ -1,5 +1,5 @@
 import { PieArcDatum, arc } from 'd3-shape';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { select } from 'd3-selection';
 
 import { defaultChartClassNames } from '@/utils';
@@ -9,7 +9,12 @@ import { min } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
-import useTooltip from '@/hooks/useTooltip';
+import useTooltip, { UseTooltipResult } from '@/hooks/useTooltip';
+
+type TooltipHandlers = Pick<
+  UseTooltipResult,
+  'onMouseOver' | 'onMouseMove' | 'onMouseLeave'
+>;
 
 
 export interface RingGaugeProps<TData = any> extends Omit<GaugeProps<TData>, 'data'> {
@@ -32,6 +37,15 @@ export interface RingGaugeProps<TData = any> extends Omit<GaugeProps<TData>, 'da
   classNameGauge?: string;
   classNameGaugeBg?: string;
 }
+
+// Module-level defaults, so a render without these props passes the same
+// values each time and does not recreate refreshChart (a full redraw).
+const DEFAULT_DATA: never[] = [];
+const DEFAULT_MARGIN = { top: 40, bottom: 40, left: 40, right: 40 };
+const DEFAULT_PADDING = { arc: 5 };
+const DEFAULT_DRAWING = { duration: 1000, delay: 0 };
+const DEFAULT_LABELS = { position: 'top' as const };
+const DEFAULT_STYLE = {};
 
 /* catalog:start */
 /**
@@ -82,25 +96,18 @@ const RingGauge = <TData = any,>({
   labelKey,
   targetKey,
   dataKey,
-  data = [],
-  margin = {
-    top: 40,
-    bottom: 40,
-    left: 40,
-    right: 40,
-  },
-  padding = {
-    arc: 5,
-  },
+  data = DEFAULT_DATA,
+  margin = DEFAULT_MARGIN,
+  padding = DEFAULT_PADDING,
   minRadius = 10,
   cornerRadius = 2,
-  drawing = { duration: 1000, delay: 0 },
+  drawing = DEFAULT_DRAWING,
   startAngle = 0,
   endAngle = 270,
   tooltip,
   classNameGaugeBg = '',
-  labels = { position: 'top' },
-  style = {},
+  labels = DEFAULT_LABELS,
+  style = DEFAULT_STYLE,
 }: RingGaugeProps<TData>) => {
   const PI = Math.PI,
     numArcs = data.length;
@@ -114,10 +121,24 @@ const RingGauge = <TData = any,>({
       `${d[labelKey]} <br/>${d[dataKey]}/${d[targetKey]}`,
   });
 
+  // The hook handlers are new each render but read the latest config, so the
+  // d3 listeners call them through a ref instead of making them redraw deps.
+  const tooltipHandlers = useRef<TooltipHandlers | null>(null);
+  useLayoutEffect(() => {
+    tooltipHandlers.current = { onMouseOver, onMouseMove, onMouseLeave };
+  });
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
+    svg.selectAll('*').interrupt();
     svg.selectAll('*').remove();
+
+    // Each draw animates from the data the previous draw ended on. Saved now,
+    // not after the animation, so no timer is needed and a redraw mid-way
+    // still starts from the last drawn data.
+    const prev = previousData.current;
+    previousData.current = data;
 
     const g = svg.append('g');
 
@@ -176,9 +197,7 @@ const RingGauge = <TData = any,>({
       .attr('class', (d: any) => twMerge('data-arc fill-current ', d.className))
       .attr('d', (d: any, i: number) => {
         // Draw previous arc first
-        const previousArc = previousData.current.find(
-          (a) => a['name'] === d['name']
-        );
+        const previousArc = prev.find((a) => a['name'] === d['name']);
         return arcFn(
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
@@ -186,18 +205,16 @@ const RingGauge = <TData = any,>({
           i
         );
       })
-      .on('mouseenter', onMouseOver)
-      .on('mousemove', onMouseMove)
-      .on('mouseleave', onMouseLeave)
+      .on('mouseenter', (e, d) => tooltipHandlers.current?.onMouseOver(e, d))
+      .on('mousemove', (e, d) => tooltipHandlers.current?.onMouseMove(e, d))
+      .on('mouseleave', () => tooltipHandlers.current?.onMouseLeave())
       .transition()
       .duration(drawing?.duration || 1000)
       .delay(drawing?.delay || 0)
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       .attrTween('d', (d: any, i: number) => {
-        const previousArc = previousData?.current?.find(
-          (a) => a['name'] === d['name']
-        );
+        const previousArc = prev.find((a) => a['name'] === d['name']);
 
         // Animate from previous arc to current arc
 
@@ -209,10 +226,6 @@ const RingGauge = <TData = any,>({
         );
         return (t: any) => arcFn(interpolate(t), i);
       });
-
-    const timeOut = setTimeout(() => {
-      previousData.current = data;
-    }, drawing?.duration);
 
     labels &&
       g
@@ -231,10 +244,6 @@ const RingGauge = <TData = any,>({
             : -getInnerRadius(i) - 2
         )
         .text((d: any) => d[labelKey]);
-
-    return () => {
-      clearTimeout(timeOut);
-    };
   }, [
     PI,
     classNameGaugeBg,
@@ -256,14 +265,17 @@ const RingGauge = <TData = any,>({
     startAngle,
     cornerRadius,
     targetKey,
-    onMouseOver,
-    onMouseMove,
-    onMouseLeave,
   ]);
 
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart, id]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`);
+    return () => {
+      svg.selectAll('*').interrupt();
+    };
+  }, [refreshChart, id]);
   return (
     <svg
       id={id}

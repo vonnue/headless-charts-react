@@ -16,7 +16,7 @@ import { useCallback, useEffect } from 'react';
 import { AxisConfig, ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import { warnOnceInDev } from '@/utils/devEnvironment';
-import { isFiniteNumber, resolveBound } from '@/utils/domain';
+import { clampToDomain, isFiniteNumber, resolveBound } from '@/utils/domain';
 import {
   createTimeXScale,
   makeDateAccessor,
@@ -303,7 +303,10 @@ const LollipopVChart = <TData = any,>({
         .attr('y2', () => yFn(minValue))
         .transition()
         .duration(1000)
-        .attr('y1', (d) => yFn((d as any)[y.key]));
+        // Stems run from the domain minimum (the x axis) to the value clamped
+        // into the domain, so a value below y.start can't draw a stem under
+        // the axis (#32).
+        .attr('y1', (d) => yFn(clampToDomain((d as any)[y.key], yFn.domain())));
 
       pointGroup
         .append('path')

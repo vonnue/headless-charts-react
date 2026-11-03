@@ -13,7 +13,7 @@ import { useCallback, useEffect } from 'react';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, bin1D } from '@/utils';
 import { warnOnceInDev } from '@/utils/devEnvironment';
-import { pinnedEnd, pinnedStart } from '@/utils/domain';
+import { clampToDomain, pinnedEnd, pinnedStart } from '@/utils/domain';
 import {
   createTimeBarLayout,
   makeDateAccessor,
@@ -266,7 +266,10 @@ const ColumnChartGrouped = <TData = any,>({
       .range([plotBottom, (margin.top ?? 0) + (padding.top ?? 0)]);
     // Columns grow up from the plot bottom; an inverted axis would give a
     // negative height (invalid SVG), so clamp to 0.
-    const columnHeight = (value: number) => Math.max(0, plotBottom - yFn(value));
+    // Column tops are clamped into the visible domain, so a y.end below the
+    // data can't push a column above the plot (#32).
+    const columnTop = (value: number) => yFn(clampToDomain(value, yFn.domain()));
+    const columnHeight = (value: number) => Math.max(0, plotBottom - columnTop(value));
 
     // Marks are clipped to the plot area so a pinned y.start/y.end that
     // narrows the axis can't draw columns over the axes or margins (#32). The
@@ -308,7 +311,7 @@ const ColumnChartGrouped = <TData = any,>({
         .attr('x', (d: any) => barX(d) + (i * barWidth) / effectiveY.length)
         .attr('y', (d) =>
           // @ts-ignore
-          drawing && drawing.duration ? yFn(0) : yFn((d as any)[column.key])
+          drawing && drawing.duration ? plotBottom : columnTop((d as any)[column.key])
         )
         .attr('width', barWidth / effectiveY.length)
         .attr('height', (d) =>
@@ -327,7 +330,7 @@ const ColumnChartGrouped = <TData = any,>({
           .transition()
           .duration(drawing.duration)
           // @ts-ignore
-          .attr('y', (d) => yFn((d as any)[column.key]))
+          .attr('y', (d) => columnTop((d as any)[column.key]))
           .attr('height', (d) =>
             Number.isFinite((d as any)[column.key])
               ? columnHeight((d as any)[column.key])

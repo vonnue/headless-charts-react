@@ -7,7 +7,7 @@ import { drawAxis } from '@/hooks/useAxis';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { useCallback, useEffect } from 'react';
 import { defaultChartClassNames, bin1D } from '@/utils';
-import { pinnedEnd, pinnedStart } from '@/utils/domain';
+import { clampToDomain, pinnedEnd, pinnedStart } from '@/utils/domain';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -283,6 +283,24 @@ const BarChart = <TData = any,>({
       .attr('class', 'marks')
       .attr('clip-path', `url(#${clipId})`);
 
+    // Bars grow from 0 clamped into the visible domain, so with x.start > 0
+    // they start on the axis instead of left of the plot, and their far end
+    // is clamped too, so no bar is wider than the plot (#32).
+    const xDomain = xFn.domain();
+    const baseline = clampToDomain(0, xDomain);
+    const clamped = (value: number) => clampToDomain(value, xDomain);
+    const barX = (value: number) =>
+      direction === 'left' || value < 0 ? xFn(clamped(value)) : xFn(baseline);
+    const barWidth = (value: number) =>
+      Math.max(
+        0,
+        direction === 'left'
+          ? xFn(baseline) - xFn(clamped(Math.abs(value)))
+          : value < 0
+          ? xFn(baseline) - xFn(clamped(value))
+          : xFn(clamped(value)) - xFn(baseline)
+      );
+
     effectiveX.map((column, i) => {
       const barsG = marksG.append('g');
 
@@ -302,24 +320,14 @@ const BarChart = <TData = any,>({
         )
         .attr('rx', column.rx || 0)
         .attr('x', (d: any) =>
-          drawing.duration
-            ? xFn(0)
-            : direction === 'left' || d[column.key] < 0
-            ? xFn(d[column.key])
-            : xFn(0)
+          drawing.duration ? xFn(baseline) : barX(d[column.key])
         )
         .attr(
           'y',
           (d: any) => (yFn(d[effectiveY.key]) || 0) + (i * yFn.bandwidth()) / effectiveX.length
         )
         .attr('width', (d: any) =>
-          drawing?.duration
-            ? 0
-            : direction === 'left'
-            ? xFn(0) - xFn(Math.abs(d[column.key]))
-            : d[column.key] < 0
-            ? xFn(0) - xFn(d[column.key])
-            : xFn(Math.abs(d[column.key])) - xFn(0)
+          drawing?.duration ? 0 : barWidth(d[column.key])
         )
         .attr('height', yFn.bandwidth() / effectiveX.length - (effectiveY?.padding ?? 0))
         .on('mouseenter', onMouseOver)
@@ -335,14 +343,8 @@ const BarChart = <TData = any,>({
           .delay(
             (_: any, idx: number) => i * (drawing.delay || 100) + idx * 100
           )
-          .attr('x', (d: any) =>
-            direction === 'left' || d[column.key] < 0
-              ? xFn(d[column.key])
-              : xFn(0)
-          )
-          .attr('width', (d: any) =>
-            Math.abs(xFn(0) - xFn(Math.abs(d[column.key])))
-          );
+          .attr('x', (d: any) => barX(d[column.key]))
+          .attr('width', (d: any) => barWidth(d[column.key]));
 
       dataLabel &&
         barsG

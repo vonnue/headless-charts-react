@@ -15,8 +15,8 @@ const meta = preview.meta({
       idKey: 'name',
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });
@@ -34,8 +34,8 @@ export const FixingPosition = meta.story({
       },
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });
@@ -50,8 +50,8 @@ export const FixingOnlyXPosition = meta.story({
       },
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });
@@ -66,8 +66,8 @@ export const FixingOnlyYPosition = meta.story({
       },
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });
@@ -87,8 +87,8 @@ export const ShowAxis = meta.story({
       },
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });
@@ -109,8 +109,8 @@ export const ShowXAxisTop = meta.story({
       },
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });
@@ -130,8 +130,8 @@ export const ShowYAxisRight = meta.story({
       },
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });

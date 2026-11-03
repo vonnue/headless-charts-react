@@ -15,8 +15,8 @@ const meta = preview.meta({
       idKey: 'name',
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
     },
   },
 });

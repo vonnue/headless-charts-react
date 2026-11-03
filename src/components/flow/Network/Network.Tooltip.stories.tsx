@@ -41,7 +41,7 @@ export const StyleNodeTooltip = meta.story({
     ...NodeTooltip.input.args,
     id: `style-node-tooltip-with-classname-prop`,
     nodeDef: {
-      idKey: 'id',
+      idKey: 'name',
       tooltip: {
         className: 'bg-gray-100 text-gray-900 p-2 rounded',
       },
@@ -53,7 +53,7 @@ export const NodeTooltipCustomKeys = meta.story({
   args: {
     id: 'node-tooltip-custom-keys',
     nodeDef: {
-      idKey: 'id',
+      idKey: 'name',
       tooltip: {
         className: 'bg-gray-100 text-gray-900 p-2 rounded',
         keys: ['name', 'age', 'gender'],
@@ -66,7 +66,7 @@ export const NodeTooltipCustomHTML = meta.story({
   args: {
     id: `node-tooltip-custom-html`,
     nodeDef: {
-      idKey: 'id',
+      idKey: 'name',
       tooltip: {
         html: (node) => `
           <div class="bg-gray-100 text-gray-900 p-2 rounded">
@@ -84,12 +84,12 @@ export const EdgeTooltip = meta.story({
   args: {
     id: 'edge-tooltip',
     nodeDef: {
-      idKey: 'id',
+      idKey: 'name',
       tooltip: {},
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
       tooltip: {},
     },
   },
@@ -99,12 +99,12 @@ export const EdgeTooltipStyleWithClassName = meta.story({
   args: {
     id: 'edge-tooltip-style-with-classname',
     nodeDef: {
-      idKey: 'id',
+      idKey: 'name',
       tooltip: {},
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
       tooltip: {
         className: 'bg-gray-100 text-gray-900 p-2 rounded',
       },
@@ -116,12 +116,12 @@ export const EdgeTooltipCustomKeys = meta.story({
   args: {
     id: 'edge-tooltip-custom-keys',
     nodeDef: {
-      idKey: 'id',
+      idKey: 'name',
       tooltip: {},
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
       tooltip: {
         keys: ['source.name', 'target.name', 'value'],
       },
@@ -136,8 +136,8 @@ export const EdgeTooltipCustomHTML = meta.story({
     edges,
     id: 'edge-tooltip-custom-html',
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
       size: {
         key: 'value',
         min: 1,

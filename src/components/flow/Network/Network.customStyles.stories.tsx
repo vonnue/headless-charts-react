@@ -22,8 +22,8 @@ export const Default = meta.story({
       idKey: 'name',
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
       className: 'running',
     },
   },
@@ -36,8 +36,8 @@ export const CurvedEdges = meta.story({
       idKey: 'name',
     },
     edgeDef: {
-      sourceKey: 'from',
-      targetKey: 'to',
+      sourceKey: 'source',
+      targetKey: 'target',
       className: 'fill-none stroke-green-500',
       curve: 1,
     },

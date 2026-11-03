@@ -48,15 +48,6 @@ const PIE_NAN_TRANSFORM: KnownBroken = {
   issue: '#18',
   symptoms: [/translate\(NaN,NaN\)/],
 };
-const NETWORK_NODE_NOT_FOUND: KnownBroken = {
-  issue: '#20',
-  symptoms: [
-    /node not found: /,
-    /^console error: Error rendering story '[^']+':/,
-    /^\[renders-visible-content\] no <svg> element found on the page$/,
-  ],
-};
-
 export const KNOWN_BROKEN: Record<string, KnownBroken> = {
   'distribution-piechart-intro--custom-style': PIE_NAN_TRANSFORM,
   'linear-barchart-intro--styled': {
@@ -70,12 +61,6 @@ export const KNOWN_BROKEN: Record<string, KnownBroken> = {
       /^\[no-invalid-numbers\] <rect [^>]*> has width="NaN"/,
     ],
   },
-  'flow-network-tooltip--style-node-tooltip': NETWORK_NODE_NOT_FOUND,
-  'flow-network-tooltip--node-tooltip-custom-keys': NETWORK_NODE_NOT_FOUND,
-  'flow-network-tooltip--node-tooltip-custom-html': NETWORK_NODE_NOT_FOUND,
-  'flow-network-tooltip--edge-tooltip': NETWORK_NODE_NOT_FOUND,
-  'flow-network-tooltip--edge-tooltip-style-with-class-name': NETWORK_NODE_NOT_FOUND,
-  'flow-network-tooltip--edge-tooltip-custom-keys': NETWORK_NODE_NOT_FOUND,
 };
 
 /**

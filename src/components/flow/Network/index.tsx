@@ -30,8 +30,8 @@ import { select } from 'd3-selection';
 import { zoom } from 'd3-zoom';
 
 interface EdgeType {
-  source: string;
-  target: string;
+  source?: string; // default endpoint keys; see edgeDef.sourceKey/targetKey
+  target?: string;
   [key: string]: any;
 }
 
@@ -93,8 +93,8 @@ export interface NetworkProps<TData = any> extends ChartProps<TData> {
     shape?: ShapeType<TData>;
   };
   edgeDef: {
-    sourceKey: string;
-    targetKey: string;
+    sourceKey?: string; // default 'source'
+    targetKey?: string; // default 'target'
     size?: SizeType<any>;
     curve?: number;
     className?: string; // tailwindClass, Applies to all edges
@@ -331,13 +331,23 @@ const Network = <TData = any,>({
         );
     };
 
+    // Copy edges with source/target read from the configured keys, so the
+    // caller's edges (and their objects) are never mutated by forceLink.
+    const sourceKey = edgeDef?.sourceKey || 'source';
+    const targetKey = edgeDef?.targetKey || 'target';
+    const links = edges.map((e: EdgeType) => ({
+      ...e,
+      source: e[sourceKey],
+      target: e[targetKey],
+    }));
+
     // @ts-ignore
     const simulation = forceSimulation(nodes)
       // Need to force links as edges
       .force(
         'link',
         // @ts-ignore
-        forceLink(edges).id((d) => d[nodeDef?.idKey])
+        forceLink(links).id((d) => d[nodeDef?.idKey])
       )
       // Need to force x so that disjointed nodes don't go out of screen
       .force('x', forceX())
@@ -367,7 +377,7 @@ const Network = <TData = any,>({
     const link = g
       .append('g')
       .selectAll('line')
-      .data(edges)
+      .data(links)
       .join('path')
       .attr('class', (d: any) =>
         twMerge(

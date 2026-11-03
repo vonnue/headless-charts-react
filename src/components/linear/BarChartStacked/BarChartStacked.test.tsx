@@ -119,4 +119,29 @@ describe('BarChartStacked', () => {
     const svg = document.getElementById('bar-stacked-empty');
     expect(svg).toBeTruthy();
   });
+
+  it("does not mutate the caller's x prop and keeps series order across redraws (#36)", () => {
+    const x = [
+      { key: 'iphone', className: 'series-iphone' },
+      { key: 'macbook', className: 'series-macbook' },
+    ];
+    const original = structuredClone(x);
+    const groupOrder = () =>
+      Array.from(
+        document.querySelectorAll('#bar-stacked-mut g[class^="series-"]')
+      ).map((g) => g.getAttribute('class'));
+
+    const { rerender } = render(
+      <BarChartStacked {...defaultArgs} id='bar-stacked-mut' x={x} />
+    );
+    expect(x).toEqual(original);
+    const first = groupOrder();
+    expect(first.length).toBe(2);
+
+    rerender(
+      <BarChartStacked {...defaultArgs} id='bar-stacked-mut' x={x} data={[...data]} />
+    );
+    expect(x).toEqual(original);
+    expect(groupOrder()).toEqual(first);
+  });
 });

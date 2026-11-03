@@ -60,7 +60,7 @@ export const BinXOnly = meta.story({
     id: 'scatter-binned-x',
     x: {
       key: 'gdp',
-      bin: { count: 6 },
+      bin: { count: 10 },
       axis: { location: 'bottom', label: 'GDP' },
     },
     y: {

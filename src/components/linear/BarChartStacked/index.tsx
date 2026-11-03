@@ -183,9 +183,9 @@ const BarChartStacked = <TData = any,>({
       ])
       .range(xFnRange);
 
-    x.reverse();
+    const series = [...x].reverse();
 
-    const dataStacked = stack().keys(x.map((column) => column.key))(
+    const dataStacked = stack().keys(series.map((column) => column.key))(
       data as Iterable<{ [key: string]: number }>
     );
 
@@ -197,7 +197,7 @@ const BarChartStacked = <TData = any,>({
       .enter()
       .append('g')
       // @ts-ignore
-      .attr('class', (d: any) => x[d.index].className)
+      .attr('class', (d: any) => series[d.index].className)
       .selectAll('rect')
       .data((d: StackedArrayItem[], index: number) => {
         return d.map((v: StackedArrayItem) => {
@@ -215,13 +215,13 @@ const BarChartStacked = <TData = any,>({
       .attr('y', (d: StackedDataItem) => {
         return (
           (yFn(d.data[y.key]) || 0) +
-          (waterfall ? (yFn.bandwidth() / x.length) * d.index : 0)
+          (waterfall ? (yFn.bandwidth() / series.length) * d.index : 0)
         );
       })
       .attr('width', (d: StackedDataItem) =>
         drawing?.duration ? 0 : xFn(d.end) - xFn(d.start)
       )
-      .attr('height', waterfall ? yFn.bandwidth() / x.length : yFn.bandwidth())
+      .attr('height', waterfall ? yFn.bandwidth() / series.length : yFn.bandwidth())
       .on('mouseenter', onMouseOver)
       .on('mousemove', onMouseMove)
       .on('mouseleave', onMouseLeave)
@@ -232,15 +232,15 @@ const BarChartStacked = <TData = any,>({
       .attr('width', (d: StackedDataItem) => xFn(d.end) - xFn(d.start));
 
     // Determine x-axis location
-    const xAxisLocation = x.find((col) => col.axis?.location)?.axis?.location || 'bottom';
-    const xAxisLabel = x.map((column) => column.axis?.label || column.key || '').join(', ');
+    const xAxisLocation = series.find((col) => col.axis?.location)?.axis?.location || 'bottom';
+    const xAxisLabel = series.map((column) => column.axis?.label || column.key || '').join(', ');
 
     // Create x-axis config
     const xAxisConfig: AxisConfig = {
-      key: x[0]?.key || '',
+      key: series[0]?.key || '',
       axis: {
         location: xAxisLocation as 'top' | 'bottom',
-        ticks: x[0]?.axis?.ticks || 5,
+        ticks: series[0]?.axis?.ticks || 5,
         label: xAxisLabel,
       },
     };

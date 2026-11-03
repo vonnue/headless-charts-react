@@ -7,6 +7,7 @@ import { drawAxis } from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { pinnedEnd, pinnedStart } from '@/utils/domain';
 import { stack } from 'd3';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
@@ -170,9 +171,16 @@ const BarChartStacked = <TData = any,>({
             width - (margin.right ?? 0) - (padding.right ?? 0),
           ];
 
+    // A finite start/end on any series pins that end of the axis (F4); the
+    // default is the 0 baseline and the largest stacked total.
+    const maxTotal = max(data, (d) =>
+      sum(x, (column) => (d as Record<string, number | undefined>)[column.key])
+    );
     const xFn = scaleLinear()
-      // @ts-ignore
-      .domain([0, max(data.map((d) => sum(x.map((value) => d[value.key]))))])
+      .domain([
+        pinnedStart(x.map((column) => column.start)) ?? 0,
+        pinnedEnd(x.map((column) => column.end)) ?? maxTotal ?? NaN,
+      ])
       .range(xFnRange);
 
     x.reverse();

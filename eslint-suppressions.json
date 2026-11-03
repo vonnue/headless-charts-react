@@ -190,7 +190,7 @@
   },
   "src/components/linear/BarChartStacked/index.tsx": {
     "@typescript-eslint/ban-ts-comment": {
-      "count": 3
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 8

@@ -21,6 +21,7 @@ import {
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
 import { warnOnceInDev } from '@/utils/devEnvironment';
+import { pinnedEnd, pinnedStart } from '@/utils/domain';
 import { transition } from 'd3';
 import { twMerge } from 'tailwind-merge';
 
@@ -246,9 +247,16 @@ const ColumnChartStacked = <TData = any,>({
       (margin.top ?? 0) + (padding.top ?? 0),
     ];
 
+    // A finite start/end on any series pins that end of the axis (F4); the
+    // default is the 0 baseline and the largest stacked total.
+    const maxTotal = max(rows, (d) =>
+      sum(y, (column) => (d as Record<string, number | undefined>)[column.key])
+    );
     const yFn = scaleLinear()
-      // @ts-ignore
-      .domain([0, max(rows.map((d) => sum(y.map((value) => (d as any)[value.key]))))])
+      .domain([
+        pinnedStart(y.map((column) => column.start)) ?? 0,
+        pinnedEnd(y.map((column) => column.end)) ?? maxTotal ?? NaN,
+      ])
       .range(yFnRange);
 
     y.map((column, i) => {

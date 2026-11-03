@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { ValueFn, select } from 'd3';
 
 import { GaugeProps } from '@/types';
 import { scaleLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
-import useTooltip from '@/hooks/useTooltip';
+import useTooltip, { UseTooltipResult } from '@/hooks/useTooltip';
+
+type TooltipHandlers = Pick<
+  UseTooltipResult,
+  'onMouseOver' | 'onMouseMove' | 'onMouseLeave'
+>;
 
 export interface LinearGaugeProps<TData = any> extends GaugeProps<TData> {
   label:
@@ -19,6 +24,12 @@ export interface LinearGaugeProps<TData = any> extends GaugeProps<TData> {
   classNameGauge?: string;
   classNameGaugeBg?: string;
 }
+
+// Module-level defaults, so a render without these props passes the same
+// objects each time and does not rebuild the gauge.
+const DEFAULT_MARGIN = { left: 40, top: 30, right: 40, bottom: 10 };
+const DEFAULT_DRAWING = { duration: 1000 };
+const DEFAULT_STYLE = {};
 
 /* catalog:start */
 /**
@@ -68,19 +79,19 @@ const LinearGauge = <TData = any,>({
   max = 1,
   error,
   gaugeHeight = 6,
-  margin = {
-    left: 40,
-    top: 30,
-    right: 40,
-    bottom: 10,
-  },
-  drawing = { duration: 1000 },
+  margin = DEFAULT_MARGIN,
+  drawing = DEFAULT_DRAWING,
   tooltip = undefined,
   classNameGauge = '',
   classNameGaugeBg = '',
-  style = {},
+  style = DEFAULT_STYLE,
 }: LinearGaugeProps<TData>) => {
+  // Value the data rect last animated to; each update animates from it.
   const previousData = useRef(0);
+  // This instance's data rect, so updates never select another gauge's.
+  const dataRectRef = useRef<SVGRectElement | null>(null);
+  // The build function the svg was last built with.
+  const builtWith = useRef<(() => void) | null>(null);
 
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
@@ -88,17 +99,35 @@ const LinearGauge = <TData = any,>({
     defaultHtml: () => `Data: ${data} <br/> Error: ${error?.data || 0}`,
   });
 
-  const setup = useCallback(() => {
+  // The hook handlers are new each render but read the latest config, so the
+  // d3 listeners call them through a ref instead of making them rebuild deps.
+  const tooltipHandlers = useRef<TooltipHandlers | null>(null);
+  useLayoutEffect(() => {
+    tooltipHandlers.current = { onMouseOver, onMouseMove, onMouseLeave };
+  });
+
+  const errorData = error?.data;
+  const errorClassName = error?.className;
+
+  const xScale = useCallback(() => {
+    const width = +select(`#${id}`).style('width').split('px')[0];
+    return scaleLinear()
+      .domain([0, max])
+      .range([margin.left || 0, width - (margin.right || 0)]);
+  }, [id, max, margin.left, margin.right]);
+
+  // Builds the static parts, with the data rect at the previous value. Data
+  // changes do not rebuild; `update` animates the existing rect.
+  const build = useCallback(() => {
     const svg = select(`#${id}`);
 
+    svg.selectAll('*').interrupt();
     svg.selectAll('*').remove();
 
     const width = +svg.style('width').split('px')[0];
     const height = +svg.style('height').split('px')[0];
 
-    const xFn = scaleLinear()
-      .domain([0, max])
-      .range([margin.left || 0, width - (margin.right || 0)]);
+    const xFn = xScale();
 
     const g = svg.append('g');
 
@@ -130,11 +159,11 @@ const LinearGauge = <TData = any,>({
       .attr('width', width - (margin.left || 0) - (margin.right || 0))
       .attr('height', gaugeHeight)
       .attr('ry', gaugeHeight / 2)
-      .on('mouseenter', onMouseOver)
-      .on('mousemove', onMouseMove)
-      .on('mouseleave', onMouseLeave);
+      .on('mouseenter', (e, d) => tooltipHandlers.current?.onMouseOver(e, d))
+      .on('mousemove', (e, d) => tooltipHandlers.current?.onMouseMove(e, d))
+      .on('mouseleave', () => tooltipHandlers.current?.onMouseLeave());
 
-    gaugeG
+    dataRectRef.current = gaugeG
       .append('rect')
       .attr(
         'class',
@@ -145,19 +174,16 @@ const LinearGauge = <TData = any,>({
       .attr('width', xFn(previousData.current) - xFn(0))
       .attr('height', gaugeHeight)
       .attr('ry', gaugeHeight / 2)
-      .transition()
-      .duration(drawing.duration ?? 0)
-      .attr('width', xFn(data) - xFn(0));
+      .node();
 
-    error &&
-      error.data &&
+    errorData &&
       gaugeG
         .append('rect')
         .attr(
           'class',
           twMerge(
             'data-rect fill-current stroke-current text-red-700',
-            (error && error.className) || ''
+            errorClassName || ''
           )
         )
         .attr('x', width - (margin.right || 0))
@@ -167,49 +193,60 @@ const LinearGauge = <TData = any,>({
         .attr('height', gaugeHeight)
         .transition()
         .duration(drawing.duration ?? 0)
-        .attr('x', () => xFn(max - (error.data || 0)))
-        .attr('width', () => {
-          return xFn(max) - xFn(max - (error.data || 0));
-        });
-
-    previousData.current = data;
+        .attr('x', () => xFn(max - errorData))
+        .attr('width', () => xFn(max) - xFn(max - errorData));
   }, [
     classNameGauge,
     classNameGaugeBg,
-    data,
-    drawing,
-    error,
+    drawing.duration,
+    errorClassName,
+    errorData,
     gaugeHeight,
     id,
     label,
-    margin,
+    margin.bottom,
+    margin.left,
+    margin.right,
+    margin.top,
     max,
-    onMouseOver,
-    onMouseMove,
-    onMouseLeave,
+    xScale,
   ]);
 
-  const refreshChart = useCallback(() => {
-    const svg = select(`#${id}`);
-    const width = +svg.style('width').split('px')[0];
-
-    const xFn = scaleLinear()
-      .domain([0, max])
-      .range([margin.left || 0, width - (margin.right || 0)]);
-
-    select('.data-rect')
+  // Animates this gauge's data rect from the previous value to `data`.
+  const update = useCallback(() => {
+    if (!dataRectRef.current) return;
+    const xFn = xScale();
+    select(dataRectRef.current)
       .transition()
       .duration(drawing.duration ?? 0)
       .attr('width', xFn(data) - xFn(0));
-  }, [data, drawing, id, margin, max]);
+    previousData.current = data;
+  }, [data, drawing.duration, xScale]);
+
+  // One update path: rebuild only when a structural prop changed, then
+  // animate the data rect once.
+  useEffect(() => {
+    if (builtWith.current !== build) {
+      build();
+      builtWith.current = build;
+    }
+    update();
+    // Stop the data rect's transition before the next update; other
+    // transitions (the error rect) keep running unless the gauge is rebuilt.
+    const rect = dataRectRef.current;
+    return () => {
+      if (rect) select(rect).interrupt();
+    };
+  }, [build, update]);
 
   useEffect(() => {
-    setup();
-  }, [setup]);
-
-  useEffect(() => {
-    refreshChart();
-  }, [data, max, refreshChart, id]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`);
+    return () => {
+      svg.selectAll('*').interrupt();
+    };
+  }, [id]);
 
   return (
     <svg

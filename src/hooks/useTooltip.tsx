@@ -62,22 +62,37 @@ export interface UseTooltipResult {
 const useIsomorphicLayoutEffect =
   typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
+/**
+ * `el` if it can serve as this hook's tooltip: a div that is not inside the
+ * chart's own svg (`svg#${id}`). Anything else with a matching id, such as a
+ * chart whose svg id is literally `tooltip`, is left alone (#48).
+ */
+const asAdoptable = (
+  el: HTMLElement | null,
+  id: string | undefined
+): HTMLDivElement | null => {
+  if (!(el instanceof HTMLDivElement)) return null;
+  const chartSvg = id ? document.getElementById(id) : null;
+  return chartSvg instanceof SVGSVGElement && chartSvg.contains(el) ? null : el;
+};
+
 /** The element a hook with this config would use, if it already exists. */
 const findExisting = (id: string | undefined, tooltip?: TooltipObjectType) =>
-  (tooltip ? document.getElementById('tooltip') : null) ??
-  document.getElementById(`tooltip-${id}`);
+  (tooltip ? asAdoptable(document.getElementById('tooltip'), id) : null) ??
+  asAdoptable(document.getElementById(`tooltip-${id}`), id);
 
 /**
  * Returns the live tooltip element: the current one if still connected, else
- * the legacy global `#tooltip` (when a tooltip config is set), else an
- * existing `#tooltip-${id}` (adopted, not owned), else a newly created one.
+ * the legacy global `div#tooltip` (when a tooltip config is set), else an
+ * existing `div#tooltip-${id}` (adopted, not owned), else a newly created one.
+ * Non-div elements and anything inside the chart's svg are never adopted.
  */
 const ensureElement = (state: TooltipState, id?: string): HTMLDivElement => {
   if (state.element && state.element.isConnected) return state.element;
 
   const existing = findExisting(id, state.tooltip);
   if (existing) {
-    state.element = existing as HTMLDivElement;
+    state.element = existing;
     state.owned = false;
     return state.element;
   }
@@ -144,7 +159,7 @@ const useTooltip = ({
   }, [id]);
 
   // A DOM read, not a write; nothing exists during SSR.
-  const tooltipDiv: TooltipSelection = select(
+  const tooltipDiv: TooltipSelection = select<HTMLElement | null, unknown>(
     typeof document === 'undefined' ? null : findExisting(id, tooltip)
   );
 

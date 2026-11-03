@@ -10,13 +10,13 @@ import {
   symbolTriangle,
   symbolWye,
 } from 'd3-shape';
-import { max, min } from 'd3-array';
+import { max, min, thresholdSturges } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { defaultChartClassNames, binData } from '@/utils';
+import { defaultChartClassNames, binData, deepValue } from '@/utils';
 import { resolveBound } from '@/utils/domain';
 import { scaleLinear, scaleBand, scaleSequential } from 'd3-scale';
 import { twMerge } from 'tailwind-merge';
@@ -64,6 +64,37 @@ export interface ScatterPlotProps<TData = any> extends ChartProps<TData> {
   };
 }
 
+const DEFAULT_MARGIN = { left: 40, right: 20, top: 40, bottom: 40 };
+
+// Binned mode: approximate width of one character of a tick label (d3 axes
+// use 10px sans-serif). Used to size the default margin and to decide when
+// the x band labels need rotating, without measuring (jsdom has no layout).
+const TICK_CHAR_WIDTH = 6;
+const longestLabel = (labels: string[]) =>
+  max(labels, (l) => l.length * TICK_CHAR_WIDTH) ?? 0;
+
+/**
+ * In binned mode an axis without `bin` is grouped too: numeric values get
+ * d3's default bin count (Sturges' formula), other values one band per
+ * distinct value in sorted order.
+ */
+const binnedAxisConfig = <TData,>(
+  data: TData[],
+  axis: AxisConfig<TData>
+): AxisConfig<TData> => {
+  if (axis.bin != null) return axis;
+  const values = data.map((d) => deepValue(d, axis.key));
+  const numeric = values.every(
+    (v) => v !== null && v !== '' && Number.isFinite(Number(v))
+  );
+  return numeric && values.length > 0
+    ? { ...axis, bin: { count: thresholdSturges(values.map(Number)) } }
+    : axis;
+};
+
+const sortedBands = (labels: string[]) =>
+  [...labels].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
 /* catalog:start */
 /**
  * One point per record positioned by two measures, revealing correlation,
@@ -96,7 +127,11 @@ export interface ScatterPlotProps<TData = any> extends ChartProps<TData> {
  *   "stroke-gray-400" }}`. Points join in the order the data is given, so
  *   sort it first.
  * - Density heatmap — Set `x.bin` and/or `y.bin`. Cells show counts,
- *   coloured via `binColor.scale` with an optional `binColor.domain`.
+ *   coloured via `binColor.scale` over `binColor.domain` (default `[0,
+ *   maxCount]`). An axis without `bin` is grouped too: numeric values into
+ *   d3's default bin count, other values one band per distinct value in
+ *   sorted order. Without a `margin` prop, the left and bottom margins grow
+ *   to fit the bin labels, and x labels wider than their bands are rotated.
  *
  * Also called: scatter chart, scatter graph, xy plot, correlation plot.
  *
@@ -169,12 +204,7 @@ const ScatterPlot = <TData = any,>({
   binColor,
   tooltip,
   shape,
-  margin = {
-    left: 40,
-    right: 20,
-    top: 40,
-    bottom: 40,
-  },
+  margin: marginProp,
   padding = {
     left: 10,
     right: 10,
@@ -213,6 +243,145 @@ const ScatterPlot = <TData = any,>({
       height = +svg.style('height').split('px')[0];
 
     const g = svg.append('g');
+
+    const xBinned = isBinned ? binnedAxisConfig(data, x) : x;
+    const yBinned = isBinned ? binnedAxisConfig(data, y) : y;
+    const binned = isBinned ? binData(data, xBinned, yBinned) : null;
+    const xValues = binned
+      ? x.bin == null && xBinned === x
+        ? sortedBands(binned.xValues)
+        : binned.xValues
+      : [];
+    const yValues = binned
+      ? y.bin == null && yBinned === y
+        ? sortedBands(binned.yValues)
+        : binned.yValues
+      : [];
+
+    // Binned mode without a margin prop: room on the left for the y labels
+    // and at the bottom for the (possibly rotated) x labels.
+    const xLabelWidth = longestLabel(xValues);
+    const binnedLeft = Math.max(40, longestLabel(yValues) + 20);
+    const rotateX =
+      isBinned &&
+      xLabelWidth >
+        (width - binnedLeft - DEFAULT_MARGIN.right) / Math.max(xValues.length, 1);
+    const margin =
+      marginProp ??
+      (isBinned
+        ? {
+            ...DEFAULT_MARGIN,
+            left: binnedLeft,
+            bottom: rotateX ? Math.ceil(xLabelWidth * Math.SQRT1_2) + 35 : 50,
+          }
+        : DEFAULT_MARGIN);
+
+    // Tooltips
+    // const tooltipDiv =
+    //   tooltip && select('#tooltip').node()
+    //     ? select('#tooltip')
+    //     : select('body')
+    //         .append('div')
+    //         .attr('id', `tooltip-${id}`)
+    //         .style('position', 'absolute')
+    //         .style('opacity', '0')
+    //         .attr('class', twMerge(tooltip?.className));
+
+    svg
+      .append('clipPath')
+      .attr('id', `${id}-plot-clip`)
+      .append('rect')
+      .attr('x', margin?.left ?? 0)
+      .attr('y', (margin?.top ?? 0) - (padding?.top ?? 0) - 10)
+      .attr('width', width - (margin?.left ?? 0))
+      .attr('height', height + (padding?.bottom ?? 0) + 8);
+
+    // Binned heatmap mode
+    if (isBinned) {
+      const binnedData = binned?.binnedData ?? [];
+
+      const xBand = scaleBand()
+        .domain(xValues)
+        .range([
+          (margin?.left ?? 0) + (padding?.left ?? 0),
+          width - (margin?.right ?? 0),
+        ])
+        .padding(0.05);
+
+      const yBand = scaleBand()
+        .domain(yValues)
+        .range([
+          height -
+            (margin?.bottom ?? 0) -
+            (padding?.top ?? 0) -
+            (padding?.bottom ?? 0),
+          (margin?.top ?? 0) + (padding?.top ?? 0),
+        ])
+        .padding(0.05);
+
+      const counts = binnedData.map((d) => d.count);
+      const maxCount = max(counts) ?? 1;
+
+      // From 0, so the lowest counts stay visible and equal counts share the
+      // full colour rather than the palette midpoint.
+      const colorScale = binColor?.scale
+        ? scaleSequential(binColor.scale).domain(binColor.domain ?? [0, maxCount])
+        : scaleSequential((t) => `rgba(59, 130, 246, ${0.1 + t * 0.9})`).domain([0, maxCount]);
+
+      const heatmapG = g.append('g').attr('clip-path', `url(#${id}-plot-clip)`);
+
+      heatmapG
+        .selectAll('rect')
+        .data(binnedData)
+        .enter()
+        .append('rect')
+        .attr('x', (d: any) => xBand(String(d[x.key])) || 0)
+        .attr('y', (d: any) => yBand(String(d[y.key])) || 0)
+        .attr('width', xBand.bandwidth())
+        .attr('height', yBand.bandwidth())
+        .attr('fill', (d: any) => colorScale(d.count))
+        .attr('rx', 2)
+        .on('mouseenter', onMouseOver)
+        .on('mousemove', onMouseMove)
+        .on('mouseleave', onMouseLeave)
+        .on('click', (event: any, d: any) => onClick && onClick(event, d));
+
+      // Draw axes for binned mode
+      const { axisG: xBandAxisG } = drawAxis({
+        g,
+        scale: xBand,
+        config: x,
+        dimensions: { width, height },
+        margin: margin ?? {},
+        padding: padding ?? {},
+        orientation: 'horizontal',
+        className: 'xAxis axis',
+        // Below the rotated labels.
+        labelY: rotateX ? (margin.bottom ?? 0) - 6 : undefined,
+      });
+
+      if (rotateX) {
+        xBandAxisG
+          .selectAll('.tick text')
+          .attr('text-anchor', 'end')
+          .attr('dx', '-0.6em')
+          .attr('dy', '0.15em')
+          .attr('transform', 'rotate(-45)');
+      }
+
+      drawAxis({
+        g,
+        scale: yBand,
+        config: y,
+        dimensions: { width, height },
+        margin: margin ?? {},
+        padding: padding ?? {},
+        orientation: 'vertical',
+        className: 'yAxis axis',
+      });
+
+      return;
+    }
 
     const xFn = scaleLinear().range([
       (margin?.left ?? 0) + (padding?.left ?? 0),
@@ -306,100 +475,8 @@ const ScatterPlot = <TData = any,>({
       wye: symbolWye,
     };
 
-    // Tooltips
-    // const tooltipDiv =
-    //   tooltip && select('#tooltip').node()
-    //     ? select('#tooltip')
-    //     : select('body')
-    //         .append('div')
-    //         .attr('id', `tooltip-${id}`)
-    //         .style('position', 'absolute')
-    //         .style('opacity', '0')
-    //         .attr('class', twMerge(tooltip?.className));
-
-    svg
-      .append('clipPath')
-      .attr('id', 'clip')
-      .append('rect')
-      .attr('x', margin?.left ?? 0)
-      .attr('y', (margin?.top ?? 0) - (padding?.top ?? 0) - 10)
-      .attr('width', width - (margin?.left ?? 0))
-      .attr('height', height + (padding?.bottom ?? 0) + 8);
-
-    // Binned heatmap mode
-    if (isBinned) {
-      const { binnedData, xValues, yValues } = binData(data, x, y);
-
-      const xBand = scaleBand()
-        .domain(xValues)
-        .range([
-          (margin?.left ?? 0) + (padding?.left ?? 0),
-          width - (margin?.right ?? 0),
-        ])
-        .padding(0.05);
-
-      const yBand = scaleBand()
-        .domain(yValues)
-        .range([
-          height - (margin?.bottom ?? 0) - (padding?.bottom ?? 0),
-          (margin?.top ?? 0) + (padding?.top ?? 0),
-        ])
-        .padding(0.05);
-
-      const counts = binnedData.map((d) => d.count);
-      const maxCount = max(counts) ?? 1;
-      const minCount = min(counts) ?? 0;
-
-      const colorScale = binColor?.scale
-        ? scaleSequential(binColor.scale).domain(binColor.domain ?? [minCount, maxCount])
-        : scaleSequential((t) => `rgba(59, 130, 246, ${0.1 + t * 0.9})`).domain([minCount, maxCount]);
-
-      const heatmapG = g.append('g').attr('clip-path', 'url(#clip)');
-
-      heatmapG
-        .selectAll('rect')
-        .data(binnedData)
-        .enter()
-        .append('rect')
-        .attr('x', (d: any) => xBand(String(d[x.key])) || 0)
-        .attr('y', (d: any) => yBand(String(d[y.key])) || 0)
-        .attr('width', xBand.bandwidth())
-        .attr('height', yBand.bandwidth())
-        .attr('fill', (d: any) => colorScale(d.count))
-        .attr('rx', 2)
-        .on('mouseenter', onMouseOver)
-        .on('mousemove', onMouseMove)
-        .on('mouseleave', onMouseLeave)
-        .on('click', (event: any, d: any) => onClick && onClick(event, d));
-
-      // Draw axes for binned mode
-      drawAxis({
-        g,
-        scale: xBand,
-        config: x,
-        dimensions: { width, height },
-        margin: margin ?? {},
-        padding: padding ?? {},
-        orientation: 'horizontal',
-        className: 'xAxis axis',
-      });
-
-      drawAxis({
-        g,
-        scale: yBand,
-        config: y,
-        dimensions: { width, height },
-        margin: margin ?? {},
-        padding: padding ?? {},
-        orientation: 'vertical',
-        className: 'yAxis axis',
-      });
-
-      return;
-    }
-
     // Drawing
-    const pointsGroup = g.append('g').attr('clip-path', 'url(#clip)');
+    const pointsGroup = g.append('g').attr('clip-path', `url(#${id}-plot-clip)`);
 
     const points = pointsGroup
       .selectAll('.points')
@@ -459,7 +536,7 @@ const ScatterPlot = <TData = any,>({
         .attr('class', `stroke-current ${connect?.className || ''}`)
         .datum(data)
         .attr('fill', 'none')
-        .attr('clip-path', 'url(#clip)')
+        .attr('clip-path', `url(#${id}-plot-clip)`)
         .attr('d', newLine);
 
       if (drawing && drawing.delay) {
@@ -528,7 +605,7 @@ const ScatterPlot = <TData = any,>({
     size,
     tooltip,
     shape,
-    margin,
+    marginProp,
     padding,
     onClick,
     zooming,

@@ -51,7 +51,8 @@ export const WarmColorScale = meta.story({
 });
 
 /**
- * Bin only the x-axis (GDP). Y-axis stays continuous.
+ * Bin only the x-axis (GDP). The unbinned numeric y-axis is grouped into
+ * d3's default number of bins, in numeric order.
  */
 export const BinXOnly = meta.story({
   args: {

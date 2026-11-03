@@ -39,7 +39,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | ColumnChartStacked, stacked column chart, stacked bar chart (vertical) | [`ColumnChartStacked`](#columnchartstacked) | Base component, no extra configuration |
 | CometPlot, comet chart, change plot, movement plot, slope chart | [`CometPlot`](#cometplot) | Base component, no extra configuration |
 | Connected scatterplot, connected scatter, path plot, trajectory plot | [`ScatterPlot`](#scatterplot) | Set `connect={{ enabled: true, className: "stroke-gray-400" }}`. Points join in the order the data is given, so sort it first. |
-| Density heatmap, 2d histogram, binned scatter plot, density plot | [`ScatterPlot`](#scatterplot) | Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` with an optional `binColor.domain`. |
+| Density heatmap, 2d histogram, binned scatter plot, density plot | [`ScatterPlot`](#scatterplot) | Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` over `binColor.domain` (default `[0, maxCount]`). An axis without `bin` is grouped too: numeric values into d3's default bin count, other values one band per distinct value in sorted order. Without a `margin` prop, the left and bottom margins grow to fit the bin labels, and x labels wider than their bands are rotated. |
 | Diverging area chart, diverging stacked area chart, bidirectional area chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "diverging" }}`. Series order is reversed so positive and negative stacks mirror each other. |
 | Diverging bar chart, tornado chart, bidirectional bar chart, deviation chart | [`BarChart`](#barchart) | Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. |
 | Donut chart, doughnut chart, ring chart | [`PieChart`](#piechart) | Set `innerRadius` above 0. Values are a fraction of `outerRadius`, so `innerRadius={0.5}` hollows half the radius. |
@@ -1517,7 +1517,7 @@ Bins points into a grid and colours each cell by how many fell into it, revealin
 
 **Also called:** 2d histogram, binned scatter plot, density plot
 
-**Configuration:** Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` with an optional `binColor.domain`.
+**Configuration:** Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` over `binColor.domain` (default `[0, maxCount]`). An axis without `bin` is grouped too: numeric values into d3's default bin count, other values one band per distinct value in sorted order. Without a `margin` prop, the left and bottom margins grow to fit the bin labels, and x labels wider than their bands are rotated.
 
 **Use when**
 

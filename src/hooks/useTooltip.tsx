@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { deepValue, mergeTailwindClasses } from '@/utils';
 import { Selection, pointer, select } from 'd3-selection';
 import { TooltipConfig } from '@/types';
+import { isDevEnvironment } from '@/utils/devEnvironment';
 
 /** @deprecated Use TooltipConfig from '../types' instead */
 export type TooltipObjectType = TooltipConfig;
@@ -54,23 +55,6 @@ export interface UseTooltipResult {
   onMouseMove: (event?: unknown, d?: unknown) => void;
   onMouseLeave: () => void;
 }
-
-// Module-local declaration so this compiles without @types/node.
-declare const process: { env?: { NODE_ENV?: string } } | undefined;
-
-/**
- * Dev-only gate, as for the box plot config warnings. `process.env.NODE_ENV`
- * is left as-is in the library build and replaced by the consumer's bundler,
- * so warnings show in their dev builds and are dropped from production. With
- * no `process` at all (unbundled ESM) it is false.
- */
-const isDevEnvironment = (): boolean => {
-  try {
-    return process!.env!.NODE_ENV !== 'production';
-  } catch {
-    return false;
-  }
-};
 
 // useLayoutEffect in the browser so the config is current before any event
 // can fire after a commit; useEffect on the server, where React 18 warns about

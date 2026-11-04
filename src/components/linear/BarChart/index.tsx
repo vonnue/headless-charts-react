@@ -8,6 +8,8 @@ import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { useCallback, useEffect } from 'react';
 import { defaultChartClassNames, bin1D } from '@/utils';
 import { clampToDomain, pinnedEnd, pinnedStart } from '@/utils/domain';
+import measureSvg from '@/utils/measureSvg';
+import { warnOnceInDev } from '@/utils/devEnvironment';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -26,6 +28,8 @@ export interface BarChartProps<TData = any> extends ChartProps<TData> {
   };
   tooltip?: TooltipConfig;
 }
+
+const DEFAULT_STYLE = {};
 
 /* catalog:start */
 /**
@@ -137,7 +141,7 @@ const BarChart = <TData = any,>({
   },
   dataLabel,
   tooltip,
-  style = {},
+  style = DEFAULT_STYLE,
 }: BarChartProps<TData>) => {
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
@@ -149,11 +153,10 @@ const BarChart = <TData = any,>({
   const refreshChart = useCallback(() => {
     if (!data || data.length === 0) return;
 
-    const svg = select(`#${id}`);
+    const svg = select<SVGSVGElement, unknown>(`#${id}`);
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
+    const { width, height } = measureSvg(svg.node());
 
     // When binning is active, bin the first x series into horizontal histogram
     let effectiveData: any[];
@@ -291,17 +294,34 @@ const BarChart = <TData = any,>({
     const clamped = (value: number) => clampToDomain(value, xDomain);
     const barX = (value: number) =>
       direction === 'left' || value < 0 ? xFn(clamped(value)) : xFn(baseline);
+    // A missing or non-numeric value draws an empty bar, not width="NaN" (#19).
     const barWidth = (value: number) =>
-      Math.max(
-        0,
-        direction === 'left'
-          ? xFn(baseline) - xFn(clamped(Math.abs(value)))
-          : value < 0
-          ? xFn(baseline) - xFn(clamped(value))
-          : xFn(clamped(value)) - xFn(baseline)
+      Number.isFinite(value)
+        ? Math.max(
+            0,
+            direction === 'left'
+              ? xFn(baseline) - xFn(clamped(Math.abs(value)))
+              : value < 0
+              ? xFn(baseline) - xFn(clamped(value))
+              : xFn(clamped(value)) - xFn(baseline)
+          )
+        : 0;
+    // A y.padding wider than a bar's band would give a negative height (#19).
+    const band = yFn.bandwidth() / effectiveX.length;
+    const rawHeight = band - (effectiveY?.padding ?? 0);
+    if (rawHeight <= 0)
+      warnOnceInDev(
+        `BarChart#${id}:y.padding`,
+        `BarChart#${id}: y.padding (${effectiveY?.padding}) >= bar band (${band.toFixed(1)}px); bars have no height.`
       );
+    const barHeight = Math.max(0, rawHeight);
 
     effectiveX.map((column, i) => {
+      if (effectiveData.some((d) => !Number.isFinite(d[column.key])))
+        warnOnceInDev(
+          `BarChart#${id}:x.key:${column.key}`,
+          `BarChart#${id}: non-numeric value for x.key "${column.key}"; those bars are drawn empty.`
+        );
       const barsG = marksG.append('g');
 
       const bars = barsG
@@ -329,7 +349,7 @@ const BarChart = <TData = any,>({
         .attr('width', (d: any) =>
           drawing?.duration ? 0 : barWidth(d[column.key])
         )
-        .attr('height', yFn.bandwidth() / effectiveX.length - (effectiveY?.padding ?? 0))
+        .attr('height', barHeight)
         .on('mouseenter', onMouseOver)
         .on('mousemove', onMouseMove)
         .on('mouseleave', onMouseLeave);
@@ -373,7 +393,8 @@ const BarChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart]);
+    // style is not read by refreshChart, but it sets the size refreshChart measures.
+  }, [data, refreshChart, style?.width, style?.height]);
 
   return (
     <svg

@@ -6,7 +6,8 @@
     "ipad": 30.9,
     "iphone": 78.6,
     "wearables": 10.7,
-    "deltaMacbook": 0
+    "deltaMacbook": 0,
+    "deltaIpad": 0
   },
   {
     "year": 2013,
@@ -15,7 +16,8 @@
     "ipad": 31.9,
     "iphone": 91.2,
     "wearables": 10.1,
-    "deltaMacbook": -1.8
+    "deltaMacbook": -1.8,
+    "deltaIpad": 1.0
   },
   {
     "year": 2014,
@@ -24,7 +26,8 @@
     "ipad": 30.2,
     "iphone": 101.0,
     "wearables": 8.3,
-    "deltaMacbook": 2.6
+    "deltaMacbook": 2.6,
+    "deltaIpad": -1.7
   },
   {
     "year": 2015,
@@ -33,7 +36,8 @@
     "ipad": 23.2,
     "iphone": 155.0,
     "wearables": 10.0,
-    "deltaMacbook": 1.4
+    "deltaMacbook": 1.4,
+    "deltaIpad": -7.0
   },
   {
     "year": 2016,
@@ -42,7 +46,8 @@
     "ipad": 20.6,
     "iphone": 136.8,
     "wearables": 11.1,
-    "deltaMacbook": -2.6
+    "deltaMacbook": -2.6,
+    "deltaIpad": -2.6
   },
   {
     "year": 2017,
@@ -51,7 +56,8 @@
     "ipad": 18.8,
     "iphone": 141.2,
     "wearables": 12.8,
-    "deltaMacbook": 2.7
+    "deltaMacbook": 2.7,
+    "deltaIpad": -1.8
   },
   {
     "year": 2018,
@@ -60,7 +66,8 @@
     "ipad": 18.3,
     "iphone": 164.0,
     "wearables": 17.3,
-    "deltaMacbook": -0.4
+    "deltaMacbook": -0.4,
+    "deltaIpad": -0.5
   },
   {
     "year": 2019,
@@ -69,7 +76,8 @@
     "ipad": 21.2,
     "iphone": 142.3,
     "wearables": 24.4,
-    "deltaMacbook": 0.6
+    "deltaMacbook": 0.6,
+    "deltaIpad": 2.9
   },
   {
     "year": 2020,
@@ -78,7 +86,8 @@
     "ipad": 23.7,
     "iphone": 137.7,
     "wearables": 30.6,
-    "deltaMacbook": 2.9
+    "deltaMacbook": 2.9,
+    "deltaIpad": 2.5
   },
   {
     "year": 2021,
@@ -87,7 +96,8 @@
     "ipad": 31.9,
     "iphone": 191.9,
     "wearables": 38.3,
-    "deltaMacbook": 9.4
+    "deltaMacbook": 9.4,
+    "deltaIpad": 8.2
   },
   {
     "year": 2022,
@@ -96,6 +106,7 @@
     "ipad": 29.2,
     "iphone": 205.4,
     "wearables": 41.2,
-    "deltaMacbook": 4.9
+    "deltaMacbook": 4.9,
+    "deltaIpad": -2.7
   }
 ]

@@ -44,19 +44,7 @@ export interface KnownBroken {
   symptoms: [RegExp, ...RegExp[]];
 }
 
-export const KNOWN_BROKEN: Record<string, KnownBroken> = {
-  'linear-barchart-intro--styled': {
-    issue: '#19',
-    symptoms: [/^console error: Error: <rect> attribute height: A negative value is not valid\./],
-  },
-  'linear-barchart-intro--negative-styling': {
-    issue: '#19',
-    symptoms: [
-      /^console error: Error: <rect> attribute width: Expected length, "NaN"\./,
-      /^\[no-invalid-numbers\] <rect [^>]*> has width="NaN"/,
-    ],
-  },
-};
+export const KNOWN_BROKEN: Record<string, KnownBroken> = {};
 
 /**
  * Stories that re-render on a `setInterval` with fresh data (live demos).

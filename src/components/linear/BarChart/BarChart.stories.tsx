@@ -59,7 +59,7 @@ export const Styled = meta.story({
       { key: 'iphone', className: 'fill-blue-500 dark:fill-blue-100' },
       { key: 'wearables', className: 'fill-red-500 dark:fill-red-100' },
     ],
-    y: { key: 'year', className: 'text-red-500 dark:text-red-50', padding: 10 },
+    y: { key: 'year', className: 'text-red-500 dark:text-red-50', padding: 0.5 },
   } as any,
 });
 
@@ -78,7 +78,11 @@ export const NegativeStyling = meta.story({
         start: -10,
         end: 10,
       },
-      { key: 'value', className: 'text-blue-500 dark:text-blue-400' },
+      {
+        key: 'deltaIpad',
+        className: 'text-blue-500 dark:text-blue-400',
+        classNameNegative: 'text-amber-400 dark:text-amber-200',
+      },
     ],
   } as any,
 });

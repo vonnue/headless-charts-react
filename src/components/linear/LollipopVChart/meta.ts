@@ -61,7 +61,7 @@ const meta: ChartMeta = {
   variants: [
     { kind: 'option', name: 'Custom symbol', how: 'Pass `shape="star"` (or diamond, triangle, square, cross, wye).' },
     { kind: 'option', name: 'Styling', how: 'Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately.' },
-    { kind: 'option', name: 'Fixed value range', how: 'Set `y.start` and `y.end` to pin the value axis (0 counts, and a range narrower than the data is honoured). The older `valueMin`/`valueMax` props apply only when the matching `y` bound is unset or not finite.' },
+    { kind: 'option', name: 'Fixed value range', how: 'Set `y.start` and `y.end` to pin the value axis (0 counts, and a range narrower than the data is honoured).' },
     {
       kind: 'chart-type',
       name: 'Time-scaled lollipop chart',

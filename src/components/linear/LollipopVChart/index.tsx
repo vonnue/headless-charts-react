@@ -15,8 +15,7 @@ import { useCallback, useEffect } from 'react';
 
 import { AxisConfig, ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
-import { warnOnceInDev } from '@/utils/devEnvironment';
-import { clampToDomain, isFiniteNumber, resolveBound } from '@/utils/domain';
+import { clampToDomain, resolveBound } from '@/utils/domain';
 import {
   createTimeXScale,
   makeDateAccessor,
@@ -35,10 +34,6 @@ export interface LollipopChartClassNames {
 
 export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
   data: TData[];
-  /** @deprecated Use `y.start`. Used only when `y.start` is not finite. */
-  valueMin?: number;
-  /** @deprecated Use `y.end`. Used only when `y.end` is not finite. */
-  valueMax?: number;
   id: string;
   className?: string;
   classNames?: LollipopChartClassNames;
@@ -131,8 +126,6 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
 /* catalog:end */
 const LollipopVChart = <TData = any,>({
   data = [],
-  valueMin,
-  valueMax,
   id,
   className,
   classNames,
@@ -207,27 +200,9 @@ const LollipopVChart = <TData = any,>({
         : (bandXFn(String((d as Record<string, unknown>)[x.key])) ?? 0) +
           bandXFn.bandwidth() / 2;
 
-    if (isFiniteNumber(y.start) && isFiniteNumber(valueMin) && y.start !== valueMin)
-      warnOnceInDev(
-        `lollipopv-${id}-start`,
-        `LollipopVChart "${id}": y.start (${y.start}) overrides valueMin (${valueMin}). valueMin is deprecated; use y.start.`
-      );
-    if (isFiniteNumber(y.end) && isFiniteNumber(valueMax) && y.end !== valueMax)
-      warnOnceInDev(
-        `lollipopv-${id}-end`,
-        `LollipopVChart "${id}": y.end (${y.end}) overrides valueMax (${valueMax}). valueMax is deprecated; use y.end.`
-      );
-
-    // y.start/y.end pin the value axis; the older valueMin/valueMax props
-    // apply only when the matching y bound is not finite.
-    const minValue = resolveBound(
-      y.start,
-      resolveBound(valueMin, min(rows, (d) => (d as any)[y.key]))
-    );
-    const maxValue = resolveBound(
-      y.end,
-      resolveBound(valueMax, max(rows, (d) => (d as any)[y.key]))
-    );
+    // y.start/y.end pin the value axis; otherwise the data sets it.
+    const minValue = resolveBound(y.start, min(rows, (d) => (d as any)[y.key]));
+    const maxValue = resolveBound(y.end, max(rows, (d) => (d as any)[y.key]));
 
     const yFn = scaleLinear()
       .domain([minValue, maxValue])
@@ -341,8 +316,6 @@ const LollipopVChart = <TData = any,>({
     data,
     id,
     shape,
-    valueMin,
-    valueMax,
     x,
     y,
     margin,

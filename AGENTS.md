@@ -1124,7 +1124,7 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
 
 - **Custom symbol** — Pass `shape="star"` (or diamond, triangle, square, cross, wye).
 - **Styling** — Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately.
-- **Fixed value range** — Set `y.start` and `y.end` to pin the value axis (0 counts, and a range narrower than the data is honoured). The older `valueMin`/`valueMax` props apply only when the matching `y` bound is unset or not finite.
+- **Fixed value range** — Set `y.start` and `y.end` to pin the value axis (0 counts, and a range narrower than the data is honoured).
 
 **Consider instead**
 

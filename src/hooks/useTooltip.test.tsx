@@ -182,6 +182,58 @@ describe('useTooltip', () => {
       expect(count('h17')).toBe(0);
     });
 
+    it('#48: does not adopt a chart svg whose id is "tooltip"', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.id = 'tooltip';
+      svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'path'));
+      document.body.appendChild(svg);
+      const { result, unmount } = mount({ id: 'tooltip', tooltip: {} });
+
+      act(() => result.current.onMouseOver(at(0, 0), { a: 1 }));
+
+      expect(svg.querySelectorAll('path')).toHaveLength(1);
+      expect(svg.getAttribute('class')).toBeNull();
+      expect(tooltipEl('tooltip').innerHTML).toBe('a: 1');
+      unmount();
+      expect(count('tooltip')).toBe(0);
+      svg.remove();
+    });
+
+    it('#48: still adopts a legacy div#tooltip next to a chart svg', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.id = 'h48';
+      document.body.appendChild(svg);
+      const legacy = document.createElement('div');
+      legacy.id = 'tooltip';
+      document.body.appendChild(legacy);
+      const { result } = mount({ id: 'h48', tooltip: {} });
+
+      act(() => result.current.onMouseOver(at(0, 0), { a: 1 }));
+
+      expect(count('h48')).toBe(0);
+      expect(legacy.innerHTML).toBe('a: 1');
+      expect(result.current.getTooltipDiv().node()).toBe(legacy);
+      svg.remove();
+    });
+
+    it('#48: does not adopt a div#tooltip inside the chart svg', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.id = 'h48b';
+      const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+      const inner = document.createElement('div');
+      inner.id = 'tooltip';
+      fo.appendChild(inner);
+      svg.appendChild(fo);
+      document.body.appendChild(svg);
+      const { result } = mount({ id: 'h48b', tooltip: {} });
+
+      act(() => result.current.onMouseOver(at(0, 0), { a: 1 }));
+
+      expect(inner.innerHTML).toBe('');
+      expect(tooltipEl('h48b').innerHTML).toBe('a: 1');
+      svg.remove();
+    });
+
     it('should not create a #tooltip-<id> when the legacy #tooltip exists but tooltip is not configured', () => {
       const legacy = document.createElement('div');
       legacy.id = 'tooltip';

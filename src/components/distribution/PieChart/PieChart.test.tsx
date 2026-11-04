@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { select } from 'd3-selection';
 
 import PieChart from '.';
@@ -196,5 +196,26 @@ describe('PieChart redraw lifecycle (#12)', () => {
     expect(paths.some((p) => Reflect.has(p, '__transition'))).toBe(true);
     unmount();
     expect(paths.some((p) => Reflect.has(p, '__transition'))).toBe(false);
+  });
+
+  // #48: the hook used to adopt the chart's own <svg id="tooltip"> as its
+  // tooltip element and replace its contents on hover.
+  it('keeps its slices on hover when the chart id is "tooltip"', () => {
+    const { unmount } = render(<PieChart {...defaultArgs} id='tooltip' tooltip={{}} />);
+    const svg = document.getElementById('tooltip');
+    expect(svg?.tagName).toBe('svg');
+    const first = svg?.querySelector('path');
+    expect(first).toBeTruthy();
+
+    fireEvent.mouseEnter(first!);
+
+    expect(svg?.querySelectorAll('path')).toHaveLength(data.length);
+    expect(svg?.getAttribute('class') ?? '').not.toContain('opacity-100');
+    const tip = document.getElementById('tooltip-tooltip');
+    expect(tip).toBeInstanceOf(HTMLDivElement);
+    expect(tip?.innerHTML).not.toBe('');
+    expect(svg?.contains(tip ?? null)).toBe(false);
+    unmount();
+    expect(document.getElementById('tooltip-tooltip')).toBeNull();
   });
 });

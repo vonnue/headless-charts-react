@@ -23,7 +23,7 @@ const classNameMap = {
  */
 export const SemiCircle = meta.story({
   args: {
-    id: 'tooltip',
+    id: 'pie-semicircle-tooltip',
     data,
     valueKey: 'Y2012',
     classNameMap,

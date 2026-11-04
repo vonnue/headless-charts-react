@@ -30,7 +30,7 @@ const meta = preview.meta({
  */
 export const Tooltip = meta.story({
   args: {
-    id: 'tooltip',
+    id: 'pie-tooltip',
   },
 });
 

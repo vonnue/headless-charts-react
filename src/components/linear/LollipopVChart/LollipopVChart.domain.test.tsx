@@ -63,23 +63,34 @@ describe('LollipopVChart y start/end domain (F4)', () => {
     expect(ticks.get('0')).toBeCloseTo(TOP, 2);
   });
 
-  it('uses valueMin/valueMax only when y.start/y.end are not finite', () => {
-    const { container } = render(
+  it('pins the axis to y.start/y.end, including 0 and a range narrower than the data', () => {
+    const { container: zero } = render(
       <LollipopVChart
         style={style}
-        id='lollipop-v-legacy'
+        id='lollipop-v-pin-zero'
         data={data}
         shape='circle'
-        valueMin={0}
-        valueMax={100}
         x={x}
-        y={{ key: 'v', start: NaN, end: 50, axis: yAxis }}
+        y={{ key: 'v', start: 0, end: 50, axis: yAxis }}
       />
     );
-    // start: NaN → valueMin 0; end: 50 beats valueMax 100.
-    const ticks = yTicks(container);
-    expect(ticks.get('0')).toBeCloseTo(BOTTOM, 2);
-    expect(ticks.get('50')).toBeCloseTo(TOP, 2);
+    const zeroTicks = yTicks(zero);
+    expect(zeroTicks.get('0')).toBeCloseTo(BOTTOM, 2);
+    expect(zeroTicks.get('50')).toBeCloseTo(TOP, 2);
+
+    const { container: narrow } = render(
+      <LollipopVChart
+        style={style}
+        id='lollipop-v-pin-narrow'
+        data={data}
+        shape='circle'
+        x={x}
+        y={{ key: 'v', start: 14, end: 26, axis: yAxis }}
+      />
+    );
+    const narrowTicks = yTicks(narrow);
+    expect(narrowTicks.get('14')).toBeCloseTo(BOTTOM, 2);
+    expect(narrowTicks.get('26')).toBeCloseTo(TOP, 2);
   });
 
   it('falls back to the data when neither bound is finite', () => {
@@ -98,41 +109,23 @@ describe('LollipopVChart y start/end domain (F4)', () => {
     expect(ticks.get('30')).toBeCloseTo(TOP, 2);
   });
 
-  it('warns once in dev when y bounds override the deprecated valueMin/valueMax', () => {
+  it('no longer accepts valueMin/valueMax and uses the data domain', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const props = {
-      style,
-      id: 'lollipop-v-deprecated',
-      data,
-      shape: 'circle' as const,
-      valueMin: 0,
-      valueMax: 100,
-      x,
-      y: { key: 'v', start: 5, end: 50, axis: yAxis },
-    };
-    const { rerender } = render(<LollipopVChart {...props} />);
-    rerender(<LollipopVChart {...props} data={[...data]} />);
-
-    const messages = warn.mock.calls.map(([m]) => String(m));
-    expect(messages).toHaveLength(2);
-    expect(messages[0]).toContain('y.start (5) overrides valueMin (0)');
-    expect(messages[1]).toContain('y.end (50) overrides valueMax (100)');
-  });
-
-  it('does not warn when only the deprecated props are set, or they match', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    render(
+    const { container } = render(
       <LollipopVChart
         style={style}
-        id='lollipop-v-legacy-only'
+        id='lollipop-v-removed-props'
         data={data}
         shape='circle'
+        // @ts-expect-error valueMin was removed in 0.3.0; use y.start
         valueMin={0}
-        valueMax={100}
         x={x}
-        y={{ key: 'v', end: 100, axis: yAxis }}
+        y={{ key: 'v', axis: yAxis }}
       />
     );
+    const ticks = yTicks(container);
+    expect(ticks.get('10')).toBeCloseTo(BOTTOM, 2);
+    expect(ticks.get('30')).toBeCloseTo(TOP, 2);
     expect(warn).not.toHaveBeenCalled();
   });
 });

@@ -44,12 +44,7 @@ export interface KnownBroken {
   symptoms: [RegExp, ...RegExp[]];
 }
 
-const PIE_NAN_TRANSFORM: KnownBroken = {
-  issue: '#18',
-  symptoms: [/translate\(NaN,NaN\)/],
-};
 export const KNOWN_BROKEN: Record<string, KnownBroken> = {
-  'distribution-piechart-intro--custom-style': PIE_NAN_TRANSFORM,
   'linear-barchart-intro--styled': {
     issue: '#19',
     symptoms: [/^console error: Error: <rect> attribute height: A negative value is not valid\./],

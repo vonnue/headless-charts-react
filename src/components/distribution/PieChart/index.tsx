@@ -7,6 +7,7 @@ import useTooltip, { UseTooltipResult } from '@/hooks/useTooltip';
 import { ChartProps, TooltipConfig } from '@/types';
 import { deepValue } from '@/utils';
 import { defaultChartClassNames } from '@/utils';
+import measureSvg from '@/utils/measureSvg';
 import { interpolate } from 'd3-interpolate';
 import { min } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
@@ -199,12 +200,11 @@ const PieChart = <TData = any,>({
   const previousArcs = useRef<any[]>([]);
 
   const refreshChart = useCallback(() => {
-    const svg = select(`#${id}`);
+    const svg = select<SVGSVGElement, unknown>(`#${id}`);
     svg.selectAll('*').interrupt();
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0];
-    const height = +svg.style('height').split('px')[0];
+    const { width, height } = measureSvg(svg.node());
 
     const g = svg.append('g');
 
@@ -382,7 +382,8 @@ const PieChart = <TData = any,>({
     return () => {
       svg.selectAll('*').interrupt();
     };
-  }, [refreshChart, id]);
+    // style is not read by refreshChart, but it sets the size refreshChart measures.
+  }, [refreshChart, id, style?.width, style?.height]);
 
   return (
     <svg

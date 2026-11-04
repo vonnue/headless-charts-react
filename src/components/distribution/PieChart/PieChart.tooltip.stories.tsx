@@ -4,9 +4,11 @@ import PieChart from '.';
 import data from './sample.json';
 
 const classNameMap = {
-  macbook: 'fill-purple-700 dark:fill-purple-100',
-  services: 'fill-  purple-500 dark:fill-purple-300',
-  wearables: 'fill-purple-300 dark:fill-purple-500',
+  macbook: 'fill-purple-300 dark:fill-purple-100',
+  services: 'fill-purple-400 dark:fill-purple-300',
+  wearables: 'fill-purple-500 dark:fill-purple-500',
+  ipad: 'fill-purple-600 dark:fill-purple-700',
+  iphone: 'fill-purple-800 dark:fill-purple-900',
 };
 
 /**

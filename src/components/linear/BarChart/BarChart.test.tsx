@@ -1,10 +1,12 @@
 import { StrictMode } from 'react';
 import { renderToString } from 'react-dom/server';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import BarChart from '.';
 import data from './sample.json';
+import { NegativeStyling, Styled } from './BarChart.stories';
+import { resetDevWarnings } from '@/utils/devEnvironment';
 
 describe('BarChart', () => {
   const x = [
@@ -130,6 +132,46 @@ describe('BarChart', () => {
 
     const labels = screen.getAllByTestId('label');
     expect(labels.length).toEqual(data.length * x.length);
+  });
+
+  // #19: the Styled and NegativeStyling story args, at the stories' h-64 size.
+  it.each([
+    ['Styled', Styled.input.args],
+    ['NegativeStyling', NegativeStyling.input.args],
+  ])('draws %s story bars with finite, non-negative sizes', (_, args) => {
+    const { container } = render(
+      <BarChart {...(args as Parameters<typeof BarChart>[0])} style={{ width: '400px', height: '256px' }} />
+    );
+    const rects = Array.from(container.querySelectorAll('g.marks rect'));
+    const sizes = rects.map((rect) => ({
+      width: Number(rect.getAttribute('width')),
+      height: Number(rect.getAttribute('height')),
+    }));
+    expect(sizes.length).toBeGreaterThan(0);
+    sizes.forEach(({ width, height }) => {
+      expect(Number.isFinite(width) && Number.isFinite(height)).toBe(true);
+      expect(Math.min(width, height)).toBeGreaterThanOrEqual(0);
+    });
+    expect(sizes.some(({ height }) => height > 0)).toBe(true);
+    expect(sizes.some(({ width }) => width > 0)).toBe(true);
+  });
+
+  it('warns once in dev for a y.padding wider than the band and for a missing x.key', () => {
+    resetDevWarnings();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const props = {
+      id: 'bar-warn',
+      data,
+      x: [{ key: 'reading' }, { key: 'missing' }],
+      y: { key: 'name', padding: 1000 },
+      style: { width: '400px', height: '200px' },
+    };
+    const { rerender } = render(<BarChart {...props} />);
+    rerender(<BarChart {...props} className='redraw' />);
+    const messages = warn.mock.calls.map(([message]) => String(message));
+    expect(messages.filter((m) => m.includes('y.padding'))).toHaveLength(1);
+    expect(messages.filter((m) => m.includes('"missing"'))).toHaveLength(1);
+    warn.mockRestore();
   });
 });
 

@@ -218,4 +218,58 @@ describe('PieChart redraw lifecycle (#12)', () => {
     unmount();
     expect(document.getElementById('tooltip-tooltip')).toBeNull();
   });
+
+  // #18: a percentage style used to be parsed as px, giving NaN sizes.
+  it('draws without NaN when width and height are percentages', () => {
+    const { rerender } = render(
+      <PieChart
+        {...defaultArgs}
+        id='pie-percent'
+        labels={{ radius: 1.1 }}
+        style={{ width: '100%', height: '100%' }}
+      />
+    );
+    const svg = document.getElementById('pie-percent');
+    const attrs = () =>
+      Array.from(svg?.querySelectorAll('*') ?? []).flatMap((el) =>
+        ['transform', 'd', 'x', 'y'].map((a) => el.getAttribute(a) ?? '')
+      );
+    expect(svg?.querySelectorAll('path')).toHaveLength(data.length);
+    expect(attrs().filter((v) => v.includes('NaN'))).toEqual([]);
+
+    // A style change redraws at the new size.
+    const before = svg?.querySelector('g[transform]')?.getAttribute('transform');
+    rerender(
+      <PieChart
+        {...defaultArgs}
+        id='pie-percent'
+        labels={{ radius: 1.1 }}
+        style={{ width: '400px', height: '300px' }}
+      />
+    );
+    expect(attrs().filter((v) => v.includes('NaN'))).toEqual([]);
+    expect(svg?.querySelector('g[transform]')?.getAttribute('transform')).not.toBe(before);
+  });
+
+  it('draws at the measured layout box, centred, for a percentage size', () => {
+    const box = vi
+      .spyOn(SVGElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue(new DOMRect(0, 0, 400, 200));
+    render(<PieChart {...defaultArgs} id='pie-box' style={{ width: '100%', height: '100%' }} />);
+    box.mockRestore();
+    const svg = document.getElementById('pie-box');
+    const paths = Array.from(svg?.querySelectorAll('path') ?? []);
+    expect(paths).toHaveLength(data.length);
+    expect(paths.every((p) => (p.getAttribute('d') ?? '').length > 0)).toBe(true);
+    expect(svg?.innerHTML).not.toContain('NaN');
+    expect(svg?.querySelector('g[transform]')?.getAttribute('transform')).toBe('translate(200,100)');
+  });
+
+  // Regression guard: an inline style={{...}} must not redraw on every parent render.
+  it('does not redraw for an equal but new style object', () => {
+    const { rerender } = render(<PieChart {...defaultArgs} id='pie-same-style' style={{ width: '400px' }} />);
+    const g = document.querySelector('#pie-same-style g');
+    rerender(<PieChart {...defaultArgs} id='pie-same-style' style={{ width: '400px' }} />);
+    expect(document.querySelector('#pie-same-style g')).toBe(g);
+  });
 });

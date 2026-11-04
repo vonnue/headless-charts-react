@@ -1778,7 +1778,7 @@
             "density plot"
           ],
           "summary": "Bins points into a grid and colours each cell by how many fell into it, revealing density where individual points would overplot.",
-          "how": "Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` with an optional `binColor.domain`.",
+          "how": "Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` over `binColor.domain` (default `[0, maxCount]`). An axis without `bin` is grouped too: numeric values into d3's default bin count, other values one band per distinct value in sorted order. Without a `margin` prop, the left and bottom margins grow to fit the bin labels, and x labels wider than their bands are rotated.",
           "useWhen": [
             "There are too many points to plot individually without them merging into a solid mass",
             "Where the data concentrates matters more than any individual record"

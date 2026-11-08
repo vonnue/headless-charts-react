@@ -3,11 +3,11 @@ import { arc, pie } from 'd3';
 import { select } from 'd3-selection';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import useTooltip, { UseTooltipResult } from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 
 import { ChartProps, TooltipConfig } from '@/types';
 import { deepValue } from '@/utils';
 import { defaultChartClassNames } from '@/utils';
-import measureSvg from '@/utils/measureSvg';
 import { interpolate } from 'd3-interpolate';
 import { min } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
@@ -199,12 +199,18 @@ const PieChart = <TData = any,>({
 
   const previousArcs = useRef<any[]>([]);
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg = select<SVGSVGElement, unknown>(`#${id}`);
     svg.selectAll('*').interrupt();
     svg.selectAll('*').remove();
-
-    const { width, height } = measureSvg(svg.node());
 
     const g = svg.append('g');
 
@@ -355,6 +361,8 @@ const PieChart = <TData = any,>({
         .text(subtitle.text);
   }, [
     id,
+    width,
+    height,
     startAngle,
     endAngle,
     paddingAngle,
@@ -375,6 +383,7 @@ const PieChart = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -382,11 +391,12 @@ const PieChart = <TData = any,>({
     return () => {
       svg.selectAll('*').interrupt();
     };
-    // style is not read by refreshChart, but it sets the size refreshChart measures.
-  }, [refreshChart, id, style?.width, style?.height]);
+    // A style/className size change reaches refreshChart through useChartSize.
+  }, [refreshChart, id, measured]);
 
   return (
     <svg
+      ref={svgRef}
       data-testid={id}
       style={style}
       id={id}

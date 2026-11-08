@@ -5,10 +5,10 @@ import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import useChartSize from '@/hooks/useChartSize';
 import { defaultChartClassNames, bin1D } from '@/utils';
 import { clampToDomain, pinnedEnd, pinnedStart } from '@/utils/domain';
-import measureSvg from '@/utils/measureSvg';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
@@ -151,13 +151,19 @@ const BarChart = <TData = any,>({
 
   const isBinned = x.length > 0 && x[0].bin != null;
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     if (!data || data.length === 0) return;
 
     const svg = select<SVGSVGElement, unknown>(`#${id}`);
     svg.selectAll('*').remove();
-
-    const { width, height } = measureSvg(svg.node());
 
     // When binning is active, bin the first x series into horizontal histogram
     let effectiveData: any[];
@@ -176,17 +182,19 @@ const BarChart = <TData = any,>({
     }
 
     const minStart = pinnedStart(
-        effectiveX.map((column: BarAxisConfig) => column.start)
+        effectiveX.map((column: BarAxisConfig) => column.start),
       ),
       minX = min(
         effectiveX
-          .map((column: BarAxisConfig) => min(effectiveData, (d: any) => d[column.key]))
-          .filter((v): v is number => v !== undefined)
+          .map((column: BarAxisConfig) =>
+            min(effectiveData, (d: any) => d[column.key]),
+          )
+          .filter((v): v is number => v !== undefined),
       ),
       maxX = max(
         effectiveX
           .map((column) => max(effectiveData, (d: any) => d[column.key]))
-          .filter((v): v is number => v !== undefined)
+          .filter((v): v is number => v !== undefined),
       ),
       maxEnd = pinnedEnd(effectiveX.map((column: BarAxisConfig) => column.end)),
       areAllGreaterThanZero = (minX ?? 0) > 0;
@@ -204,7 +212,7 @@ const BarChart = <TData = any,>({
 
     const xFn = scaleLinear()
       .domain([
-        minStart ?? (areAllGreaterThanZero ? 0 : minX ?? 0),
+        minStart ?? (areAllGreaterThanZero ? 0 : (minX ?? 0)),
         maxEnd ?? maxX ?? 0,
       ])
       .range(xFnRange);
@@ -238,8 +246,13 @@ const BarChart = <TData = any,>({
       .attr('height', Math.max(0, plotBottom - plotTop));
 
     // Determine x-axis location from first x column that has axis config
-    const xAxisLocation = effectiveX.find((col) => col.axis?.location)?.axis?.location || 'bottom';
-    const xAxisLabel = isBinned ? 'Count' : effectiveX.map((column) => column.axis?.label || column.key || '').join(', ');
+    const xAxisLocation =
+      effectiveX.find((col) => col.axis?.location)?.axis?.location || 'bottom';
+    const xAxisLabel = isBinned
+      ? 'Count'
+      : effectiveX
+          .map((column) => column.axis?.label || column.key || '')
+          .join(', ');
 
     // Create a merged config for x-axis with combined label
     const xAxisConfig: AxisConfig = {
@@ -303,8 +316,8 @@ const BarChart = <TData = any,>({
             direction === 'left'
               ? xFn(baseline) - xFn(clamped(Math.abs(value)))
               : value < 0
-              ? xFn(baseline) - xFn(clamped(value))
-              : xFn(clamped(value)) - xFn(baseline)
+                ? xFn(baseline) - xFn(clamped(value))
+                : xFn(clamped(value)) - xFn(baseline),
           )
         : 0;
     // A y.padding wider than a bar's band would give a negative height (#19).
@@ -313,7 +326,7 @@ const BarChart = <TData = any,>({
     if (rawHeight <= 0)
       warnOnceInDev(
         `BarChart#${id}:y.padding`,
-        `BarChart#${id}: y.padding (${effectiveY?.padding}) >= bar band (${band.toFixed(1)}px); bars have no height.`
+        `BarChart#${id}: y.padding (${effectiveY?.padding}) >= bar band (${band.toFixed(1)}px); bars have no height.`,
       );
     const barHeight = Math.max(0, rawHeight);
 
@@ -321,7 +334,7 @@ const BarChart = <TData = any,>({
       if (effectiveData.some((d) => !Number.isFinite(d[column.key])))
         warnOnceInDev(
           `BarChart#${id}:x.key:${column.key}`,
-          `BarChart#${id}: non-numeric value for x.key "${column.key}"; those bars are drawn empty.`
+          `BarChart#${id}: non-numeric value for x.key "${column.key}"; those bars are drawn empty.`,
         );
       const barsG = marksG.append('g');
 
@@ -337,18 +350,20 @@ const BarChart = <TData = any,>({
               (column.classNameNegative && d[column.key] < 0
                 ? column.classNameNegative
                 : column.className) || ''
-            }`
+            }`,
         )
         .attr('rx', column.rx || 0)
         .attr('x', (d: any) =>
-          drawing.duration ? xFn(baseline) : barX(d[column.key])
+          drawing.duration ? xFn(baseline) : barX(d[column.key]),
         )
         .attr(
           'y',
-          (d: any) => (yFn(d[effectiveY.key]) || 0) + (i * yFn.bandwidth()) / effectiveX.length
+          (d: any) =>
+            (yFn(d[effectiveY.key]) || 0) +
+            (i * yFn.bandwidth()) / effectiveX.length,
         )
         .attr('width', (d: any) =>
-          drawing?.duration ? 0 : barWidth(d[column.key])
+          drawing?.duration ? 0 : barWidth(d[column.key]),
         )
         .attr('height', barHeight)
         .on('mouseenter', onMouseOver)
@@ -362,7 +377,7 @@ const BarChart = <TData = any,>({
           .transition()
           .duration(drawing.duration)
           .delay(
-            (_: any, idx: number) => i * (drawing.delay || 100) + idx * 100
+            (_: any, idx: number) => i * (drawing.delay || 100) + idx * 100,
           )
           .attr('x', (d: any) => barX(d[column.key]))
           .attr('width', (d: any) => barWidth(d[column.key]));
@@ -379,7 +394,7 @@ const BarChart = <TData = any,>({
           .attr('text-anchor', direction === 'left' ? 'start' : 'end')
           .attr(
             'x',
-            (d: any) => xFn(d[column.key]) + (direction === 'left' ? 5 : -2)
+            (d: any) => xFn(d[column.key]) + (direction === 'left' ? 5 : -2),
           )
           .attr('font-size', '0.5em')
           .attr(
@@ -387,25 +402,40 @@ const BarChart = <TData = any,>({
             (d: any) =>
               (yFn(d[effectiveY.key]) || 0) +
               ((i + 1) * yFn.bandwidth()) / effectiveX.length -
-              yFn.bandwidth() / effectiveX.length / 4
+              yFn.bandwidth() / effectiveX.length / 4,
           );
     });
-  }, [data, direction, drawing, id, margin, padding, x, y, dataLabel, tooltip]);
+  }, [
+    data,
+    direction,
+    drawing,
+    id,
+    margin,
+    padding,
+    x,
+    y,
+    dataLabel,
+    tooltip,
+    width,
+    height,
+  ]);
 
   useEffect(() => {
+    if (!measured) return;
     refreshChart();
-    // style is not read by refreshChart, but it sets the size refreshChart measures.
+    // A style/className size change reaches refreshChart through useChartSize.
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
     const svg = select(`#${id}`).node();
     return () => {
       interruptTransitions(svg);
     };
-  }, [data, refreshChart, id, style?.width, style?.height]);
+  }, [data, refreshChart, id, measured]);
 
   return (
     <svg
       id={id}
+      ref={svgRef}
       style={style}
       className={twMerge(defaultChartClassNames, className)}
       data-testid='bar-chart'

@@ -1,7 +1,9 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, expectTypeOf, it, beforeEach } from 'vitest';
+import type { Axis } from 'd3-axis';
 import { select, Selection } from 'd3-selection';
-import { scaleLinear, scaleBand } from 'd3-scale';
-import { drawAxis } from './useAxis';
+import { scaleLinear, scaleBand, scaleTime } from 'd3-scale';
+import type { NumberValue } from 'd3-scale';
+import useAxis, { drawAxis } from './useAxis';
 
 describe('drawAxis', () => {
   let container: SVGSVGElement;
@@ -200,5 +202,70 @@ describe('drawAxis', () => {
     // Band scale should render tick labels
     const ticks = axisG?.querySelectorAll('.tick');
     expect(ticks?.length).toBe(3);
+  });
+
+  describe('types (#44)', () => {
+    type Row = { label: string; value: number };
+    const rowConfig = { key: 'value' as const, axis: { ticks: 5 } };
+
+    it('infers the axis domain from the scale', () => {
+      const band = drawAxis({
+        ...baseOptions,
+        g,
+        scale: scaleBand().domain(['A']).range([0, 400]),
+        orientation: 'horizontal',
+      });
+      expectTypeOf(band.axis).toEqualTypeOf<Axis<string>>();
+
+      const linear = drawAxis({ ...baseOptions, g, orientation: 'vertical' });
+      expectTypeOf(linear.axis).toEqualTypeOf<Axis<NumberValue>>();
+
+      const time = drawAxis({
+        ...baseOptions,
+        g,
+        scale: scaleTime().range([0, 400]),
+        orientation: 'horizontal',
+      });
+      expectTypeOf(time.axis).toEqualTypeOf<Axis<Date | NumberValue>>();
+    });
+
+    it('keeps the pre-#44 explicit row generic: drawAxis<Row>(...)', () => {
+      const chartG = select(container).append('g');
+      const linear = drawAxis<Row>({
+        ...baseOptions,
+        g: chartG,
+        config: rowConfig,
+        orientation: 'vertical',
+      });
+      expectTypeOf(linear.axis).toEqualTypeOf<Axis<NumberValue>>();
+
+      const band = useAxis().drawAxis<Row>({
+        ...baseOptions,
+        g: chartG,
+        scale: scaleBand().domain(['A']).range([0, 400]),
+        config: { key: 'label', axis: { ticks: 5 } },
+        orientation: 'horizontal',
+      });
+      expectTypeOf(band.axis).toEqualTypeOf<Axis<string>>();
+
+      drawAxis<Row>({
+        ...baseOptions,
+        g: chartG,
+        scale: scaleTime().range([0, 400]),
+        config: rowConfig,
+        orientation: 'horizontal',
+      });
+
+      // Explicit domain after the row type.
+      const explicit = drawAxis<Row, string>({
+        ...baseOptions,
+        g: chartG,
+        scale: scaleBand().domain(['A']).range([0, 400]),
+        config: rowConfig,
+        orientation: 'horizontal',
+      });
+      expectTypeOf(explicit.axis).toEqualTypeOf<Axis<string>>();
+      expect(container.querySelectorAll('[data-testid]').length).toBe(4);
+    });
   });
 });

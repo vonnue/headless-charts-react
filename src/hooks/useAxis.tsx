@@ -8,6 +8,7 @@ import {
   axisTop,
 } from 'd3-axis';
 import { BaseType, Selection } from 'd3-selection';
+import type { NumberValue } from 'd3-scale';
 import { ValueAxisConfig } from '@/types';
 
 /** A d3 scale usable by an axis, generic over its domain (number, Date, string). */
@@ -15,8 +16,8 @@ export type AxisScale<Domain extends AxisDomain = AxisDomain> =
   D3AxisScale<Domain>;
 
 export interface DrawAxisOptions<
-  Domain extends AxisDomain = AxisDomain,
   TData = unknown,
+  Domain extends AxisDomain = AxisDomain,
   PElement extends BaseType = BaseType,
   PDatum = unknown,
   GElement extends SVGElement = SVGGElement,
@@ -66,11 +67,53 @@ export interface AxisResult<
  * @returns The axis group element and the d3 axis function
  */
 export function drawAxis<
+  TData,
   Domain extends AxisDomain,
+  PElement extends BaseType = BaseType,
+  PDatum = unknown,
+  GElement extends SVGElement = SVGGElement,
+>(
+  options: DrawAxisOptions<TData, Domain, PElement, PDatum, GElement>
+): AxisResult<Domain, PElement, PDatum>;
+// Pre-#44 API: `drawAxis<Row>(options)` names only the row type. TypeScript
+// cannot partially infer the domain, so these overloads cover d3's three
+// axis domain families (band/point, continuous, time).
+export function drawAxis<
   TData = unknown,
   PElement extends BaseType = BaseType,
   PDatum = unknown,
   GElement extends SVGElement = SVGGElement,
+>(
+  options: DrawAxisOptions<TData, string, PElement, PDatum, GElement>
+): AxisResult<string, PElement, PDatum>;
+export function drawAxis<
+  TData = unknown,
+  PElement extends BaseType = BaseType,
+  PDatum = unknown,
+  GElement extends SVGElement = SVGGElement,
+>(
+  options: DrawAxisOptions<TData, NumberValue, PElement, PDatum, GElement>
+): AxisResult<NumberValue, PElement, PDatum>;
+export function drawAxis<
+  TData = unknown,
+  PElement extends BaseType = BaseType,
+  PDatum = unknown,
+  GElement extends SVGElement = SVGGElement,
+>(
+  options: DrawAxisOptions<
+    TData,
+    Date | NumberValue,
+    PElement,
+    PDatum,
+    GElement
+  >
+): AxisResult<Date | NumberValue, PElement, PDatum>;
+export function drawAxis<
+  TData,
+  Domain extends AxisDomain,
+  PElement extends BaseType,
+  PDatum,
+  GElement extends SVGElement,
 >({
   g,
   scale,
@@ -82,7 +125,7 @@ export function drawAxis<
   labelText,
   labelY: customLabelY,
   className,
-}: DrawAxisOptions<Domain, TData, PElement, PDatum, GElement>): AxisResult<
+}: DrawAxisOptions<TData, Domain, PElement, PDatum, GElement>): AxisResult<
   Domain,
   PElement,
   PDatum

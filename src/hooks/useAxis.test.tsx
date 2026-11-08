@@ -1,11 +1,11 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { select } from 'd3-selection';
+import { select, Selection } from 'd3-selection';
 import { scaleLinear, scaleBand } from 'd3-scale';
 import { drawAxis } from './useAxis';
 
 describe('drawAxis', () => {
   let container: SVGSVGElement;
-  let g: any;
+  let g: Selection<SVGSVGElement, unknown, null, undefined>;
 
   beforeEach(() => {
     document.body.innerHTML = '';

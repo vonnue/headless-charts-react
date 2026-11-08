@@ -1,14 +1,29 @@
-import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
-import { Selection } from 'd3-selection';
+import {
+  Axis,
+  AxisDomain,
+  AxisScale as D3AxisScale,
+  axisBottom,
+  axisLeft,
+  axisRight,
+  axisTop,
+} from 'd3-axis';
+import { BaseType, Selection } from 'd3-selection';
 import { ValueAxisConfig } from '@/types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AxisScale = any;
+/** A d3 scale usable by an axis, generic over its domain (number, Date, string). */
+export type AxisScale<Domain extends AxisDomain = AxisDomain> =
+  D3AxisScale<Domain>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface DrawAxisOptions<TData = any> {
-  g: Selection<SVGGElement, unknown, any, any>;
-  scale: AxisScale;
+export interface DrawAxisOptions<
+  Domain extends AxisDomain = AxisDomain,
+  TData = unknown,
+  PElement extends BaseType = BaseType,
+  PDatum = unknown,
+  GElement extends SVGElement = SVGGElement,
+> {
+  /** Group (or root svg) the axis `<g>` is appended to */
+  g: Selection<GElement, unknown, PElement, PDatum>;
+  scale: AxisScale<Domain>;
   /** Only `axis` settings are read, so `key` is optional */
   config: ValueAxisConfig<TData>;
   dimensions: {
@@ -36,9 +51,13 @@ export interface DrawAxisOptions<TData = any> {
   className?: string;
 }
 
-export interface AxisResult {
-  axisG: Selection<SVGGElement, unknown, null, undefined>;
-  axis: any;
+export interface AxisResult<
+  Domain extends AxisDomain = AxisDomain,
+  PElement extends BaseType = BaseType,
+  PDatum = unknown,
+> {
+  axisG: Selection<SVGGElement, unknown, PElement, PDatum>;
+  axis: Axis<Domain>;
 }
 
 /**
@@ -46,7 +65,13 @@ export interface AxisResult {
  * @param options - Configuration options for the axis
  * @returns The axis group element and the d3 axis function
  */
-export function drawAxis<TData = any>({
+export function drawAxis<
+  Domain extends AxisDomain,
+  TData = unknown,
+  PElement extends BaseType = BaseType,
+  PDatum = unknown,
+  GElement extends SVGElement = SVGGElement,
+>({
   g,
   scale,
   config,
@@ -57,13 +82,17 @@ export function drawAxis<TData = any>({
   labelText,
   labelY: customLabelY,
   className,
-}: DrawAxisOptions<TData>): AxisResult {
+}: DrawAxisOptions<Domain, TData, PElement, PDatum, GElement>): AxisResult<
+  Domain,
+  PElement,
+  PDatum
+> {
   const { width, height } = dimensions;
   const location = config.axis?.location;
   const ticks = config.axis?.ticks || 5;
   const label = labelText ?? config.axis?.label;
 
-  let axis;
+  let axis: Axis<Domain>;
   let transform: string;
   let labelX: number;
   let labelY: number;

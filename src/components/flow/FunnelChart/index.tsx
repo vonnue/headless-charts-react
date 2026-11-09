@@ -167,22 +167,31 @@ const defaultTooltipHtml =
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 /* catalog:start */
 /**
- * Ordered stages drawn as centred bars or connected trapezoids whose length
- * encodes each stage value, so drop-off between stages is the story.
+ * Ordered conversion stages drawn as centred bars or connected trapezoids
+ * whose length encodes each stage value, so drop-off along the path is the
+ * story.
  *
  * @remarks
  *
  * **Use when**
- * - Counts move through ordered stages and the drop-off between stages is
- *   the message, e.g. visit → signup → paid
- * - Each stage should be read against the first stage or the previous one —
- *   set `labels.percent`
+ * - Counts move through a fixed ordered path and the drop-off between stages
+ *   is the message, e.g. visit → signup → paid
+ * - Each stage should be read as a share of the first stage or of the
+ *   previous one — set `labels.percent` to `"ofFirst"`, `"ofPrevious"` or
+ *   `"both"`
+ * - Stages should stay in the given order rather than being sorted by value
  *
  * **Avoid when**
  * - The parts are an unordered split of one whole — use PieChart
- * - It is a ranked snapshot with no drop-off story — use BarChart
+ * - It is a ranked snapshot with no stage-to-stage drop-off story — use
+ *   BarChart
  * - The steps are additive bridge steps to a total — use ColumnChartStacked
  *   with `waterfall`
+ * - Colour is used to encode magnitude (darker = larger) — length already
+ *   encodes value; keep `classNameMap` / `value.className` as stage identity
+ *   only
+ * - The flow is volume between arbitrary nodes rather than one ordered path
+ *   — Network only shows topology; a Sankey fits once available
  *
  * Also called: funnel, funnel chart, conversion funnel.
  *
@@ -193,10 +202,13 @@ const defaultTooltipHtml =
  * <FunnelChart
  *   id="signup"
  *   className="w-full h-80"
- *   data={stages}
+ *   data={data}
  *   stage={{ key: 'name' }}
  *   value={{ key: 'count', className: 'fill-slate-400' }}
+ *   classNameMap={{ Visit: 'fill-slate-500', Signup: 'fill-slate-400', Paid: 'fill-slate-300' }}
+ *   shape="trapezoid"
  *   labels={{ stage: true, value: true, percent: 'ofFirst' }}
+ *   title="Signup conversion"
  * />
  * ```
  *

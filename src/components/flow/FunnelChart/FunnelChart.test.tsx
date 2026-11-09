@@ -919,4 +919,68 @@ describe('FunnelChart', () => {
       expect(l.getAttribute('text-anchor')).toBe('middle');
     });
   });
+
+  it('review F1: a parent re-render with unchanged props does not redraw the marks', () => {
+    const data: Row[] = [
+      { name: 'Visit', count: 100 },
+      { name: 'Paid', count: 40 },
+    ];
+    const tooltip = {};
+    const view = (extra: string) => (
+      <div data-extra={extra}>
+        <FunnelChart
+          id='f-rerender'
+          data={data}
+          stage={STAGE}
+          value={VALUE}
+          tooltip={tooltip}
+          style={STYLE}
+        />
+      </div>
+    );
+    const { rerender } = render(view('a'));
+    const marksBefore = stagesOf();
+    const hitsBefore = hitsOf();
+    expect(marksBefore).toHaveLength(2);
+
+    rerender(view('b'));
+    const marksAfter = stagesOf();
+    const hitsAfter = hitsOf();
+    marksAfter.forEach((node, i) => expect(node).toBe(marksBefore[i]));
+    hitsAfter.forEach((node, i) => expect(node).toBe(hitsBefore[i]));
+
+    // The surviving listeners still reach the current tooltip handlers.
+    fireEvent.mouseEnter(hitsAfter[1], { clientX: 10, clientY: 10 });
+    expect(tooltipOf('f-rerender')?.innerHTML).toContain('Paid');
+
+    // A real prop change still redraws.
+    rerender(
+      <div data-extra='c'>
+        <FunnelChart
+          id='f-rerender'
+          data={[...data]}
+          stage={STAGE}
+          value={VALUE}
+          tooltip={tooltip}
+          style={STYLE}
+        />
+      </div>
+    );
+    expect(stagesOf()[0]).not.toBe(marksBefore[0]);
+  });
+
+  it('review F1: unmounting mid grow-in does not throw', () => {
+    const { unmount } = render(
+      <FunnelChart
+        id='f-unmount'
+        data={sample}
+        stage={STAGE}
+        value={VALUE}
+        shape='trapezoid'
+        drawing={{ duration: 500 }}
+        style={STYLE}
+      />
+    );
+    expect(() => unmount()).not.toThrow();
+  });
 });

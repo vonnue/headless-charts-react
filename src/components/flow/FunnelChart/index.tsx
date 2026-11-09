@@ -1,7 +1,7 @@
 import { scaleBand } from 'd3-scale';
 import { select } from 'd3-selection';
 import 'd3-transition';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 import useTooltip from '@/hooks/useTooltip';
@@ -112,6 +112,11 @@ export interface FunnelDatumInfo {
   ofFirst: number | null;
   ofPrevious: number | null;
 }
+
+type TooltipHandlers = Pick<
+  ReturnType<typeof useTooltip>,
+  'onMouseOver' | 'onMouseMove' | 'onMouseLeave'
+>;
 
 /** A data row as read by key; rows are user records of unknown shape. */
 type Row = Record<string, unknown>;
@@ -242,10 +247,19 @@ const FunnelChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
     defaultHtml: defaultTooltipHtml(stage.key, value.key),
   });
 
+  // The hook handlers are new each render but read the latest config, so the
+  // d3 listeners call them through a ref instead of making them redraw deps
+  // (otherwise every parent re-render would clear and redraw the funnel).
+  const tooltipHandlers = useRef<TooltipHandlers | null>(null);
+  useLayoutEffect(() => {
+    tooltipHandlers.current = { onMouseOver, onMouseMove, onMouseLeave };
+  });
+
   const refreshChart = useCallback(() => {
     if (!plotRef.current) return;
     const svgNode = plotRef.current.ownerSVGElement;
     const root = select(plotRef.current);
+    root.selectAll('*').interrupt();
     root.selectAll('*').remove();
 
     const rows = (data ?? []) as Row[];
@@ -416,9 +430,11 @@ const FunnelChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
       .attr('height', vertical ? bandSize : span)
       .attr('fill', 'transparent')
       .attr('pointer-events', 'all')
-      .on('mouseenter', (event, i) => onMouseOver(event, datums[i]))
-      .on('mousemove', onMouseMove)
-      .on('mouseleave', onMouseLeave);
+      .on('mouseenter', (event, i) =>
+        tooltipHandlers.current?.onMouseOver(event, datums[i])
+      )
+      .on('mousemove', (event) => tooltipHandlers.current?.onMouseMove(event))
+      .on('mouseleave', () => tooltipHandlers.current?.onMouseLeave());
 
     // Stage labels: outside the plot, beside each band.
     if (stageLabelOpt) {
@@ -502,13 +518,16 @@ const FunnelChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
     padding,
     margin,
     drawing,
-    onMouseOver,
-    onMouseMove,
-    onMouseLeave,
   ]);
 
   useEffect(() => {
     refreshChart();
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so interrupt through this reference, not a lookup by id.
+    const plot = plotRef.current;
+    return () => {
+      if (plot) select(plot).selectAll('*').interrupt();
+    };
     // style is not read by refreshChart, but it sets the size refreshChart measures.
   }, [refreshChart, style?.width, style?.height]);
 

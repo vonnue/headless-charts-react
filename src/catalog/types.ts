@@ -85,8 +85,9 @@ export interface ChartDataSpec {
    * - `records` — an array of objects, one per row
    * - `scalar`  — a single number (gauges)
    * - `graph`   — nodes plus edges (passed as separate props)
+   * - `hierarchy` — one nested root object, or a forest, with `children`
    */
-  form: 'records' | 'scalar' | 'graph';
+  form: 'records' | 'scalar' | 'graph' | 'hierarchy';
   encodings: ChartEncoding[];
   /** How many series/measures the chart can carry at once. */
   seriesCount?: Cardinality;

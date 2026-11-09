@@ -1,0 +1,31 @@
+{
+  "name": "Budget",
+  "children": [
+    {
+      "name": "Ops",
+      "children": [
+        { "name": "Payroll", "amount": 420 },
+        { "name": "Facilities", "amount": 160 },
+        { "name": "IT", "amount": 120 },
+        { "name": "Legal", "amount": 18 }
+      ]
+    },
+    {
+      "name": "Growth",
+      "children": [
+        { "name": "Ads", "amount": 260 },
+        { "name": "Events", "amount": 90 },
+        { "name": "Content", "amount": 70 },
+        { "name": "Partnerships", "amount": 0 }
+      ]
+    },
+    {
+      "name": "R&D",
+      "children": [
+        { "name": "Platform", "amount": 310 },
+        { "name": "Research", "amount": 140 },
+        { "name": "Tooling", "amount": 45 }
+      ]
+    }
+  ]
+}

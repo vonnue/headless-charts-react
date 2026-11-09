@@ -1,0 +1,7 @@
+[
+  { "name": "Visit", "count": 12000 },
+  { "name": "Signup", "count": 4800 },
+  { "name": "Activate", "count": 2900 },
+  { "name": "Subscribe", "count": 1100 },
+  { "name": "Renew", "count": 760 }
+]

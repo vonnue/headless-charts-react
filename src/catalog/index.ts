@@ -18,6 +18,7 @@ import LineChart from '@/components/linear/LineChart/meta';
 import LinearGauge from '@/components/gauges/LinearGauge/meta';
 import LollipopHChart from '@/components/linear/LollipopHChart/meta';
 import LollipopVChart from '@/components/linear/LollipopVChart/meta';
+import FunnelChart from '@/components/flow/FunnelChart/meta';
 import Network from '@/components/flow/Network/meta';
 import PieChart from '@/components/distribution/PieChart/meta';
 import PizzaChart from '@/components/gauges/PizzaChart/meta';
@@ -68,6 +69,7 @@ export const chartCatalog: ChartMeta[] = [
   RingGauge,
   SpeedometerChart,
   // flow
+  FunnelChart,
   Network,
 ];
 

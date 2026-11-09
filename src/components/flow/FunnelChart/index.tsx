@@ -164,7 +164,6 @@ const defaultTooltipHtml =
     )}<br/>of previous: ${formatPercent(info?.ofPrevious ?? null)}`;
   };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 /* catalog:start */
 /**
  * Ordered conversion stages drawn as centred bars or connected trapezoids
@@ -217,7 +216,7 @@ const defaultTooltipHtml =
  * @see PieChart — an unordered part-to-whole split
  */
 /* catalog:end */
-const FunnelChart = <TData = any,>({
+const FunnelChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
   data,
   id,
   className,
@@ -360,10 +359,7 @@ const FunnelChart = <TData = any,>({
         .attr('x', (i) => rectAttrs(i, duration ? 0 : 1).x)
         .attr('y', (i) => rectAttrs(i, duration ? 0 : 1).y)
         .attr('width', (i) => rectAttrs(i, duration ? 0 : 1).width)
-        .attr('height', (i) => rectAttrs(i, duration ? 0 : 1).height)
-        .on('mouseenter', (event, i) => onMouseOver(event, datums[i]))
-        .on('mousemove', onMouseMove)
-        .on('mouseleave', onMouseLeave);
+        .attr('height', (i) => rectAttrs(i, duration ? 0 : 1).height);
       if (duration)
         rects
           .transition()
@@ -392,10 +388,7 @@ const FunnelChart = <TData = any,>({
         .attr('data-near', (i) => geoms[i].near)
         .attr('data-far', (i) => geoms[i].far)
         .attr('class', markClass)
-        .attr('d', (i) => (duration ? collapsed(i) : polygonPath(geoms[i].points)))
-        .on('mouseenter', (event, i) => onMouseOver(event, datums[i]))
-        .on('mousemove', onMouseMove)
-        .on('mouseleave', onMouseLeave);
+        .attr('d', (i) => (duration ? collapsed(i) : polygonPath(geoms[i].points)));
       if (duration)
         paths
           .transition()
@@ -403,6 +396,29 @@ const FunnelChart = <TData = any,>({
           .delay((_, idx) => delay + idx * 100)
           .attr('d', (i) => polygonPath(geoms[i].points));
     }
+
+    // Hit targets: one transparent rect per stage covering its whole band
+    // (full plot length × bandwidth), drawn over the marks, so tiny, zero
+    // and tapered stages are still hoverable. Marks carry no handlers, so
+    // events fire once.
+    root
+      .append('g')
+      .attr('class', 'hit-areas')
+      .selectAll('rect')
+      .data(indices)
+      .enter()
+      .append('rect')
+      .attr('data-testid', 'funnel-hit')
+      .attr('data-index', (i) => i)
+      .attr('x', (i) => (vertical ? crossStart : bandFn(i) ?? alongStart))
+      .attr('y', (i) => (vertical ? bandFn(i) ?? alongStart : crossStart))
+      .attr('width', vertical ? span : bandSize)
+      .attr('height', vertical ? bandSize : span)
+      .attr('fill', 'transparent')
+      .attr('pointer-events', 'all')
+      .on('mouseenter', (event, i) => onMouseOver(event, datums[i]))
+      .on('mousemove', onMouseMove)
+      .on('mouseleave', onMouseLeave);
 
     // Stage labels: outside the plot, beside each band.
     if (stageLabelOpt) {

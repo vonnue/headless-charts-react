@@ -17,6 +17,10 @@ const stagesOf = (container: HTMLElement = document.body) =>
   Array.from(
     container.querySelectorAll<SVGElement>('[data-testid="funnel-stage"]')
   );
+const hitsOf = (container: HTMLElement = document.body) =>
+  Array.from(
+    container.querySelectorAll<SVGElement>('[data-testid="funnel-hit"]')
+  );
 
 const tooltipOf = (id: string): HTMLElement | null =>
   document.getElementById(`tooltip-${id}`);
@@ -609,7 +613,8 @@ describe('FunnelChart', () => {
         style={STYLE}
       />
     );
-    fireEvent.mouseEnter(stagesOf()[1], { clientX: 10, clientY: 10 });
+    // The band hit rect (drawn over the mark) is the hover target (spec 23).
+    fireEvent.mouseEnter(hitsOf()[1], { clientX: 10, clientY: 10 });
     const tip = tooltipOf('f18');
     expect(tip).toBeTruthy();
     expect(tip?.className).toContain('opacity-100');
@@ -630,7 +635,7 @@ describe('FunnelChart', () => {
         style={STYLE}
       />
     );
-    fireEvent.mouseEnter(stagesOf()[0], { clientX: 10, clientY: 10 });
+    fireEvent.mouseEnter(hitsOf()[0], { clientX: 10, clientY: 10 });
     expect(tooltipOf('f18b')?.innerHTML).toBe('custom:Visit');
   });
 

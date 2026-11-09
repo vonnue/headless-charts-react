@@ -71,7 +71,7 @@
         },
         {
           "name": "TreemapChart",
-          "when": "A whole split into nested groups, too many parts for a pie"
+          "when": "A hierarchical whole where nested group totals and their parts both matter; area encodes value (too many parts for a pie)"
         }
       ]
     },
@@ -1832,13 +1832,19 @@
             "prop": "data",
             "role": "link",
             "required": true,
-            "description": "One nested root object or a forest (array of roots); children under `children.key` (default `\"children\"`)."
+            "description": "One nested root object or a forest (array of roots). Children nest under `children.key` (default `\"children\"`); there is no flat id/parent mode."
+          },
+          {
+            "prop": "children",
+            "role": "link",
+            "required": false,
+            "description": "Optional override for the nested-children key. Default `{ key: \"children\" }`."
           },
           {
             "prop": "value",
             "role": "quantitative",
             "required": true,
-            "description": "Leaf size key. Internal nodes are the sum of their leaves; their own values are ignored."
+            "description": "Leaf size key. Internal nodes are the sum of their descendant leaves; a value on an internal node is ignored."
           },
           {
             "prop": "name",
@@ -1850,7 +1856,7 @@
             "prop": "classNameMap",
             "role": "color",
             "required": false,
-            "description": "Optional class per top-level group (see `colorBy`). Colour names the group; area encodes magnitude."
+            "description": "Optional class per group (see `colorBy`, default top-level). Colour names the group; area encodes magnitude — do not map colour to size."
           }
         ],
         "rowCount": {
@@ -1864,12 +1870,16 @@
       },
       "useWhen": [
         "A whole splits into nested groups and both the group totals and their parts matter",
-        "There are too many parts for a pie, and the hierarchy explains them"
+        "There are too many parts for a pie, and the hierarchy is what explains them",
+        "Leaf areas should be comparable at a glance — set `leavesOnly` if group headers are noise"
       ],
       "avoidWhen": [
         "A flat whole with about 6 or fewer parts — use PieChart",
-        "Individual units should be countable — use WaffleChart",
-        "Composition changes over time — use AreaChart or ColumnChartStacked"
+        "Individual units should be countable cells — use WaffleChart",
+        "A flat ranked comparison of leaves with no nesting — use BarChart",
+        "Composition changes over time — use AreaChart or ColumnChartStacked",
+        "Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only",
+        "A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role"
       ],
       "alternatives": [
         {
@@ -1879,6 +1889,10 @@
         {
           "name": "WaffleChart",
           "when": "cells should be countable units"
+        },
+        {
+          "name": "BarChart",
+          "when": "a flat ranked comparison of the leaves with no nesting"
         }
       ],
       "requiredProps": [
@@ -1886,23 +1900,23 @@
         "data",
         "value"
       ],
-      "example": "<TreemapChart\n  id=\"budget\"\n  className=\"w-full h-96\"\n  data={tree}\n  value={{ key: 'amount', className: 'fill-slate-300 stroke-white' }}\n  classNameMap={{ Ops: 'fill-slate-500', Growth: 'fill-slate-400' }}\n  labels={{ name: true, value: true }}\n/>",
+      "example": "<TreemapChart\n  id=\"budget\"\n  className=\"w-full h-96\"\n  data={data}\n  value={{ key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' }}\n  classNameMap={{ Ops: 'fill-slate-500', Growth: 'fill-slate-400' }}\n  labels={{ name: true, value: true, percent: 'ofParent' }}\n  title=\"Budget by group\"\n/>",
       "storybook": "Distribution/TreemapChart/Intro",
       "variants": [
         {
           "kind": "option",
           "name": "Leaves only",
-          "how": "Set `leavesOnly` to drop the group headers and paint leaf cells only."
+          "how": "Set `leavesOnly` to drop the group headers and paint leaf cells only (`paddingTop` then defaults to 0)."
         },
         {
           "kind": "option",
           "name": "Tiling",
-          "how": "Set `tile.type` to `squarify` (default), `binary`, `slice`, `dice`, `sliceDice` or `resquarify`."
+          "how": "Set `tile.type` to `squarify` (default), `binary`, `slice`, `dice`, `sliceDice` or `resquarify`; `tile.ratio` applies to squarify/resquarify."
         },
         {
           "kind": "option",
           "name": "Percent labels",
-          "how": "Set `labels.percent` to `\"ofParent\"`, `\"ofRoot\"` or `\"both\"`."
+          "how": "Set `labels.percent` to `\"ofParent\"`, `\"ofRoot\"` or `\"both\"`; a zero or missing divisor prints `n/a`."
         }
       ]
     },

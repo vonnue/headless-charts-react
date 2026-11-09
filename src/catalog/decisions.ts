@@ -68,7 +68,7 @@ export const decisionTree: DecisionBranch[] = [
       },
       {
         name: 'TreemapChart',
-        when: 'A whole split into nested groups, too many parts for a pie',
+        when: 'A hierarchical whole where nested group totals and their parts both matter; area encodes value (too many parts for a pie)',
       },
     ],
   },

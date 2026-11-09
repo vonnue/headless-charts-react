@@ -103,7 +103,7 @@ Find the question being asked, then pick among the candidates.
 | [`AreaChart`](#areachart) | Composition changing over a continuous axis; supports 100% and streamgraph stacking |
 | [`PizzaChart`](#pizzachart) | Several metrics as radial segments of one entity, each against its own max |
 | [`FunnelChart`](#funnelchart) | Ordered conversion / drop-off through fixed stages (visit → signup → paid); length encodes count, colour must not |
-| [`TreemapChart`](#treemapchart) | A whole split into nested groups, too many parts for a pie |
+| [`TreemapChart`](#treemapchart) | A hierarchical whole where nested group totals and their parts both matter; area encodes value (too many parts for a pie) |
 
 ### How does a measure change over time or an ordered axis?
 
@@ -1569,13 +1569,17 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 **Use when**
 
 - A whole splits into nested groups and both the group totals and their parts matter
-- There are too many parts for a pie, and the hierarchy explains them
+- There are too many parts for a pie, and the hierarchy is what explains them
+- Leaf areas should be comparable at a glance — set `leavesOnly` if group headers are noise
 
 **Do not use when**
 
 - A flat whole with about 6 or fewer parts — use PieChart
-- Individual units should be countable — use WaffleChart
+- Individual units should be countable cells — use WaffleChart
+- A flat ranked comparison of leaves with no nesting — use BarChart
 - Composition changes over time — use AreaChart or ColumnChartStacked
+- Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only
+- A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role
 
 **Data**
 
@@ -1584,10 +1588,11 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
-| `data` | link | yes | One nested root object or a forest (array of roots); children under `children.key` (default `"children"`). |
-| `value` | quantitative | yes | Leaf size key. Internal nodes are the sum of their leaves; their own values are ignored. |
+| `data` | link | yes | One nested root object or a forest (array of roots). Children nest under `children.key` (default `"children"`); there is no flat id/parent mode. |
+| `children` | link | no | Optional override for the nested-children key. Default `{ key: "children" }`. |
+| `value` | quantitative | yes | Leaf size key. Internal nodes are the sum of their descendant leaves; a value on an internal node is ignored. |
 | `name` | label | no | Display-name key. Default `"name"`. |
-| `classNameMap` | color | no | Optional class per top-level group (see `colorBy`). Colour names the group; area encodes magnitude. |
+| `classNameMap` | color | no | Optional class per group (see `colorBy`, default top-level). Colour names the group; area encodes magnitude — do not map colour to size. |
 
 **Required props:** `id`, `data`, `value`
 
@@ -1595,23 +1600,25 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 <TreemapChart
   id="budget"
   className="w-full h-96"
-  data={tree}
-  value={{ key: 'amount', className: 'fill-slate-300 stroke-white' }}
+  data={data}
+  value={{ key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' }}
   classNameMap={{ Ops: 'fill-slate-500', Growth: 'fill-slate-400' }}
-  labels={{ name: true, value: true }}
+  labels={{ name: true, value: true, percent: 'ofParent' }}
+  title="Budget by group"
 />
 ```
 
 **Options**
 
-- **Leaves only** — Set `leavesOnly` to drop the group headers and paint leaf cells only.
-- **Tiling** — Set `tile.type` to `squarify` (default), `binary`, `slice`, `dice`, `sliceDice` or `resquarify`.
-- **Percent labels** — Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`.
+- **Leaves only** — Set `leavesOnly` to drop the group headers and paint leaf cells only (`paddingTop` then defaults to 0).
+- **Tiling** — Set `tile.type` to `squarify` (default), `binary`, `slice`, `dice`, `sliceDice` or `resquarify`; `tile.ratio` applies to squarify/resquarify.
+- **Percent labels** — Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`; a zero or missing divisor prints `n/a`.
 
 **Consider instead**
 
 - [`PieChart`](#piechart) — a flat part-to-whole with few slices
 - [`WaffleChart`](#wafflechart) — cells should be countable units
+- [`BarChart`](#barchart) — a flat ranked comparison of the leaves with no nesting
 
 ### WaffleChart
 

@@ -108,12 +108,20 @@ const tileFn = (type: TreemapTileType | undefined, ratio: number | undefined) =>
  * **Use when**
  * - A whole splits into nested groups and both the group totals and their
  *   parts matter
- * - There are too many parts for a pie, and the hierarchy explains them
+ * - There are too many parts for a pie, and the hierarchy is what explains
+ *   them
+ * - Leaf areas should be comparable at a glance — set `leavesOnly` if group
+ *   headers are noise
  *
  * **Avoid when**
  * - A flat whole with about 6 or fewer parts — use PieChart
- * - Individual units should be countable — use WaffleChart
+ * - Individual units should be countable cells — use WaffleChart
+ * - A flat ranked comparison of leaves with no nesting — use BarChart
  * - Composition changes over time — use AreaChart or ColumnChartStacked
+ * - Colour is used to encode magnitude — area already encodes value; keep
+ *   `classNameMap` as group identity only
+ * - A radial hierarchy is preferred — wait for SunburstChart; do not stretch
+ *   PizzaChart (`sunburst-style profile`) into that role
  *
  * Also called: treemap, squarified treemap, rectangular tree map.
  *
@@ -124,15 +132,17 @@ const tileFn = (type: TreemapTileType | undefined, ratio: number | undefined) =>
  * <TreemapChart
  *   id="budget"
  *   className="w-full h-96"
- *   data={tree}
- *   value={{ key: 'amount', className: 'fill-slate-300 stroke-white' }}
+ *   data={data}
+ *   value={{ key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' }}
  *   classNameMap={{ Ops: 'fill-slate-500', Growth: 'fill-slate-400' }}
- *   labels={{ name: true, value: true }}
+ *   labels={{ name: true, value: true, percent: 'ofParent' }}
+ *   title="Budget by group"
  * />
  * ```
  *
  * @see PieChart — a flat part-to-whole with few slices
  * @see WaffleChart — cells should be countable units
+ * @see BarChart — a flat ranked comparison of the leaves with no nesting
  */
 /* catalog:end */
 const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

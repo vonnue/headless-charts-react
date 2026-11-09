@@ -84,10 +84,11 @@ export interface LollipopVChartProps<TData = any> extends ChartProps<TData> {
  * **Specialised types**
  * - Time-scaled lollipop chart — Set `x.scalingFunction: "time"` with
  *   `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar
- *   width to derive — `x.time.barWidth` is not used by this chart. Set
- *   `x.time.utc: true` when dates are UTC instants or calendar days —
- *   otherwise they are parsed, placed and labelled in the viewer's local
- *   time zone.
+ *   width to derive — `x.time.barWidth` is not used by this chart. ISO dates
+ *   are read, placed and labelled in UTC by default, so calendar days
+ *   (`2025-01-31`) land on the right day in every time zone; set
+ *   `x.time.utc: false` for the viewer's local time, or `x.time.utc: true`
+ *   to read `x.time.format` strings in UTC.
  *
  * Also called: vertical lollipop chart, stem and dot chart.
  *

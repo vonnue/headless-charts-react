@@ -1,5 +1,5 @@
 import { max, min } from 'd3-array';
-import { scaleLinear, scaleTime } from 'd3';
+import { scaleLinear } from 'd3';
 import { select } from 'd3-selection';
 import {
   stack,
@@ -17,7 +17,8 @@ import {
   SeriesAxisConfig,
   TooltipConfig,
 } from '@/types';
-import { timeFormat, timeParse, isoParse } from 'd3-time-format';
+import { timeFormat, utcFormat } from 'd3-time-format';
+import { createTimeScale, isUtcTime, makeDateParser } from '@/utils/timeScale';
 import useTooltip from '@/hooks/useTooltip';
 import { area } from 'd3-shape';
 import { defaultChartClassNames } from '@/utils';
@@ -102,7 +103,11 @@ const DEFAULT_STYLE = {};
  * - Diverging area chart — Set `stacking={{ type: "diverging" }}`. Series
  *   order is reversed so positive and negative stacks mirror each other.
  * - Time-scaled area chart — Set `x.scalingFunction: "time"` with
- *   `x.time.format`, or `x.time.isISO` for ISO strings.
+ *   `x.time.format`, or `x.time.isISO` for ISO strings. ISO dates are read,
+ *   placed and labelled in UTC by default, so calendar days (`2025-01-31`)
+ *   land on the right day in every time zone; set `x.time.utc: false` for
+ *   the viewer's local time, or `x.time.utc: true` to read `x.time.format`
+ *   strings in UTC.
  *
  * Also called: area graph, stacked area chart, mountain chart.
  *
@@ -202,8 +207,21 @@ const AreaChart = <TData = any,>({
   style = DEFAULT_STYLE,
 }: AreaChartProps<TData>) => {
   const d3Format = x.time?.format || '%Y-%m-%d';
-  const formatDate = useMemo(() => timeFormat(d3Format), [d3Format]);
-  const parseDate = useMemo(() => timeParse(d3Format), [d3Format]);
+  const { isISO: xTimeIsISO, utc: xTimeUtc } = x.time ?? {};
+  // In UTC when x.time.utc is on (the default for isISO, #25), else local.
+  const xUtc = isUtcTime({ time: { isISO: xTimeIsISO, utc: xTimeUtc } });
+  const formatDate = useMemo(
+    () => (xUtc ? utcFormat : timeFormat)(d3Format),
+    [d3Format, xUtc]
+  );
+  // ISO strings via isoParse, else x.time.format (in UTC when xUtc).
+  const parseDate = useMemo(
+    () =>
+      makeDateParser({
+        time: { format: d3Format, isISO: xTimeIsISO, utc: xTimeUtc },
+      }),
+    [d3Format, xTimeIsISO, xTimeUtc]
+  );
 
   const { onMouseOver, onMouseLeave } = useTooltip({
     id,
@@ -211,9 +229,7 @@ const AreaChart = <TData = any,>({
     defaultHtml: (d: any) => {
       const xValue =
         x.scalingFunction === 'time'
-          ? x.time?.isISO
-            ? formatDate(isoParse(d[x.key]) as Date)
-            : formatDate(parseDate(d[x.key]) as Date)
+          ? formatDate(parseDate(d[x.key]) as Date)
           : d[x.key];
       return `${xValue}<br/>${y
         .map((column) => `${column.key}: ${d[column.key]}`)
@@ -255,13 +271,10 @@ const AreaChart = <TData = any,>({
       )
       .attr('height', height - (margin?.top ?? 0) - (margin?.bottom ?? 0));
 
-    const toDateTime = (d: any): Date =>
-      x.time?.isISO
-        ? (isoParse(d[x.key]) as Date)
-        : (parseDate(d[x.key]) as Date);
+    const toDateTime = (d: any): Date => parseDate(d[x.key]) as Date;
 
     const xFn =
-      x.scalingFunction === 'time' ? scaleTime() : scaleLinear();
+      x.scalingFunction === 'time' ? createTimeScale(x) : scaleLinear();
 
     const setDefaultXDomain = (xFunction: any) => {
       x.scalingFunction === 'time'

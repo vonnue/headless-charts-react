@@ -68,7 +68,7 @@ const meta: ChartMeta = {
       aliases: ['time series lollipop chart'],
       summary:
         'A vertical lollipop chart whose x axis parses real dates and positions each stem proportionally to elapsed time, rather than as an equal-width slot.',
-      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer\'s local time zone.',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer\'s local time, or `x.time.utc: true` to read `x.time.format` strings in UTC.',
       useWhen: [
         'Values are one-per-date and spacing between stems should be proportional to elapsed time',
         'Category labels are dates rather than names',

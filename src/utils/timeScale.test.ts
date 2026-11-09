@@ -7,6 +7,7 @@ import {
   createTimeBarLayout,
   createTimeXScale,
   getTimeAxisIssues,
+  isUtcTime,
   makeDateAccessor,
   makeDateFormatter,
   makeDateParser,
@@ -421,8 +422,12 @@ describe('getTimeAxisIssues (F4/F6 dev warnings)', () => {
   });
 });
 
-describe('utcSuggestionSample (review-2 N1: date-only ISO without utc)', () => {
-  const iso: AxisConfig = { key: 'date', scalingFunction: 'time', time: { isISO: true } };
+describe('utcSuggestionSample (review-2 N1, #25: date-only ISO with utc: false)', () => {
+  const iso: AxisConfig = {
+    key: 'date',
+    scalingFunction: 'time',
+    time: { isISO: true, utc: false },
+  };
 
   it.each([
     [['2025-01-01', '2025-01-02']],
@@ -439,9 +444,12 @@ describe('utcSuggestionSample (review-2 N1: date-only ISO without utc)', () => {
     ]);
   });
 
-  it('stays quiet with utc: true, without isISO, for offset datetimes, mixed values or no data', () => {
+  it('stays quiet with utc: true or unset, without isISO, for offset datetimes, mixed values or no data', () => {
     const dateOnly = [{ date: '2025-01-01' }, { date: '2025-01-02' }];
     expect(utcSuggestionSample(dateOnly, { ...iso, time: { isISO: true, utc: true } })).toBeUndefined();
+    // #25: unset utc means UTC for isISO, so there is nothing to suggest
+    expect(utcSuggestionSample(dateOnly, { ...iso, time: { isISO: true } })).toBeUndefined();
+    expect(getTimeAxisIssues(dateOnly, { ...iso, time: { isISO: true } }, true)).toStrictEqual([]);
     expect(utcSuggestionSample(dateOnly, { ...iso, time: {} })).toBeUndefined();
     expect(
       utcSuggestionSample([{ date: '2025-01-01T09:00:00+05:30' }], iso)
@@ -480,9 +488,33 @@ describe('x.time.utc in a non-UTC time zone (F3)', () => {
     expect(new Date(nye).getDate()).toBe(30);
   });
 
-  it('default (local) formatting shows the previous day: the documented caveat', () => {
+  it('isISO defaults to UTC (#25): UTC midnight and date-only read as Dec 31', () => {
     const x: AxisConfig = { key: 'date', time: { isISO: true } };
+    expect(isUtcTime(x)).toBe(true);
+    expect(makeDateFormatter(x)(makeDateParser(x)(nye)!)).toBe('2024-12-31');
+    expect(makeDateFormatter(x)(makeDateParser(x)('2024-12-31')!)).toBe('2024-12-31');
+  });
+
+  it('utc: false keeps local time for ISO data: the documented caveat', () => {
+    const x: AxisConfig = { key: 'date', time: { isISO: true, utc: false } };
+    expect(isUtcTime(x)).toBe(false);
     expect(makeDateFormatter(x)(makeDateParser(x)(nye)!)).toBe('2024-12-30');
+  });
+
+  it('non-ISO format strings stay local by default (#25 only flips isISO)', () => {
+    const x: AxisConfig = { key: 'date', time: { format: '%Y-%m-%d' } };
+    expect(isUtcTime(x)).toBe(false);
+    expect(isUtcTime({ time: undefined })).toBe(false);
+    const parsed = makeDateParser(x)('2024-12-31')!;
+    expect([parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), parsed.getHours()]).toStrictEqual([
+      2024, 11, 31, 0,
+    ]);
+    expect(makeDateFormatter(x)(parsed)).toBe('2024-12-31');
+    expect(
+      createTimeXScale([{ date: '2024-12-30' }, { date: '2025-01-02' }], x, makeDateAccessor(x), [0, 300])
+        .ticks(4)
+        .every((t) => t.getHours() === 0)
+    ).toBe(true);
   });
 
   it('utc: true formats the UTC calendar day', () => {
@@ -509,9 +541,13 @@ describe('x.time.utc in a non-UTC time zone (F3)', () => {
     // UTC multi-format labels 2025-01-01T00:00Z as the year boundary
     expect(scale.tickFormat()(ticks[ticks.length - 1])).toBe('2025');
     // local scaleTime would put ticks on New York midnights (05:00 UTC)
-    const local = createTimeXScale(rows, { ...x, time: { isISO: true } }, toDate, [0, 300]);
+    const local = createTimeXScale(rows, { ...x, time: { isISO: true, utc: false } }, toDate, [0, 300]);
     local.ticks(4).forEach((t) => expect(t.getUTCHours()).toBe(5));
+    // #25: unset utc with isISO is a scaleUtc too
+    const byDefault = createTimeXScale(rows, { ...x, time: { isISO: true } }, toDate, [0, 300]);
+    byDefault.ticks(4).forEach((t) => expect(t.getUTCHours()).toBe(0));
   });
+
 });
 
 describe('timePosition (review-2 N4)', () => {

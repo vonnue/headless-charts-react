@@ -148,7 +148,7 @@ const meta: ChartMeta = {
       name: 'Time-scaled area chart',
       aliases: ['time series area chart'],
       summary: 'An area chart whose x axis parses real dates rather than treating the key as a plain number.',
-      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings.',
+      how: 'Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer\'s local time, or `x.time.utc: true` to read `x.time.format` strings in UTC.',
       useWhen: [
         'The x values are dates and the spacing between them is uneven',
         'Axis ticks should fall on real date boundaries',

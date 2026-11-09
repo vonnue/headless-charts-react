@@ -15,12 +15,21 @@ import { isDevEnvironment, warnOnceInDev } from '@/utils/devEnvironment';
 /**
  * Shared time-axis helpers for charts whose x axis is normally a category
  * (`scaleBand`) axis but can switch to `scalingFunction: 'time'` (#7):
- * ColumnChart, ColumnChartStacked, LollipopVChart and BoxPlotV.
+ * ColumnChart, ColumnChartStacked, LollipopVChart and BoxPlotV. AreaChart and
+ * LineChart use the parsing / UTC helpers (#25).
  */
 
 export const DEFAULT_TIME_FORMAT = '%Y-%m-%d';
 
 type TimeAxis = Pick<AxisConfig, 'key' | 'time' | 'start' | 'end'>;
+
+/**
+ * Whether dates are read and shown in UTC: `x.time.utc` when it is set,
+ * otherwise `true` for `x.time.isISO` data and `false` for `x.time.format`
+ * data (#25). `utc: false` keeps local time for ISO data.
+ */
+export const isUtcTime = (x: Pick<AxisConfig, 'time'>): boolean =>
+  x.time?.utc ?? Boolean(x.time?.isISO);
 
 const isValidDate = (d: Date | null | undefined): d is Date =>
   d instanceof Date && !isNaN(d.getTime());
@@ -32,12 +41,15 @@ const isValidDate = (d: Date | null | undefined): d is Date =>
  * - finite numbers are read as epoch milliseconds;
  * - strings go through `isoParse` when `x.time.isISO` is set, otherwise
  *   `timeParse(x.time.format)` (default `%Y-%m-%d`), or `utcParse` when
- *   `x.time.utc` is set.
+ *   `x.time.utc` is set. (`isoParse` reads the offset or `Z` in the string,
+ *   and date-only strings as UTC midnight, whatever `utc` is.)
  */
-export const makeDateParser = (x: TimeAxis) => {
+export const makeDateParser = (
+  x: Pick<AxisConfig, 'time'> & Partial<Pick<AxisConfig, 'key'>>
+) => {
   const parseString: (value: string) => Date | null = x.time?.isISO
     ? isoParse
-    : (x.time?.utc ? utcParse : timeParse)(x.time?.format || DEFAULT_TIME_FORMAT);
+    : (isUtcTime(x) ? utcParse : timeParse)(x.time?.format || DEFAULT_TIME_FORMAT);
   return (value: unknown): Date | null => {
     if (value instanceof Date) return isValidDate(value) ? value : null;
     if (typeof value === 'number') {
@@ -72,16 +84,21 @@ export const timePosition =
 
 /**
  * Formats a date for the default tooltip: `x.time.tooltipFormat`, else
- * `x.time.format`, else `%Y-%m-%d`; in UTC when `x.time.utc` is set, local
- * time otherwise.
+ * `x.time.format`, else `%Y-%m-%d`; in UTC when `isUtcTime(x)`, local time
+ * otherwise.
  */
 export const makeDateFormatter = (x: TimeAxis) =>
-  (x.time?.utc ? utcFormat : timeFormat)(
+  (isUtcTime(x) ? utcFormat : timeFormat)(
     x.time?.tooltipFormat || x.time?.format || DEFAULT_TIME_FORMAT
   );
 
+/** `scaleUtc()` when `isUtcTime(x)`, else `scaleTime()`; unconfigured. */
+export const createTimeScale = (
+  x: Pick<AxisConfig, 'time'>
+): ScaleTime<number, number> => (isUtcTime(x) ? scaleUtc() : scaleTime());
+
 /**
- * A `scaleTime` (or `scaleUtc` with `x.time.utc`) over
+ * A `scaleTime` (or `scaleUtc` when `isUtcTime(x)`) over
  * `[x.start ?? earliest date, x.end ?? latest date]` mapped onto `range`.
  * Rows whose date is `null` are skipped. No `.nice()`: niced ends would add
  * empty space the bar layout doesn't account for.
@@ -95,7 +112,7 @@ export const createTimeXScale = <TData,>(
   const dates = data.map(toDate).filter(isValidDate);
   const start = Number.isFinite(x.start) ? (x.start as number) : (min(dates) ?? NaN);
   const end = Number.isFinite(x.end) ? (x.end as number) : (max(dates) ?? NaN);
-  return (x.time?.utc ? scaleUtc() : scaleTime()).domain([start, end]).range(range);
+  return createTimeScale(x).domain([start, end]).range(range);
 };
 
 /**
@@ -249,19 +266,21 @@ const DATE_ONLY = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 const UTC_MIDNIGHT = /T00:00(:00(\.0+)?)?(Z|[+-]00:?00)$/;
 
 /**
- * The first x value when `x.time.isISO` is set without `x.time.utc` and every
- * x value is a date-only ISO string (`2025`, `2025-01`, `2025-01-01`) or a UTC
- * instant at midnight (`2025-01-01T00:00:00.000Z`), else undefined. Those are
- * dates read as UTC midnight, but the axis and tooltip are in local time, so
- * west of UTC the marks, ticks and labels land a day early (review-2 N1).
- * Real UTC timestamps (e.g. `T14:37:00Z`) don't trigger it: showing those in
- * the viewer's local time is the right default (review-3 R1).
+ * The first x value when `x.time.isISO` is set with an explicit
+ * `x.time.utc: false` and every x value is a date-only ISO string (`2025`,
+ * `2025-01`, `2025-01-01`) or a UTC instant at midnight
+ * (`2025-01-01T00:00:00.000Z`), else undefined. Those are dates read as UTC
+ * midnight, but `utc: false` puts the axis and tooltip in local time, so west
+ * of UTC the marks, ticks and labels land a day early (review-2 N1). Since
+ * #25, `isISO` defaults to UTC, so an unset `utc` never triggers it. Real UTC
+ * timestamps (e.g. `T14:37:00Z`) don't trigger it either: local time is a
+ * reasonable choice for those (review-3 R1).
  */
 export const utcSuggestionSample = <TData,>(
   data: TData[],
   x: TimeAxis
 ): string | undefined => {
-  if (!x.time?.isISO || x.time?.utc || data.length === 0) return undefined;
+  if (!x.time?.isISO || x.time.utc !== false || data.length === 0) return undefined;
   const values = data.map((d) => (d as Record<string, unknown>)[x.key]);
   const allUtc = values.every(
     (v) => typeof v === 'string' && (DATE_ONLY.test(v) || UTC_MIDNIGHT.test(v))
@@ -294,13 +313,13 @@ const TIME_ISSUE_MESSAGES: Record<TimeAxisIssue, (key: string, detail: string) =
   'invalid-bar-width': (_key, detail) =>
     `x.time.barWidth must be a positive number of pixels, got ${detail}; it is ignored and the width is inferred from the date cadence`,
   'suggest-utc': (key, detail) =>
-    `x.${key} values are date-only or UTC-midnight ISO strings (e.g. "${detail}") but x.time.utc is off, so they are placed and labelled in the viewer's local time zone; west of UTC they show as the previous day. Set x.time.utc: true`,
+    `x.${key} values are date-only or UTC-midnight ISO strings (e.g. "${detail}") but x.time.utc is false, so they are placed and labelled in the viewer's local time zone; west of UTC they show as the previous day. Remove utc: false (ISO dates default to UTC) unless local time is intended`,
 };
 
 /**
  * Dev-only warnings for a time x axis: rows dropped because their date can't
  * be read, an unusable `x.time.barWidth`, and date-only/UTC-midnight ISO strings
- * without `x.time.utc`. Logged once per distinct problem (via
+ * with an explicit `x.time.utc: false`. Logged once per distinct problem (via
  * `warnOnceInDev`), not on every render. No-op unless `x.scalingFunction` is
  * 'time'.
  */

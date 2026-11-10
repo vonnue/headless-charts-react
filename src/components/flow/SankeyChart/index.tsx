@@ -118,7 +118,11 @@ export interface SankeyChartProps<TNode = any, TLink = any> // eslint-disable-li
      */
     side?: 'auto' | 'start' | 'end';
   };
-  /** Number formatter for default tooltips and value labels. Default `d3.format(',~g')`. */
+  /**
+   * Number formatter for default tooltips and value labels. Default
+   * `d3.format(',')`: grouped thousands, up to ~12 significant digits,
+   * trailing zeros trimmed (1234567 → "1,234,567", 0.5 → "0.5").
+   */
   format?: (v: number) => string;
   /**
    * Hover highlighting through `data-highlighted` / `data-dimmed`
@@ -154,7 +158,8 @@ const MIN_HIT = 8;
 /** Gap between a node and its label, in px. */
 const LABEL_GAP = 6;
 
-const defaultFormat = d3Format(',~g');
+// ',' rather than the spec's ',~g', which prints 1234567 as "1.23457e+6".
+const defaultFormat = d3Format(',');
 const percentFormat = d3Format('.1~%');
 
 /** A ratio as `'.1~%'`, or `'n/a'` when null or not finite. */

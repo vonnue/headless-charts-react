@@ -29,6 +29,7 @@ import RingGauge from '@/components/gauges/RingGauge/meta';
 import ScatterPlot from '@/components/distribution/ScatterPlot/meta';
 import SpeedometerChart from '@/components/gauges/SpeedometerChart/meta';
 import SpineChart from '@/components/linear/SpineChart/meta';
+import SunburstChart from '@/components/distribution/SunburstChart/meta';
 import TimeLineChart from '@/components/linear/TimeLineChart/meta';
 import TreemapChart from '@/components/distribution/TreemapChart/meta';
 import WaffleChart from '@/components/distribution/WaffleChart/meta';
@@ -57,6 +58,7 @@ export const chartCatalog: ChartMeta[] = [
   // distribution
   PieChart,
   ScatterPlot,
+  SunburstChart,
   TreemapChart,
   WaffleChart,
   // ranges

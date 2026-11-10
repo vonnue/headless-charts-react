@@ -40,6 +40,8 @@ export interface PizzaChartProps<TData = any> extends Omit<GaugeProps<TData>, 'd
  *   which overlays many
  * - The metrics are parts of one whole — use PieChart, where angle encodes
  *   share
+ * - A true hierarchical sunburst is needed — PizzaChart is a flat profile;
+ *   use SunburstChart
  * - Precise values matter — radius is read poorly; use ColumnChart
  * - Each metric has its own target rather than a shared max — use RingGauge
  *
@@ -66,6 +68,8 @@ export interface PizzaChartProps<TData = any> extends Omit<GaugeProps<TData>, 'd
  *   metrics
  * @see RingGauge — each metric has its own target
  * @see PieChart — the values are parts of one whole
+ * @see SunburstChart — a hierarchical part-to-whole, not a single-entity
+ *   profile
  */
 /* catalog:end */
 const PizzaChart = <TData = any,>({

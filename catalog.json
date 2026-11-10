@@ -1530,7 +1530,9 @@
         "parallel coordinates",
         "parallel coordinates plot",
         "parallel coordinates chart",
-        "parallel plot"
+        "parallel coordinate plot",
+        "parallel plot",
+        "parallel axes"
       ],
       "category": "distribution",
       "summary": "One axis per measure, each with its own scale, and one line per record across them, showing clusters, trade-offs and outliers across many measures.",
@@ -1579,9 +1581,9 @@
         }
       },
       "useWhen": [
-        "Many records across 3–12 measures with different units",
-        "Finding clusters or trade-offs (crossing lines between adjacent axes) across measures",
-        "Filtering records interactively by ranges on several measures (`brushing`)"
+        "Many records need comparing across 3–12 measures with different units",
+        "Clusters or trade-offs (crossing lines between adjacent axes) are the pattern to find",
+        "Records should be filtered interactively by ranges on several measures — set `brushing`"
       ],
       "avoidWhen": [
         "A few entities on one shared scale — use RadarChart",
@@ -1609,7 +1611,7 @@
         "data",
         "dimensions"
       ],
-      "example": "<ParallelCoordinatesChart\n  id=\"cars\"\n  className=\"w-full h-96\"\n  data={cars}\n  label={{ key: 'model' }}\n  dimensions={[\n    'mpg',\n    { key: 'hp', label: 'Horsepower' },\n    { key: 'weight', format: (v) => `${v} kg` },\n    { key: 'origin', type: 'point', order: ['US', 'EU', 'JP'] },\n  ]}\n  color={{ key: 'origin', classNameMap: { US: 'stroke-slate-600', EU: 'stroke-sky-600', JP: 'stroke-amber-600' } }}\n  line={{ className: 'stroke-slate-400' }}\n  brushing={{ onChange: (s) => setSelected(s.indices) }}\n  tooltip={{ className: 'bg-white text-xs p-2 shadow' }}\n  title=\"Cars by economy, power and weight\"\n/>",
+      "example": "const [selected, setSelected] = React.useState<number[]>([]);\n<ParallelCoordinatesChart\n  id=\"cars\"\n  className=\"w-full h-96\"\n  data={data}\n  label={{ key: 'model' }}\n  dimensions={[\n    'mpg',\n    { key: 'hp', label: 'Horsepower' },\n    { key: 'weight', format: (v) => `${v} kg` },\n    { key: 'origin', type: 'point', order: ['US', 'EU', 'JP'] },\n  ]}\n  color={{ key: 'origin', classNameMap: { US: 'stroke-slate-600', EU: 'stroke-sky-600', JP: 'stroke-amber-600' } }}\n  line={{ className: 'stroke-slate-400' }}\n  brushing={{ onChange: (s) => setSelected(s.indices) }}\n  tooltip={{ className: 'bg-white text-xs p-2 shadow' }}\n  title=\"Cars by economy, power and weight\"\n/>",
       "storybook": "Distribution/ParallelCoordinatesChart/Intro",
       "variants": [
         {
@@ -1846,7 +1848,8 @@
         "One axis is categorical rather than numeric — use ColumnChart or a lollipop chart",
         "There are only a handful of records — a table or bar chart communicates more directly",
         "Overplotting hides the pattern — switch to the binned heatmap mode or use WaffleChart",
-        "The x axis is time and the sequence is the point — use LineChart"
+        "The x axis is time and the sequence is the point — use LineChart",
+        "More than two or three numeric dimensions need comparing at once — use ParallelCoordinatesChart"
       ],
       "alternatives": [
         {
@@ -1860,6 +1863,10 @@
         {
           "name": "BoxPlotV",
           "when": "comparing the spread of a measure across groups rather than two measures"
+        },
+        {
+          "name": "ParallelCoordinatesChart",
+          "when": "more than two or three numeric dimensions need comparing at once"
         }
       ],
       "requiredProps": [
@@ -3066,6 +3073,7 @@
       "avoidWhen": [
         "Metrics use different units or ranges — one shared radial scale would misrepresent them; use ColumnChart grouped",
         "More than about five entities need overlaying — the polygons become unreadable",
+        "Many records, or more than about eight dimensions, need comparing — use ParallelCoordinatesChart",
         "Precise values must be compared — radial position is read poorly; use BarChart",
         "Only one entity is being shown — use PizzaChart"
       ],
@@ -3081,6 +3089,10 @@
         {
           "name": "RingGauge",
           "when": "each metric has its own target rather than a shared scale"
+        },
+        {
+          "name": "ParallelCoordinatesChart",
+          "when": "many records, or more than about eight dimensions, especially with different units"
         }
       ],
       "requiredProps": [

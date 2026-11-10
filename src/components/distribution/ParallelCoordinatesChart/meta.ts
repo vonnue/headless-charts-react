@@ -6,7 +6,9 @@ const meta: ChartMeta = {
     'parallel coordinates',
     'parallel coordinates plot',
     'parallel coordinates chart',
+    'parallel coordinate plot',
     'parallel plot',
+    'parallel axes',
   ],
   category: 'distribution',
   summary:
@@ -48,9 +50,9 @@ const meta: ChartMeta = {
     },
   },
   useWhen: [
-    'Many records across 3–12 measures with different units',
-    'Finding clusters or trade-offs (crossing lines between adjacent axes) across measures',
-    'Filtering records interactively by ranges on several measures (`brushing`)',
+    'Many records need comparing across 3–12 measures with different units',
+    'Clusters or trade-offs (crossing lines between adjacent axes) are the pattern to find',
+    'Records should be filtered interactively by ranges on several measures — set `brushing`',
   ],
   avoidWhen: [
     'A few entities on one shared scale — use RadarChart',
@@ -65,10 +67,11 @@ const meta: ChartMeta = {
     { name: 'BoxPlotV', when: "one measure's distribution per group" },
   ],
   requiredProps: ['id', 'data', 'dimensions'],
-  example: `<ParallelCoordinatesChart
+  example: `const [selected, setSelected] = React.useState<number[]>([]);
+<ParallelCoordinatesChart
   id="cars"
   className="w-full h-96"
-  data={cars}
+  data={data}
   label={{ key: 'model' }}
   dimensions={[
     'mpg',

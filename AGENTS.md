@@ -56,7 +56,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | LollipopVChart, vertical lollipop chart, stem and dot chart | [`LollipopVChart`](#lollipopvchart) | Base component, no extra configuration |
 | Network, network graph, node-link diagram, force-directed graph, graph chart, relationship map | [`Network`](#network) | Base component, no extra configuration |
 | OHLC chart, ohlc, ohlc bar chart, open-high-low-close chart | [`CandlestickChart`](#candlestickchart) | Set `shape: 'ohlc'`. |
-| ParallelCoordinatesChart, parallel coordinates, parallel coordinates plot, parallel coordinates chart, parallel plot | [`ParallelCoordinatesChart`](#parallelcoordinateschart) | Base component, no extra configuration |
+| ParallelCoordinatesChart, parallel coordinates, parallel coordinates plot, parallel coordinates chart, parallel coordinate plot, parallel plot, parallel axes | [`ParallelCoordinatesChart`](#parallelcoordinateschart) | Base component, no extra configuration |
 | PieChart, circle chart, part-to-whole chart | [`PieChart`](#piechart) | Base component, no extra configuration |
 | PizzaChart, radial bar chart, polar bar chart, sunburst-style profile | [`PizzaChart`](#pizzachart) | Base component, no extra configuration |
 | RadarChart, spider chart, web chart, star chart, polar chart, kiviat diagram | [`RadarChart`](#radarchart) | Base component, no extra configuration |
@@ -1301,13 +1301,13 @@ One axis per measure, each with its own scale, and one line per record across th
 
 **Category:** `distribution` · **Answers:** `profile`, `correlation`, `distribution` · **Storybook:** Distribution/ParallelCoordinatesChart/Intro
 
-**Also called:** parallel coordinates, parallel coordinates plot, parallel coordinates chart, parallel plot
+**Also called:** parallel coordinates, parallel coordinates plot, parallel coordinates chart, parallel coordinate plot, parallel plot, parallel axes
 
 **Use when**
 
-- Many records across 3–12 measures with different units
-- Finding clusters or trade-offs (crossing lines between adjacent axes) across measures
-- Filtering records interactively by ranges on several measures (`brushing`)
+- Many records need comparing across 3–12 measures with different units
+- Clusters or trade-offs (crossing lines between adjacent axes) are the pattern to find
+- Records should be filtered interactively by ranges on several measures — set `brushing`
 
 **Do not use when**
 
@@ -1332,10 +1332,11 @@ One axis per measure, each with its own scale, and one line per record across th
 **Required props:** `id`, `data`, `dimensions`
 
 ```tsx
+const [selected, setSelected] = React.useState<number[]>([]);
 <ParallelCoordinatesChart
   id="cars"
   className="w-full h-96"
-  data={cars}
+  data={data}
   label={{ key: 'model' }}
   dimensions={[
     'mpg',
@@ -1506,6 +1507,7 @@ One point per record positioned by two measures, revealing correlation, clusters
 - There are only a handful of records — a table or bar chart communicates more directly
 - Overplotting hides the pattern — switch to the binned heatmap mode or use WaffleChart
 - The x axis is time and the sequence is the point — use LineChart
+- More than two or three numeric dimensions need comparing at once — use ParallelCoordinatesChart
 
 **Data**
 
@@ -1631,6 +1633,7 @@ Bins points into a grid and colours each cell by how many fell into it, revealin
 - [`WaffleChart`](#wafflechart) — both axes are categorical or binned and density is the message
 - [`LineChart`](#linechart) — x is time and the sequence matters
 - [`BoxPlotV`](#boxplotv) — comparing the spread of a measure across groups rather than two measures
+- [`ParallelCoordinatesChart`](#parallelcoordinateschart) — more than two or three numeric dimensions need comparing at once
 
 ### TreemapChart
 
@@ -2423,6 +2426,7 @@ Plots several metrics on spokes radiating from a centre and joins them into a po
 
 - Metrics use different units or ranges — one shared radial scale would misrepresent them; use ColumnChart grouped
 - More than about five entities need overlaying — the polygons become unreadable
+- Many records, or more than about eight dimensions, need comparing — use ParallelCoordinatesChart
 - Precise values must be compared — radial position is read poorly; use BarChart
 - Only one entity is being shown — use PizzaChart
 
@@ -2468,6 +2472,7 @@ Plots several metrics on spokes radiating from a centre and joins them into a po
 - [`PizzaChart`](#pizzachart) — profiling a single entity
 - [`ColumnChart`](#columnchart) — metrics have different units, or values must be read precisely
 - [`RingGauge`](#ringgauge) — each metric has its own target rather than a shared scale
+- [`ParallelCoordinatesChart`](#parallelcoordinateschart) — many records, or more than about eight dimensions, especially with different units
 
 ### RingGauge
 

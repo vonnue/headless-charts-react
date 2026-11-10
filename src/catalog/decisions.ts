@@ -198,6 +198,10 @@ export const decisionTree: DecisionBranch[] = [
         name: 'RingGauge',
         when: 'Metrics have individual targets rather than one shared scale',
       },
+      {
+        name: 'ParallelCoordinatesChart',
+        when: 'Many records across many measures with different units; each axis has its own scale (clusters, trade-offs, range filtering)',
+      },
     ],
   },
   {

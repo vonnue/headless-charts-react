@@ -218,24 +218,25 @@ const has = (map: Record<string, string> | undefined, key: string) =>
 /* catalog:start */
 /**
  * Weighted flows between nodes arranged in layered columns; node size and link
- * width share one scale, so how much moves from where to where is the story.
+ * width share one scale, showing how much moves from where to where.
  *
  * @remarks
  *
  * **Use when**
  * - Volume moves between stages or categories and both the totals and the
- *   splits matter, e.g. energy, budget or user-journey flows
+ *   splits matter — e.g. energy, budget or user-journey flows
  * - Flows pass through intermediate nodes in layered steps (source →
  *   conversion → use)
- * - Imbalance at a node (in ≠ out) should stay visible
+ * - Imbalance at a node (inflow ≠ outflow) should stay visible — node size
+ *   is max(in, out)
  *
  * **Avoid when**
- * - It is one ordered path with drop-off — use FunnelChart
- * - The relationships matter but there are no volumes — use Network
- * - Flows loop back (cycles) — use Network, or aggregate the data into an
- *   acyclic graph first
- * - There are more than ~30 nodes — aggregate first
- * - The parts are one whole with no flow between them — use TreemapChart or
+ * - One ordered path with drop-off — use FunnelChart
+ * - Relationships without volumes — use Network
+ * - Flows that loop back (cycles) — the chart draws nothing; use Network, or
+ *   aggregate the data into an acyclic graph first
+ * - More than ~30 nodes — aggregate first
+ * - Parts of one whole with no flow between them — use TreemapChart or
  *   PieChart
  *
  * Also called: sankey, sankey diagram, sankey chart, flow diagram, alluvial diagram.
@@ -247,8 +248,8 @@ const has = (map: Record<string, string> | undefined, key: string) =>
  * <SankeyChart
  *   id="energy"
  *   className="w-full h-96"
- *   links={flows}
- *   nodes={sectors}
+ *   links={data}
+ *   nodes={nodes}
  *   nodeDef={{ idKey: 'id', labelKey: 'name', className: 'fill-slate-500',
  *              classNameMap: { Coal: 'fill-stone-600', Solar: 'fill-amber-400' } }}
  *   linkDef={{ valueKey: 'twh', className: 'stroke-slate-300 [stroke-opacity:0.5]',

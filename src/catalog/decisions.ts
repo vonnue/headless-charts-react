@@ -234,7 +234,7 @@ export const decisionTree: DecisionBranch[] = [
       },
       {
         name: 'SankeyChart',
-        when: 'How much flows from where to where: weighted links between layered nodes, width = volume; acyclic only',
+        when: 'How much volume flows from where to where through layered nodes — link width equals volume; acyclic only',
       },
     ],
   },

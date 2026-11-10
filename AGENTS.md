@@ -177,7 +177,7 @@ Find the question being asked, then pick among the candidates.
 | Chart | Choose it when |
 | --- | --- |
 | [`Network`](#network) | Nodes and edges, force-directed by default and optionally pinned to x/y scales |
-| [`SankeyChart`](#sankeychart) | How much flows from where to where: weighted links between layered nodes, width = volume; acyclic only |
+| [`SankeyChart`](#sankeychart) | How much volume flows from where to where through layered nodes — link width equals volume; acyclic only |
 
 ## Chart reference
 
@@ -2633,7 +2633,7 @@ Draws nodes and the edges between them, laid out by force simulation or pinned t
 
 ### SankeyChart
 
-Weighted flows between nodes arranged in layered columns; node size and link width share one scale, so how much moves from where to where is the story.
+Weighted flows between nodes arranged in layered columns; node size and link width share one scale, showing how much moves from where to where.
 
 **Category:** `flow` · **Answers:** `connection`, `composition` · **Storybook:** Flow/SankeyChart/Intro
 
@@ -2641,17 +2641,17 @@ Weighted flows between nodes arranged in layered columns; node size and link wid
 
 **Use when**
 
-- Volume moves between stages or categories and both the totals and the splits matter, e.g. energy, budget or user-journey flows
+- Volume moves between stages or categories and both the totals and the splits matter — e.g. energy, budget or user-journey flows
 - Flows pass through intermediate nodes in layered steps (source → conversion → use)
-- Imbalance at a node (in ≠ out) should stay visible
+- Imbalance at a node (inflow ≠ outflow) should stay visible — node size is max(in, out)
 
 **Do not use when**
 
-- It is one ordered path with drop-off — use FunnelChart
-- The relationships matter but there are no volumes — use Network
-- Flows loop back (cycles) — use Network, or aggregate the data into an acyclic graph first
-- There are more than ~30 nodes — aggregate first
-- The parts are one whole with no flow between them — use TreemapChart or PieChart
+- One ordered path with drop-off — use FunnelChart
+- Relationships without volumes — use Network
+- Flows that loop back (cycles) — the chart draws nothing; use Network, or aggregate the data into an acyclic graph first
+- More than ~30 nodes — aggregate first
+- Parts of one whole with no flow between them — use TreemapChart or PieChart
 
 **Data**
 
@@ -2672,8 +2672,8 @@ Weighted flows between nodes arranged in layered columns; node size and link wid
 <SankeyChart
   id="energy"
   className="w-full h-96"
-  links={flows}
-  nodes={sectors}
+  links={data}
+  nodes={nodes}
   nodeDef={{ idKey: 'id', labelKey: 'name', className: 'fill-slate-500',
              classNameMap: { Coal: 'fill-stone-600', Solar: 'fill-amber-400' } }}
   linkDef={{ valueKey: 'twh', className: 'stroke-slate-300 [stroke-opacity:0.5]',
@@ -2690,7 +2690,7 @@ Weighted flows between nodes arranged in layered columns; node size and link wid
 - **Alignment** — Set `align` to `"justify"` (default, sinks in the last column), `"left"`, `"right"` or `"center"`.
 - **Input order** — Set `nodeSort="input"` to keep node input order in each column instead of relaxing the layout.
 - **Path highlighting** — Set `highlight="path"` to mark every upstream and downstream node and link on hover through `data-highlighted` / `data-dimmed`; `false` turns highlighting off.
-- **Value labels** — Set `labels.value: true` to append each node value; `format` sets the number format.
+- **Value labels** — Set `labels.value: true` to append each node value; the chart `format` prop sets the number format.
 
 **Consider instead**
 

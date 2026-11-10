@@ -87,6 +87,8 @@ export type BoxPlotVProps<TData = any> =
  *
  * **Avoid when**
  * - Every underlying point should be visible — use ScatterPlot
+ * - The full distribution shape matters, e.g. multimodality — use
+ *   ViolinChart
  * - The interval is a plain min–max — use RangePlot
  * - Group labels are long — use BoxPlotH
  * - Only the central value matters — use ColumnChart
@@ -165,6 +167,8 @@ export type BoxPlotVProps<TData = any> =
  * ```
  *
  * @see BoxPlotH — group labels are long
+ * @see ViolinChart — the full distribution shape matters, e.g.
+ *   multimodality
  * @see RangePlot — showing a plain min–max interval rather than quartiles
  * @see ScatterPlot — individual records should stay visible
  */

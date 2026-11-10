@@ -1756,6 +1756,7 @@ Horizontal box-and-whisker marks summarising the spread of a measure per group: 
 **Do not use when**
 
 - Every underlying point should be visible — use ScatterPlot
+- The full distribution shape matters, e.g. multimodality — use ViolinChart
 - The interval is a plain min–max rather than a statistical summary — use RangePlot
 - The audience will not read quartiles; a histogram via ColumnChart with `x.bin` is more intuitive
 - A vertical layout fits better — use BoxPlotV
@@ -1827,6 +1828,7 @@ Bins a continuous field into groups and computes each group’s min, quartiles a
 **Consider instead**
 
 - [`BoxPlotV`](#boxplotv) — a vertical layout fits the space better
+- [`ViolinChart`](#violinchart) — the full distribution shape matters, e.g. multimodality
 - [`RangePlot`](#rangeplot) — showing a plain min–max interval rather than quartiles
 - [`ColumnChart`](#columnchart) — a histogram of one group is enough — set `x.bin`
 
@@ -1848,6 +1850,7 @@ Vertical box-and-whisker marks summarising the spread of a measure per group: mi
 **Do not use when**
 
 - Every underlying point should be visible — use ScatterPlot
+- The full distribution shape matters, e.g. multimodality — use ViolinChart
 - The interval is a plain min–max — use RangePlot
 - Group labels are long — use BoxPlotH
 - Only the central value matters — use ColumnChart
@@ -1953,6 +1956,7 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
 **Consider instead**
 
 - [`BoxPlotH`](#boxploth) — group labels are long
+- [`ViolinChart`](#violinchart) — the full distribution shape matters, e.g. multimodality
 - [`RangePlot`](#rangeplot) — showing a plain min–max interval rather than quartiles
 - [`ScatterPlot`](#scatterplot) — individual records should stay visible
 

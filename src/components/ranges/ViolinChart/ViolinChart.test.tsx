@@ -1,6 +1,6 @@
 import { quantile } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { decisionTree, resolveChartRequest } from '@/catalog';
@@ -168,7 +168,7 @@ const defaultProps = {
 } as const;
 
 describe('ViolinChart', () => {
-  let warn: ReturnType<typeof vi.spyOn>;
+  let warn: MockInstance<typeof console.warn>;
 
   beforeEach(() => {
     resetDevWarnings();

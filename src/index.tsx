@@ -56,6 +56,8 @@ export { default as CandlestickChart } from '@/components/ranges/CandlestickChar
 export type { CandlestickChartProps, CandleDatum } from '@/components/ranges/CandlestickChart';
 export { default as CometPlot } from '@/components/ranges/CometPlot';
 export { default as RangePlot } from '@/components/ranges/RangePlot';
+export { default as ViolinChart } from '@/components/ranges/ViolinChart';
+export type { ViolinChartProps, ViolinDatum } from '@/components/ranges/ViolinChart';
 
 export { default as ScatterPlot } from '@/components/distribution/ScatterPlot';
 export { default as PieChart } from '@/components/distribution/PieChart';

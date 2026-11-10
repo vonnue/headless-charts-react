@@ -59,6 +59,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | PieChart, circle chart, part-to-whole chart | [`PieChart`](#piechart) | Base component, no extra configuration |
 | PizzaChart, radial bar chart, polar bar chart, sunburst-style profile | [`PizzaChart`](#pizzachart) | Base component, no extra configuration |
 | RadarChart, spider chart, web chart, star chart, polar chart, kiviat diagram | [`RadarChart`](#radarchart) | Base component, no extra configuration |
+| Raincloud plot, raincloud chart, half violin | [`ViolinChart`](#violinchart) | Set `side: 'start'` and `points: true`. |
 | RangePlot, dumbbell chart, dumbbell plot, barbell chart, dot plot, DNA chart, range chart | [`RangePlot`](#rangeplot) | Base component, no extra configuration |
 | RingGauge, activity rings, radial progress chart, concentric gauge, donut gauge | [`RingGauge`](#ringgauge) | Base component, no extra configuration |
 | ScatterPlot, scatter chart, scatter graph, xy plot, correlation plot | [`ScatterPlot`](#scatterplot) | Base component, no extra configuration |
@@ -75,6 +76,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Time-scaled stacked column chart, time series stacked column chart | [`ColumnChartStacked`](#columnchartstacked) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
 | TimeLineChart, timeline, event plot, activity timeline | [`TimeLineChart`](#timelinechart) | Base component, no extra configuration |
 | TreemapChart, treemap, squarified treemap, rectangular tree map | [`TreemapChart`](#treemapchart) | Base component, no extra configuration |
+| ViolinChart, violin, violin plot, violin chart | [`ViolinChart`](#violinchart) | Base component, no extra configuration |
 | WaffleChart, heatmap, categorical heatmap, matrix chart, grid chart, tile chart | [`WaffleChart`](#wafflechart) | Base component, no extra configuration |
 | Waterfall chart, waterfall, bridge chart, cascade chart, flying bricks chart | [`ColumnChartStacked`](#columnchartstacked) | Set `waterfall` on a ColumnChartStacked. Each `y` series becomes a step in the sequence rather than a segment stacked from the baseline. |
 
@@ -129,6 +131,7 @@ Find the question being asked, then pick among the candidates.
 | [`BarChart`](#barchart) | Same histogram horizontally — set `x[0].bin`; better for many bins |
 | [`BoxPlotV`](#boxplotv) | Compare the spread, median and quartiles of several groups, vertically |
 | [`BoxPlotH`](#boxploth) | Same as BoxPlotV with long group labels |
+| [`ViolinChart`](#violinchart) | Compare the full shape of a measure's distribution across groups |
 | [`ScatterPlot`](#scatterplot) | Two-dimensional density — set `x.bin` or `y.bin` for a binned heatmap |
 
 ### What is the interval, or the movement between two states?
@@ -2156,6 +2159,93 @@ A dumbbell per category: two endpoints joined by a bar, showing the interval bet
 - [`CometPlot`](#cometplot) — the direction of movement between the two values matters
 - [`BoxPlotH`](#boxploth) — the interval is a quartile summary
 - [`LollipopHChart`](#lollipophchart) — there is a single value per category
+
+### ViolinChart
+
+A mirrored kernel density per group, with an optional inner box and points, showing the full shape of a measure's distribution across categories.
+
+**Category:** `ranges` · **Answers:** `distribution`, `comparison` · **Storybook:** Ranges/ViolinChart/Intro
+
+**Also called:** violin, violin plot, violin chart
+
+**Use when**
+
+- The shape of a distribution (multimodality, skew) matters across groups
+- Each group has enough samples (about 20 or more) for a density
+
+**Do not use when**
+
+- Only the median and quartiles matter, or the audience will not read densities — use BoxPlotV or BoxPlotH
+- Groups have very few samples — use ScatterPlot (or turn on `points`)
+- Only one group's distribution is shown — use ColumnChart with `x.bin`
+- Colour would encode magnitude — colour names the group; density is width only
+
+**Data**
+
+- `data` shape: records
+- Rows: ideal 2–8, max 20 — Groups. Each group needs roughly 20+ samples for a meaningful density.
+
+| Prop | Role | Required | Notes |
+| --- | --- | --- | --- |
+| `category` | category | yes | Grouping key; one violin per distinct value, in first-appearance order (or `category.order`). |
+| `value` | quantitative | yes | Raw sample key, one row per observation. Non-finite values are excluded. |
+| `classNameMap` | color | no | Optional class per group. Colour names the group; density is width only. |
+
+**Required props:** `id`, `data`, `category`, `value`
+
+```tsx
+<ViolinChart
+  id="salaries"
+  className="w-full h-80"
+  data={rows}
+  category={{ key: 'dept' }}
+  value={{ key: 'salary', className: 'fill-slate-300 stroke-slate-500' }}
+/>
+```
+
+#### Raincloud plot (ViolinChart)
+
+A half violin with the raw samples jittered on the empty side, showing density and every observation together.
+
+**Also called:** raincloud chart, half violin
+
+**Configuration:** Set `side: 'start'` and `points: true`.
+
+**Use when**
+
+- Readers should see both the density and the individual samples
+- Sample sizes are modest, so the points do not overplot
+
+**Do not use when**
+
+- Samples number in the thousands — the points overplot; use a plain violin
+
+```tsx
+<ViolinChart
+  id="raincloud"
+  className="w-full h-80"
+  data={rows}
+  category={{ key: 'dept' }}
+  value={{ key: 'salary', className: 'fill-slate-300' }}
+  side="start"
+  points
+/>
+```
+
+**Options**
+
+- **Horizontal** — Set `orientation="horizontal"` to run groups top → bottom.
+- **Count scaling** — Set `density={{ scale: 'count' }}` so violin area is proportional to sample count.
+- **Tails** — Set `density={{ extent: 'tails' }}` to extend each violin 3 bandwidths past its data.
+- **Quartile lines** — Set `inner="quartiles"` for dashed Q1/Q3 and a solid median line.
+- **Points** — Set `points` (or `{ radius, jitter, className }`) to overlay the raw samples.
+
+**Consider instead**
+
+- [`BoxPlotV`](#boxplotv) — only the five-number summary matters
+- [`BoxPlotH`](#boxploth) — the five-number summary with long category labels
+- [`ColumnChart`](#columnchart) — one group's distribution as a histogram
+- [`ScatterPlot`](#scatterplot) — very small samples per group
 
 ### BulletChart
 

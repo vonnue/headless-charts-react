@@ -86,8 +86,8 @@ const priceDomain = (
   lowsHighs: { low: number; high: number }[],
   pins?: { start?: number; end?: number }
 ): [number, number] => {
-  let lo = Math.min(...lowsHighs.map((d) => d.low));
-  let hi = Math.max(...lowsHighs.map((d) => d.high));
+  const lo = Math.min(...lowsHighs.map((d) => d.low));
+  const hi = Math.max(...lowsHighs.map((d) => d.high));
   let niced: number[];
   if (lo === hi) niced = [lo - 1, hi + 1];
   else niced = scaleLinear().domain([lo, hi]).nice().domain();
@@ -812,7 +812,7 @@ describe('CandlestickChart', () => {
   });
 
   it('23: each candle-hit is the full band (or slot) wide and spans the full plot height, including the volume panel; hovering above a 1px doji body, within its band, shows that candle’s tooltip; marks have no listeners and the handler fires once', () => {
-    const html = vi.fn(() => 'doji-tip');
+    const html = vi.fn<(d: unknown) => string>(() => 'doji-tip');
     render(
       <CandlestickChart
         id='cs23'

@@ -75,7 +75,7 @@
         },
         {
           "name": "SunburstChart",
-          "when": "A whole split into nested levels, read from the centre outward, with optional drill-down"
+          "when": "A nested part-to-whole as concentric rings, read from the centre outward, with optional drill-down"
         }
       ]
     },
@@ -1870,12 +1870,13 @@
       },
       "useWhen": [
         "A hierarchical part-to-whole with 2–4 levels, where the path from the centre outward is the story",
+        "There are too many parts for a pie, and the nesting itself is what explains them",
         "Readers should drill down into deeper levels — set `zoom`"
       ],
       "avoidWhen": [
         "Sizes of many leaves must be compared precisely — use TreemapChart; area reads better than angle",
         "A flat whole with about 6 or fewer parts — use PieChart",
-        "One entity's metrics on a radial profile — use PizzaChart",
+        "One entity’s metrics on a radial profile — use PizzaChart; do not stretch it into a sunburst",
         "Composition changes over time — use AreaChart"
       ],
       "alternatives": [
@@ -1889,28 +1890,28 @@
         "data",
         "value"
       ],
-      "example": "<SunburstChart\n  id=\"files\"\n  className=\"w-full h-96\"\n  data={tree}\n  value={{ key: 'size', className: 'fill-slate-300 stroke-white' }}\n  classNameMap={{ src: 'fill-sky-400', docs: 'fill-amber-300' }}\n  labels={{ name: true }}\n/>",
+      "example": "<SunburstChart\n  id=\"files\"\n  className=\"w-full h-96\"\n  data={data}\n  value={{ key: 'size', className: 'fill-slate-300 stroke-white' }}\n  classNameMap={{ src: 'fill-sky-400', docs: 'fill-amber-300' }}\n  labels={{ name: true }}\n  title=\"Repository size by folder\"\n/>",
       "storybook": "Distribution/SunburstChart/Intro",
       "variants": [
         {
           "kind": "option",
           "name": "Donut hole",
-          "how": "Set `innerRadius` (a fraction, e.g. `0.3`) to drop the centre disc."
+          "how": "Set `innerRadius` (a fraction of the outer radius, e.g. `0.3`) to drop the centre disc. Values are clamped to `[0, 0.9]`."
         },
         {
           "kind": "option",
           "name": "Partial angle",
-          "how": "Set `startAngle` / `endAngle` in radians, e.g. `-Math.PI / 2` to `Math.PI / 2` for a half sunburst."
+          "how": "Set `startAngle` / `endAngle` in radians, clockwise from 12 o’clock, e.g. `-Math.PI / 2` to `Math.PI / 2` for a half sunburst."
         },
         {
           "kind": "option",
           "name": "Click-to-zoom",
-          "how": "Set `zoom` (or `zoom={{ onChange }}`) to drill into an arc; click the centre or press Escape to zoom out."
+          "how": "Set `zoom` (or `zoom={{ onChange }}`) to drill into an arc; click the centre (or the donut hole) or press Escape to zoom out."
         },
         {
           "kind": "option",
           "name": "Visible rings",
-          "how": "Set `rings` to show that many levels below the focus; deeper levels appear when zoomed."
+          "how": "Set `rings` to show that many levels below the focus; deeper levels still exist and appear when zoomed. This is not `maxDepth`, which rolls deeper mass into an ancestor."
         },
         {
           "kind": "option",
@@ -2937,6 +2938,7 @@
       "avoidWhen": [
         "Several entities need comparing — a pizza shows one; use RadarChart, which overlays many",
         "The metrics are parts of one whole — use PieChart, where angle encodes share",
+        "A true hierarchical sunburst is needed — PizzaChart is a flat profile; use SunburstChart",
         "Precise values matter — radius is read poorly; use ColumnChart",
         "Each metric has its own target rather than a shared max — use RingGauge"
       ],
@@ -2952,6 +2954,10 @@
         {
           "name": "PieChart",
           "when": "the values are parts of one whole"
+        },
+        {
+          "name": "SunburstChart",
+          "when": "a hierarchical part-to-whole, not a single-entity profile"
         }
       ],
       "requiredProps": [

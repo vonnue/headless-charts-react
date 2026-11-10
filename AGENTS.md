@@ -105,7 +105,7 @@ Find the question being asked, then pick among the candidates.
 | [`PizzaChart`](#pizzachart) | Several metrics as radial segments of one entity, each against its own max |
 | [`FunnelChart`](#funnelchart) | Ordered conversion / drop-off through fixed stages (visit → signup → paid); length encodes count, colour must not |
 | [`TreemapChart`](#treemapchart) | A hierarchical whole where nested group totals and their parts both matter; area encodes value (too many parts for a pie) |
-| [`SunburstChart`](#sunburstchart) | A whole split into nested levels, read from the centre outward, with optional drill-down |
+| [`SunburstChart`](#sunburstchart) | A nested part-to-whole as concentric rings, read from the centre outward, with optional drill-down |
 
 ### How does a measure change over time or an ordered axis?
 
@@ -1571,13 +1571,14 @@ Concentric rings for a hierarchical part-to-whole: each depth is a ring and each
 **Use when**
 
 - A hierarchical part-to-whole with 2–4 levels, where the path from the centre outward is the story
+- There are too many parts for a pie, and the nesting itself is what explains them
 - Readers should drill down into deeper levels — set `zoom`
 
 **Do not use when**
 
 - Sizes of many leaves must be compared precisely — use TreemapChart; area reads better than angle
 - A flat whole with about 6 or fewer parts — use PieChart
-- One entity's metrics on a radial profile — use PizzaChart
+- One entity’s metrics on a radial profile — use PizzaChart; do not stretch it into a sunburst
 - Composition changes over time — use AreaChart
 
 **Data**
@@ -1598,19 +1599,20 @@ Concentric rings for a hierarchical part-to-whole: each depth is a ring and each
 <SunburstChart
   id="files"
   className="w-full h-96"
-  data={tree}
+  data={data}
   value={{ key: 'size', className: 'fill-slate-300 stroke-white' }}
   classNameMap={{ src: 'fill-sky-400', docs: 'fill-amber-300' }}
   labels={{ name: true }}
+  title="Repository size by folder"
 />
 ```
 
 **Options**
 
-- **Donut hole** — Set `innerRadius` (a fraction, e.g. `0.3`) to drop the centre disc.
-- **Partial angle** — Set `startAngle` / `endAngle` in radians, e.g. `-Math.PI / 2` to `Math.PI / 2` for a half sunburst.
-- **Click-to-zoom** — Set `zoom` (or `zoom={{ onChange }}`) to drill into an arc; click the centre or press Escape to zoom out.
-- **Visible rings** — Set `rings` to show that many levels below the focus; deeper levels appear when zoomed.
+- **Donut hole** — Set `innerRadius` (a fraction of the outer radius, e.g. `0.3`) to drop the centre disc. Values are clamped to `[0, 0.9]`.
+- **Partial angle** — Set `startAngle` / `endAngle` in radians, clockwise from 12 o’clock, e.g. `-Math.PI / 2` to `Math.PI / 2` for a half sunburst.
+- **Click-to-zoom** — Set `zoom` (or `zoom={{ onChange }}`) to drill into an arc; click the centre (or the donut hole) or press Escape to zoom out.
+- **Visible rings** — Set `rings` to show that many levels below the focus; deeper levels still exist and appear when zoomed. This is not `maxDepth`, which rolls deeper mass into an ancestor.
 - **Percent labels** — Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`.
 
 **Consider instead**
@@ -2349,6 +2351,7 @@ Equal-angle radial slices, one per metric, each extending from the centre in pro
 
 - Several entities need comparing — a pizza shows one; use RadarChart, which overlays many
 - The metrics are parts of one whole — use PieChart, where angle encodes share
+- A true hierarchical sunburst is needed — PizzaChart is a flat profile; use SunburstChart
 - Precise values matter — radius is read poorly; use ColumnChart
 - Each metric has its own target rather than a shared max — use RingGauge
 
@@ -2389,6 +2392,7 @@ Equal-angle radial slices, one per metric, each extending from the centre in pro
 - [`RadarChart`](#radarchart) — several entities must be compared across the same metrics
 - [`RingGauge`](#ringgauge) — each metric has its own target
 - [`PieChart`](#piechart) — the values are parts of one whole
+- [`SunburstChart`](#sunburstchart) — a hierarchical part-to-whole, not a single-entity profile
 
 ### RadarChart
 

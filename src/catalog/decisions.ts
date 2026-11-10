@@ -72,7 +72,7 @@ export const decisionTree: DecisionBranch[] = [
       },
       {
         name: 'SunburstChart',
-        when: 'A whole split into nested levels, read from the centre outward, with optional drill-down',
+        when: 'A nested part-to-whole as concentric rings, read from the centre outward, with optional drill-down',
       },
     ],
   },

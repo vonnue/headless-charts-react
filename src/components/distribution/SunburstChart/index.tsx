@@ -129,13 +129,16 @@ const fitText = (text: string, px: number): string => {
  * **Use when**
  * - A hierarchical part-to-whole with 2–4 levels, where the path from the
  *   centre outward is the story
+ * - There are too many parts for a pie, and the nesting itself is what
+ *   explains them
  * - Readers should drill down into deeper levels — set `zoom`
  *
  * **Avoid when**
  * - Sizes of many leaves must be compared precisely — use TreemapChart; area
  *   reads better than angle
  * - A flat whole with about 6 or fewer parts — use PieChart
- * - One entity's metrics on a radial profile — use PizzaChart
+ * - One entity’s metrics on a radial profile — use PizzaChart; do not
+ *   stretch it into a sunburst
  * - Composition changes over time — use AreaChart
  *
  * Also called: sunburst, sunburst chart, sunburst diagram, radial treemap, multi-level pie chart.
@@ -147,10 +150,11 @@ const fitText = (text: string, px: number): string => {
  * <SunburstChart
  *   id="files"
  *   className="w-full h-96"
- *   data={tree}
+ *   data={data}
  *   value={{ key: 'size', className: 'fill-slate-300 stroke-white' }}
  *   classNameMap={{ src: 'fill-sky-400', docs: 'fill-amber-300' }}
  *   labels={{ name: true }}
+ *   title="Repository size by folder"
  * />
  * ```
  *

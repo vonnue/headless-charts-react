@@ -223,11 +223,11 @@ const tooltipHtml = (
  * @remarks
  *
  * **Use when**
- * - Many records across 3–12 measures with different units
- * - Finding clusters or trade-offs (crossing lines between adjacent axes)
- *   across measures
- * - Filtering records interactively by ranges on several measures
- *   (`brushing`)
+ * - Many records need comparing across 3–12 measures with different units
+ * - Clusters or trade-offs (crossing lines between adjacent axes) are the
+ *   pattern to find
+ * - Records should be filtered interactively by ranges on several measures —
+ *   set `brushing`
  *
  * **Avoid when**
  * - A few entities on one shared scale — use RadarChart
@@ -238,16 +238,17 @@ const tooltipHtml = (
  *   colour names categories only
  * - The audience needs exact values — use a table
  *
- * Also called: parallel coordinates, parallel coordinates plot, parallel coordinates chart, parallel plot.
+ * Also called: parallel coordinates, parallel coordinates plot, parallel coordinates chart, parallel coordinate plot, parallel plot, parallel axes.
  *
  * Answers: profile, correlation, distribution. Required props: `id`, `data`, `dimensions`.
  *
  * @example
  * ```tsx
+ * const [selected, setSelected] = React.useState<number[]>([]);
  * <ParallelCoordinatesChart
  *   id="cars"
  *   className="w-full h-96"
- *   data={cars}
+ *   data={data}
  *   label={{ key: 'model' }}
  *   dimensions={[
  *     'mpg',

@@ -1,0 +1,35 @@
+{
+  "name": "repo",
+  "children": [
+    {
+      "name": "src",
+      "children": [
+        {
+          "name": "components",
+          "children": [
+            { "name": "charts", "size": 420 },
+            { "name": "gauges", "size": 160 },
+            { "name": "forms", "size": 90 }
+          ]
+        },
+        { "name": "hooks", "children": [{ "name": "useAxis", "size": 60 }, { "name": "useTooltip", "size": 80 }] },
+        { "name": "utils", "size": 110 }
+      ]
+    },
+    {
+      "name": "docs",
+      "children": [
+        { "name": "guides", "size": 140 },
+        { "name": "api", "size": 95 },
+        { "name": "drafts", "size": 0 }
+      ]
+    },
+    {
+      "name": "test",
+      "children": [
+        { "name": "unit", "size": 180 },
+        { "name": "e2e", "children": [{ "name": "smoke", "size": 40 }, { "name": "visual", "size": 3 }] }
+      ]
+    }
+  ]
+}

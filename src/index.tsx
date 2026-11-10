@@ -83,6 +83,8 @@ export type {
   PCBrushSelection,
   PCDatum,
 } from '@/components/distribution/ParallelCoordinatesChart';
+export { default as SunburstChart } from '@/components/distribution/SunburstChart';
+export type { SunburstChartProps } from '@/components/distribution/SunburstChart';
 
 export { default as RingGauge } from '@/components/gauges/RingGauge';
 export { default as BulletChart } from '@/components/gauges/BulletChart';

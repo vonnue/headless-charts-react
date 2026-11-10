@@ -61,6 +61,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | RadarChart, spider chart, web chart, star chart, polar chart, kiviat diagram | [`RadarChart`](#radarchart) | Base component, no extra configuration |
 | RangePlot, dumbbell chart, dumbbell plot, barbell chart, dot plot, DNA chart, range chart | [`RangePlot`](#rangeplot) | Base component, no extra configuration |
 | RingGauge, activity rings, radial progress chart, concentric gauge, donut gauge | [`RingGauge`](#ringgauge) | Base component, no extra configuration |
+| SankeyChart, sankey, sankey diagram, sankey chart, flow diagram, alluvial diagram | [`SankeyChart`](#sankeychart) | Base component, no extra configuration |
 | ScatterPlot, scatter chart, scatter graph, xy plot, correlation plot | [`ScatterPlot`](#scatterplot) | Base component, no extra configuration |
 | Semicircle chart, half donut chart, parliament chart, hemicycle chart, seat chart, gauge donut | [`PieChart`](#piechart) | Set `startAngle={-90}` and `endAngle={90}`. Combine with `innerRadius` for a half donut. |
 | SpeedometerChart, gauge chart, dial chart, speedometer, needle gauge | [`SpeedometerChart`](#speedometerchart) | Base component, no extra configuration |
@@ -176,6 +177,7 @@ Find the question being asked, then pick among the candidates.
 | Chart | Choose it when |
 | --- | --- |
 | [`Network`](#network) | Nodes and edges, force-directed by default and optionally pinned to x/y scales |
+| [`SankeyChart`](#sankeychart) | How much flows from where to where: weighted links between layered nodes, width = volume; acyclic only |
 
 ## Chart reference
 
@@ -2628,3 +2630,69 @@ Draws nodes and the edges between them, laid out by force simulation or pinned t
 
 - [`ScatterPlot`](#scatterplot) — entities have two measures and no meaningful links
 - [`WaffleChart`](#wafflechart) — the relationships form a matrix better read as a heatmap
+
+### SankeyChart
+
+Weighted flows between nodes arranged in layered columns; node size and link width share one scale, so how much moves from where to where is the story.
+
+**Category:** `flow` · **Answers:** `connection`, `composition` · **Storybook:** Flow/SankeyChart/Intro
+
+**Also called:** sankey, sankey diagram, sankey chart, flow diagram, alluvial diagram
+
+**Use when**
+
+- Volume moves between stages or categories and both the totals and the splits matter, e.g. energy, budget or user-journey flows
+- Flows pass through intermediate nodes in layered steps (source → conversion → use)
+- Imbalance at a node (in ≠ out) should stay visible
+
+**Do not use when**
+
+- It is one ordered path with drop-off — use FunnelChart
+- The relationships matter but there are no volumes — use Network
+- Flows loop back (cycles) — use Network, or aggregate the data into an acyclic graph first
+- There are more than ~30 nodes — aggregate first
+- The parts are one whole with no flow between them — use TreemapChart or PieChart
+
+**Data**
+
+- `data` shape: graph
+- Rows: ideal 4–20, max 30 — Nodes. Past ~30 nodes columns get crowded and labels collide; aggregate first.
+
+| Prop | Role | Required | Notes |
+| --- | --- | --- | --- |
+| `links` | link | yes | Array of flow records with source, target and value (keys set by `linkDef`). Duplicate source/target pairs are summed; the graph must be acyclic. |
+| `linkDef.valueKey` | quantitative | no | Field holding the flow volume (default `value`). Link width and node size encode it on one shared scale; zero flows are skipped, negative ones dropped. |
+| `nodes` | category | no | Optional node records for labels and tooltip data. When omitted, nodes are inferred from link endpoints; when given, links to unknown ids are dropped. |
+| `nodeDef.idKey` | label | no | Field on each node holding its id (default `id`); links reference this value. |
+| `classNameMap` | color | no | `nodeDef.classNameMap` (fill) and `linkDef.classNameMap` (stroke), keyed by node id. Colour names the node; it never encodes the flow value. |
+
+**Required props:** `id`, `links`
+
+```tsx
+<SankeyChart
+  id="energy"
+  className="w-full h-96"
+  links={flows}
+  nodes={sectors}
+  nodeDef={{ idKey: 'id', labelKey: 'name', className: 'fill-slate-500',
+             classNameMap: { Coal: 'fill-stone-600', Solar: 'fill-amber-400' } }}
+  linkDef={{ valueKey: 'twh', className: 'stroke-slate-300 [stroke-opacity:0.5]',
+             classNameMap: { Coal: 'stroke-stone-400', Solar: 'stroke-amber-300' } }}
+  labels={{ name: true, value: true }}
+  tooltip={{ className: 'bg-white text-xs p-2 shadow' }}
+  title="Energy flows, 2025 (TWh)"
+/>
+```
+
+**Options**
+
+- **Vertical** — Set `orientation="vertical"` to run columns top → bottom.
+- **Alignment** — Set `align` to `"justify"` (default, sinks in the last column), `"left"`, `"right"` or `"center"`.
+- **Input order** — Set `nodeSort="input"` to keep node input order in each column instead of relaxing the layout.
+- **Path highlighting** — Set `highlight="path"` to mark every upstream and downstream node and link on hover through `data-highlighted` / `data-dimmed`; `false` turns highlighting off.
+- **Value labels** — Set `labels.value: true` to append each node value; `format` sets the number format.
+
+**Consider instead**
+
+- [`Network`](#network) — topology without volumes, or flows with cycles
+- [`PieChart`](#piechart) — parts of one whole with no flow between them

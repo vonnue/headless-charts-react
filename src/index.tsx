@@ -80,6 +80,14 @@ export { default as Network } from '@/components/flow/Network';
 export { default as FunnelChart } from '@/components/flow/FunnelChart';
 export type { FunnelChartProps } from '@/components/flow/FunnelChart';
 
+export { default as SankeyChart } from '@/components/flow/SankeyChart';
+export type {
+  SankeyChartProps,
+  SankeyNodeDatum,
+  SankeyLinkDatum,
+  SankeyAlign,
+} from '@/components/flow/SankeyChart';
+
 export const utils = {
   mergeTailwindClasses,
   convertToRanks,

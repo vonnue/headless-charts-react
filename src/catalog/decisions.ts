@@ -232,6 +232,10 @@ export const decisionTree: DecisionBranch[] = [
         name: 'Network',
         when: 'Nodes and edges, force-directed by default and optionally pinned to x/y scales',
       },
+      {
+        name: 'SankeyChart',
+        when: 'How much flows from where to where: weighted links between layered nodes, width = volume; acyclic only',
+      },
     ],
   },
 ];

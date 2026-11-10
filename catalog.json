@@ -133,7 +133,7 @@
         },
         {
           "name": "ViolinChart",
-          "when": "Compare the full shape of a measure's distribution across groups"
+          "when": "Compare the full shape (peaks, skew, multimodality) of a raw measure across groups — not just the five-number summary"
         },
         {
           "name": "ScatterPlot",
@@ -2606,7 +2606,7 @@
         "violin chart"
       ],
       "category": "ranges",
-      "summary": "A mirrored kernel density per group, with an optional inner box and points, showing the full shape of a measure's distribution across categories.",
+      "summary": "Mirrored kernel-density shapes, one per group, showing the full distribution of a raw numeric measure — including multimodality and skew that a five-number summary hides.",
       "intents": [
         "distribution",
         "comparison"
@@ -2624,7 +2624,7 @@
             "prop": "value",
             "role": "quantitative",
             "required": true,
-            "description": "Raw sample key, one row per observation. Non-finite values are excluded."
+            "description": "Raw sample key, one row per observation. Non-finite values are excluded. Precomputed densities or summaries are not accepted."
           },
           {
             "prop": "classNameMap",
@@ -2643,13 +2643,15 @@
         }
       },
       "useWhen": [
-        "The shape of a distribution (multimodality, skew) matters across groups",
-        "Each group has enough samples (about 20 or more) for a density"
+        "The full shape of a distribution (peaks, skew, multimodality or gaps) matters across groups, and a five-number summary would hide it",
+        "Each group has enough raw samples (about 20 or more) for a stable density"
       ],
       "avoidWhen": [
         "Only the median and quartiles matter, or the audience will not read densities — use BoxPlotV or BoxPlotH",
-        "Groups have very few samples — use ScatterPlot (or turn on `points`)",
+        "The five-number summary is already computed and there are no raw samples — use BoxPlotV or BoxPlotH",
+        "Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlotV / BoxPlotH if a summary is enough",
         "Only one group's distribution is shown — use ColumnChart with `x.bin`",
+        "Densities are already precomputed — use AreaChart; ViolinChart always estimates from raw rows",
         "Colour would encode magnitude — colour names the group; density is width only"
       ],
       "alternatives": [
@@ -2663,11 +2665,11 @@
         },
         {
           "name": "ColumnChart",
-          "when": "one group's distribution as a histogram"
+          "when": "one group's distribution as a histogram — set `x.bin`"
         },
         {
           "name": "ScatterPlot",
-          "when": "very small samples per group"
+          "when": "very small samples per group, or every point should stay visible"
         }
       ],
       "requiredProps": [
@@ -2676,7 +2678,7 @@
         "category",
         "value"
       ],
-      "example": "<ViolinChart\n  id=\"salaries\"\n  className=\"w-full h-80\"\n  data={rows}\n  category={{ key: 'dept' }}\n  value={{ key: 'salary', className: 'fill-slate-300 stroke-slate-500' }}\n/>",
+      "example": "<ViolinChart\n  id=\"salaries\"\n  className=\"w-full h-80\"\n  data={data}\n  category={{ key: 'dept' }}\n  value={{ key: 'salary', className: 'fill-slate-300 stroke-slate-500', axis: { label: 'Salary' } }}\n  classNameMap={{ Eng: 'fill-slate-400', Sales: 'fill-slate-300' }}\n  inner=\"box\"\n  title=\"Salary distribution by department\"\n/>",
       "storybook": "Ranges/ViolinChart/Intro",
       "variants": [
         {
@@ -2693,9 +2695,10 @@
             "Sample sizes are modest, so the points do not overplot"
           ],
           "avoidWhen": [
-            "Samples number in the thousands — the points overplot; use a plain violin"
+            "Samples number in the thousands — the points overplot; use a plain violin",
+            "Only the density matters — use a plain violin (`side: \"both\"`, `points` off)"
           ],
-          "example": "<ViolinChart\n  id=\"raincloud\"\n  className=\"w-full h-80\"\n  data={rows}\n  category={{ key: 'dept' }}\n  value={{ key: 'salary', className: 'fill-slate-300' }}\n  side=\"start\"\n  points\n/>"
+          "example": "<ViolinChart\n  id=\"raincloud\"\n  className=\"w-full h-80\"\n  data={data}\n  category={{ key: 'dept' }}\n  value={{ key: 'salary', className: 'fill-slate-300' }}\n  side=\"start\"\n  points\n/>"
         },
         {
           "kind": "option",

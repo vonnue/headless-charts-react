@@ -130,7 +130,7 @@ export const decisionTree: DecisionBranch[] = [
       },
       {
         name: 'ViolinChart',
-        when: "Compare the full shape of a measure's distribution across groups",
+        when: 'Compare the full shape (peaks, skew, multimodality) of a raw measure across groups — not just the five-number summary',
       },
       {
         name: 'ScatterPlot',

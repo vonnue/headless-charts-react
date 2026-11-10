@@ -131,7 +131,7 @@ Find the question being asked, then pick among the candidates.
 | [`BarChart`](#barchart) | Same histogram horizontally — set `x[0].bin`; better for many bins |
 | [`BoxPlotV`](#boxplotv) | Compare the spread, median and quartiles of several groups, vertically |
 | [`BoxPlotH`](#boxploth) | Same as BoxPlotV with long group labels |
-| [`ViolinChart`](#violinchart) | Compare the full shape of a measure's distribution across groups |
+| [`ViolinChart`](#violinchart) | Compare the full shape (peaks, skew, multimodality) of a raw measure across groups — not just the five-number summary |
 | [`ScatterPlot`](#scatterplot) | Two-dimensional density — set `x.bin` or `y.bin` for a binned heatmap |
 
 ### What is the interval, or the movement between two states?
@@ -2162,7 +2162,7 @@ A dumbbell per category: two endpoints joined by a bar, showing the interval bet
 
 ### ViolinChart
 
-A mirrored kernel density per group, with an optional inner box and points, showing the full shape of a measure's distribution across categories.
+Mirrored kernel-density shapes, one per group, showing the full distribution of a raw numeric measure — including multimodality and skew that a five-number summary hides.
 
 **Category:** `ranges` · **Answers:** `distribution`, `comparison` · **Storybook:** Ranges/ViolinChart/Intro
 
@@ -2170,14 +2170,16 @@ A mirrored kernel density per group, with an optional inner box and points, show
 
 **Use when**
 
-- The shape of a distribution (multimodality, skew) matters across groups
-- Each group has enough samples (about 20 or more) for a density
+- The full shape of a distribution (peaks, skew, multimodality or gaps) matters across groups, and a five-number summary would hide it
+- Each group has enough raw samples (about 20 or more) for a stable density
 
 **Do not use when**
 
 - Only the median and quartiles matter, or the audience will not read densities — use BoxPlotV or BoxPlotH
-- Groups have very few samples — use ScatterPlot (or turn on `points`)
+- The five-number summary is already computed and there are no raw samples — use BoxPlotV or BoxPlotH
+- Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlotV / BoxPlotH if a summary is enough
 - Only one group's distribution is shown — use ColumnChart with `x.bin`
+- Densities are already precomputed — use AreaChart; ViolinChart always estimates from raw rows
 - Colour would encode magnitude — colour names the group; density is width only
 
 **Data**
@@ -2188,7 +2190,7 @@ A mirrored kernel density per group, with an optional inner box and points, show
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
 | `category` | category | yes | Grouping key; one violin per distinct value, in first-appearance order (or `category.order`). |
-| `value` | quantitative | yes | Raw sample key, one row per observation. Non-finite values are excluded. |
+| `value` | quantitative | yes | Raw sample key, one row per observation. Non-finite values are excluded. Precomputed densities or summaries are not accepted. |
 | `classNameMap` | color | no | Optional class per group. Colour names the group; density is width only. |
 
 **Required props:** `id`, `data`, `category`, `value`
@@ -2197,9 +2199,12 @@ A mirrored kernel density per group, with an optional inner box and points, show
 <ViolinChart
   id="salaries"
   className="w-full h-80"
-  data={rows}
+  data={data}
   category={{ key: 'dept' }}
-  value={{ key: 'salary', className: 'fill-slate-300 stroke-slate-500' }}
+  value={{ key: 'salary', className: 'fill-slate-300 stroke-slate-500', axis: { label: 'Salary' } }}
+  classNameMap={{ Eng: 'fill-slate-400', Sales: 'fill-slate-300' }}
+  inner="box"
+  title="Salary distribution by department"
 />
 ```
 
@@ -2219,12 +2224,13 @@ A half violin with the raw samples jittered on the empty side, showing density a
 **Do not use when**
 
 - Samples number in the thousands — the points overplot; use a plain violin
+- Only the density matters — use a plain violin (`side: "both"`, `points` off)
 
 ```tsx
 <ViolinChart
   id="raincloud"
   className="w-full h-80"
-  data={rows}
+  data={data}
   category={{ key: 'dept' }}
   value={{ key: 'salary', className: 'fill-slate-300' }}
   side="start"
@@ -2244,8 +2250,8 @@ A half violin with the raw samples jittered on the empty side, showing density a
 
 - [`BoxPlotV`](#boxplotv) — only the five-number summary matters
 - [`BoxPlotH`](#boxploth) — the five-number summary with long category labels
-- [`ColumnChart`](#columnchart) — one group's distribution as a histogram
-- [`ScatterPlot`](#scatterplot) — very small samples per group
+- [`ColumnChart`](#columnchart) — one group's distribution as a histogram — set `x.bin`
+- [`ScatterPlot`](#scatterplot) — very small samples per group, or every point should stay visible
 
 ### BulletChart
 

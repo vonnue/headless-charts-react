@@ -35,6 +35,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | BulletChart, bullet graph, kpi bar, target vs actual chart | [`BulletChart`](#bulletchart) | Base component, no extra configuration |
 | Bump chart, rank chart, ranking chart, bump plot, rank over time | [`LineChart`](#linechart) | Convert values to ranks with `utils.convertToRanks(data, y, x)` — it takes the same `y` array and `x` object you pass to the chart — then set `curve: "bumpX"` and `label: { show: true }` on each series, and `reverse` so rank 1 sits at the top. |
 | Calendar heatmap, month-year heatmap, seasonality chart, activity heatmap | [`WaffleChart`](#wafflechart) | Map the finer time unit to `y` and the coarser to `x`, then colour by the measure. Use a diverging scale such as `interpolateRdYlGn` for values with a meaningful middle. |
+| CandlestickChart, candlestick, candlestick chart, japanese candlestick chart, stock chart, financial chart | [`CandlestickChart`](#candlestickchart) | Base component, no extra configuration |
 | ColumnChart, vertical bar chart, grouped column chart, clustered column chart | [`ColumnChart`](#columnchart) | Base component, no extra configuration |
 | ColumnChartStacked, stacked column chart, stacked bar chart (vertical) | [`ColumnChartStacked`](#columnchartstacked) | Base component, no extra configuration |
 | CometPlot, comet chart, change plot, movement plot, slope chart | [`CometPlot`](#cometplot) | Base component, no extra configuration |
@@ -54,6 +55,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | LollipopHChart, horizontal lollipop chart, lollipop chart, stem plot | [`LollipopHChart`](#lollipophchart) | Base component, no extra configuration |
 | LollipopVChart, vertical lollipop chart, stem and dot chart | [`LollipopVChart`](#lollipopvchart) | Base component, no extra configuration |
 | Network, network graph, node-link diagram, force-directed graph, graph chart, relationship map | [`Network`](#network) | Base component, no extra configuration |
+| OHLC chart, ohlc, ohlc bar chart, open-high-low-close chart | [`CandlestickChart`](#candlestickchart) | Set `shape: 'ohlc'`. |
 | PieChart, circle chart, part-to-whole chart | [`PieChart`](#piechart) | Base component, no extra configuration |
 | PizzaChart, radial bar chart, polar bar chart, sunburst-style profile | [`PizzaChart`](#pizzachart) | Base component, no extra configuration |
 | RadarChart, spider chart, web chart, star chart, polar chart, kiviat diagram | [`RadarChart`](#radarchart) | Base component, no extra configuration |
@@ -109,6 +111,7 @@ Find the question being asked, then pick among the candidates.
 | [`AreaChart`](#areachart) | Trend where the volume under the line or the split of a total matters |
 | [`ColumnChart`](#columnchart) | Few discrete periods where individual values matter more than the trend line |
 | [`TimeLineChart`](#timelinechart) | Discrete events or durations on a date axis rather than a continuous measure |
+| [`CandlestickChart`](#candlestickchart) | Open/high/low/close per period, where direction and intraperiod range both matter |
 
 ### How do two measures relate to each other?
 
@@ -561,6 +564,96 @@ Floating horizontal bars where each segment continues from the previous total, s
 - [`BarChart`](#barchart) — segments must be compared precisely rather than summed
 - [`ColumnChartStacked`](#columnchartstacked) — short labels and few categories
 - [`PieChart`](#piechart) — a single whole at one point in time
+
+### CandlestickChart
+
+Draws each period's open, high, low and close as a wick and a body, coloured by direction, to show price movement and intraperiod range over time.
+
+**Category:** `linear` · **Answers:** `trend`, `range` · **Storybook:** Linear/CandlestickChart/Intro
+
+**Also called:** candlestick, candlestick chart, japanese candlestick chart, stock chart, financial chart
+
+**Use when**
+
+- The open/close direction and the intraperiod range both matter for each period, as in prices, rates or sensor min/max with start and end values
+
+**Do not use when**
+
+- Only the closing value matters — use LineChart
+- Each category has a plain min–max interval — use RangePlot
+- The data is a distribution summary — use BoxPlotV
+- Colour would be the only cue for direction — use `shape: 'ohlc'` or hollow up bodies (`fill-transparent`)
+
+**Data**
+
+- `data` shape: records
+- Rows: ideal 20–250, max 1000 — Periods. Beyond a few hundred, bodies get thinner than a pixel.
+
+| Prop | Role | Required | Notes |
+| --- | --- | --- | --- |
+| `x` | temporal | yes | Date key (`time.isISO` or `time.format`; Date objects and epoch ms also work). ISO dates are UTC by default; `time.utc: false` keeps local time. Default axis is a gap-free band over the dates present; `scalingFunction: "time"` gives elapsed-time spacing. |
+| `open` | quantitative | yes | Opening value key, `{ key }`. |
+| `high` | quantitative | yes | High value key, `{ key }`. |
+| `low` | quantitative | yes | Low value key, `{ key }`. |
+| `close` | quantitative | yes | Closing value key, `{ key }`. |
+| `volume.key` | quantitative | no | Optional volume key; draws a zero-based volume panel below the prices. |
+| `classNames` | color | no | `up` / `down` / `flat` classes. Colour names the direction only; nothing is coloured by default. |
+
+**Required props:** `id`, `data`, `x`, `open`, `high`, `low`, `close`
+
+```tsx
+<CandlestickChart
+  id="btc"
+  className="w-full h-96"
+  data={bars}
+  x={{ key: 'date', time: { isISO: true } }}
+  open={{ key: 'o' }}
+  high={{ key: 'h' }}
+  low={{ key: 'l' }}
+  close={{ key: 'c' }}
+  classNames={{ up: 'fill-sky-500 stroke-sky-500', down: 'fill-orange-500 stroke-orange-500' }}
+/>
+```
+
+#### OHLC chart (CandlestickChart)
+
+Draws each period as a high–low stem with a left tick at the open and a right tick at the close, so direction reads without colour.
+
+**Also called:** ohlc, ohlc bar chart, open-high-low-close chart
+
+**Configuration:** Set `shape: 'ohlc'`.
+
+**Use when**
+
+- Direction must be readable without colour (print, colour-blind readers)
+- Many periods are shown and filled bodies would be too heavy
+
+```tsx
+<CandlestickChart
+  id="ohlc"
+  className="w-full h-96"
+  data={bars}
+  x={{ key: 'date', time: { isISO: true } }}
+  open={{ key: 'o' }}
+  high={{ key: 'h' }}
+  low={{ key: 'l' }}
+  close={{ key: 'c' }}
+  shape="ohlc"
+/>
+```
+
+**Options**
+
+- **Continuous time axis** — Set `x.scalingFunction: 'time'` for elapsed-time spacing: weekends and holidays show as gaps and ticks fall on calendar boundaries. Body width comes from the median gap between dates; `x.time.barWidth` overrides it, capped at one slot.
+- **Volume panel** — Set `volume={{ key: 'v', className: 'fill-slate-300' }}` for zero-based volume bars below the prices (`height` 0.1–0.5 of the plot, default 0.2). Bars carry `data-direction` for colouring by direction.
+- **Crosshair** — Set `crosshair` (or `{ className }`) for a crosshair that snaps to the hovered candle.
+- **Local time** — Set `x.time.utc: false` to place and label ISO dates in the viewer’s local time zone instead of UTC.
+
+**Consider instead**
+
+- [`LineChart`](#linechart) — only the closing value over time matters
+- [`RangePlot`](#rangeplot) — a plain min–max interval per category
+- [`BoxPlotV`](#boxplotv) — a distribution summary per period
 
 ### ColumnChart
 

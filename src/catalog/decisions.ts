@@ -88,6 +88,10 @@ export const decisionTree: DecisionBranch[] = [
         name: 'TimeLineChart',
         when: 'Discrete events or durations on a date axis rather than a continuous measure',
       },
+      {
+        name: 'CandlestickChart',
+        when: 'Open/high/low/close per period, where direction and intraperiod range both matter',
+      },
     ],
   },
   {

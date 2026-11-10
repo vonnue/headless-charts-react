@@ -50,7 +50,8 @@ export interface AxisConfig<TData = any> {
      * that shape without `utc` logs a one-time hint. Timestamps at other times
      * of day are usually best left in the viewer's local time.
      *
-     * Read by ColumnChart, ColumnChartStacked, LollipopVChart and BoxPlotV.
+     * Read by ColumnChart, ColumnChartStacked, LollipopVChart, BoxPlotV and
+     * CandlestickChart.
      */
     utc?: boolean;
     /**

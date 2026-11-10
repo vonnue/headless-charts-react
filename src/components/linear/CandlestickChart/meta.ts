@@ -1,6 +1,5 @@
 import { ChartMeta } from '@/catalog/types';
 
-// Placeholder wording — Chart Catalog Editor refines.
 const meta: ChartMeta = {
   name: 'CandlestickChart',
   aliases: [
@@ -45,7 +44,8 @@ const meta: ChartMeta = {
     rowCount: { ideal: [20, 250], max: 1000, note: 'Periods. Beyond a few hundred, bodies get thinner than a pixel.' },
   },
   useWhen: [
-    'The open/close direction and the intraperiod range both matter for each period, as in prices, rates or sensor min/max with start and end values',
+    'Each period has an open, high, low and close, and both the open/close direction and the intraperiod range matter',
+    'The series is prices, rates, or a sensor min/max with start and end values over time',
   ],
   avoidWhen: [
     'Only the closing value matters — use LineChart',
@@ -62,7 +62,7 @@ const meta: ChartMeta = {
   example: `<CandlestickChart
   id="btc"
   className="w-full h-96"
-  data={bars}
+  data={data}
   x={{ key: 'date', time: { isISO: true } }}
   open={{ key: 'o' }}
   high={{ key: 'h' }}
@@ -83,10 +83,14 @@ const meta: ChartMeta = {
         'Direction must be readable without colour (print, colour-blind readers)',
         'Many periods are shown and filled bodies would be too heavy',
       ],
+      avoidWhen: [
+        'Colour can be used and filled bodies stay readable — use the default candle shape',
+        'Only the closing value matters — use LineChart',
+      ],
       example: `<CandlestickChart
   id="ohlc"
   className="w-full h-96"
-  data={bars}
+  data={data}
   x={{ key: 'date', time: { isISO: true } }}
   open={{ key: 'o' }}
   high={{ key: 'h' }}

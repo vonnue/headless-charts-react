@@ -93,7 +93,7 @@
         },
         {
           "name": "CandlestickChart",
-          "when": "Open/high/low/close per period, where direction and intraperiod range both matter"
+          "when": "Each period has open, high, low and close, and both the direction and the intraperiod range matter — not a close-only series"
         }
       ]
     },
@@ -710,7 +710,8 @@
         }
       },
       "useWhen": [
-        "The open/close direction and the intraperiod range both matter for each period, as in prices, rates or sensor min/max with start and end values"
+        "Each period has an open, high, low and close, and both the open/close direction and the intraperiod range matter",
+        "The series is prices, rates, or a sensor min/max with start and end values over time"
       ],
       "avoidWhen": [
         "Only the closing value matters — use LineChart",
@@ -741,7 +742,7 @@
         "low",
         "close"
       ],
-      "example": "<CandlestickChart\n  id=\"btc\"\n  className=\"w-full h-96\"\n  data={bars}\n  x={{ key: 'date', time: { isISO: true } }}\n  open={{ key: 'o' }}\n  high={{ key: 'h' }}\n  low={{ key: 'l' }}\n  close={{ key: 'c' }}\n  classNames={{ up: 'fill-sky-500 stroke-sky-500', down: 'fill-orange-500 stroke-orange-500' }}\n/>",
+      "example": "<CandlestickChart\n  id=\"btc\"\n  className=\"w-full h-96\"\n  data={data}\n  x={{ key: 'date', time: { isISO: true } }}\n  open={{ key: 'o' }}\n  high={{ key: 'h' }}\n  low={{ key: 'l' }}\n  close={{ key: 'c' }}\n  classNames={{ up: 'fill-sky-500 stroke-sky-500', down: 'fill-orange-500 stroke-orange-500' }}\n/>",
       "storybook": "Linear/CandlestickChart/Intro",
       "variants": [
         {
@@ -758,7 +759,11 @@
             "Direction must be readable without colour (print, colour-blind readers)",
             "Many periods are shown and filled bodies would be too heavy"
           ],
-          "example": "<CandlestickChart\n  id=\"ohlc\"\n  className=\"w-full h-96\"\n  data={bars}\n  x={{ key: 'date', time: { isISO: true } }}\n  open={{ key: 'o' }}\n  high={{ key: 'h' }}\n  low={{ key: 'l' }}\n  close={{ key: 'c' }}\n  shape=\"ohlc\"\n/>"
+          "avoidWhen": [
+            "Colour can be used and filled bodies stay readable — use the default candle shape",
+            "Only the closing value matters — use LineChart"
+          ],
+          "example": "<CandlestickChart\n  id=\"ohlc\"\n  className=\"w-full h-96\"\n  data={data}\n  x={{ key: 'date', time: { isISO: true } }}\n  open={{ key: 'o' }}\n  high={{ key: 'h' }}\n  low={{ key: 'l' }}\n  close={{ key: 'c' }}\n  shape=\"ohlc\"\n/>"
         },
         {
           "kind": "option",

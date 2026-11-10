@@ -111,7 +111,7 @@ Find the question being asked, then pick among the candidates.
 | [`AreaChart`](#areachart) | Trend where the volume under the line or the split of a total matters |
 | [`ColumnChart`](#columnchart) | Few discrete periods where individual values matter more than the trend line |
 | [`TimeLineChart`](#timelinechart) | Discrete events or durations on a date axis rather than a continuous measure |
-| [`CandlestickChart`](#candlestickchart) | Open/high/low/close per period, where direction and intraperiod range both matter |
+| [`CandlestickChart`](#candlestickchart) | Each period has open, high, low and close, and both the direction and the intraperiod range matter — not a close-only series |
 
 ### How do two measures relate to each other?
 
@@ -575,7 +575,8 @@ Draws each period's open, high, low and close as a wick and a body, coloured by 
 
 **Use when**
 
-- The open/close direction and the intraperiod range both matter for each period, as in prices, rates or sensor min/max with start and end values
+- Each period has an open, high, low and close, and both the open/close direction and the intraperiod range matter
+- The series is prices, rates, or a sensor min/max with start and end values over time
 
 **Do not use when**
 
@@ -605,7 +606,7 @@ Draws each period's open, high, low and close as a wick and a body, coloured by 
 <CandlestickChart
   id="btc"
   className="w-full h-96"
-  data={bars}
+  data={data}
   x={{ key: 'date', time: { isISO: true } }}
   open={{ key: 'o' }}
   high={{ key: 'h' }}
@@ -628,11 +629,16 @@ Draws each period as a high–low stem with a left tick at the open and a right 
 - Direction must be readable without colour (print, colour-blind readers)
 - Many periods are shown and filled bodies would be too heavy
 
+**Do not use when**
+
+- Colour can be used and filled bodies stay readable — use the default candle shape
+- Only the closing value matters — use LineChart
+
 ```tsx
 <CandlestickChart
   id="ohlc"
   className="w-full h-96"
-  data={bars}
+  data={data}
   x={{ key: 'date', time: { isISO: true } }}
   open={{ key: 'o' }}
   high={{ key: 'h' }}

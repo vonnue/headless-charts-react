@@ -90,7 +90,7 @@ export const decisionTree: DecisionBranch[] = [
       },
       {
         name: 'CandlestickChart',
-        when: 'Open/high/low/close per period, where direction and intraperiod range both matter',
+        when: 'Each period has open, high, low and close, and both the direction and the intraperiod range matter — not a close-only series',
       },
     ],
   },

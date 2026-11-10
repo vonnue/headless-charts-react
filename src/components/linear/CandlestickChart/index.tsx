@@ -156,8 +156,10 @@ const makeDefaultHtml =
  * @remarks
  *
  * **Use when**
- * - The open/close direction and the intraperiod range both matter for each
- *   period, as in prices, rates or sensor min/max with start and end values
+ * - Each period has an open, high, low and close, and both the open/close
+ *   direction and the intraperiod range matter
+ * - The series is prices, rates, or a sensor min/max with start and end
+ *   values over time
  *
  * **Avoid when**
  * - Only the closing value matters — use LineChart
@@ -178,7 +180,7 @@ const makeDefaultHtml =
  * <CandlestickChart
  *   id="btc"
  *   className="w-full h-96"
- *   data={bars}
+ *   data={data}
  *   x={{ key: 'date', time: { isISO: true } }}
  *   open={{ key: 'o' }}
  *   high={{ key: 'h' }}
@@ -193,7 +195,7 @@ const makeDefaultHtml =
  * <CandlestickChart
  *   id="ohlc"
  *   className="w-full h-96"
- *   data={bars}
+ *   data={data}
  *   x={{ key: 'date', time: { isISO: true } }}
  *   open={{ key: 'o' }}
  *   high={{ key: 'h' }}

@@ -384,6 +384,27 @@ describe('SankeyChart', () => {
     expect(all('sankey-label')).toHaveLength(0);
   });
 
+  it("19b: default format is d3.format(',') — grouped, no exponent, trimmed", () => {
+    render(
+      <SankeyChart
+        id='s19b'
+        links={[link('a', 'b', 1234567), link('a', 'c', 0.5)]}
+        labels={{ value: true }}
+        tooltip={{}}
+        style={STYLE}
+      />
+    );
+    const label = (id: string) =>
+      document.querySelector(`[data-testid="sankey-label"][data-id="${id}"]`)!.textContent;
+    expect(label('a')).toBe('a 1,234,567.5');
+    expect(label('b')).toBe('b 1,234,567');
+    expect(label('c')).toBe('c 0.5');
+    fireEvent.mouseEnter(nodeHit('b'), { clientX: 1, clientY: 1 });
+    expect(tooltipOf('s19b')!.innerHTML).toBe('b<br>in: 1,234,567');
+    fireEvent.mouseEnter(linkHit('a', 'c'), { clientX: 1, clientY: 1 });
+    expect(tooltipOf('s19b')!.innerHTML).toBe('a → c<br>0.5<br>0% of a out');
+  });
+
   it('20: colours from class maps, colorBy source/target/none, nothing by default', () => {
     const { rerender } = render(<SankeyChart id='s20' links={CROSS} style={STYLE} />);
     expect(nodeEl('A').getAttribute('class')).toBe('fill-current');

@@ -470,6 +470,31 @@ describe('SunburstChart', () => {
     expect(arcByPath('Root/A/A1/A1a')).toBeUndefined();
   });
 
+  it('9b: with rings: 1 the outermost visible ring stays zoomable — nodes whose children sit beyond rings get role="button", tabindex, and zoom on click and Enter', () => {
+    const onChange = vi.fn<(focus: HierarchyDatum | null) => void>();
+    renderChart({
+      id: 's9e',
+      data: deep,
+      rings: 1,
+      zoom: { onChange },
+      drawing: INSTANT,
+    });
+    expect(arcByPath('Root/A/A1')).toBeUndefined();
+    const A = arcByPath('Root/A')!;
+    expect(A.getAttribute('role')).toBe('button');
+    expect(A.getAttribute('tabindex')).toBe('0');
+    fireEvent.click(hitByPath('Root/A')!);
+    expect(onChange).toHaveBeenCalledOnce();
+    expect(centreOf()?.getAttribute('data-path')).toBe('Root/A');
+    expect(arcByPath('Root/A/A1')).toBeTruthy();
+    expect(arcByPath('Root/A/A1/A1a')).toBeUndefined();
+    fireEvent.keyDown(svgOf(), { key: 'Escape' });
+    const B = arcByPath('Root/B')!;
+    B.focus();
+    fireEvent.keyDown(B, { key: 'Enter' });
+    expect(centreOf()?.getAttribute('data-path')).toBe('Root/B');
+  });
+
   it('10: startAngle/endAngle (half circle) map spans into that range; centre and radius are unchanged; invalid angles fall back to the defaults with one warning', () => {
     const { unmount } = renderChart({ id: 's10a' });
     const discR = num(centreOf(), 'r');

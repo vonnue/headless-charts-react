@@ -410,8 +410,8 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
       });
       // Donut with nothing below the focus: the focus itself is one full ring.
       if (donut && L === 0 && !isSyntheticRoot(f) && positive(f)) ringNodes.push(f);
-      const hasPaintedChildren = (n: PNode) =>
-        n !== f && !!n.children?.some((c) => ringNodes.includes(c as PNode));
+      // Zoomable when the node has a positive child in the tree, even if `rings` hides it.
+      const isZoomable = (n: PNode) => n !== f && !!n.children?.some((c) => positive(c as PNode));
 
       const marksG = body.append('g').attr('class', 'marks');
       const elements = new Map<PNode, SVGElement>();
@@ -496,7 +496,7 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
           return `${d.path.join(' › ')}, ${d.value}`;
         };
         arcs
-          .filter((n) => hasPaintedChildren(n))
+          .filter((n) => isZoomable(n))
           .attr('tabindex', 0)
           .attr('role', 'button')
           .attr('aria-label', ariaFor)
@@ -598,7 +598,7 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
           .attr('data-path', pathOf(n).join('/'))
           .attr('d', hitPath(n));
         bindHover(hit, n).on('click', () => {
-          if (hasPaintedChildren(n)) zoomTo(n, false);
+          if (isZoomable(n)) zoomTo(n, false);
         });
       });
 

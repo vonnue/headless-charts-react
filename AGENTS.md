@@ -2591,6 +2591,7 @@ Draws nodes and the edges between them, laid out by force simulation or pinned t
 - The relationships are strictly hierarchical — a tree layout communicates depth better than a force graph
 - The data has no explicit edges; a network cannot be inferred from records alone
 - Node values are the real question — use BarChart or ScatterPlot
+- How much volume flows between layered stages — use SankeyChart
 - The graph is dense enough to become a hairball — aggregate or filter first
 
 **Data**
@@ -2630,6 +2631,7 @@ Draws nodes and the edges between them, laid out by force simulation or pinned t
 
 - [`ScatterPlot`](#scatterplot) — entities have two measures and no meaningful links
 - [`WaffleChart`](#wafflechart) — the relationships form a matrix better read as a heatmap
+- [`SankeyChart`](#sankeychart) — how much volume flows between layered stages
 
 ### SankeyChart
 

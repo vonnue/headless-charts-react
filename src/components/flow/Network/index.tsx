@@ -487,6 +487,7 @@ const attachZoom = (
  * - The data has no explicit edges; a network cannot be inferred from
  *   records alone
  * - Node values are the real question — use BarChart or ScatterPlot
+ * - How much volume flows between layered stages — use SankeyChart
  * - The graph is dense enough to become a hairball — aggregate or filter
  *   first
  *
@@ -509,6 +510,7 @@ const attachZoom = (
  * @see ScatterPlot — entities have two measures and no meaningful links
  * @see WaffleChart — the relationships form a matrix better read as a
  *   heatmap
+ * @see SankeyChart — how much volume flows between layered stages
  */
 /* catalog:end */
 const Network = <TData = any,>({

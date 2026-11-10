@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    { "id": "Coal", "name": "Coal" },
+    { "id": "Gas", "name": "Natural gas" },
+    { "id": "Solar", "name": "Solar" },
+    { "id": "Wind", "name": "Wind" },
+    { "id": "Nuclear", "name": "Nuclear" },
+    { "id": "Electricity", "name": "Electricity" },
+    { "id": "Heat", "name": "Heat" },
+    { "id": "Homes", "name": "Homes" },
+    { "id": "Industry", "name": "Industry" },
+    { "id": "Transport", "name": "Transport" },
+    { "id": "Losses", "name": "Losses" }
+  ],
+  "links": [
+    { "source": "Coal", "target": "Electricity", "twh": 120 },
+    { "source": "Coal", "target": "Heat", "twh": 40 },
+    { "source": "Gas", "target": "Electricity", "twh": 90 },
+    { "source": "Gas", "target": "Heat", "twh": 70 },
+    { "source": "Gas", "target": "Industry", "twh": 30 },
+    { "source": "Solar", "target": "Electricity", "twh": 45 },
+    { "source": "Wind", "target": "Electricity", "twh": 60 },
+    { "source": "Nuclear", "target": "Electricity", "twh": 80 },
+    { "source": "Electricity", "target": "Homes", "twh": 140 },
+    { "source": "Electricity", "target": "Industry", "twh": 120 },
+    { "source": "Electricity", "target": "Transport", "twh": 25 },
+    { "source": "Electricity", "target": "Losses", "twh": 110 },
+    { "source": "Heat", "target": "Homes", "twh": 70 },
+    { "source": "Heat", "target": "Industry", "twh": 25 },
+    { "source": "Heat", "target": "Losses", "twh": 15 }
+  ]
+}

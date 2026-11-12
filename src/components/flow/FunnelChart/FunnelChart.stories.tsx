@@ -68,6 +68,18 @@ export const HorizontalTrapezoid = meta.story({
   },
 });
 
+/** Marks grow from the midline, staggered 100ms per stage, after `drawing.delay`. Remount the story to replay. */
+export const Drawing = meta.story({
+  args: {
+    ...Trapezoid.input.args,
+    id: 'funnel-drawing',
+    drawing: {
+      duration: 1000,
+      delay: 100,
+    },
+  },
+});
+
 /** Stage, value and percent-of-first labels. */
 export const Labels = meta.story({
   args: {

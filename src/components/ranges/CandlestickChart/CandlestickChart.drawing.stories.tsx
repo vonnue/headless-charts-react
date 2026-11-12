@@ -51,8 +51,7 @@ export const DrawingWithDelay = meta.story({
   args: {
     ...base,
     id: 'candlestick-drawing-delay',
-    data: data.slice(0, 15),
-    drawing: { duration: 1000, delay: 200 },
+    drawing: { duration: 200, delay: 200 },
   },
 });
 
@@ -74,7 +73,6 @@ export const OHLCWithDelay = meta.story({
     id: 'candlestick-drawing-ohlc-delay',
     shape: 'ohlc',
     classNames: ohlcClassNames,
-    data: data.slice(0, 15),
-    drawing: { duration: 1000, delay: 200 },
+    drawing: { duration: 200, delay: 200 },
   },
 });

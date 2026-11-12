@@ -44,6 +44,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Diverging bar chart, tornado chart, bidirectional bar chart, deviation chart | [`BarChart`](#barchart) | Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. |
 | Donut chart, doughnut chart, ring chart | [`PieChart`](#piechart) | Set `innerRadius` above 0. Values are a fraction of `outerRadius`, so `innerRadius={0.5}` hollows half the radius. |
 | Dual-axis line chart, two axis chart, secondary axis chart, combo chart | [`LineChart`](#linechart) | Give the second series `axis: { location: "right" }` and widen `margin.right`. Label the scales with `yLeftLabel` and `yRightLabel`. |
+| FunnelChart, funnel, funnel chart, conversion funnel | [`FunnelChart`](#funnelchart) | Base component, no extra configuration |
 | Gantt chart, gantt, schedule chart, project timeline, swimlane chart | [`TimeLineChart`](#timelinechart) | Pass both `events.startKey` and `events.endKey` with `events.isTime: true`, and set `y` to the lane key. Spans render as rects; overlapping work in a lane is visible as stacked bars. |
 | Histogram, frequency distribution, binned column chart, frequency chart | [`ColumnChart`](#columnchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
 | Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically. |
@@ -98,6 +99,7 @@ Find the question being asked, then pick among the candidates.
 | [`BarChartStacked`](#barchartstacked) | Same as ColumnChartStacked but with long category labels; also does waterfall |
 | [`AreaChart`](#areachart) | Composition changing over a continuous axis; supports 100% and streamgraph stacking |
 | [`PizzaChart`](#pizzachart) | Several metrics as radial segments of one entity, each against its own max |
+| [`FunnelChart`](#funnelchart) | Ordered conversion / drop-off through fixed stages (visit → signup → paid); length encodes count, colour must not |
 
 ### How does a measure change over time or an ordered axis?
 
@@ -2342,6 +2344,68 @@ A dial with a needle showing one value against a scale that can be split into co
 - [`BulletChart`](#bulletchart) — the same information is needed in a fraction of the space
 - [`LinearGauge`](#lineargauge) — a plain value on a scale, no bands
 - [`RingGauge`](#ringgauge) — several metrics each against their own target
+
+### FunnelChart
+
+Ordered conversion stages drawn as centred bars or connected trapezoids whose length encodes each stage value, so drop-off along the path is the story.
+
+**Category:** `flow` · **Answers:** `composition`, `comparison` · **Storybook:** Flow/FunnelChart/Intro
+
+**Also called:** funnel, funnel chart, conversion funnel
+
+**Use when**
+
+- Counts move through a fixed ordered path and the drop-off between stages is the message, e.g. visit → signup → paid
+- Each stage should be read as a share of the first stage or of the previous one — set `labels.percent` to `"ofFirst"`, `"ofPrevious"` or `"both"`
+- Stages should stay in the given order rather than being sorted by value
+
+**Do not use when**
+
+- The parts are an unordered split of one whole — use PieChart
+- It is a ranked snapshot with no stage-to-stage drop-off story — use BarChart
+- The steps are additive bridge steps to a total — use ColumnChartStacked with `waterfall`
+- Colour is used to encode magnitude (darker = larger) — length already encodes value; keep `classNameMap` / `value.className` as stage identity only
+- The flow is volume between arbitrary nodes rather than one ordered path — Network only shows topology; a Sankey fits once available
+
+**Data**
+
+- `data` shape: records
+- Rows: ideal 3–8, min 1, max 12 — Past ~12 stages the bands get thin and labels collide.
+
+| Prop | Role | Required | Notes |
+| --- | --- | --- | --- |
+| `stage` | category | yes | Key holding the stage label. Array order is stage order; the chart does not sort. |
+| `value` | quantitative | yes | Key holding the stage count; mark length grows from 0. `value.end` pins the upper domain; a finite `value.start` is ignored. |
+| `classNameMap` | color | no | Optional class per stage label (overrides `value.className`). Colour names the stage; it must not encode magnitude — length does that. |
+
+**Required props:** `id`, `data`, `stage`, `value`
+
+```tsx
+<FunnelChart
+  id="signup"
+  className="w-full h-80"
+  data={data}
+  stage={{ key: 'name' }}
+  value={{ key: 'count', className: 'fill-slate-400' }}
+  classNameMap={{ Visit: 'fill-slate-500', Signup: 'fill-slate-400', Paid: 'fill-slate-300' }}
+  shape="trapezoid"
+  labels={{ stage: true, value: true, percent: 'ofFirst' }}
+  title="Signup conversion"
+/>
+```
+
+**Options**
+
+- **Trapezoid** — Set `shape="trapezoid"` to connect stages; the last stage tapers to a point.
+- **Horizontal** — Set `orientation="horizontal"` to run stages left → right.
+- **Percent of first** — Set `labels.percent: "ofFirst"` (or `{ of: "first" }`); a zero or missing first stage prints `n/a`.
+- **Percent of previous** — Set `labels.percent: "ofPrevious"` (or `{ of: "previous" }` / `"both"`); the first stage prints `n/a`.
+
+**Consider instead**
+
+- [`BarChart`](#barchart) — a ranked snapshot with no stage-to-stage drop-off
+- [`ColumnChartStacked`](#columnchartstacked) — additive steps to a total (waterfall)
+- [`PieChart`](#piechart) — an unordered part-to-whole split
 
 ### Network
 

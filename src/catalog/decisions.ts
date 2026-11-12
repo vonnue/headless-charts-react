@@ -62,6 +62,10 @@ export const decisionTree: DecisionBranch[] = [
         name: 'PizzaChart',
         when: 'Several metrics as radial segments of one entity, each against its own max',
       },
+      {
+        name: 'FunnelChart',
+        when: 'Ordered conversion / drop-off through fixed stages (visit → signup → paid); length encodes count, colour must not',
+      },
     ],
   },
   {

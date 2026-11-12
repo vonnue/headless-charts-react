@@ -67,6 +67,8 @@ export { default as SpeedometerChart } from '@/components/gauges/SpeedometerChar
 export { default as PizzaChart } from '@/components/gauges/PizzaChart';
 
 export { default as Network } from '@/components/flow/Network';
+export { default as FunnelChart } from '@/components/flow/FunnelChart';
+export type { FunnelChartProps } from '@/components/flow/FunnelChart';
 
 export const utils = {
   mergeTailwindClasses,

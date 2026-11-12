@@ -33,7 +33,7 @@ export type { CandleDatum } from './ohlc';
 type FieldKey<TData> = { key: Extract<keyof TData, string> | string };
 
 // `any` default matches ChartProps<TData = any> and the other charts' props.
-export interface CandlestickChartProps<TData = any> extends Omit<ChartProps<TData>, 'zooming'> { // eslint-disable-line @typescript-eslint/no-explicit-any
+export interface CandlestickChartProps<TData = any> extends Omit<ChartProps<TData>, 'zooming' | 'drawing'> { // eslint-disable-line @typescript-eslint/no-explicit-any
   /** One row per period. Unsorted input is sorted by date. */
   data: TData[];
   /**
@@ -91,6 +91,23 @@ export interface CandlestickChartProps<TData = any> extends Omit<ChartProps<TDat
   description?: string;
   /** Used only when `title` is omitted. Default `"Candlestick chart"`. */
   ariaLabel?: string;
+  /**
+   * Enter animation. `duration` and `delay` are the shared ChartProps fields
+   * (component default `{ duration: 0 }`); candle `i` starts at `i * delay`.
+   *
+   * `motion` is Candlestick-specific and is not on shared `ChartProps`.
+   * Default `'grow'`: wick and body grow from the open level (the OHLC stem
+   * from its midpoint) over `duration`. `'wick-reveal'` is candle-only: the
+   * wick first extends from open to high and low over `duration / 2`, then the
+   * body settles at its final rectangle over the other half while the wick
+   * stays at the range. With `shape: 'ohlc'` it warns and uses `'grow'`.
+   * Unknown values warn and use `'grow'`.
+   */
+  drawing?: {
+    duration?: number;
+    delay?: number;
+    motion?: 'grow' | 'wick-reveal';
+  };
 }
 
 type TooltipHandlers = Pick<
@@ -412,6 +429,14 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     const duration = isFiniteNumber(drawing?.duration) ? drawing.duration : 0;
     const delay = isFiniteNumber(drawing?.delay) && drawing.delay > 0 ? drawing.delay : 0;
     const animate = duration > 0;
+    // Motion is resolved once per refresh. Omitted, unknown or invalid → 'grow'.
+    const rawMotion: unknown = drawing?.motion;
+    if (rawMotion === 'wick-reveal' && shape === 'ohlc')
+      warn('wick-reveal-ohlc', "drawing.motion 'wick-reveal' is only for shape 'candle'; using 'grow'.");
+    else if (rawMotion !== undefined && rawMotion !== 'grow' && rawMotion !== 'wick-reveal')
+      warn('drawing-motion', `unknown drawing.motion '${String(rawMotion)}'; using 'grow'.`);
+    const wickReveal = animate && rawMotion === 'wick-reveal' && shape !== 'ohlc';
+    const half = duration / 2;
     const dirClass = (c: Candle<TData>) =>
       twMerge('candle fill-current stroke-current', classNames?.[c.datum.direction]);
     const wickClass = twMerge('candle-wick', classNames?.wick);
@@ -475,8 +500,15 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
         .attr('x2', cx)
         .attr('y1', animate ? yOpen : yHigh)
         .attr('y2', animate ? yOpen : yLow);
+      // wick-reveal phase 1: the wick alone extends from open to high/low over
+      // the first half; it then stays at the range (it never retracts).
       if (animate)
-        wick.transition().duration(duration).delay(wait).attr('y1', yHigh).attr('y2', yLow);
+        wick
+          .transition()
+          .duration(wickReveal ? half : duration)
+          .delay(wait)
+          .attr('y1', yHigh)
+          .attr('y2', yLow);
       const yTop = yFn(Math.max(d.open, d.close)),
         yBottom = yFn(Math.min(d.open, d.close));
       const rawH = yBottom - yTop;
@@ -491,11 +523,13 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
         .attr('width', bodyPx)
         .attr('y', animate ? yOpen : bodyY)
         .attr('height', animate ? 0 : bodyH);
+      // wick-reveal phase 2: the body settles at its final rectangle over the
+      // second half, starting right after phase 1 (delay is not re-applied).
       if (animate)
         body
           .transition()
-          .duration(duration)
-          .delay(wait)
+          .duration(wickReveal ? half : duration)
+          .delay(wickReveal ? wait + half : wait)
           .attr('y', bodyY)
           .attr('height', bodyH);
     });

@@ -58,12 +58,25 @@ const wicks = (root: ParentNode = document.body) =>
 const tooltipOf = (id: string): HTMLElement | null => document.getElementById(`tooltip-${id}`);
 const num = (el: Element | null | undefined, a: string) => Number(el?.getAttribute(a));
 const hasTransition = (node: Element | null): boolean => node !== null && '__transition' in node;
-type D3Schedule = { delay: number; duration: number };
+type D3Tween = {
+  name: string;
+  value: (this: Element) => ((this: Element, t: number) => void) | null;
+};
+type D3Schedule = { delay: number; duration: number; tween?: D3Tween[] };
 const schedules = (node: Element | null | undefined): D3Schedule[] =>
   node && '__transition' in node
     ? Object.values((node as unknown as { __transition: Record<string, D3Schedule> }).__transition)
     : [];
 const transitionDelays = (node: Element | null | undefined) => schedules(node).map((s) => s.delay);
+const transitionDurations = (node: Element | null | undefined) =>
+  schedules(node).map((s) => s.duration);
+/** Applies a node's scheduled attr tweens at t = 1 (its transition's end state), without d3-timer. */
+const runToEnd = (node: Element | null | undefined) => {
+  if (!node) return;
+  schedules(node).forEach((s) =>
+    (s.tween ?? []).forEach((tw) => tw.value.call(node)?.call(node, 1))
+  );
+};
 const d3On = (node: Element | null): unknown =>
   node !== null && '__on' in node ? (node as unknown as { __on: unknown }).__on : undefined;
 
@@ -1149,6 +1162,283 @@ describe('CandlestickChart', () => {
       expect(num(line, 'y1')).toBeCloseTo(yFn(104), 6);
       expect(num(line, 'y2')).toBeCloseTo(yFn(98), 6);
       r.unmount();
+    }
+  });
+
+  // Sorted ROWS: down Jan 3 (o 102, c 100, h 104, l 98), up Jan 6 (o 100, c 105, h 110, l 95),
+  // doji Jan 7 (o = c = 105, h 108, l 101).
+  const SORTED_OHLC = [
+    { o: 102, h: 104, l: 98, c: 100 },
+    { o: 100, h: 110, l: 95, c: 105 },
+    { o: 105, h: 108, l: 101, c: 105 },
+  ];
+  const rowsScale = () =>
+    priceScale(priceDomain([{ low: 95, high: 110 }, { low: 98, high: 104 }, { low: 101, high: 108 }]));
+
+  it("33: drawing.motion 'wick-reveal' with shape 'candle' and duration D: phase 1 lasts D/2 and ends with the wick at y(high)–y(low) and the body at height 0; phase 2 lasts D/2 and ends with the body at its final open–close rectangle (1px for a doji) and the wick still at high–low; down body top y(open), bottom y(close), up the reverse; default motion and 'grow' keep the simultaneous open-to-close grow and do not sequence the phases", () => {
+    const D = 400;
+    const yFn = rowsScale();
+    const { unmount } = render(
+      <CandlestickChart
+        id='cs33'
+        data={ROWS}
+        x={X}
+        {...KEYS}
+        drawing={{ duration: D, motion: 'wick-reveal' }}
+        style={STYLE}
+      />
+    );
+    expect(candles().map((c) => c.getAttribute('data-direction'))).toStrictEqual([
+      'down',
+      'up',
+      'flat',
+    ]);
+    candles().forEach((c, i) => {
+      const r = SORTED_OHLC[i];
+      const wick = c.querySelector('[data-testid="candle-wick"]');
+      const body = c.querySelector('[data-testid="candle-body"]');
+      // Start: zero-length wick at y(open); body height 0 at y(open).
+      expect(num(wick, 'y1'), `wick start ${i}`).toBeCloseTo(yFn(r.o), 6);
+      expect(num(wick, 'y2'), `wick start ${i}`).toBeCloseTo(yFn(r.o), 6);
+      expect(num(body, 'y'), `body start ${i}`).toBeCloseTo(yFn(r.o), 6);
+      expect(num(body, 'height'), `body start ${i}`).toBe(0);
+      // Phase 1 = the wick's transition: [0, D/2). Phase 2 = the body's: [D/2, D].
+      expect(transitionDelays(wick), `wick ${i}`).toStrictEqual([0]);
+      expect(transitionDurations(wick), `wick ${i}`).toStrictEqual([D / 2]);
+      expect(transitionDelays(body), `body ${i}`).toStrictEqual([D / 2]);
+      expect(transitionDurations(body), `body ${i}`).toStrictEqual([D / 2]);
+
+      // End of phase 1: wick at high–low, body still height 0.
+      runToEnd(wick);
+      expect(num(wick, 'y1'), `wick p1 ${i}`).toBeCloseTo(yFn(r.h), 6);
+      expect(num(wick, 'y2'), `wick p1 ${i}`).toBeCloseTo(yFn(r.l), 6);
+      expect(num(body, 'height'), `body p1 ${i}`).toBe(0);
+
+      // End of phase 2: final body rectangle; the wick has no further tween and stays at high–low.
+      runToEnd(body);
+      expect(num(wick, 'y1'), `wick p2 ${i}`).toBeCloseTo(yFn(r.h), 6);
+      expect(num(wick, 'y2'), `wick p2 ${i}`).toBeCloseTo(yFn(r.l), 6);
+      if (r.o === r.c) {
+        expect(num(body, 'height'), `doji ${i}`).toBe(1);
+        expect(num(body, 'y'), `doji ${i}`).toBeCloseTo(yFn(r.o) - 0.5, 6);
+      } else {
+        // Down: top y(open), bottom y(close). Up: top y(close), bottom y(open).
+        const top = r.c < r.o ? yFn(r.o) : yFn(r.c);
+        const bottom = r.c < r.o ? yFn(r.c) : yFn(r.o);
+        expect(num(body, 'y'), `body top ${i}`).toBeCloseTo(top, 6);
+        expect(num(body, 'y') + num(body, 'height'), `body bottom ${i}`).toBeCloseTo(bottom, 6);
+      }
+    });
+    unmount();
+
+    for (const drawing of [{ duration: D }, { duration: D, motion: 'grow' as const }]) {
+      const r = render(
+        <CandlestickChart id='cs33g' data={ROWS} x={X} {...KEYS} drawing={drawing} style={STYLE} />
+      );
+      candles().forEach((c, i) => {
+        const wick = c.querySelector('[data-testid="candle-wick"]');
+        const body = c.querySelector('[data-testid="candle-body"]');
+        expect(transitionDelays(wick), `grow wick ${i}`).toStrictEqual([0]);
+        expect(transitionDelays(body), `grow body ${i}`).toStrictEqual([0]);
+        expect(transitionDurations(wick), `grow wick ${i}`).toStrictEqual([D]);
+        expect(transitionDurations(body), `grow body ${i}`).toStrictEqual([D]);
+        runToEnd(wick);
+        runToEnd(body);
+        expect(num(wick, 'y1')).toBeCloseTo(yFn(SORTED_OHLC[i].h), 6);
+        expect(num(wick, 'y2')).toBeCloseTo(yFn(SORTED_OHLC[i].l), 6);
+      });
+      r.unmount();
+    }
+    expect(warnings('drawing.motion')).toHaveLength(0);
+  });
+
+  it('34: delay is unchanged under wick-reveal: candle i starts phase 1 at i × delay and phase 2 at i × delay + D/2; delay is not added between phases', () => {
+    const D = 400;
+    const delay = 150;
+    const { unmount } = render(
+      <CandlestickChart
+        id='cs34'
+        data={ROWS}
+        x={X}
+        {...KEYS}
+        drawing={{ duration: D, delay, motion: 'wick-reveal' }}
+        style={STYLE}
+      />
+    );
+    expect(candles().map((c) => c.getAttribute('data-date'))).toStrictEqual(SORTED_ISO);
+    candles().forEach((c, i) => {
+      const wick = c.querySelector('[data-testid="candle-wick"]');
+      const body = c.querySelector('[data-testid="candle-body"]');
+      expect(transitionDelays(wick), `wick ${i}`).toStrictEqual([i * delay]);
+      expect(transitionDurations(wick), `wick ${i}`).toStrictEqual([D / 2]);
+      expect(transitionDelays(body), `body ${i}`).toStrictEqual([i * delay + D / 2]);
+      expect(transitionDurations(body), `body ${i}`).toStrictEqual([D / 2]);
+    });
+    unmount();
+  });
+
+  it("35: motion 'wick-reveal' with shape 'ohlc' uses 'grow' and warns once; an unknown motion uses 'grow' and warns once; duration 0 with 'wick-reveal' draws the final geometry immediately, with no transitions, and ignores delay", () => {
+    const D = 400;
+    const delay = 150;
+    const ohlcMsg = "drawing.motion 'wick-reveal' is only for shape 'candle'; using 'grow'";
+    const ohlc = (drawing: { duration: number; delay?: number; motion: 'wick-reveal' }) => (
+      <CandlestickChart
+        id='cs35o'
+        data={ROWS}
+        x={X}
+        {...KEYS}
+        shape='ohlc'
+        drawing={drawing}
+        style={STYLE}
+      />
+    );
+    const o = render(ohlc({ duration: D, delay, motion: 'wick-reveal' }));
+    candles().forEach((c, i) => {
+      const stem = c.querySelector('[data-testid="ohlc-stem"]');
+      expect(transitionDelays(stem), `stem ${i}`).toStrictEqual([i * delay]);
+      expect(transitionDurations(stem), `stem ${i}`).toStrictEqual([D]);
+      for (const id of ['ohlc-open', 'ohlc-close']) {
+        const tick = c.querySelector(`[data-testid="${id}"]`);
+        expect(tick?.getAttribute('opacity'), `${id} ${i}`).toBe('0');
+        expect(transitionDelays(tick), `${id} ${i}`).toStrictEqual([i * delay]);
+      }
+    });
+    o.rerender(ohlc({ duration: D, delay, motion: 'wick-reveal' }));
+    expect(warnings(ohlcMsg)).toHaveLength(1);
+    expect(warnings(`CandlestickChart#cs35o: ${ohlcMsg}`)).toHaveLength(1);
+    o.unmount();
+
+    // Warns even when duration is 0.
+    resetDevWarnings();
+    warn.mockClear();
+    const o0 = render(ohlc({ duration: 0, motion: 'wick-reveal' }));
+    expect(warnings(ohlcMsg)).toHaveLength(1);
+    o0.unmount();
+
+    warn.mockClear();
+    const fade = { duration: D, motion: 'fade' } as unknown as { duration: number; motion: 'grow' };
+    const u = render(
+      <CandlestickChart id='cs35u' data={ROWS} x={X} {...KEYS} drawing={fade} style={STYLE} />
+    );
+    candles().forEach((c, i) => {
+      const wick = c.querySelector('[data-testid="candle-wick"]');
+      const body = c.querySelector('[data-testid="candle-body"]');
+      expect(transitionDelays(wick), `wick ${i}`).toStrictEqual([0]);
+      expect(transitionDelays(body), `body ${i}`).toStrictEqual([0]);
+      expect(transitionDurations(wick), `wick ${i}`).toStrictEqual([D]);
+      expect(transitionDurations(body), `body ${i}`).toStrictEqual([D]);
+    });
+    u.rerender(
+      <CandlestickChart id='cs35u' data={ROWS} x={X} {...KEYS} drawing={{ ...fade }} style={STYLE} />
+    );
+    expect(warnings("CandlestickChart#cs35u: unknown drawing.motion 'fade'; using 'grow'")).toHaveLength(1);
+    expect(warnings(ohlcMsg)).toHaveLength(0);
+    u.unmount();
+
+    warn.mockClear();
+    const z = render(
+      <CandlestickChart
+        id='cs35z'
+        data={ROWS}
+        x={X}
+        {...KEYS}
+        drawing={{ duration: 0, delay, motion: 'wick-reveal' }}
+        style={STYLE}
+      />
+    );
+    const marks = Array.from(document.querySelectorAll('#cs35z [data-testid="candle"] *'));
+    expect(marks.length).toBeGreaterThan(0);
+    marks.forEach((m) => expect(hasTransition(m)).toBe(false));
+    const yFn = rowsScale();
+    candles().forEach((c, i) => {
+      const r = SORTED_OHLC[i];
+      const wick = c.querySelector('[data-testid="candle-wick"]');
+      const body = c.querySelector('[data-testid="candle-body"]');
+      expect(num(wick, 'y1')).toBeCloseTo(yFn(r.h), 6);
+      expect(num(wick, 'y2')).toBeCloseTo(yFn(r.l), 6);
+      const top = yFn(Math.max(r.o, r.c));
+      const bottom = yFn(Math.min(r.o, r.c));
+      expect(num(body, 'y')).toBeCloseTo(r.o === r.c ? top - 0.5 : top, 6);
+      expect(num(body, 'height')).toBeCloseTo(r.o === r.c ? 1 : bottom - top, 6);
+    });
+    expect(warnings('drawing.motion')).toHaveLength(0);
+    z.unmount();
+  });
+
+  it('36: interrupting a wick-reveal mid-phase (data change during phase 1 or phase 2, or unmount) matches test 25: running transitions stop, the new data shows its final geometry, and there are no leftover nodes, errors or timers', () => {
+    const drawing = { duration: 400, motion: 'wick-reveal' as const };
+    const next: Row[] = [{ date: '2025-02-01', o: 50, h: 60, l: 40, c: 55 }];
+    const yNext = priceScale(priceDomain([{ low: 40, high: 60 }]));
+    const expectNextFinal = () => {
+      expect(num(wicks()[0], 'y1')).toBeCloseTo(yNext(60), 6);
+      expect(num(wicks()[0], 'y2')).toBeCloseTo(yNext(40), 6);
+      expect(num(bodies()[0], 'y')).toBeCloseTo(yNext(55), 6);
+      expect(num(bodies()[0], 'height')).toBeCloseTo(yNext(50) - yNext(55), 6);
+    };
+
+    for (const phase of [1, 2] as const) {
+      const { rerender, unmount } = render(
+        <CandlestickChart id='cs36' data={ROWS} x={X} {...KEYS} drawing={drawing} style={STYLE} />
+      );
+      const oldWicks = wicks();
+      const oldBodies = bodies();
+      expect(oldWicks).toHaveLength(3);
+      // Phase 1: wick transitions running, bodies waiting for D/2. Phase 2: the
+      // wick has reached high–low (its tween applied at t = 1), only bodies remain.
+      if (phase === 2) oldWicks.forEach(runToEnd);
+      oldBodies.forEach((b) => expect(hasTransition(b)).toBe(true));
+      if (phase === 1) oldWicks.forEach((w) => expect(hasTransition(w)).toBe(true));
+
+      rerender(
+        <CandlestickChart id='cs36' data={next} x={X} {...KEYS} drawing={drawing} style={STYLE} />
+      );
+      [...oldWicks, ...oldBodies].forEach((n) => expect(hasTransition(n), `phase ${phase}`).toBe(false));
+      expect(candles().map((c) => c.getAttribute('data-date'))).toStrictEqual([
+        '2025-02-01T00:00:00.000Z',
+      ]);
+      expect(wicks()).toHaveLength(1);
+      expect(bodies()).toHaveLength(1);
+      expect(document.querySelectorAll('#cs36 [data-testid="candle"]')).toHaveLength(1);
+      // The new candle's wick-reveal ends at its final geometry...
+      runToEnd(wicks()[0]);
+      runToEnd(bodies()[0]);
+      expectNextFinal();
+      // ...and duration 0 draws the same final geometry at once.
+      rerender(
+        <CandlestickChart
+          id='cs36'
+          data={next}
+          x={X}
+          {...KEYS}
+          drawing={{ duration: 0, motion: 'wick-reveal' }}
+          style={STYLE}
+        />
+      );
+      expect(hasTransition(wicks()[0])).toBe(false);
+      expectNextFinal();
+      unmount();
+    }
+
+    for (const phase of [1, 2] as const) {
+      const { unmount } = render(
+        <CandlestickChart id='cs36u' data={next} x={X} {...KEYS} drawing={drawing} style={STYLE} />
+      );
+      const wick = wicks()[0];
+      const body = bodies()[0];
+      if (phase === 2) runToEnd(wick);
+      expect(hasTransition(body)).toBe(true);
+      const errors: unknown[] = [];
+      const err = vi.spyOn(console, 'error').mockImplementation((...a) => {
+        errors.push(a);
+      });
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      expect(() => unmount()).not.toThrow();
+      expect(hasTransition(wick)).toBe(false);
+      expect(hasTransition(body)).toBe(false);
+      expect(errors).toHaveLength(0);
+      expect(vi.getTimerCount()).toBe(0);
+      vi.useRealTimers();
+      err.mockRestore();
     }
   });
 });

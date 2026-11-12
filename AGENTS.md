@@ -1976,6 +1976,7 @@ Draws each period as a high–low stem with a left tick at the open and a right 
 - **Continuous time axis** — Set `x.scalingFunction: 'time'` for elapsed-time spacing: weekends and holidays show as gaps and ticks fall on calendar boundaries. Body width comes from the median gap between dates; `x.time.barWidth` overrides it, capped at one slot.
 - **Crosshair** — Set `crosshair` (or `{ className }`) for a crosshair that snaps to the hovered candle.
 - **Local time** — Set `x.time.utc: false` to place and label ISO dates in the viewer’s local time zone instead of UTC.
+- **Wick-reveal** — Set `drawing.motion: 'wick-reveal'` (with `drawing.duration`) for a two-phase enter: each wick extends from open to high and low, then the body settles at its final rectangle while the wick stays at the range. `duration` is the total, split in halves. Candle shape only; `shape: 'ohlc'` uses the default `'grow'`.
 
 **Consider instead**
 

@@ -6,7 +6,12 @@ import data from './sample.json';
  * Wicks and bodies (or OHLC stems) grow from open to close when
  * `drawing.duration` is set. `DrawingWithDelay` staggers that in date order:
  * the first candle starts immediately and each next one starts
- * `drawing.delay` ms after the one before. Remount a story to replay.
+ * `drawing.delay` ms after the one before. `WickReveal` uses
+ * `drawing.motion: 'wick-reveal'`: each wick first extends from open to high
+ * and low, then the body settles at its final rectangle while the wick stays
+ * at the range (`duration` is the total, split in halves). Wick-reveal is
+ * candle-only, so there is no OHLC wick-reveal story (OHLC uses `'grow'`).
+ * Remount a story to replay.
  */
 const meta = preview.meta({
   title: 'Ranges/CandlestickChart/Drawing',
@@ -74,5 +79,23 @@ export const OHLCWithDelay = meta.story({
     shape: 'ohlc',
     classNames: ohlcClassNames,
     drawing: { duration: 200, delay: 200 },
+  },
+});
+
+/** Wick extends to high–low, then the body settles, leaving the tails. Candle-only. */
+export const WickReveal = meta.story({
+  args: {
+    ...base,
+    id: 'candlestick-wick-reveal',
+    drawing: { duration: 1000, motion: 'wick-reveal' },
+  },
+});
+
+/** Wick-reveal, each candle starting `drawing.delay` after the previous one. Candle-only. */
+export const WickRevealWithDelay = meta.story({
+  args: {
+    ...base,
+    id: 'candlestick-wick-reveal-delay',
+    drawing: { duration: 200, delay: 200, motion: 'wick-reveal' },
   },
 });

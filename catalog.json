@@ -2304,6 +2304,11 @@
           "kind": "option",
           "name": "Local time",
           "how": "Set `x.time.utc: false` to place and label ISO dates in the viewer’s local time zone instead of UTC."
+        },
+        {
+          "kind": "option",
+          "name": "Wick-reveal",
+          "how": "Set `drawing.motion: 'wick-reveal'` (with `drawing.duration`) for a two-phase enter: each wick extends from open to high and low, then the body settles at its final rectangle while the wick stays at the range. `duration` is the total, split in halves. Candle shape only; `shape: 'ohlc'` uses the default `'grow'`."
         }
       ]
     },

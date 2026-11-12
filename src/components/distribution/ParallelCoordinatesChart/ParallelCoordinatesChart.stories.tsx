@@ -51,20 +51,6 @@ export const ColorByCategory = meta.story({
   },
 });
 
-/** Brushing: drag along an axis to filter; filtered lines are styled with `data-[filtered=true]:`. */
-export const Brushing = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'pc-brushing',
-    color: { key: 'origin', classNameMap },
-    line: { className: 'data-[filtered=true]:stroke-gray-200' },
-    brushing: {
-      className: 'fill-sky-200/40',
-      onChange: (s: { indices: number[] }) => console.log('selected', s.indices),
-    },
-  },
-});
-
 /** Horizontal axes stacked top to bottom, with a bump curve and a reversed axis. */
 export const HorizontalBump = meta.story({
   args: {

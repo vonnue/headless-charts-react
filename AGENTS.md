@@ -597,7 +597,6 @@ Draws each period's open, high, low and close as a wick and a body, coloured by 
 | `high` | quantitative | yes | High value key, `{ key }`. |
 | `low` | quantitative | yes | Low value key, `{ key }`. |
 | `close` | quantitative | yes | Closing value key, `{ key }`. |
-| `volume.key` | quantitative | no | Optional volume key; draws a zero-based volume panel below the prices. |
 | `classNames` | color | no | `up` / `down` / `flat` classes. Colour names the direction only; nothing is coloured by default. |
 
 **Required props:** `id`, `data`, `x`, `open`, `high`, `low`, `close`
@@ -651,7 +650,6 @@ Draws each period as a high–low stem with a left tick at the open and a right 
 **Options**
 
 - **Continuous time axis** — Set `x.scalingFunction: 'time'` for elapsed-time spacing: weekends and holidays show as gaps and ticks fall on calendar boundaries. Body width comes from the median gap between dates; `x.time.barWidth` overrides it, capped at one slot.
-- **Volume panel** — Set `volume={{ key: 'v', className: 'fill-slate-300' }}` for zero-based volume bars below the prices (`height` 0.1–0.5 of the plot, default 0.2). Bars carry `data-direction` for colouring by direction.
 - **Crosshair** — Set `crosshair` (or `{ className }`) for a crosshair that snaps to the hovered candle.
 - **Local time** — Set `x.time.utc: false` to place and label ISO dates in the viewer’s local time zone instead of UTC.
 

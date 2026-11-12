@@ -38,13 +38,3 @@ export const TimeAxis = meta.story({
     x: { key: 'date', scalingFunction: 'time', time: { isISO: true } },
   },
 });
-
-/** Time axis with the volume panel. */
-export const TimeAxisVolume = meta.story({
-  args: {
-    ...base,
-    id: 'candlestick-time-volume',
-    x: { key: 'date', scalingFunction: 'time', time: { isISO: true } },
-    volume: { key: 'v', className: 'fill-slate-300' },
-  },
-});

@@ -4,8 +4,7 @@ import data from './sample.json';
 
 /**
  * Hover a period to see its values. Enable with `tooltip={{}}`; the default
- * HTML is the date, open/high/low/close, the change from open, and volume
- * when `volume` is set.
+ * HTML is the date, open/high/low/close and the change from open.
  */
 const meta = preview.meta({
   title: 'Linear/CandlestickChart/Tooltip',
@@ -35,7 +34,6 @@ export const Tooltip = meta.story({
   args: {
     ...base,
     id: 'candlestick-tooltip',
-    volume: { key: 'v', className: 'fill-slate-300' },
     tooltip: {},
   },
 });
@@ -52,7 +50,7 @@ export const TooltipStyled = meta.story({
 /**
  * `tooltip.html` replaces the default HTML. The datum is a `CandleDatum`:
  * `date`, `open`, `high`, `low`, `close`, `direction`, `change`,
- * `changePct`, `prevClose`, `volume` and the original row as `data`.
+ * `changePct`, `prevClose` and the original row as `data`.
  */
 export const TooltipCustomHtml = meta.story({
   args: {

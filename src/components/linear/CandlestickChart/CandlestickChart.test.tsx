@@ -18,12 +18,12 @@ const KEYS = {
 } as const;
 const X = { key: 'date', time: { isISO: true } } as const;
 
-type Row = { date: string | Date | number; o: number; h: number; l: number; c: number; v?: number };
+type Row = { date: string | Date | number; o: number; h: number; l: number; c: number };
 
 const ROWS: Row[] = [
-  { date: '2025-01-06', o: 100, h: 110, l: 95, c: 105, v: 10 }, // Mon up
-  { date: '2025-01-03', o: 102, h: 104, l: 98, c: 100, v: 20 }, // Fri down (unsorted)
-  { date: '2025-01-07', o: 105, h: 108, l: 101, c: 105, v: 5 }, // Tue flat
+  { date: '2025-01-06', o: 100, h: 110, l: 95, c: 105 }, // Mon up
+  { date: '2025-01-03', o: 102, h: 104, l: 98, c: 100 }, // Fri down (unsorted)
+  { date: '2025-01-07', o: 105, h: 108, l: 101, c: 105 }, // Tue flat
 ];
 
 const SORTED_ISO = [
@@ -55,8 +55,6 @@ const bodies = (root: ParentNode = document.body) =>
   Array.from(root.querySelectorAll('[data-testid="candle-body"]'));
 const wicks = (root: ParentNode = document.body) =>
   Array.from(root.querySelectorAll('[data-testid="candle-wick"]'));
-const volumeBars = (root: ParentNode = document.body) =>
-  Array.from(root.querySelectorAll('[data-testid="volume-bar"]'));
 const tooltipOf = (id: string): HTMLElement | null => document.getElementById(`tooltip-${id}`);
 const num = (el: Element | null | undefined, a: string) => Number(el?.getAttribute(a));
 const hasTransition = (node: Element | null): boolean => node !== null && '__transition' in node;
@@ -100,11 +98,8 @@ const priceDomain = (
   return [start ?? niced[0], end ?? niced[1]];
 };
 
-const priceScale = (
-  domain: [number, number],
-  plot = plotOf(),
-  priceBottom = plot.bottom
-) => scaleLinear().domain(domain).range([priceBottom, plot.top]);
+const priceScale = (domain: [number, number], plot = plotOf()) =>
+  scaleLinear().domain(domain).range([plot.bottom, plot.top]);
 
 const hover = (el: Element, clientX = 20, clientY = 50) =>
   fireEvent.mouseEnter(el, { clientX, clientY });
@@ -625,139 +620,19 @@ describe('CandlestickChart', () => {
     expect(warnings('bodyWidth')).toHaveLength(1);
   });
 
-  it('21: volume panel appears only when volume is set; height is 0.2 × plot minus the gap; domain starts at 0; bars carry data-direction and volume.className; negative or NaN volume gives no bar, keeps the candle, and logs one warning; height is clamped to [0.1, 0.5]', () => {
-    const { unmount } = render(
-      <CandlestickChart id='cs21a' data={ROWS} x={X} {...KEYS} style={STYLE} />
-    );
-    expect(document.querySelector('[data-testid="volume-panel"]')).toBeNull();
-    expect(document.querySelector('[data-testid="volume-axis"]')).toBeNull();
-    expect(volumeBars()).toHaveLength(0);
-    unmount();
-
-    const r2 = render(
-      <CandlestickChart
-        id='cs21b'
-        data={ROWS}
-        x={X}
-        {...KEYS}
-        volume={{ key: 'v', className: 'vol-c' }}
-        style={STYLE}
-      />
-    );
-    expect(document.querySelector('[data-testid="volume-panel"]')).toBeTruthy();
-    expect(document.querySelector('[data-testid="volume-axis"]')).toBeTruthy();
-    expect(volumeBars()).toHaveLength(3);
-    const plot = plotOf();
-    const gap = 8;
-    const area = 0.2 * plot.height - gap;
-    const maxBar = volumeBars().reduce((h, b) => Math.max(h, num(b, 'height')), 0);
-    expect(maxBar).toBeCloseTo(area, 6);
-    expect(num(volumeBars().find((b) => b.getAttribute('data-date') === SORTED_ISO[1]), 'height')).toBeCloseTo(
-      area * (10 / 20),
-      6
-    );
-    const volTicks = axisTicks('volume-axis').map((t) => t.value).filter(Number.isFinite);
-    expect(Math.min(...volTicks)).toBe(0);
-    expect(volumeBars().map((b) => b.getAttribute('data-direction'))).toStrictEqual([
-      'down',
-      'up',
-      'flat',
-    ]);
-    volumeBars().forEach((b) => expect(b.getAttribute('class')).toContain('vol-c'));
-    r2.unmount();
-    resetDevWarnings();
-    warn.mockClear();
-
-    const mixed: Row[] = [
-      { date: '2025-01-06', o: 100, h: 110, l: 95, c: 105, v: 10 },
-      { date: '2025-01-07', o: 105, h: 108, l: 101, c: 105, v: -3 },
-      { date: '2025-01-08', o: 105, h: 108, l: 101, c: 106, v: Number.NaN },
-    ];
-    const r3 = render(
-      <CandlestickChart
-        id='cs21c'
-        data={mixed}
-        x={X}
-        {...KEYS}
-        volume={{ key: 'v' }}
-        style={STYLE}
-      />
-    );
-    expect(candles()).toHaveLength(3);
-    expect(volumeBars()).toHaveLength(1);
-    expect(warnings('negative or non-finite volume')).toHaveLength(1);
-    r3.unmount();
-    resetDevWarnings();
-    warn.mockClear();
-
-    const r4 = render(
-      <CandlestickChart
-        id='cs21d'
-        data={ROWS}
-        x={X}
-        {...KEYS}
-        volume={{ key: 'v', height: 0.01 }}
-        style={STYLE}
-      />
-    );
-    const h01 = volumeBars().reduce((h, b) => Math.max(h, num(b, 'height')), 0);
-    r4.unmount();
-    const r5 = render(
-      <CandlestickChart
-        id='cs21e'
-        data={ROWS}
-        x={X}
-        {...KEYS}
-        volume={{ key: 'v', height: 0.1 }}
-        style={STYLE}
-      />
-    );
-    const h10 = volumeBars().reduce((h, b) => Math.max(h, num(b, 'height')), 0);
-    expect(h01).toBeCloseTo(h10, 6);
-    expect(h01).toBeCloseTo(0.1 * plot.height - gap, 6);
-    r5.unmount();
-
-    const r6 = render(
-      <CandlestickChart
-        id='cs21f'
-        data={ROWS}
-        x={X}
-        {...KEYS}
-        volume={{ key: 'v', height: 0.9 }}
-        style={STYLE}
-      />
-    );
-    const h90 = volumeBars().reduce((h, b) => Math.max(h, num(b, 'height')), 0);
-    r6.unmount();
-    render(
-      <CandlestickChart
-        id='cs21g'
-        data={ROWS}
-        x={X}
-        {...KEYS}
-        volume={{ key: 'v', height: 0.5 }}
-        style={STYLE}
-      />
-    );
-    const h50 = volumeBars().reduce((h, b) => Math.max(h, num(b, 'height')), 0);
-    expect(h90).toBeCloseTo(h50, 6);
-    expect(h50).toBeCloseTo(0.5 * plot.height - gap, 6);
-  });
-
-  it("22: tooltip default HTML has the formatted date, O/H/L/C, change and change % ('n/a' when open is 0), and volume when set; never shows NaN or Infinity; html overrides and receives a CandleDatum with prevClose", () => {
+  it("21: tooltip default HTML has the formatted date, O/H/L/C, change and change % ('n/a' when open is 0), and no volume line; never shows NaN or Infinity; html overrides and receives a CandleDatum with prevClose", () => {
     const { unmount } = render(
       <CandlestickChart
-        id='cs22a'
+        id='cs21a'
         data={ROWS}
         x={X}
         {...KEYS}
-        volume={{ key: 'v' }}
         tooltip={{}}
         style={STYLE}
       />
     );
     hover(hits()[1]);
-    const html = tooltipOf('cs22a')?.innerHTML ?? '';
+    const html = tooltipOf('cs21a')?.innerHTML ?? '';
     expect(html).toContain('2025-01-06');
     expect(html).toMatch(/O 100/);
     expect(html).toMatch(/H 110/);
@@ -765,7 +640,7 @@ describe('CandlestickChart', () => {
     expect(html).toMatch(/C 105/);
     expect(html).toContain('chg +5');
     expect(html).toContain('+5%');
-    expect(html).toContain('vol 10');
+    expect(html).not.toContain('vol');
     expect(html).not.toMatch(/NaN|Infinity/);
     unmount();
     document.querySelectorAll('[id^="tooltip"]').forEach((el) => el.remove());
@@ -775,10 +650,10 @@ describe('CandlestickChart', () => {
       { date: '2025-01-07', o: 0, h: 2, l: -1, c: 1 },
     ];
     const r2 = render(
-      <CandlestickChart id='cs22b' data={zeroOpen} x={X} {...KEYS} tooltip={{}} style={STYLE} />
+      <CandlestickChart id='cs21b' data={zeroOpen} x={X} {...KEYS} tooltip={{}} style={STYLE} />
     );
     hover(hits()[1]);
-    const zeroHtml = tooltipOf('cs22b')?.innerHTML ?? '';
+    const zeroHtml = tooltipOf('cs21b')?.innerHTML ?? '';
     expect(zeroHtml).toContain('n/a');
     expect(zeroHtml).not.toContain('vol');
     expect(zeroHtml).not.toMatch(/NaN|Infinity/);
@@ -788,7 +663,7 @@ describe('CandlestickChart', () => {
     let received: CandleDatum<Row> | undefined;
     render(
       <CandlestickChart
-        id='cs22c'
+        id='cs21c'
         data={ROWS}
         x={X}
         {...KEYS}
@@ -802,7 +677,7 @@ describe('CandlestickChart', () => {
       />
     );
     hover(hits()[1]);
-    expect(tooltipOf('cs22c')?.innerHTML).toBe('custom-tip');
+    expect(tooltipOf('cs21c')?.innerHTML).toBe('custom-tip');
     expect(received?.prevClose).toBe(100);
     expect(received?.change).toBe(5);
     expect(received?.changePct).toBeCloseTo(0.05);
@@ -811,15 +686,14 @@ describe('CandlestickChart', () => {
     expect(received?.data).toBe(ROWS[0]);
   });
 
-  it('23: each candle-hit is the full band (or slot) wide and spans the full plot height, including the volume panel; hovering above a 1px doji body, within its band, shows that candle’s tooltip; marks have no listeners and the handler fires once', () => {
+  it('22: each candle-hit is the full band (or slot) wide and spans the full plot height; hovering above a 1px doji body, within its band, shows that candle’s tooltip; marks have no listeners and the handler fires once', () => {
     const html = vi.fn<(d: unknown) => string>(() => 'doji-tip');
     render(
       <CandlestickChart
-        id='cs23'
+        id='cs22'
         data={ROWS}
         x={X}
         {...KEYS}
-        volume={{ key: 'v' }}
         tooltip={{ html }}
         style={STYLE}
       />
@@ -836,20 +710,19 @@ describe('CandlestickChart', () => {
 
     wicks().forEach((w) => expect(d3On(w)).toBeUndefined());
     bodies().forEach((b) => expect(d3On(b)).toBeUndefined());
-    volumeBars().forEach((b) => expect(d3On(b)).toBeUndefined());
     expect(d3On(hits()[2])).toBeTruthy();
 
     expect(candles()[2].getAttribute('data-direction')).toBe('flat');
     hover(hits()[2]);
     expect(html).toHaveBeenCalledOnce();
-    expect(tooltipOf('cs23')?.innerHTML).toBe('doji-tip');
+    expect(tooltipOf('cs22')?.innerHTML).toBe('doji-tip');
     expect(html.mock.calls[0][0]).toMatchObject({ direction: 'flat', close: 105, open: 105 });
   });
 
-  it('24: re-rendering the parent with a new tooltip object identity keeps the same candle DOM elements and does not rebind listeners; the latest tooltip.html is used on the next hover', () => {
+  it('23: re-rendering the parent with a new tooltip object identity keeps the same candle DOM elements and does not rebind listeners; the latest tooltip.html is used on the next hover', () => {
     const first = vi.fn(() => 'first');
     const second = vi.fn(() => 'second');
-    const props = { id: 'cs24', data: ROWS, x: X, ...KEYS, style: STYLE };
+    const props = { id: 'cs23', data: ROWS, x: X, ...KEYS, style: STYLE };
     const { rerender } = render(<CandlestickChart {...props} tooltip={{ html: first }} />);
     const candle = candles()[0];
     const hit = hits()[0];
@@ -864,12 +737,12 @@ describe('CandlestickChart', () => {
     hover(hit);
     expect(first).not.toHaveBeenCalled();
     expect(second).toHaveBeenCalledOnce();
-    expect(tooltipOf('cs24')?.innerHTML).toBe('second');
+    expect(tooltipOf('cs23')?.innerHTML).toBe('second');
   });
 
-  it('25: crosshair is off by default and adds no elements; with crosshair: true the vertical line snaps to the hovered band centre and spans both panels, the horizontal line follows the pointer y, both have pointer-events: none, and they hide on mouseleave', () => {
+  it('24: crosshair is off by default and adds no elements; with crosshair: true the vertical line snaps to the hovered band centre and spans the full plot height, the horizontal line follows the pointer y anywhere in the plot, both have pointer-events: none, and they hide on mouseleave', () => {
     const { unmount } = render(
-      <CandlestickChart id='cs25a' data={ROWS} x={X} {...KEYS} style={STYLE} />
+      <CandlestickChart id='cs24a' data={ROWS} x={X} {...KEYS} style={STYLE} />
     );
     expect(document.querySelector('[data-testid="crosshair-x"]')).toBeNull();
     expect(document.querySelector('[data-testid="crosshair-y"]')).toBeNull();
@@ -877,11 +750,10 @@ describe('CandlestickChart', () => {
 
     render(
       <CandlestickChart
-        id='cs25b'
+        id='cs24b'
         data={ROWS}
         x={X}
         {...KEYS}
-        volume={{ key: 'v' }}
         crosshair
         style={STYLE}
       />
@@ -903,15 +775,23 @@ describe('CandlestickChart', () => {
     expect(num(cy, 'y1')).toBeCloseTo(50, 6);
     expect(num(cy, 'y2')).toBeCloseTo(50, 6);
 
+    // The price plot runs to plot.bottom, so the horizontal line follows the
+    // pointer right down to it, and hides below it.
+    fireEvent.mouseMove(hits()[0], { clientX: 10, clientY: plot.bottom - 5 });
+    expect(cy?.getAttribute('visibility')).toBe('visible');
+    expect(num(cy, 'y1')).toBeCloseTo(plot.bottom - 5, 6);
+    fireEvent.mouseMove(hits()[0], { clientX: 10, clientY: plot.bottom + 5 });
+    expect(cy?.getAttribute('visibility')).toBe('hidden');
+
     fireEvent.mouseLeave(hits()[0]);
     expect(cx?.getAttribute('visibility')).toBe('hidden');
     expect(cy?.getAttribute('visibility')).toBe('hidden');
   });
 
-  it('26: when data changes mid-transition, the old transition is interrupted and the final geometry matches the new data, with no leftover nodes; unmounting mid-transition interrupts it, with no errors or leftover timers', () => {
+  it('25: when data changes mid-transition, the old transition is interrupted and the final geometry matches the new data, with no leftover nodes; unmounting mid-transition interrupts it, with no errors or leftover timers', () => {
     const drawing = { duration: 400 };
     const { rerender, unmount } = render(
-      <CandlestickChart id='cs26' data={ROWS} x={X} {...KEYS} drawing={drawing} style={STYLE} />
+      <CandlestickChart id='cs25' data={ROWS} x={X} {...KEYS} drawing={drawing} style={STYLE} />
     );
     const first = wicks();
     expect(first).toHaveLength(3);
@@ -919,7 +799,7 @@ describe('CandlestickChart', () => {
 
     const next: Row[] = [{ date: '2025-02-01', o: 50, h: 60, l: 40, c: 55 }];
     rerender(
-      <CandlestickChart id='cs26' data={next} x={X} {...KEYS} drawing={drawing} style={STYLE} />
+      <CandlestickChart id='cs25' data={next} x={X} {...KEYS} drawing={drawing} style={STYLE} />
     );
     first.forEach((w) => expect(hasTransition(w)).toBe(false));
     expect(candles().map((c) => c.getAttribute('data-date'))).toStrictEqual([
@@ -927,11 +807,11 @@ describe('CandlestickChart', () => {
     ]);
     expect(wicks()).toHaveLength(1);
     expect(bodies()).toHaveLength(1);
-    expect(document.querySelectorAll('#cs26 [data-testid="candle"]')).toHaveLength(1);
+    expect(document.querySelectorAll('#cs25 [data-testid="candle"]')).toHaveLength(1);
 
     rerender(
       <CandlestickChart
-        id='cs26'
+        id='cs25'
         data={next}
         x={X}
         {...KEYS}
@@ -948,7 +828,7 @@ describe('CandlestickChart', () => {
     expect(num(bodies()[0], 'height')).toBeCloseTo(bottom - top, 6);
 
     rerender(
-      <CandlestickChart id='cs26' data={next} x={X} {...KEYS} drawing={drawing} style={STYLE} />
+      <CandlestickChart id='cs25' data={next} x={X} {...KEYS} drawing={drawing} style={STYLE} />
     );
     const live = wicks()[0];
     expect(hasTransition(live)).toBe(true);
@@ -965,8 +845,8 @@ describe('CandlestickChart', () => {
     err.mockRestore();
   });
 
-  it('27: runtime changes to shape, x.scalingFunction, volume or data redraw with no leftover nodes, and the crosshair is cleared', () => {
-    const props = { id: 'cs27', data: ROWS, x: X, ...KEYS, style: STYLE, crosshair: true as const };
+  it('26: runtime changes to shape, x.scalingFunction or data redraw with no leftover nodes, and the crosshair is cleared', () => {
+    const props = { id: 'cs26', data: ROWS, x: X, ...KEYS, style: STYLE, crosshair: true as const };
     const { rerender } = render(<CandlestickChart {...props} />);
     fireEvent.mouseEnter(hits()[0], { clientX: 10, clientY: 50 });
     expect(document.querySelector('[data-testid="crosshair-x"]')?.getAttribute('visibility')).toBe(
@@ -987,25 +867,13 @@ describe('CandlestickChart', () => {
     const c = hits().map((h) => num(h, 'x') + num(h, 'width') / 2);
     expect(c[1] - c[0]).toBeCloseTo(3 * (c[2] - c[1]), 6);
 
-    rerender(
-      <CandlestickChart
-        {...props}
-        x={{ ...X, scalingFunction: 'time' }}
-        volume={{ key: 'v' }}
-      />
-    );
+    rerender(<CandlestickChart {...props} x={{ ...X, scalingFunction: 'time' }} />);
     expect(document.querySelectorAll('[data-testid="ohlc-stem"]')).toHaveLength(0);
-    expect(volumeBars()).toHaveLength(3);
+    expect(bodies()).toHaveLength(3);
 
-    rerender(
-      <CandlestickChart
-        {...props}
-        data={ROWS.slice(0, 1)}
-        volume={{ key: 'v' }}
-      />
-    );
+    rerender(<CandlestickChart {...props} data={ROWS.slice(0, 1)} />);
     expect(candles()).toHaveLength(1);
-    expect(volumeBars()).toHaveLength(1);
+    expect(bodies()).toHaveLength(1);
     expect(document.querySelectorAll('[data-testid="candle"]')).toHaveLength(1);
     expect(document.querySelector('[data-testid="crosshair-x"]')?.getAttribute('visibility')).toBe(
       'hidden'
@@ -1015,14 +883,14 @@ describe('CandlestickChart', () => {
     );
   });
 
-  it('28: empty data, or data where every row is invalid, renders the shell with no marks and no NaN attributes, and does not throw; a single row renders one centred candle', () => {
+  it('27: empty data, or data where every row is invalid, renders the shell with no marks and no NaN attributes, and does not throw; a single row renders one centred candle', () => {
     const { unmount } = render(
-      <CandlestickChart id='cs28a' data={[]} x={X} {...KEYS} style={STYLE} />
+      <CandlestickChart id='cs27a' data={[]} x={X} {...KEYS} style={STYLE} />
     );
     expect(screen.getByTestId('candlestick-chart')).toBeTruthy();
     expect(candles()).toHaveLength(0);
     expect(hits()).toHaveLength(0);
-    expect(document.getElementById('cs28a')?.innerHTML).not.toMatch(/NaN|Infinity/);
+    expect(document.getElementById('cs27a')?.innerHTML).not.toMatch(/NaN|Infinity/);
     unmount();
 
     const allBad: Row[] = [
@@ -1031,15 +899,15 @@ describe('CandlestickChart', () => {
       { date: '2025-01-09', o: 1, h: 0, l: 2, c: 1 },
     ];
     const r2 = render(
-      <CandlestickChart id='cs28b' data={allBad} x={X} {...KEYS} style={STYLE} />
+      <CandlestickChart id='cs27b' data={allBad} x={X} {...KEYS} style={STYLE} />
     );
     expect(candles()).toHaveLength(0);
-    expect(document.getElementById('cs28b')?.innerHTML).not.toMatch(/NaN|Infinity/);
+    expect(document.getElementById('cs27b')?.innerHTML).not.toMatch(/NaN|Infinity/);
     r2.unmount();
 
     render(
       <CandlestickChart
-        id='cs28c'
+        id='cs27c'
         data={[{ date: '2025-01-06', o: 100, h: 110, l: 95, c: 105 }]}
         x={X}
         {...KEYS}
@@ -1053,12 +921,12 @@ describe('CandlestickChart', () => {
     expect(num(wicks()[0], 'x1')).toBeCloseTo(cx, 6);
   });
 
-  it('29: all prices equal gives a y domain of v ± 1', () => {
+  it('28: all prices equal gives a y domain of v ± 1', () => {
     const data: Row[] = [
       { date: '2025-01-06', o: 100, h: 100, l: 100, c: 100 },
       { date: '2025-01-07', o: 100, h: 100, l: 100, c: 100 },
     ];
-    render(<CandlestickChart id='cs29' data={data} x={X} {...KEYS} style={STYLE} />);
+    render(<CandlestickChart id='cs28' data={data} x={X} {...KEYS} style={STYLE} />);
     const ticks = axisTicks('y-axis').map((t) => t.value).filter(Number.isFinite);
     expect(Math.min(...ticks)).toBe(99);
     expect(Math.max(...ticks)).toBe(101);
@@ -1067,10 +935,10 @@ describe('CandlestickChart', () => {
     expect(num(bodies()[0], 'y') + num(bodies()[0], 'height') / 2).toBeCloseTo(mid, 6);
   });
 
-  it('30: title/description produce <title>/<desc> and the matching aria-*; otherwise aria-label is "Candlestick chart" or ariaLabel', () => {
+  it('29: title/description produce <title>/<desc> and the matching aria-*; otherwise aria-label is "Candlestick chart" or ariaLabel', () => {
     const { unmount } = render(
       <CandlestickChart
-        id='cs30a'
+        id='cs29a'
         data={ROWS}
         x={X}
         {...KEYS}
@@ -1083,15 +951,15 @@ describe('CandlestickChart', () => {
     const title = svg.querySelector('title');
     const desc = svg.querySelector('desc');
     expect(title?.textContent).toBe('BTC daily OHLC');
-    expect(title?.id).toBe('cs30a-title');
+    expect(title?.id).toBe('cs29a-title');
     expect(desc?.textContent).toBe('January session');
-    expect(desc?.id).toBe('cs30a-desc');
-    expect(svg.getAttribute('aria-labelledby')).toBe('cs30a-title');
-    expect(svg.getAttribute('aria-describedby')).toBe('cs30a-desc');
+    expect(desc?.id).toBe('cs29a-desc');
+    expect(svg.getAttribute('aria-labelledby')).toBe('cs29a-title');
+    expect(svg.getAttribute('aria-describedby')).toBe('cs29a-desc');
     expect(svg.getAttribute('aria-label')).toBeNull();
     unmount();
 
-    const r2 = render(<CandlestickChart id='cs30b' data={ROWS} x={X} {...KEYS} style={STYLE} />);
+    const r2 = render(<CandlestickChart id='cs29b' data={ROWS} x={X} {...KEYS} style={STYLE} />);
     expect(screen.getByTestId('candlestick-chart').getAttribute('aria-label')).toBe(
       'Candlestick chart'
     );
@@ -1099,7 +967,7 @@ describe('CandlestickChart', () => {
 
     render(
       <CandlestickChart
-        id='cs30c'
+        id='cs29c'
         data={ROWS}
         x={X}
         {...KEYS}
@@ -1107,12 +975,12 @@ describe('CandlestickChart', () => {
         style={STYLE}
       />
     );
-    expect(document.getElementById('cs30c')?.getAttribute('aria-label')).toBe('Price candles');
+    expect(document.getElementById('cs29c')?.getAttribute('aria-label')).toBe('Price candles');
   });
 
-  it("31: padding.bar widens the gaps between bands, and margin insets the plot; y.axis.location: 'right' moves the price axis", () => {
+  it("30: padding.bar widens the gaps between bands, and margin insets the plot; y.axis.location: 'right' moves the price axis", () => {
     const { unmount } = render(
-      <CandlestickChart id='cs31a' data={ROWS} x={X} {...KEYS} padding={{ bar: 0 }} style={STYLE} />
+      <CandlestickChart id='cs30a' data={ROWS} x={X} {...KEYS} padding={{ bar: 0 }} style={STYLE} />
     );
     const tightGap =
       num(hits()[1], 'x') - (num(hits()[0], 'x') + num(hits()[0], 'width'));
@@ -1120,7 +988,7 @@ describe('CandlestickChart', () => {
     unmount();
 
     const r2 = render(
-      <CandlestickChart id='cs31b' data={ROWS} x={X} {...KEYS} padding={{ bar: 0.5 }} style={STYLE} />
+      <CandlestickChart id='cs30b' data={ROWS} x={X} {...KEYS} padding={{ bar: 0.5 }} style={STYLE} />
     );
     const wideGap =
       num(hits()[1], 'x') - (num(hits()[0], 'x') + num(hits()[0], 'width'));
@@ -1130,7 +998,7 @@ describe('CandlestickChart', () => {
 
     const margin = { top: 30, right: 40, bottom: 50, left: 80 };
     const r3 = render(
-      <CandlestickChart id='cs31c' data={ROWS} x={X} {...KEYS} margin={margin} style={STYLE} />
+      <CandlestickChart id='cs30c' data={ROWS} x={X} {...KEYS} margin={margin} style={STYLE} />
     );
     const plot = plotOf(margin);
     expect(num(hits()[0], 'x')).toBeGreaterThanOrEqual(plot.left - 1e-6);
@@ -1145,7 +1013,7 @@ describe('CandlestickChart', () => {
 
     render(
       <CandlestickChart
-        id='cs31d'
+        id='cs30d'
         data={ROWS}
         x={X}
         {...KEYS}
@@ -1158,7 +1026,7 @@ describe('CandlestickChart', () => {
     );
   });
 
-  it('32: catalog aliases resolve to CandlestickChart; ohlc aliases resolve to the OHLC chart variant; none collide with RangePlot, BoxPlot, LineChart, Waffle heatmap, Comet slope chart or dual-axis combo chart; meta.category is linear and primary intent trend is on the decisionTree trend branch', () => {
+  it('31: catalog aliases resolve to CandlestickChart; ohlc aliases resolve to the OHLC chart variant; none collide with RangePlot, BoxPlot, LineChart, Waffle heatmap, Comet slope chart or dual-axis combo chart; meta.category is linear and primary intent trend is on the decisionTree trend branch', () => {
     for (const alias of [
       'candlestick',
       'candlestick chart',

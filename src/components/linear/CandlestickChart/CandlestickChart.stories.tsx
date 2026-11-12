@@ -61,12 +61,11 @@ export const Hollow = meta.story({
   },
 });
 
-/** Volume panel and crosshair. */
-export const VolumeAndCrosshair = meta.story({
+/** Crosshair that snaps to the hovered candle. */
+export const Crosshair = meta.story({
   args: {
     ...Default.input.args,
-    id: 'candlestick-volume',
-    volume: { key: 'v', className: 'fill-slate-300' },
+    id: 'candlestick-crosshair',
     crosshair: { className: 'stroke-slate-400' },
   },
 });

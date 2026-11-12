@@ -44,8 +44,6 @@ export interface CandleDatum<TData = any> {
   changePct: number | null;
   /** The previous drawn period's close; `null` for the first. */
   prevClose: number | null;
-  /** `null` when `volume` is off, or the value is missing, negative or non-finite. */
-  volume: number | null;
 }
 
 /** A datum plus the drawn wick extent (covers the body when O/C fall outside L..H). */
@@ -69,10 +67,6 @@ export interface PreparedCandles<TData> {
   outsideRange: number;
   /** Later rows dropped because an earlier row had the same instant. */
   duplicates: number;
-  /** Kept rows whose volume is present but negative / non-finite / not a number. */
-  invalidVolume: number;
-  /** True when `volume` is set but no kept row has the key at all. */
-  volumeAbsent: boolean;
 }
 
 const readNumber = (row: unknown, key: string): number | undefined => {
@@ -86,7 +80,6 @@ export interface PrepareOptions<TData> {
   high: string;
   low: string;
   close: string;
-  volume?: string;
 }
 
 /**
@@ -102,11 +95,9 @@ export const prepareCandles = <TData>(
     invalidOhlc = 0,
     highBelowLow = 0,
     outsideRange = 0,
-    duplicates = 0,
-    invalidVolume = 0,
-    volumePresent = 0;
+    duplicates = 0;
 
-  type Pending = { row: TData; date: Date; o: number; h: number; l: number; c: number; v: number | null; vPresent: boolean };
+  type Pending = { row: TData; date: Date; o: number; h: number; l: number; c: number };
   const pending: Pending[] = [];
   (data ?? []).forEach((row) => {
     const date = toDate(row);
@@ -126,14 +117,7 @@ export const prepareCandles = <TData>(
       highBelowLow++;
       return;
     }
-    let v: number | null = null;
-    let vPresent = false;
-    if (opts.volume !== undefined) {
-      const raw = deepValue(row, opts.volume);
-      vPresent = raw !== undefined && raw !== null;
-      if (typeof raw === 'number' && Number.isFinite(raw) && raw >= 0) v = raw;
-    }
-    pending.push({ row, date, o, h, l, c, v, vPresent });
+    pending.push({ row, date, o, h, l, c });
   });
 
   // Stable sort: among equal instants, input order is kept, so "first wins".
@@ -147,13 +131,6 @@ export const prepareCandles = <TData>(
     }
     seen.add(t);
     return true;
-  });
-
-  // Volume issues are counted on kept rows only.
-  kept.forEach((p) => {
-    if (!p.vPresent) return;
-    volumePresent++;
-    if (p.v === null) invalidVolume++;
   });
 
   let prevClose: number | null = null;
@@ -173,7 +150,6 @@ export const prepareCandles = <TData>(
       change,
       changePct: p.o === 0 ? null : change / p.o,
       prevClose,
-      volume: p.v,
     };
     prevClose = p.c;
     return {
@@ -191,7 +167,5 @@ export const prepareCandles = <TData>(
     highBelowLow,
     outsideRange,
     duplicates,
-    invalidVolume,
-    volumeAbsent: opts.volume !== undefined && candles.length > 0 && volumePresent === 0,
   };
 };

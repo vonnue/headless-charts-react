@@ -3,7 +3,7 @@ import CandlestickChart from '.';
 import data from './sample.json';
 
 /**
- * Wicks, bodies and volume bars grow in when `drawing.duration` is set,
+ * Wicks and bodies grow in when `drawing.duration` is set,
  * after `drawing.delay`. Remount a story to replay.
  */
 const meta = preview.meta({
@@ -29,12 +29,11 @@ const base = {
   classNames,
 };
 
-/** Candles and volume growing in. */
+/** Candles growing in. */
 export const Drawing = meta.story({
   args: {
     ...base,
     id: 'candlestick-drawing',
-    volume: { key: 'v', className: 'fill-slate-300' },
     drawing: { duration: 1000, delay: 100 },
   },
 });

@@ -28,12 +28,6 @@ const meta: ChartMeta = {
       { prop: 'low', role: 'quantitative', required: true, description: 'Low value key, `{ key }`.' },
       { prop: 'close', role: 'quantitative', required: true, description: 'Closing value key, `{ key }`.' },
       {
-        prop: 'volume.key',
-        role: 'quantitative',
-        required: false,
-        description: 'Optional volume key; draws a zero-based volume panel below the prices.',
-      },
-      {
         prop: 'classNames',
         role: 'color',
         required: false,
@@ -103,11 +97,6 @@ const meta: ChartMeta = {
       kind: 'option',
       name: 'Continuous time axis',
       how: "Set `x.scalingFunction: 'time'` for elapsed-time spacing: weekends and holidays show as gaps and ticks fall on calendar boundaries. Body width comes from the median gap between dates; `x.time.barWidth` overrides it, capped at one slot.",
-    },
-    {
-      kind: 'option',
-      name: 'Volume panel',
-      how: "Set `volume={{ key: 'v', className: 'fill-slate-300' }}` for zero-based volume bars below the prices (`height` 0.1–0.5 of the plot, default 0.2). Bars carry `data-direction` for colouring by direction.",
     },
     { kind: 'option', name: 'Crosshair', how: 'Set `crosshair` (or `{ className }`) for a crosshair that snaps to the hovered candle.' },
     {

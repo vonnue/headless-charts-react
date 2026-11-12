@@ -82,17 +82,6 @@ export interface CandlestickChartProps<TData = any> extends Omit<ChartProps<TDat
   };
   /** Body width as a fraction of the band or slot, in `(0, 1]`. Default `0.7`. OHLC tick length is half of it. */
   bodyWidth?: number;
-  /** Optional volume panel below the price panel. Default: off. */
-  volume?: {
-    key: Extract<keyof TData, string> | string;
-    className?: string;
-    /** Panel height (gap included) as a fraction of the plot height. Default `0.2`, clamped to `[0.1, 0.5]`. */
-    height?: number;
-    /** Gap between the panels in px. Default `8`. */
-    gap?: number;
-    /** Default `d3.format('.3~s')`. */
-    format?: (v: number) => string;
-  };
   /** Snapped crosshair. Default `false`. */
   crosshair?: boolean | { className?: string };
   tooltip?: TooltipConfig;
@@ -116,35 +105,25 @@ const DEFAULT_MARGIN = { top: 20, right: 20, bottom: 40, left: 50 };
 const DEFAULT_BAND_PADDING = 0.2;
 const DEFAULT_BODY_WIDTH = 0.7;
 const DEFAULT_X_TICKS = 6;
-const DEFAULT_VOLUME_HEIGHT = 0.2;
-const DEFAULT_VOLUME_GAP = 8;
 const MIN_BODY_PX = 1;
 const defaultPriceFormat = d3format(',~f');
-const defaultVolumeFormat = d3format('.3~s');
 const pctFormat = d3format('+.2~%');
 
-const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 /** Formats a number, `'n/a'` for non-finite values (never NaN / Infinity). */
 const safe = (fmt: (v: number) => string, v: number | null | undefined) =>
   typeof v === 'number' && Number.isFinite(v) ? fmt(v) : 'n/a';
 
 const makeDefaultHtml =
-  (
-    formatDate: (d: Date) => string,
-    priceFmt: (v: number) => string,
-    volumeFmt: (v: number) => string | null
-  ) =>
+  (formatDate: (d: Date) => string, priceFmt: (v: number) => string) =>
   (datum: unknown): string => {
     const d = datum as CandleDatum;
     const f = (v: number) => safe(priceFmt, v);
     const sign = d.change > 0 ? '+' : '';
     const pct = d.changePct === null ? 'n/a' : safe(pctFormat, d.changePct);
-    const vol = d.volume !== null ? volumeFmt(d.volume) : null;
     return (
       `${formatDate(d.date)}<br/>` +
       `O ${f(d.open)}&nbsp; H ${f(d.high)}&nbsp; L ${f(d.low)}&nbsp; C ${f(d.close)}<br/>` +
-      `chg ${sign}${f(d.change)} (${pct})` +
-      (vol !== null ? `<br/>vol ${vol}` : '')
+      `chg ${sign}${f(d.change)} (${pct})`
     );
   };
 
@@ -223,7 +202,6 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
   shape = 'candle',
   classNames,
   bodyWidth,
-  volume,
   crosshair = false,
   padding,
   margin,
@@ -246,15 +224,10 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     checkBarWidth: isTime,
   });
 
-  const volumeFormat = volume?.format;
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
-    defaultHtml: makeDefaultHtml(
-      makeDateFormatter(xResolved),
-      y?.format ?? defaultPriceFormat,
-      (v) => (volume ? safe(volumeFormat ?? defaultVolumeFormat, v) : null)
-    ),
+    defaultHtml: makeDefaultHtml(makeDateFormatter(xResolved), y?.format ?? defaultPriceFormat),
   });
 
   // The hook handlers are new each render but read the latest config, so the
@@ -293,7 +266,6 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       high: high.key,
       low: low.key,
       close: close.key,
-      volume: volume?.key,
     });
     const { candles } = prepared;
     if (prepared.invalidOhlc > 0)
@@ -312,13 +284,6 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       warn(
         'duplicate-dates',
         `${prepared.duplicates} row(s) repeat an earlier date; the first row for each date is drawn.`
-      );
-    if (prepared.volumeAbsent)
-      warn('volume-absent', `volume.key "${volume?.key}" is not present in any row; no volume bars are drawn.`);
-    else if (prepared.invalidVolume > 0)
-      warn(
-        'volume-invalid',
-        `${prepared.invalidVolume} row(s) have a negative or non-finite volume; no bar is drawn for them.`
       );
     if (candles.length === 0) return;
 
@@ -339,7 +304,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     }
     const yDomain: [number, number] = [yStart ?? niced[0], yEnd ?? niced[1]];
 
-    // --- plot rect and panels
+    // --- plot rect
     const m = { ...DEFAULT_MARGIN, ...margin };
     const p = { top: 0, right: 0, bottom: 0, left: 0, ...padding };
     const { width, height } = measureSvg(svgNode);
@@ -348,17 +313,6 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       plotTop = m.top + p.top,
       plotBottom = Math.max(plotTop, height - m.bottom - p.bottom);
     const plotH = plotBottom - plotTop;
-    const volFraction = volume
-      ? clamp(isFiniteNumber(volume.height) ? volume.height : DEFAULT_VOLUME_HEIGHT, 0.1, 0.5)
-      : 0;
-    const gap = volume
-      ? isFiniteNumber(volume.gap) && volume.gap >= 0
-        ? volume.gap
-        : DEFAULT_VOLUME_GAP
-      : 0;
-    // The volume section (gap + bars) takes `volFraction` of the plot.
-    const priceBottom = volume ? plotBottom - volFraction * plotH : plotBottom;
-    const volTop = Math.min(plotBottom, priceBottom + gap);
 
     const bandPadding =
       isFiniteNumber(p.bar) && p.bar >= 0 && p.bar < 1 ? p.bar : DEFAULT_BAND_PADDING;
@@ -397,11 +351,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     const bodyPx = bw * markBand;
     const tickPx = bodyPx / 2;
 
-    const yFn = scaleLinear().domain(yDomain).range([priceBottom, plotTop]);
-    const maxVolume = Math.max(0, ...candles.map((c) => c.datum.volume ?? 0));
-    const vFn = scaleLinear()
-      .domain([0, maxVolume > 0 ? maxVolume : 1])
-      .range([plotBottom, volTop]);
+    const yFn = scaleLinear().domain(yDomain).range([plotBottom, plotTop]);
 
     // --- axes
     const axesG = root.append('g').attr('class', 'axes');
@@ -442,22 +392,8 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       className: twMerge('axis axis--y axis--price', y?.className),
     });
     priceAxis.axisG.call(priceAxis.axis.tickFormat(y?.format ?? defaultPriceFormat));
-    if (volume) {
-      const volumeAxis = drawAxis({
-        g: axesG,
-        scale: vFn,
-        config: { axis: { ticks: 3, location: yLocation } },
-        dimensions: dims,
-        margin: m,
-        orientation: 'vertical',
-        className: 'axis axis--y axis--volume',
-      });
-      volumeAxis.axisG
-        .attr('data-testid', 'volume-axis')
-        .call(volumeAxis.axis.ticks(3).tickFormat(volume.format ?? defaultVolumeFormat));
-    }
 
-    // --- price marks, clipped to the price panel (pins may be narrower than data)
+    // --- price marks, clipped to the plot (pins may be narrower than data)
     const clipId = `${id}-price-clip`;
     root
       .append('clipPath')
@@ -466,7 +402,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       .attr('x', plotLeft)
       .attr('y', plotTop)
       .attr('width', plotRight - plotLeft)
-      .attr('height', Math.max(0, priceBottom - plotTop));
+      .attr('height', Math.max(0, plotH));
     const candlesG = root
       .append('g')
       .attr('class', 'candles')
@@ -553,34 +489,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
           .attr('height', bodyH);
     });
 
-    // --- volume panel
-    if (volume) {
-      const volumeG = root.append('g').attr('class', 'volume').attr('data-testid', 'volume-panel');
-      candles.forEach((c) => {
-        const v = c.datum.volume;
-        if (v === null) return;
-        const yV = vFn(v);
-        const bar = volumeG
-          .append('rect')
-          .attr('data-testid', 'volume-bar')
-          .attr('data-date', c.datum.date.toISOString())
-          .attr('data-direction', c.datum.direction)
-          .attr('class', twMerge('candle-volume fill-current', volume.className))
-          .attr('x', centre(c) - bodyPx / 2)
-          .attr('width', bodyPx)
-          .attr('y', animate ? plotBottom : yV)
-          .attr('height', animate ? 0 : plotBottom - yV);
-        if (animate)
-          bar
-            .transition()
-            .duration(duration)
-            .delay(delay)
-            .attr('y', yV)
-            .attr('height', plotBottom - yV);
-      });
-    }
-
-    // --- hit areas: full band/slot wide, full plot height (both panels), above marks
+    // --- hit areas: full band/slot wide, full plot height, above marks
     const hitG = root.append('g').attr('class', 'hit-areas');
     const crossOpt = crosshair === true ? {} : crosshair || null;
     const crossG = crossOpt
@@ -610,7 +519,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     const moveCrossY = (event: MouseEvent) => {
       if (!crossY || !svgNode) return;
       const [, py] = pointer(event, svgNode);
-      if (Number.isFinite(py) && py >= plotTop && py <= priceBottom)
+      if (Number.isFinite(py) && py >= plotTop && py <= plotBottom)
         crossY.attr('y1', py).attr('y2', py).attr('visibility', 'visible');
       else crossY.attr('visibility', 'hidden');
     };
@@ -657,7 +566,6 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     shape,
     classNames,
     bodyWidth,
-    volume,
     crosshair,
     padding,
     margin,

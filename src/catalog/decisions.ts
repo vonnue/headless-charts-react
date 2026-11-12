@@ -146,6 +146,10 @@ export const decisionTree: DecisionBranch[] = [
         name: 'BoxPlotH',
         when: 'The interval is a statistical summary (quartiles and median), not a plain min–max',
       },
+      {
+        name: 'CandlestickChart',
+        when: 'Each period has open, high, low and close, and both the direction and the intraperiod range matter — not a close-only series or a plain min–max interval',
+      },
     ],
   },
   {

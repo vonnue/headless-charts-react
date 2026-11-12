@@ -11,6 +11,7 @@ import BarChartStacked from '@/components/linear/BarChartStacked/meta';
 import BoxPlotH from '@/components/ranges/BoxPlotH/meta';
 import BoxPlotV from '@/components/ranges/BoxPlotV/meta';
 import BulletChart from '@/components/gauges/BulletChart/meta';
+import CandlestickChart from '@/components/ranges/CandlestickChart/meta';
 import ColumnChart from '@/components/linear/ColumnChart/meta';
 import ColumnChartStacked from '@/components/linear/ColumnChartStacked/meta';
 import CometPlot from '@/components/ranges/CometPlot/meta';
@@ -59,6 +60,7 @@ export const chartCatalog: ChartMeta[] = [
   // ranges
   BoxPlotH,
   BoxPlotV,
+  CandlestickChart,
   CometPlot,
   RangePlot,
   // gauges

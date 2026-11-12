@@ -52,6 +52,8 @@ export type {
 
 export { default as BoxPlotH } from '@/components/ranges/BoxPlotH';
 export { default as BoxPlotV } from '@/components/ranges/BoxPlotV';
+export { default as CandlestickChart } from '@/components/ranges/CandlestickChart';
+export type { CandlestickChartProps, CandleDatum } from '@/components/ranges/CandlestickChart';
 export { default as CometPlot } from '@/components/ranges/CometPlot';
 export { default as RangePlot } from '@/components/ranges/RangePlot';
 

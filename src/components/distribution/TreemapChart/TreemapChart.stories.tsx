@@ -16,9 +16,9 @@ const meta = preview.meta({
 });
 
 const classNameMap = {
-  Ops: 'fill-sky-300',
-  Growth: 'fill-amber-300',
-  'R&D': 'fill-emerald-300',
+  Ops: 'fill-sky-300 stroke-white stroke-1',
+  Growth: 'fill-amber-300 stroke-white stroke-1',
+  'R&D': 'fill-emerald-300 stroke-white stroke-1',
 };
 
 /** Default: nested group headers (`leavesOnly` false). */
@@ -27,7 +27,7 @@ export const Default = meta.story({
     id: 'treemap-default',
     className: 'w-full h-96',
     data,
-    value: { key: 'amount', className: 'fill-slate-300 stroke-white' },
+    value: { key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' },
     labels: { name: true },
     tooltip: { className: 'bg-white text-xs p-2 shadow' },
   },
@@ -43,12 +43,18 @@ export const LeavesOnly = meta.story({
   },
 });
 
-/** Colour by top-level group with `classNameMap`; misses fall back to `value.className`. */
+/**
+ * Colour by top-level group with `classNameMap`, layered on `value.className`
+ * (the stroke stays); misses fall back to `value.className`.
+ */
 export const ColorMap = meta.story({
   args: {
     ...Default.input.args,
     id: 'treemap-colors',
-    classNameMap: { Ops: 'fill-sky-400', Growth: 'fill-amber-400' },
+    classNameMap: {
+      Ops: 'fill-sky-400 stroke-white stroke-1',
+      Growth: 'fill-amber-400 stroke-white stroke-1',
+    },
     labels: { name: true, value: true },
   },
 });

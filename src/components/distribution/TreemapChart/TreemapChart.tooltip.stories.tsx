@@ -14,15 +14,15 @@ const meta = preview.meta({
 });
 
 const classNameMap = {
-  Ops: 'fill-sky-300',
-  Growth: 'fill-amber-300',
-  'R&D': 'fill-emerald-300',
+  Ops: 'fill-sky-300 stroke-white stroke-1',
+  Growth: 'fill-amber-300 stroke-white stroke-1',
+  'R&D': 'fill-emerald-300 stroke-white stroke-1',
 };
 
 const base = {
   className: 'w-full h-96',
   data,
-  value: { key: 'amount', className: 'fill-slate-300 stroke-white' },
+  value: { key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' },
   labels: { name: true },
   classNameMap,
 };

@@ -256,11 +256,14 @@ const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/
 
     const markClass = (i: number) => {
       const key = colorKey(cells[i], colorMode, nameKey);
+      // Layer the map over value.className: the map's fill wins, while
+      // value.className's stroke (the visible gap) stays unless overridden.
       return twMerge(
         'fill-current',
+        value.className,
         (classNameMap && Object.prototype.hasOwnProperty.call(classNameMap, key)
           ? classNameMap[key]
-          : value.className) || ''
+          : '') || ''
       );
     };
 

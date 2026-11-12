@@ -677,23 +677,44 @@ describe('TreemapChart', () => {
     expect(labelsOf('treemap-label-percent')[0]?.textContent).toBe('100%');
   });
 
-  it('20: classNameMap + colorBy "top" by top-level group; miss → value.className', () => {
-    render(
+  it('20: classNameMap + colorBy "top" by top-level group; map layers on value.className; miss → value.className', () => {
+    const { rerender } = render(
       <TreemapChart
         id='t20'
         data={tinyTree}
-        value={{ key: 'amount', className: 'fill-fallback' }}
+        value={{ key: 'amount', className: 'fill-fallback stroke-white' }}
         classNameMap={{ A: 'fill-group-a' }}
         colorBy='top'
         style={STYLE}
       />
     );
-    // Descendants of A pick up A's class.
-    expect(cellByName('a1').getAttribute('class')).toContain('fill-group-a');
-    expect(cellByName('A').getAttribute('class')).toContain('fill-group-a');
-    // B has no map entry → value.className.
-    expect(cellByName('b1').getAttribute('class')).toContain('fill-fallback');
-    expect(cellByName('B').getAttribute('class')).toContain('fill-fallback');
+    const classes = (n: string) => cellByName(n).getAttribute('class')!.split(/\s+/);
+    // Descendants of A pick up A's fill; value.className's stroke stays; its fill is replaced.
+    for (const n of ['A', 'a1', 'a2']) {
+      expect(classes(n)).toContain('fill-group-a');
+      expect(classes(n)).toContain('stroke-white');
+      expect(classes(n)).not.toContain('fill-fallback');
+    }
+    // B has no map entry → value.className only.
+    for (const n of ['B', 'b1']) {
+      expect(classes(n)).toContain('fill-fallback');
+      expect(classes(n)).toContain('stroke-white');
+      expect(classes(n)).not.toContain('fill-group-a');
+    }
+    // A map entry that sets its own stroke wins over value.className's stroke.
+    rerender(
+      <TreemapChart
+        id='t20'
+        data={tinyTree}
+        value={{ key: 'amount', className: 'fill-fallback stroke-white' }}
+        classNameMap={{ A: 'fill-group-a stroke-black' }}
+        colorBy='top'
+        style={STYLE}
+      />
+    );
+    expect(classes('a1')).toContain('stroke-black');
+    expect(classes('a1')).not.toContain('stroke-white');
+    expect(classes('b1')).toContain('stroke-white');
   });
 
   it('21: colorBy "value" ignored with one warning', () => {

@@ -3,8 +3,10 @@ import CandlestickChart from '.';
 import data from './sample.json';
 
 /**
- * Wicks and bodies grow in when `drawing.duration` is set,
- * after `drawing.delay`. Remount a story to replay.
+ * Wicks and bodies (or OHLC stems) grow in when `drawing.duration` is set.
+ * Candles draw in date order: the first starts immediately and each next one
+ * starts `drawing.delay` ms after the one before (60 candles at 100ms: the
+ * last starts at 5.9s). Remount a story to replay.
  */
 const meta = preview.meta({
   title: 'Ranges/CandlestickChart/Drawing',

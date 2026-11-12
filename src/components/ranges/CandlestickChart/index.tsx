@@ -410,13 +410,16 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       .attr('clip-path', `url(#${clipId})`);
 
     const duration = isFiniteNumber(drawing?.duration) ? drawing.duration : 0;
-    const delay = isFiniteNumber(drawing?.delay) ? drawing.delay : 0;
+    const delay = isFiniteNumber(drawing?.delay) && drawing.delay > 0 ? drawing.delay : 0;
     const animate = duration > 0;
     const dirClass = (c: Candle<TData>) =>
       twMerge('candle fill-current stroke-current', classNames?.[c.datum.direction]);
     const wickClass = twMerge('candle-wick', classNames?.wick);
 
-    candles.forEach((c) => {
+    // Staggered draw-in: candle i (date order, first date first) starts
+    // i * delay after the first, so each candle waits `delay` after the one before.
+    candles.forEach((c, i) => {
+      const wait = i * delay;
       const d = c.datum;
       const cx = centre(c);
       const g = candlesG
@@ -438,21 +441,29 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
           .attr('y1', animate ? yMid : yHigh)
           .attr('y2', animate ? yMid : yLow);
         if (animate)
-          stem.transition().duration(duration).delay(delay).attr('y1', yHigh).attr('y2', yLow);
-        g.append('line')
+          stem.transition().duration(duration).delay(wait).attr('y1', yHigh).attr('y2', yLow);
+        const open = g
+          .append('line')
           .attr('data-testid', 'ohlc-open')
           .attr('class', 'ohlc-open')
           .attr('x1', cx - tickPx)
           .attr('x2', cx)
           .attr('y1', yFn(d.open))
           .attr('y2', yFn(d.open));
-        g.append('line')
+        const close = g
+          .append('line')
           .attr('data-testid', 'ohlc-close')
           .attr('class', 'ohlc-close')
           .attr('x1', cx)
           .attr('x2', cx + tickPx)
           .attr('y1', yFn(d.close))
           .attr('y2', yFn(d.close));
+        // Ticks stay at their final y; they are hidden until this candle's
+        // stem starts growing, then shown (the opacity attribute is removed).
+        if (animate)
+          [open, close].forEach((tick) =>
+            tick.attr('opacity', 0).transition().duration(0).delay(wait).attr('opacity', null)
+          );
         return;
       }
       const yOpen = yFn(d.open);
@@ -465,7 +476,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
         .attr('y1', animate ? yOpen : yHigh)
         .attr('y2', animate ? yOpen : yLow);
       if (animate)
-        wick.transition().duration(duration).delay(delay).attr('y1', yHigh).attr('y2', yLow);
+        wick.transition().duration(duration).delay(wait).attr('y1', yHigh).attr('y2', yLow);
       const yTop = yFn(Math.max(d.open, d.close)),
         yBottom = yFn(Math.min(d.open, d.close));
       const rawH = yBottom - yTop;
@@ -484,7 +495,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
         body
           .transition()
           .duration(duration)
-          .delay(delay)
+          .delay(wait)
           .attr('y', bodyY)
           .attr('height', bodyH);
     });

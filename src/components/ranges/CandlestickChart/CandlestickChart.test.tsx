@@ -58,6 +58,12 @@ const wicks = (root: ParentNode = document.body) =>
 const tooltipOf = (id: string): HTMLElement | null => document.getElementById(`tooltip-${id}`);
 const num = (el: Element | null | undefined, a: string) => Number(el?.getAttribute(a));
 const hasTransition = (node: Element | null): boolean => node !== null && '__transition' in node;
+type D3Schedule = { delay: number; duration: number };
+const schedules = (node: Element | null | undefined): D3Schedule[] =>
+  node && '__transition' in node
+    ? Object.values((node as unknown as { __transition: Record<string, D3Schedule> }).__transition)
+    : [];
+const transitionDelays = (node: Element | null | undefined) => schedules(node).map((s) => s.delay);
 const d3On = (node: Element | null): unknown =>
   node !== null && '__on' in node ? (node as unknown as { __on: unknown }).__on : undefined;
 
@@ -1064,5 +1070,85 @@ describe('CandlestickChart', () => {
     expect(range?.options.some((o) => o.name === 'CandlestickChart')).toBe(true);
     const trend = decisionTree.find((b) => b.intent === 'trend');
     expect(trend?.options.some((o) => o.name === 'CandlestickChart')).toBe(false);
+  });
+  it('32: drawing.delay staggers candles in date order: candle i starts at i × delay (the first at 0), and its wick and body (or stem and open/close ticks) share that delay; ticks are hidden until their candle starts; no or zero delay starts all together; duration 0 draws final geometry with no transitions', () => {
+    const D = 150;
+    const { unmount } = render(
+      <CandlestickChart
+        id='cs32'
+        data={ROWS}
+        x={X}
+        {...KEYS}
+        drawing={{ duration: 400, delay: D }}
+        style={STYLE}
+      />
+    );
+    expect(candles().map((c) => c.getAttribute('data-date'))).toStrictEqual(SORTED_ISO);
+    candles().forEach((c, i) => {
+      const wick = c.querySelector('[data-testid="candle-wick"]');
+      const body = c.querySelector('[data-testid="candle-body"]');
+      expect(transitionDelays(wick), `wick ${i}`).toStrictEqual([i * D]);
+      expect(transitionDelays(body), `body ${i}`).toStrictEqual([i * D]);
+      expect(schedules(wick)[0].duration).toBe(400);
+    });
+    unmount();
+
+    const ohlc = render(
+      <CandlestickChart
+        id='cs32o'
+        data={ROWS}
+        x={X}
+        {...KEYS}
+        shape='ohlc'
+        drawing={{ duration: 400, delay: D }}
+        style={STYLE}
+      />
+    );
+    candles().forEach((c, i) => {
+      const stem = c.querySelector('[data-testid="ohlc-stem"]');
+      expect(transitionDelays(stem), `stem ${i}`).toStrictEqual([i * D]);
+      for (const id of ['ohlc-open', 'ohlc-close']) {
+        const tick = c.querySelector(`[data-testid="${id}"]`);
+        expect(tick?.getAttribute('opacity'), `${id} ${i}`).toBe('0');
+        expect(transitionDelays(tick), `${id} ${i}`).toStrictEqual([i * D]);
+      }
+    });
+    ohlc.unmount();
+
+    for (const drawing of [{ duration: 400 }, { duration: 400, delay: 0 }, { duration: 400, delay: NaN }]) {
+      const r = render(
+        <CandlestickChart id='cs32z' data={ROWS} x={X} {...KEYS} drawing={drawing} style={STYLE} />
+      );
+      wicks().forEach((w) => expect(transitionDelays(w)).toStrictEqual([0]));
+      bodies().forEach((b) => expect(transitionDelays(b)).toStrictEqual([0]));
+      r.unmount();
+    }
+
+    for (const shape of ['candle', 'ohlc'] as const) {
+      const r = render(
+        <CandlestickChart
+          id='cs32d'
+          data={ROWS}
+          x={X}
+          {...KEYS}
+          shape={shape}
+          drawing={{ duration: 0, delay: D }}
+          style={STYLE}
+        />
+      );
+      const marks = Array.from(document.querySelectorAll('#cs32d [data-testid="candle"] *'));
+      expect(marks.length).toBeGreaterThan(0);
+      marks.forEach((m) => {
+        expect(hasTransition(m)).toBe(false);
+        expect(m.hasAttribute('opacity')).toBe(false);
+      });
+      const yFn = priceScale(priceDomain([{ low: 95, high: 110 }, { low: 98, high: 104 }, { low: 101, high: 108 }]));
+      const line = document.querySelector(
+        shape === 'candle' ? '[data-testid="candle-wick"]' : '[data-testid="ohlc-stem"]'
+      );
+      expect(num(line, 'y1')).toBeCloseTo(yFn(104), 6);
+      expect(num(line, 'y2')).toBeCloseTo(yFn(98), 6);
+      r.unmount();
+    }
   });
 });

@@ -40,13 +40,12 @@ export const Vertical = meta.story({
   },
 });
 
-/** Horizontal violins with quartile lines. */
+/** Horizontal violins, same inner box as Vertical. */
 export const Horizontal = meta.story({
   args: {
     ...base,
     id: 'violin-drawing-horizontal',
     orientation: 'horizontal',
-    inner: 'quartiles',
     classNameMap,
     margin: { left: 60 },
     drawing: { duration: 1000, delay: 100 },

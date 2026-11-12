@@ -32,15 +32,49 @@ export const Default = meta.story({
   },
 });
 
-/** Horizontal with quartile lines and per-group colours. */
+/** Horizontal: groups run top → bottom, same inner box as Default. */
 export const Horizontal = meta.story({
   args: {
     ...Default.input.args,
     id: 'violin-horizontal',
     orientation: 'horizontal',
-    inner: 'quartiles',
-    classNameMap,
     margin: { left: 60 },
+  },
+});
+
+/** Dashed Q1/Q3 and a solid median across the violin width. */
+export const Quartiles = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'violin-quartiles',
+    inner: 'quartiles',
+  },
+});
+
+/** Only the median line. */
+export const Median = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'violin-median',
+    inner: 'median',
+  },
+});
+
+/** Density only, no inner summary. */
+export const InnerNone = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'violin-inner-none',
+    inner: 'none',
+  },
+});
+
+/** Raw samples overlaid on the full violin. */
+export const Points = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'violin-points',
+    points: { className: 'fill-slate-600', radius: 1.5 },
   },
 });
 
@@ -55,14 +89,22 @@ export const Raincloud = meta.story({
   },
 });
 
-/** Count scaling with tails: area ∝ sample count, density runs past the data. */
-export const CountScaleTails = meta.story({
+/** Violin area is proportional to sample count. Ops has fewer samples. */
+export const CountScale = meta.story({
   args: {
     ...Default.input.args,
     id: 'violin-count',
     data: data.filter((d, i) => d.dept !== 'Ops' || i % 4 === 0),
-    density: { scale: 'count', extent: 'tails' },
-    inner: 'median',
+    density: { scale: 'count' },
+  },
+});
+
+/** Density extends 3 bandwidths past the data. */
+export const Tails = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'violin-tails',
+    density: { extent: 'tails' },
   },
 });
 

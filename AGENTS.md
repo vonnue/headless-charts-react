@@ -74,6 +74,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Time-scaled lollipop chart, time series lollipop chart | [`LollipopVChart`](#lollipopvchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled stacked column chart, time series stacked column chart | [`ColumnChartStacked`](#columnchartstacked) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
 | TimeLineChart, timeline, event plot, activity timeline | [`TimeLineChart`](#timelinechart) | Base component, no extra configuration |
+| TreemapChart, treemap, squarified treemap, rectangular tree map | [`TreemapChart`](#treemapchart) | Base component, no extra configuration |
 | WaffleChart, heatmap, categorical heatmap, matrix chart, grid chart, tile chart | [`WaffleChart`](#wafflechart) | Base component, no extra configuration |
 | Waterfall chart, waterfall, bridge chart, cascade chart, flying bricks chart | [`ColumnChartStacked`](#columnchartstacked) | Set `waterfall` on a ColumnChartStacked. Each `y` series becomes a step in the sequence rather than a segment stacked from the baseline. |
 
@@ -102,6 +103,7 @@ Find the question being asked, then pick among the candidates.
 | [`AreaChart`](#areachart) | Composition changing over a continuous axis; supports 100% and streamgraph stacking |
 | [`PizzaChart`](#pizzachart) | Several metrics as radial segments of one entity, each against its own max |
 | [`FunnelChart`](#funnelchart) | Ordered conversion / drop-off through fixed stages (visit → signup → paid); length encodes count, colour must not |
+| [`TreemapChart`](#treemapchart) | A hierarchical whole where nested group totals and their parts both matter; area encodes value (too many parts for a pie) |
 
 ### How does a measure change over time or an ordered axis?
 
@@ -1555,6 +1557,68 @@ Bins points into a grid and colours each cell by how many fell into it, revealin
 - [`WaffleChart`](#wafflechart) — both axes are categorical or binned and density is the message
 - [`LineChart`](#linechart) — x is time and the sequence matters
 - [`BoxPlotV`](#boxplotv) — comparing the spread of a measure across groups rather than two measures
+
+### TreemapChart
+
+Nested rectangles whose area encodes value, showing a hierarchical part-to-whole with groups as labelled blocks.
+
+**Category:** `distribution` · **Answers:** `composition` · **Storybook:** Distribution/TreemapChart/Intro
+
+**Also called:** treemap, squarified treemap, rectangular tree map
+
+**Use when**
+
+- A whole splits into nested groups and both the group totals and their parts matter
+- There are too many parts for a pie, and the hierarchy is what explains them
+- Leaf areas should be comparable at a glance — set `leavesOnly` if group headers are noise
+
+**Do not use when**
+
+- A flat whole with about 6 or fewer parts — use PieChart
+- Individual units should be countable cells — use WaffleChart
+- A flat ranked comparison of leaves with no nesting — use BarChart
+- Composition changes over time — use AreaChart or ColumnChartStacked
+- Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only
+- A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role
+
+**Data**
+
+- `data` shape: hierarchy
+- Rows: ideal 4–30, max 50 — Leaves. Past ~50 cells labels drop out and areas get hard to compare.
+
+| Prop | Role | Required | Notes |
+| --- | --- | --- | --- |
+| `data` | link | yes | One nested root object or a forest (array of roots). Children nest under `children.key` (default `"children"`); there is no flat id/parent mode. |
+| `children` | link | no | Optional override for the nested-children key. Default `{ key: "children" }`. |
+| `value` | quantitative | yes | Leaf size key. Internal nodes are the sum of their descendant leaves; a value on an internal node is ignored. |
+| `name` | label | no | Display-name key. Default `"name"`. |
+| `classNameMap` | color | no | Optional class per group (see `colorBy`, default top-level). Colour names the group; area encodes magnitude — do not map colour to size. |
+
+**Required props:** `id`, `data`, `value`
+
+```tsx
+<TreemapChart
+  id="budget"
+  className="w-full h-96"
+  data={data}
+  value={{ key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' }}
+  classNameMap={{ Ops: 'fill-slate-500', Growth: 'fill-slate-400' }}
+  labels={{ name: true, value: true, percent: 'ofParent' }}
+  title="Budget by group"
+/>
+```
+
+**Options**
+
+- **Leaves only** — Set `leavesOnly` to drop the group headers and paint leaf cells only (`paddingTop` then defaults to 0).
+- **Tiling** — Set `tile.type` to `squarify` (default), `binary`, `slice`, `dice`, `sliceDice` or `resquarify`; `tile.ratio` applies to squarify/resquarify.
+- **Percent labels** — Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`; a zero or missing divisor prints `n/a`.
+
+**Consider instead**
+
+- [`PieChart`](#piechart) — a flat part-to-whole with few slices
+- [`WaffleChart`](#wafflechart) — cells should be countable units
+- [`BarChart`](#barchart) — a flat ranked comparison of the leaves with no nesting
 
 ### WaffleChart
 

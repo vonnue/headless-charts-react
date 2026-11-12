@@ -30,6 +30,7 @@ import ScatterPlot from '@/components/distribution/ScatterPlot/meta';
 import SpeedometerChart from '@/components/gauges/SpeedometerChart/meta';
 import SpineChart from '@/components/linear/SpineChart/meta';
 import TimeLineChart from '@/components/linear/TimeLineChart/meta';
+import TreemapChart from '@/components/distribution/TreemapChart/meta';
 import WaffleChart from '@/components/distribution/WaffleChart/meta';
 
 export * from './types';
@@ -56,6 +57,7 @@ export const chartCatalog: ChartMeta[] = [
   // distribution
   PieChart,
   ScatterPlot,
+  TreemapChart,
   WaffleChart,
   // ranges
   BoxPlotH,

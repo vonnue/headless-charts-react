@@ -66,6 +66,10 @@ export const decisionTree: DecisionBranch[] = [
         name: 'FunnelChart',
         when: 'Ordered conversion / drop-off through fixed stages (visit → signup → paid); length encodes count, colour must not',
       },
+      {
+        name: 'TreemapChart',
+        when: 'A hierarchical whole where nested group totals and their parts both matter; area encodes value (too many parts for a pie)',
+      },
     ],
   },
   {

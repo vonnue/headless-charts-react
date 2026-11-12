@@ -71,25 +71,6 @@ export const VolumeAndCrosshair = meta.story({
   },
 });
 
-/** Continuous time axis: weekends and holidays show as gaps; ticks on calendar boundaries. */
-export const TimeAxis = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'candlestick-time',
-    x: { key: 'date', scalingFunction: 'time', time: { isISO: true } },
-  },
-});
-
-/** Draw-in animation. */
-export const Animated = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'candlestick-animated',
-    volume: { key: 'v', className: 'fill-slate-300' },
-    drawing: { duration: 800 },
-  },
-});
-
 /** Empty data: an empty SVG shell. */
 export const Empty = meta.story({
   args: {

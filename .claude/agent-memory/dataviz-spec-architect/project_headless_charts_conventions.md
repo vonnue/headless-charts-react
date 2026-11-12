@@ -33,7 +33,7 @@ A chart can have three different names in play at once:
   `resolveChartRequest` (e.g. `ColumnChart`)
 - the Storybook `title` (matches the internal name: `'Linear/ColumnChartGrouped'`)
 
-Extra `*.stories.tsx` files (binning, time, tooltip variants) are prefixed
+Extra `*.stories.tsx` files (binning, time, tooltip, drawing, labels sections) are prefixed
 with the **catalog name**, not the internal export name — e.g.
 `ColumnChart.binning.stories.tsx` imports `ColumnChartGrouped from '.'` and
 sets `title: 'Linear/ColumnChartGrouped/Binning'`. Confirmed this pattern by
@@ -41,6 +41,23 @@ reading `ColumnChart.binning.stories.tsx` and `BoxPlotV.binning.stories.tsx`
 before specifying new `*.time.stories.tsx` file names/titles — worth
 verifying against an existing sibling variant-stories file every time rather
 than guessing from the component name.
+
+**Stories are nested in one file per section** (CLAUDE.md, "Storybook
+stories"; FunnelChart is the model: `Flow/FunnelChart/{Intro,Drawing,Tooltip,Labels}`).
+A spec for a new chart must have a Storybook section listing every story file
+and its title, and which stories go in each:
+- `<CatalogName>.stories.tsx` → `Category/ChartName/Intro`: default, the
+  distinctive variants, empty/edge cases.
+- `<CatalogName>.drawing.stories.tsx` → `.../Drawing` whenever the chart
+  honours `drawing` (almost all do); `drawing: { duration: 1000, delay: 100 }`,
+  component default stays `{ duration: 0 }`.
+- `<CatalogName>.tooltip.stories.tsx` → `.../Tooltip` whenever it supports
+  `tooltip`: default HTML, `className`, custom `html`.
+- `<CatalogName>.labels.stories.tsx` → `.../Labels` whenever it has a `labels`
+  prop.
+- Feature sections as needed (`.../Zoom`, `.../Brushing`, `.../Highlight`,
+  `.../Time Scaling` in `<CatalogName>.time.stories.tsx`).
+Don't specify a drawing demo as an `Animated` story inside Intro.
 
 ## `drawAxis` (`src/hooks/useAxis.tsx`) is already scale-agnostic
 It takes any d3 scale and calls `axisBottom(scale)` etc. — no special-casing

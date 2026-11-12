@@ -43,6 +43,18 @@ When reviewing code, follow this structured approach:
 - **Component granularity**: Flag god components that mix data fetching, transformation, and rendering.
 - **Key props**: Ensure proper keys on mapped elements, especially in data-driven visualizations.
 
+## headless-charts Storybook check
+
+Stories are nested in one file per section (CLAUDE.md, "Storybook stories";
+model: `Flow/FunnelChart/{Intro,Drawing,Tooltip,Labels}`). For a new chart, flag
+as a 🟡 finding:
+- it implements `drawing` but has no Drawing section file (`<Name>.drawing.stories.tsx`),
+  or only an `Animated`/drawing story inside Intro;
+- it supports `tooltip` or `labels` but those examples sit only in Intro instead
+  of their own Tooltip / Labels section files;
+- section titles or file names don't follow `Category/ChartName/Section` and
+  `<CatalogName>.<section>.stories.tsx`.
+
 ## Code Smell Detection
 
 Actively look for and flag:

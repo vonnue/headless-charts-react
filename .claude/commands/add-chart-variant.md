@@ -19,8 +19,13 @@ this process:
    a new kind of question — variant nuance stays in the variant, not the tree. Then run
    `yarn docs` and verify `yarn docs:check` passes.
 
-4. **Add a Storybook story.** In `<Chart>.stories.tsx`, add a story for the variant
-   following the existing `meta.story({...})` / `<ExistingStory>.extend({...})` pattern.
+4. **Add a Storybook story.** Put it in the section it belongs to (CLAUDE.md,
+   "Storybook stories"): a chart-type variant usually goes in Intro
+   (`<Chart>.stories.tsx`), but a drawing, tooltip, labels, zoom, time-scaling or
+   similar example goes in that section's file (`<Chart>.drawing.stories.tsx`,
+   `<Chart>.tooltip.stories.tsx`, …, titled `Category/Chart/Section`). Extend the
+   section file if it exists, create it if not; don't only append to Intro.
+   Follow the existing `meta.story({...})` / `<ExistingStory>.extend({...})` pattern.
    If the variant's defining behavior needs data the chart's shared `data.json` doesn't
    have (e.g. negative values for a diverging/mirrored variant), add a small inline data
    array scoped to that story rather than mutating the shared fixture.

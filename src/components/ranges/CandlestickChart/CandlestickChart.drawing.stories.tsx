@@ -7,9 +7,10 @@ import data from './sample.json';
  * `drawing.duration` is set. `DrawingWithDelay` staggers that in date order:
  * the first candle starts immediately and each next one starts
  * `drawing.delay` ms after the one before. `WickReveal` uses
- * `drawing.motion: 'wick-reveal'`: each wick first extends from open to high
- * and low, then the body settles at its final rectangle while the wick stays
- * at the range (`duration` is the total, split in halves). Wick-reveal is
+ * `drawing.motion: 'wick-reveal'`: the body expands from open out to high
+ * and low, then shrinks to open and close, leaving the tails (`duration`
+ * is the total, split in halves). The wick extends with the body and stays
+ * at the range. Wick-reveal is
  * candle-only, so there is no OHLC wick-reveal story (OHLC uses `'grow'`).
  * Remount a story to replay.
  */
@@ -82,7 +83,7 @@ export const OHLCWithDelay = meta.story({
   },
 });
 
-/** Wick extends to high–low, then the body settles, leaving the tails. Candle-only. */
+/** Body expands to the full range, then shrinks to open–close, leaving the tails. Candle-only. */
 export const WickReveal = meta.story({
   args: {
     ...base,

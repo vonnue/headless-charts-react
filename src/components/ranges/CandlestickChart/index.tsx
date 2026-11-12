@@ -98,9 +98,10 @@ export interface CandlestickChartProps<TData = any> extends Omit<ChartProps<TDat
    * `motion` is Candlestick-specific and is not on shared `ChartProps`.
    * Default `'grow'`: wick and body grow from the open level (the OHLC stem
    * from its midpoint) over `duration`. `'wick-reveal'` is candle-only: the
-   * wick first extends from open to high and low over `duration / 2`, then the
-   * body settles at its final rectangle over the other half while the wick
-   * stays at the range. With `shape: 'ohlc'` it warns and uses `'grow'`.
+   * body expands from open out to high and low over `duration / 2`, then
+   * shrinks to the open–close rectangle over the other half, leaving the
+   * tails. The wick extends with the body in the first half and stays at
+   * the range. With `shape: 'ohlc'` it warns and uses `'grow'`.
    * Unknown values warn and use `'grow'`.
    */
   drawing?: {
@@ -258,7 +259,12 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     if (!plotRef.current) return;
     const svgNode = plotRef.current.ownerSVGElement;
     const root = select(plotRef.current);
-    root.selectAll('*').interrupt();
+    // Named wick-reveal phases are not stopped by a nameless interrupt().
+    root
+      .selectAll('*')
+      .interrupt()
+      .interrupt('wick-reveal-expand')
+      .interrupt('wick-reveal-shrink');
     root.selectAll('*').remove();
 
     const xr = withResolvedUtc(x);
@@ -500,8 +506,8 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
         .attr('x2', cx)
         .attr('y1', animate ? yOpen : yHigh)
         .attr('y2', animate ? yOpen : yLow);
-      // wick-reveal phase 1: the wick alone extends from open to high/low over
-      // the first half; it then stays at the range (it never retracts).
+      // wick-reveal: the wick extends with the body in phase 1, then stays
+      // at high–low so the tails are left as the body shrinks in phase 2.
       if (animate)
         wick
           .transition()
@@ -515,6 +521,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       // Doji / sub-pixel bodies: at least 1px, centred on the open/close level.
       const bodyH = Math.max(MIN_BODY_PX, rawH);
       const bodyY = rawH >= MIN_BODY_PX ? yTop : (yTop + yBottom) / 2 - MIN_BODY_PX / 2;
+      const rangeH = Math.max(0, yLow - yHigh);
       const body = g
         .append('rect')
         .attr('data-testid', 'candle-body')
@@ -523,15 +530,32 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
         .attr('width', bodyPx)
         .attr('y', animate ? yOpen : bodyY)
         .attr('height', animate ? 0 : bodyH);
-      // wick-reveal phase 2: the body settles at its final rectangle over the
-      // second half, starting right after phase 1 (delay is not re-applied).
-      if (animate)
-        body
-          .transition()
-          .duration(wickReveal ? half : duration)
-          .delay(wickReveal ? wait + half : wait)
-          .attr('y', bodyY)
-          .attr('height', bodyH);
+      if (animate) {
+        if (wickReveal) {
+          // Two named transitions so both can be scheduled up front:
+          // phase 2 starts at wait + duration/2, from whatever attrs
+          // phase 1 left (d3 creates the interpolator when that delay elapses).
+          body
+            .transition('wick-reveal-expand')
+            .duration(half)
+            .delay(wait)
+            .attr('y', yHigh)
+            .attr('height', rangeH);
+          body
+            .transition('wick-reveal-shrink')
+            .duration(half)
+            .delay(wait + half)
+            .attr('y', bodyY)
+            .attr('height', bodyH);
+        } else {
+          body
+            .transition()
+            .duration(duration)
+            .delay(wait)
+            .attr('y', bodyY)
+            .attr('height', bodyH);
+        }
+      }
     });
 
     // --- hit areas: full band/slot wide, full plot height, above marks
@@ -624,7 +648,12 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     // document, so interrupt through this reference, not a lookup by id.
     const plot = plotRef.current;
     return () => {
-      if (plot) select(plot).selectAll('*').interrupt();
+      if (plot)
+        select(plot)
+          .selectAll('*')
+          .interrupt()
+          .interrupt('wick-reveal-expand')
+          .interrupt('wick-reveal-shrink');
     };
     // style is not read by refreshChart, but it sets the size refreshChart measures.
   }, [refreshChart, style?.width, style?.height]);

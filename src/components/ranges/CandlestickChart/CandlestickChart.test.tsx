@@ -70,12 +70,20 @@ const schedules = (node: Element | null | undefined): D3Schedule[] =>
 const transitionDelays = (node: Element | null | undefined) => schedules(node).map((s) => s.delay);
 const transitionDurations = (node: Element | null | undefined) =>
   schedules(node).map((s) => s.duration);
-/** Applies a node's scheduled attr tweens at t = 1 (its transition's end state), without d3-timer. */
+/** Scheduled transitions in start-delay order. */
+const schedulesByDelay = (node: Element | null | undefined): D3Schedule[] =>
+  [...schedules(node)].sort((a, b) => a.delay - b.delay);
+/** Applies one scheduled transition at t = 1, from the node's current attrs, without d3-timer. */
+const runPhase = (node: Element | null | undefined, i = 0) => {
+  if (!node) return;
+  const s = schedulesByDelay(node)[i];
+  if (!s) return;
+  (s.tween ?? []).forEach((tw) => tw.value.call(node)?.call(node, 1));
+};
+/** Applies every scheduled transition in delay order, each from the attrs the previous left. */
 const runToEnd = (node: Element | null | undefined) => {
   if (!node) return;
-  schedules(node).forEach((s) =>
-    (s.tween ?? []).forEach((tw) => tw.value.call(node)?.call(node, 1))
-  );
+  schedulesByDelay(node).forEach((_, i) => runPhase(node, i));
 };
 const d3On = (node: Element | null): unknown =>
   node !== null && '__on' in node ? (node as unknown as { __on: unknown }).__on : undefined;
@@ -1175,7 +1183,7 @@ describe('CandlestickChart', () => {
   const rowsScale = () =>
     priceScale(priceDomain([{ low: 95, high: 110 }, { low: 98, high: 104 }, { low: 101, high: 108 }]));
 
-  it("33: drawing.motion 'wick-reveal' with shape 'candle' and duration D: phase 1 lasts D/2 and ends with the wick at y(high)–y(low) and the body at height 0; phase 2 lasts D/2 and ends with the body at its final open–close rectangle (1px for a doji) and the wick still at high–low; down body top y(open), bottom y(close), up the reverse; default motion and 'grow' keep the simultaneous open-to-close grow and do not sequence the phases", () => {
+  it("33: drawing.motion 'wick-reveal' with shape 'candle' and duration D: phase 1 lasts D/2 and ends with the body expanded from open to y(high)–y(low) and the wick at high–low; phase 2 lasts D/2 and ends with the body shrunk to its final open–close rectangle (1px for a doji) and the wick still at high–low; down body top y(open), bottom y(close), up the reverse; default motion and 'grow' keep the simultaneous open-to-close grow and do not sequence the phases", () => {
     const D = 400;
     const yFn = rowsScale();
     const { unmount } = render(
@@ -1202,20 +1210,23 @@ describe('CandlestickChart', () => {
       expect(num(wick, 'y2'), `wick start ${i}`).toBeCloseTo(yFn(r.o), 6);
       expect(num(body, 'y'), `body start ${i}`).toBeCloseTo(yFn(r.o), 6);
       expect(num(body, 'height'), `body start ${i}`).toBe(0);
-      // Phase 1 = the wick's transition: [0, D/2). Phase 2 = the body's: [D/2, D].
+      // Wick: one transition over [0, D/2). Body: expand at 0, shrink at D/2.
       expect(transitionDelays(wick), `wick ${i}`).toStrictEqual([0]);
       expect(transitionDurations(wick), `wick ${i}`).toStrictEqual([D / 2]);
-      expect(transitionDelays(body), `body ${i}`).toStrictEqual([D / 2]);
-      expect(transitionDurations(body), `body ${i}`).toStrictEqual([D / 2]);
+      const bodySched = schedulesByDelay(body);
+      expect(bodySched.map((s) => s.delay), `body delays ${i}`).toStrictEqual([0, D / 2]);
+      expect(bodySched.map((s) => s.duration), `body durs ${i}`).toStrictEqual([D / 2, D / 2]);
 
-      // End of phase 1: wick at high–low, body still height 0.
+      // End of phase 1: body covers high–low; wick is at high–low.
       runToEnd(wick);
+      runPhase(body, 0);
       expect(num(wick, 'y1'), `wick p1 ${i}`).toBeCloseTo(yFn(r.h), 6);
       expect(num(wick, 'y2'), `wick p1 ${i}`).toBeCloseTo(yFn(r.l), 6);
-      expect(num(body, 'height'), `body p1 ${i}`).toBe(0);
+      expect(num(body, 'y'), `body p1 y ${i}`).toBeCloseTo(yFn(r.h), 6);
+      expect(num(body, 'height'), `body p1 h ${i}`).toBeCloseTo(yFn(r.l) - yFn(r.h), 6);
 
-      // End of phase 2: final body rectangle; the wick has no further tween and stays at high–low.
-      runToEnd(body);
+      // End of phase 2: body shrinks to the final rectangle; wick stays at high–low.
+      runPhase(body, 1);
       expect(num(wick, 'y1'), `wick p2 ${i}`).toBeCloseTo(yFn(r.h), 6);
       expect(num(wick, 'y2'), `wick p2 ${i}`).toBeCloseTo(yFn(r.l), 6);
       if (r.o === r.c) {
@@ -1271,8 +1282,12 @@ describe('CandlestickChart', () => {
       const body = c.querySelector('[data-testid="candle-body"]');
       expect(transitionDelays(wick), `wick ${i}`).toStrictEqual([i * delay]);
       expect(transitionDurations(wick), `wick ${i}`).toStrictEqual([D / 2]);
-      expect(transitionDelays(body), `body ${i}`).toStrictEqual([i * delay + D / 2]);
-      expect(transitionDurations(body), `body ${i}`).toStrictEqual([D / 2]);
+      const bodySched = schedulesByDelay(body);
+      expect(bodySched.map((s) => s.delay), `body delays ${i}`).toStrictEqual([
+        i * delay,
+        i * delay + D / 2,
+      ]);
+      expect(bodySched.map((s) => s.duration), `body durs ${i}`).toStrictEqual([D / 2, D / 2]);
     });
     unmount();
   });
@@ -1383,9 +1398,12 @@ describe('CandlestickChart', () => {
       const oldWicks = wicks();
       const oldBodies = bodies();
       expect(oldWicks).toHaveLength(3);
-      // Phase 1: wick transitions running, bodies waiting for D/2. Phase 2: the
-      // wick has reached high–low (its tween applied at t = 1), only bodies remain.
-      if (phase === 2) oldWicks.forEach(runToEnd);
+      // Phase 1: wick and body expand together. Phase 2: wick is at high–low
+      // and the body has finished expanding; only the shrink remains to run.
+      if (phase === 2) {
+        oldWicks.forEach(runToEnd);
+        oldBodies.forEach((b) => runPhase(b, 0));
+      }
       oldBodies.forEach((b) => expect(hasTransition(b)).toBe(true));
       if (phase === 1) oldWicks.forEach((w) => expect(hasTransition(w)).toBe(true));
 
@@ -1425,7 +1443,10 @@ describe('CandlestickChart', () => {
       );
       const wick = wicks()[0];
       const body = bodies()[0];
-      if (phase === 2) runToEnd(wick);
+      if (phase === 2) {
+        runToEnd(wick);
+        runPhase(body, 0);
+      }
       expect(hasTransition(body)).toBe(true);
       const errors: unknown[] = [];
       const err = vi.spyOn(console, 'error').mockImplementation((...a) => {

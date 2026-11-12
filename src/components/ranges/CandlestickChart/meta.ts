@@ -107,7 +107,7 @@ const meta: ChartMeta = {
     {
       kind: 'option',
       name: 'Wick-reveal',
-      how: "Set `drawing.motion: 'wick-reveal'` (with `drawing.duration`) for a two-phase enter: each wick extends from open to high and low, then the body settles at its final rectangle while the wick stays at the range. `duration` is the total, split in halves. Candle shape only; `shape: 'ohlc'` uses the default `'grow'`.",
+      how: "Set `drawing.motion: 'wick-reveal'` (with `drawing.duration`) for a two-phase enter: the body expands from open out to high and low, then shrinks to open and close, leaving the tails. The wick extends with the body and stays at the range. `duration` is the total, split in halves. Candle shape only; `shape: 'ohlc'` uses the default `'grow'`.",
     },
   ],
 };

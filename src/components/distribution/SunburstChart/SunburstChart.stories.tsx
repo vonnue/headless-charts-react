@@ -36,23 +36,12 @@ export const Default = meta.story({
   },
 });
 
-/** Donut hole with percent-of-parent labels. */
+/** Donut hole: `innerRadius > 0` drops the centre disc. */
 export const Donut = meta.story({
   args: {
     ...Default.input.args,
     id: 'sunburst-donut',
     innerRadius: 0.35,
-    labels: { name: true, percent: 'ofParent', minThickness: 20 },
-  },
-});
-
-/** Click-to-zoom with two visible rings: click an arc to drill in, the centre (or Escape) to zoom out. */
-export const Zoom = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'sunburst-zoom',
-    rings: 2,
-    zoom: true,
   },
 });
 

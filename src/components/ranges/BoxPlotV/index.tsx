@@ -101,14 +101,15 @@ export type BoxPlotVProps<TData = any> =
  *   `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from
  *   the median gap between dates (one slot per step); `x.time.barWidth`
  *   (positive pixels) overrides it but is capped at one slot, so it can
- *   narrow boxes but never widen them past their slot. Set `x.time.utc:
- *   true` when dates are UTC instants or calendar days — otherwise they are
- *   parsed, placed and labelled in the viewer's local time zone. Pinned
- *   `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly
- *   on a pinned end is centred on the plot edge and overhangs it by half a
- *   box; to keep edge marks inside, pin half a step outside the data (e.g.
- *   `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1
- *   Jan 2025).
+ *   narrow boxes but never widen them past their slot. ISO dates are read,
+ *   placed and labelled in UTC by default, so calendar days (`2025-01-31`)
+ *   land on the right day in every time zone; set `x.time.utc: false` for
+ *   the viewer's local time, or `x.time.utc: true` to read `x.time.format`
+ *   strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding,
+ *   so a box dated exactly on a pinned end is centred on the plot edge and
+ *   overhangs it by half a box; to keep edge marks inside, pin half a step
+ *   outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for
+ *   daily data starting 1 Jan 2025).
  *
  * Also called: vertical box plot, box and whisker chart, box chart.
  *

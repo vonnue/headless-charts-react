@@ -40,17 +40,20 @@ export interface AxisConfig<TData = any> {
      * Read and show dates in UTC instead of the viewer's local time zone:
      * `format` strings are parsed with `utcParse`, the axis uses `scaleUtc`
      * (UTC tick positions and labels) and the default tooltip formats with
-     * `utcFormat`. Default `false`.
+     * `utcFormat`.
      *
-     * Local-time caveat: without `utc`, ISO instants such as
-     * `2024-12-31T00:00:00Z` are drawn and labelled in the viewer's zone, so
-     * west of UTC they land on (and read as) Dec 30. Set `utc: true` when the
-     * data holds calendar days: date-only values (`2024`, `2024-12`,
-     * `2024-12-31`) or UTC-midnight instants. In development, `isISO` data of
-     * that shape without `utc` logs a one-time hint. Timestamps at other times
-     * of day are usually best left in the viewer's local time.
+     * Default: `true` when `isISO` is set, `false` otherwise (since 0.3.0,
+     * #25). ISO calendar days (`2024`, `2024-12`, `2024-12-31`) and
+     * UTC-midnight instants (`2024-12-31T00:00:00Z`) are UTC midnights, so
+     * with UTC they land on, and read as, the right day in every zone.
      *
-     * Read by ColumnChart, ColumnChartStacked, LollipopVChart and BoxPlotV.
+     * Set `utc: false` to place and label ISO data in the viewer's local time
+     * zone, e.g. for intraday timestamps. Then `2024-12-31T00:00:00Z` shows
+     * as Dec 30 west of UTC; in development, `isISO` data made only of
+     * calendar days or UTC midnights with `utc: false` logs a one-time hint.
+     *
+     * Read by AreaChart, LineChart, ColumnChart, ColumnChartStacked,
+     * LollipopVChart and BoxPlotV.
      */
     utc?: boolean;
     /**

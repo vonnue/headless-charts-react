@@ -149,7 +149,7 @@ const y = [
       name: 'Time-scaled line chart',
       aliases: ['time series chart', 'time series line chart'],
       summary: 'A line chart whose x axis parses real dates rather than treating the key as a plain number.',
-      how: 'Set `x.scalingFunction: "time"` and `x.time.format` (or `x.time.isISO`) to parse date strings.',
+      how: 'Set `x.scalingFunction: "time"` and `x.time.format` (or `x.time.isISO`) to parse date strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer\'s local time, or `x.time.utc: true` to read `x.time.format` strings in UTC.',
       useWhen: [
         'The x values are dates and the gaps between them are uneven',
         'Ticks should land on real date boundaries rather than arbitrary numbers',

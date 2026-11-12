@@ -384,7 +384,7 @@
             "time series area chart"
           ],
           "summary": "An area chart whose x axis parses real dates rather than treating the key as a plain number.",
-          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings.",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC.",
           "useWhen": [
             "The x values are dates and the spacing between them is uneven",
             "Axis ticks should fall on real date boundaries"
@@ -764,7 +764,7 @@
             "time series column chart"
           ],
           "summary": "A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.",
-          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
           "useWhen": [
             "The x values are real dates and spacing between bars should be proportional to elapsed time, not category index",
             "Some periods are missing and the gap should read as whitespace rather than being silently collapsed",
@@ -895,7 +895,7 @@
             "time series stacked column chart"
           ],
           "summary": "A stacked column chart whose x axis parses real dates and spaces bars proportionally to elapsed time.",
-          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
           "useWhen": [
             "The total per period matters and periods are real, possibly unevenly spaced dates",
             "Some periods are missing and the gap should read as whitespace",
@@ -1063,7 +1063,7 @@
             "time series line chart"
           ],
           "summary": "A line chart whose x axis parses real dates rather than treating the key as a plain number.",
-          "how": "Set `x.scalingFunction: \"time\"` and `x.time.format` (or `x.time.isISO`) to parse date strings.",
+          "how": "Set `x.scalingFunction: \"time\"` and `x.time.format` (or `x.time.isISO`) to parse date strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC.",
           "useWhen": [
             "The x values are dates and the gaps between them are uneven",
             "Ticks should land on real date boundaries rather than arbitrary numbers"
@@ -1285,7 +1285,7 @@
             "time series lollipop chart"
           ],
           "summary": "A vertical lollipop chart whose x axis parses real dates and positions each stem proportionally to elapsed time, rather than as an equal-width slot.",
-          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone.",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC.",
           "useWhen": [
             "Values are one-per-date and spacing between stems should be proportional to elapsed time",
             "Category labels are dates rather than names"
@@ -2157,7 +2157,7 @@
             "time series box plot"
           ],
           "summary": "A vertical box plot whose x axis parses real dates and spaces boxes proportionally to elapsed time.",
-          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. Set `x.time.utc: true` when dates are UTC instants or calendar days — otherwise they are parsed, placed and labelled in the viewer's local time zone. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
+          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
           "useWhen": [
             "Groups are periods (weeks, months) with real dates and spacing should reflect elapsed time",
             "Some periods have no data and that gap should be visible rather than silently skipped"

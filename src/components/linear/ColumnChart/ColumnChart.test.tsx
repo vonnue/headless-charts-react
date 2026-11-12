@@ -1023,18 +1023,18 @@ describe('ColumnChart time mode with x.start / x.end pinned (review-2 N2)', () =
   });
 });
 
-describe('ColumnChart suggests x.time.utc for date-only ISO data (review-2 N1)', () => {
+describe('ColumnChart warns about utc: false with date-only ISO data (review-2 N1, #25)', () => {
   const CHART_SIZE = { width: '500px', height: '300px' };
   const rows = ['2025-01-01', '2025-01-02', '2025-01-03'].map((date, i) => ({ date, a: i + 1 }));
 
-  it('warns once in dev when isISO dates are date-only and utc is off', () => {
+  it('warns once in dev when isISO dates are date-only and utc is explicitly false', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { rerender } = render(
       <ColumnChart
         id='utc-hint-column'
         style={CHART_SIZE}
         data={rows}
-        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: false } }}
         y={[{ key: 'a' }]}
       />
     );
@@ -1043,7 +1043,7 @@ describe('ColumnChart suggests x.time.utc for date-only ISO data (review-2 N1)',
         id='utc-hint-column'
         style={CHART_SIZE}
         data={[...rows]}
-        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: false } }}
         y={[{ key: 'a' }]}
       />
     );
@@ -1056,21 +1056,22 @@ describe('ColumnChart suggests x.time.utc for date-only ISO data (review-2 N1)',
     warn.mockRestore();
   });
 
-  it('does not warn when x.time.utc is set', () => {
+  it.each([
+    ['utc: true', 'utc-hint-column-off', { isISO: true, utc: true }],
+    ['utc unset (UTC by default, #25)', 'utc-hint-column-default', { isISO: true }],
+  ])('does not warn with %s', (_label, id, time) => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     render(
       <ColumnChart
-        id='utc-hint-column-off'
+        id={id}
         style={CHART_SIZE}
         data={rows}
-        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+        x={{ key: 'date', scalingFunction: 'time', time }}
         y={[{ key: 'a' }]}
       />
     );
 
-    expect(
-      warn.mock.calls.some(([m]) => String(m).includes('ColumnChart#utc-hint-column-off'))
-    ).toBe(false);
+    expect(warn.mock.calls.some(([m]) => String(m).includes(`ColumnChart#${id}`))).toBe(false);
     warn.mockRestore();
   });
 
@@ -1081,7 +1082,7 @@ describe('ColumnChart suggests x.time.utc for date-only ISO data (review-2 N1)',
         id={id}
         style={CHART_SIZE}
         data={dates.map((date, i) => ({ date, a: i + 1 }))}
-        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+        x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: false } }}
         y={[{ key: 'a' }]}
       />
     );

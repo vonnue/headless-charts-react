@@ -15,10 +15,10 @@ import {
 } from 'd3-shape';
 import { max, min, minIndex } from 'd3-array';
 import { pointer, select, selectAll } from 'd3-selection';
-import { scaleLinear, scaleTime } from 'd3';
+import { scaleLinear } from 'd3';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { timeParse, isoParse } from 'd3-time-format';
+import { createTimeScale, makeDateParser } from '@/utils/timeScale';
 import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import { pinnedEnd, pinnedStart, resolveBound } from '@/utils/domain';
@@ -100,7 +100,11 @@ const DEFAULT_STYLE = {};
  *   }` and widen `margin.right`. Label the scales with `yLeftLabel` and
  *   `yRightLabel`.
  * - Time-scaled line chart — Set `x.scalingFunction: "time"` and
- *   `x.time.format` (or `x.time.isISO`) to parse date strings.
+ *   `x.time.format` (or `x.time.isISO`) to parse date strings. ISO dates are
+ *   read, placed and labelled in UTC by default, so calendar days
+ *   (`2025-01-31`) land on the right day in every time zone; set
+ *   `x.time.utc: false` for the viewer's local time, or `x.time.utc: true`
+ *   to read `x.time.format` strings in UTC.
  *
  * Also called: line graph, multi-line chart, trend line chart.
  *
@@ -208,8 +212,16 @@ const LineChart = <TData = any,>({
   reverse = false,
   showGuideLines = false,
 }: LineChartProps<TData>) => {
-  const d3Format = x.time?.format || '%Y-%m-%d';
-  const parseDate = useMemo(() => timeParse(d3Format), [d3Format]);
+  const { format: xTimeFormat, isISO: xTimeIsISO, utc: xTimeUtc } = x.time ?? {};
+  // ISO strings via isoParse, else x.time.format; format strings are read in
+  // UTC when x.time.utc is set (#25).
+  const parseDate = useMemo(
+    () =>
+      makeDateParser({
+        time: { format: xTimeFormat, isISO: xTimeIsISO, utc: xTimeUtc },
+      }),
+    [xTimeFormat, xTimeIsISO, xTimeUtc]
+  );
 
   const refreshChart = useCallback(() => {
     const shapeMapping = {
@@ -231,10 +243,7 @@ const LineChart = <TData = any,>({
       default: curveLinear,
     };
 
-    const toDateTime = (d: any): Date =>
-      x.time?.isISO
-        ? (isoParse(d[x.key]) as Date)
-        : (parseDate(d[x.key]) as Date);
+    const toDateTime = (d: any): Date => parseDate(d[x.key]) as Date;
 
     /**
      *
@@ -278,8 +287,10 @@ const LineChart = <TData = any,>({
     const width = +svg.style('width').split('px')[0],
       height = +svg.style('height').split('px')[0];
 
+    // scaleUtc when x.time.utc is on (the default for isISO, #25): UTC ticks
+    // and tick labels.
     const xFn =
-      x.scalingFunction === 'time' ? scaleTime() : scaleLinear();
+      x.scalingFunction === 'time' ? createTimeScale(x) : scaleLinear();
 
     setDefaultXDomain(xFn);
     xFn.range([

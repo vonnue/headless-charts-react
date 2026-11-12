@@ -183,3 +183,31 @@ export const Unsorted = meta.story({
     sort: false,
   },
 });
+
+/**
+ * Charts follow the size of their container, not only `style.width`/`style.height`.
+ * Drag the bottom-right corner of the box to resize it: the chart is sized with
+ * `width: 100%; height: 100%` and redraws at the new size, once per animation frame.
+ */
+export const ResizableContainer = meta.story({
+  args: {
+    ...Styled.input.args,
+    id: 'pie-chart-resizable',
+    style: { width: '100%', height: '100%' },
+  },
+  render: (args) => (
+    <div
+      style={{
+        resize: 'both',
+        overflow: 'hidden',
+        width: 400,
+        height: 250,
+        minWidth: 120,
+        minHeight: 120,
+        border: '1px dashed currentColor',
+      }}
+    >
+      <PieChart {...args} />
+    </div>
+  ),
+});

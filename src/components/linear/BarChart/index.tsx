@@ -5,10 +5,10 @@ import useTooltip from '@/hooks/useTooltip';
 import { drawAxis } from '@/hooks/useAxis';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import useChartSize from '@/hooks/useChartSize';
 import { defaultChartClassNames, bin1D } from '@/utils';
 import { clampToDomain, pinnedEnd, pinnedStart } from '@/utils/domain';
-import measureSvg from '@/utils/measureSvg';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
@@ -150,13 +150,19 @@ const BarChart = <TData = any,>({
 
   const isBinned = x.length > 0 && x[0].bin != null;
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     if (!data || data.length === 0) return;
 
     const svg = select<SVGSVGElement, unknown>(`#${id}`);
     svg.selectAll('*').remove();
-
-    const { width, height } = measureSvg(svg.node());
 
     // When binning is active, bin the first x series into horizontal histogram
     let effectiveData: any[];
@@ -389,16 +395,18 @@ const BarChart = <TData = any,>({
               yFn.bandwidth() / effectiveX.length / 4
           );
     });
-  }, [data, direction, drawing, id, margin, padding, x, y, dataLabel, tooltip]);
+  }, [data, direction, drawing, id, margin, padding, x, y, dataLabel, tooltip, width, height]);
 
   useEffect(() => {
+    if (!measured) return;
     refreshChart();
-    // style is not read by refreshChart, but it sets the size refreshChart measures.
-  }, [data, refreshChart, style?.width, style?.height]);
+    // A style/className size change reaches refreshChart through useChartSize.
+  }, [data, refreshChart, measured]);
 
   return (
     <svg
       id={id}
+      ref={svgRef}
       style={style}
       className={twMerge(defaultChartClassNames, className)}
       data-testid='bar-chart'

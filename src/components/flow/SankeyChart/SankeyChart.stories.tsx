@@ -67,20 +67,6 @@ export const Energy = meta.story({
   },
 });
 
-/**
- * Highlighting is headless: hovered elements get `data-highlighted`, the
- * rest `data-dimmed`. Style them with attribute selectors.
- */
-export const PathHighlight = meta.story({
-  args: {
-    ...Energy.input.args,
-    id: 'sankey-path-highlight',
-    className:
-      'w-full h-96 text-slate-500 [&_[data-dimmed=true]]:opacity-20 [&_path]:transition-opacity',
-    highlight: 'path',
-  },
-});
-
 /** `orientation="vertical"`: columns run top → bottom. */
 export const Vertical = meta.story({
   args: {
@@ -107,15 +93,6 @@ export const InputOrder = meta.story({
     ...Energy.input.args,
     id: 'sankey-input-order',
     nodeSort: 'input',
-  },
-});
-
-/** Grow-in animation over `drawing.duration`. */
-export const Animated = meta.story({
-  args: {
-    ...Energy.input.args,
-    id: 'sankey-animated',
-    drawing: { duration: 800 },
   },
 });
 

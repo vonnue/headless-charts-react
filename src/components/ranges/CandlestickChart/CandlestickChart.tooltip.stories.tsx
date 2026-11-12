@@ -7,7 +7,7 @@ import data from './sample.json';
  * HTML is the date, open/high/low/close and the change from open.
  */
 const meta = preview.meta({
-  title: 'Linear/CandlestickChart/Tooltip',
+  title: 'Ranges/CandlestickChart/Tooltip',
   component: CandlestickChart,
   tags: ['autodocs'],
 });

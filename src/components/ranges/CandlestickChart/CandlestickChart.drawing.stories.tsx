@@ -7,7 +7,7 @@ import data from './sample.json';
  * after `drawing.delay`. Remount a story to replay.
  */
 const meta = preview.meta({
-  title: 'Linear/CandlestickChart/Drawing',
+  title: 'Ranges/CandlestickChart/Drawing',
   component: CandlestickChart,
   tags: ['autodocs'],
 });

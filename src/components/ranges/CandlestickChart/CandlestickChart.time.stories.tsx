@@ -8,7 +8,7 @@ import data from './sample.json';
  * and holidays show as gaps and ticks fall on calendar boundaries.
  */
 const meta = preview.meta({
-  title: 'Linear/CandlestickChart/Time Scaling',
+  title: 'Ranges/CandlestickChart/Time Scaling',
   component: CandlestickChart,
   tags: ['autodocs'],
 });

@@ -13,8 +13,6 @@ export { default as LollipopHChart } from '@/components/linear/LollipopHChart';
 export { default as LollipopVChart } from '@/components/linear/LollipopVChart';
 export { default as SpineChart } from '@/components/linear/SpineChart';
 export { default as TimeLineChart } from '@/components/linear/TimeLineChart';
-export { default as CandlestickChart } from '@/components/linear/CandlestickChart';
-export type { CandlestickChartProps, CandleDatum } from '@/components/linear/CandlestickChart';
 
 // Hooks
 export { default as useAxis, drawAxis } from '@/hooks/useAxis';
@@ -54,6 +52,8 @@ export type {
 
 export { default as BoxPlotH } from '@/components/ranges/BoxPlotH';
 export { default as BoxPlotV } from '@/components/ranges/BoxPlotV';
+export { default as CandlestickChart } from '@/components/ranges/CandlestickChart';
+export type { CandlestickChartProps, CandleDatum } from '@/components/ranges/CandlestickChart';
 export { default as CometPlot } from '@/components/ranges/CometPlot';
 export { default as RangePlot } from '@/components/ranges/RangePlot';
 

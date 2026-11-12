@@ -1026,7 +1026,7 @@ describe('CandlestickChart', () => {
     );
   });
 
-  it('31: catalog aliases resolve to CandlestickChart; ohlc aliases resolve to the OHLC chart variant; none collide with RangePlot, BoxPlot, LineChart, Waffle heatmap, Comet slope chart or dual-axis combo chart; meta.category is linear and primary intent trend is on the decisionTree trend branch', () => {
+  it('31: catalog aliases resolve to CandlestickChart; ohlc aliases resolve to the OHLC chart variant; none collide with RangePlot, BoxPlot, LineChart, Waffle heatmap, Comet slope chart or dual-axis combo chart; meta.category is ranges and primary intent range is on the decisionTree range branch', () => {
     for (const alias of [
       'candlestick',
       'candlestick chart',
@@ -1043,8 +1043,8 @@ describe('CandlestickChart', () => {
       expect(resolved?.chart.name, alias).toBe('CandlestickChart');
       expect(resolved?.variant?.name, alias).toBe('OHLC chart');
     }
-    expect(resolveChartRequest('CandlestickChart')?.chart.category).toBe('linear');
-    expect(resolveChartRequest('CandlestickChart')?.chart.intents[0]).toBe('trend');
+    expect(resolveChartRequest('CandlestickChart')?.chart.category).toBe('ranges');
+    expect(resolveChartRequest('CandlestickChart')?.chart.intents[0]).toBe('range');
 
     const reserved: Record<string, string> = {
       'range plot': 'RangePlot',
@@ -1060,7 +1060,9 @@ describe('CandlestickChart', () => {
       if (resolved) expect(resolved.chart.name, name).toBe(chart);
     }
 
+    const range = decisionTree.find((b) => b.intent === 'range');
+    expect(range?.options.some((o) => o.name === 'CandlestickChart')).toBe(true);
     const trend = decisionTree.find((b) => b.intent === 'trend');
-    expect(trend?.options.some((o) => o.name === 'CandlestickChart')).toBe(true);
+    expect(trend?.options.some((o) => o.name === 'CandlestickChart')).toBe(false);
   });
 });

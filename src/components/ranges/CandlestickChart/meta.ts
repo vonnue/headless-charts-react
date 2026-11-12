@@ -9,10 +9,10 @@ const meta: ChartMeta = {
     'stock chart',
     'financial chart',
   ],
-  category: 'linear',
+  category: 'ranges',
   summary:
     "Draws each period's open, high, low and close as a wick and a body, coloured by direction, to show price movement and intraperiod range over time.",
-  intents: ['trend', 'range'],
+  intents: ['range', 'trend'],
   data: {
     form: 'records',
     encodings: [
@@ -64,7 +64,7 @@ const meta: ChartMeta = {
   close={{ key: 'c' }}
   classNames={{ up: 'fill-sky-500 stroke-sky-500', down: 'fill-orange-500 stroke-orange-500' }}
 />`,
-  storybook: 'Linear/CandlestickChart/Intro',
+  storybook: 'Ranges/CandlestickChart/Intro',
   variants: [
     {
       kind: 'chart-type',

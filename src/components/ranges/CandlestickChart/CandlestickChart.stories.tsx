@@ -10,7 +10,7 @@ import data from './sample.json';
  * To create a candlestick chart, use the `<CandlestickChart />` component.
  */
 const meta = preview.meta({
-  title: 'Linear/CandlestickChart/Intro',
+  title: 'Ranges/CandlestickChart/Intro',
   component: CandlestickChart,
   tags: ['autodocs'],
 });

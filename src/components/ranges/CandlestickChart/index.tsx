@@ -152,7 +152,7 @@ const makeDefaultHtml =
  *
  * Also called: candlestick, candlestick chart, japanese candlestick chart, stock chart, financial chart.
  *
- * Answers: trend, range. Required props: `id`, `data`, `x`, `open`, `high`, `low`, `close`.
+ * Answers: range, trend. Required props: `id`, `data`, `x`, `open`, `high`, `low`, `close`.
  *
  * @example
  * ```tsx

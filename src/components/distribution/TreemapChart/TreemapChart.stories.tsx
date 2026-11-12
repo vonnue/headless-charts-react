@@ -43,22 +43,6 @@ export const LeavesOnly = meta.story({
   },
 });
 
-/** Name, value and percent labels; small cells drop their text and the rest clip to the cell. */
-export const Labels = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'treemap-labels',
-    classNameMap,
-    labels: {
-      name: { className: 'text-xs font-semibold' },
-      value: { className: 'text-xs', format: (v: number) => `$${v}k` },
-      percent: 'ofParent',
-      minWidth: 50,
-      minHeight: 30,
-    },
-  },
-});
-
 /** Colour by top-level group with `classNameMap`; misses fall back to `value.className`. */
 export const ColorMap = meta.story({
   args: {

@@ -1,5 +1,5 @@
 import preview from '../../../../.storybook/preview';
-import FunnelChart, { PercentKind } from '.';
+import FunnelChart from '.';
 import data from './sample.json';
 
 /**
@@ -65,55 +65,6 @@ export const HorizontalTrapezoid = meta.story({
     shape: 'trapezoid',
     classNameMap,
     labels: { stage: true, value: { className: 'text-xs' } },
-  },
-});
-
-/** Marks grow from the midline, staggered 100ms per stage, after `drawing.delay`. Remount the story to replay. */
-export const Drawing = meta.story({
-  args: {
-    ...Trapezoid.input.args,
-    id: 'funnel-drawing',
-    drawing: {
-      duration: 1000,
-      delay: 100,
-    },
-  },
-});
-
-/** Stage, value and percent-of-first labels. */
-export const Labels = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'funnel-labels',
-    shape: 'trapezoid',
-    classNameMap,
-    labels: {
-      stage: { className: 'text-sm' },
-      value: {
-        className: 'text-xs fill-white',
-        format: (v: number) => v.toLocaleString(),
-      },
-      percent: 'ofFirst',
-    },
-  },
-});
-
-/** `labels.percent: 'both'` with an object form for class and format. */
-export const Percent = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'funnel-percent',
-    labels: {
-      stage: true,
-      percent: {
-        of: 'both',
-        className: 'text-xs',
-        format: (pct: number | null, kind: PercentKind) =>
-          pct === null
-            ? `${kind === 'ofFirst' ? 'first' : 'prev'}: n/a`
-            : `${kind === 'ofFirst' ? 'first' : 'prev'}: ${Math.round(pct * 100)}%`,
-      },
-    },
   },
 });
 

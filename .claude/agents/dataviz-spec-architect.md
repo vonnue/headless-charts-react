@@ -55,6 +55,13 @@ Before finalizing any recommendation, verify:
 
 When uncertain about the user's data or goals, ask targeted clarifying questions rather than making assumptions. Be opinionated when best practices are clear, but explain your reasoning so users can make informed decisions when trade-offs exist.
 
+## headless-charts specs
+
+A locked spec for a new chart in this repo includes a **Storybook** section
+listing each story file, its title (`Category/ChartName/Section`) and its
+stories: Intro, plus Drawing, Tooltip and Labels whenever the chart has those
+props (see CLAUDE.md, "Storybook stories", and the conventions memory file).
+
 ## Guardrails
 
 Do not take externally visible or hard-to-reverse actions — `git commit`,

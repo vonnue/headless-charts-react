@@ -36,7 +36,8 @@ resolveChartRequest('waterfall');
 
 - `src/components/<category>/<Chart>/index.tsx` — implementation
 - `src/components/<category>/<Chart>/meta.ts` — selection metadata (source of truth)
-- `src/components/<category>/<Chart>/*.stories.tsx` — Storybook examples
+- `src/components/<category>/<Chart>/*.stories.tsx` — Storybook examples, one
+  file per section (see "Storybook stories" below)
 - `src/catalog/` — catalog types, decision tree, and the AGENTS.md generator
 - `src/types.tsx` — shared `AxisConfig`, `ChartProps`, `TooltipConfig`, `GaugeProps`
 
@@ -71,6 +72,8 @@ review and update the catalog; they never commit or push.
    work off the same signature or the merge step fails.
 2. Fork in parallel: `vitest-test-writer` writes tests from the spec; the
    main session writes the implementation (and stories) from the same spec.
+   Stories follow "Storybook stories" below: separate Intro, Drawing, Tooltip
+   and Labels section files, as the spec lists them.
 3. The main session merges tests + implementation, runs them, iterates until
    green.
 4. `d3-react-code-reviewer` reviews; back-and-forth with the main session
@@ -101,6 +104,49 @@ broken hook (lost exec bit, missing `bash`, a crash or a timeout) blocks every
 Bash call, including the main session's. If all Bash calls start failing with
 `blocking because onFailure is "block"`, fix the hook rather than removing the
 setting.
+
+## Storybook stories
+
+The main session writes the stories. Nest them under separate Storybook
+sections, one file per section, instead of putting every example in one file.
+FunnelChart is the model: `Flow/FunnelChart/Intro`, `Flow/FunnelChart/Drawing`,
+`Flow/FunnelChart/Tooltip` and `Flow/FunnelChart/Labels`, in
+`src/components/flow/FunnelChart/`.
+
+- **Titles** are `Category/ChartName/Section`, e.g. `Flow/FunnelChart/Drawing`.
+- **File names.** Intro is `<CatalogName>.stories.tsx`. Every other section is
+  `<CatalogName>.<section>.stories.tsx`, section in lowercase, e.g.
+  `BarChart.tooltip.stories.tsx` (title `Linear/BarChart/Tooltips`) or
+  `FunnelChart.drawing.stories.tsx`. Use the **catalog** (`meta.ts`) name as
+  the prefix when it differs from the export name: `ColumnChart.binning.stories.tsx`
+  holds `Linear/ColumnChartGrouped/Binning`.
+- **Style.** Import `preview` from `.storybook/preview`, build the meta with
+  `preview.meta({ title, component, tags: ['autodocs'] })`, put a JSDoc comment
+  on the meta (it becomes the docs page intro) and on every story, and give each
+  story a unique `id`. Share args within a file through a small `base` object
+  (`className: 'w-full h-80'`, data, keys). Don't import stories or args from
+  another section file; duplicate the small `base` and class maps instead.
+
+A new chart needs these sections:
+
+- **Intro**: the default orientation or shape, the chart's distinctive
+  variants, and the empty and edge cases. Don't dump every example here.
+- **Drawing**: required whenever the chart honours `drawing` from `ChartProps`,
+  which almost every chart does. At least one story with
+  `drawing: { duration: 1000, delay: 100 }`, and a comment that remounting the
+  story replays the animation. The component default stays `{ duration: 0 }`, so
+  the other stories render instantly. Don't put a drawing story (or an
+  `Animated` story) in Intro instead of a Drawing section.
+- **Tooltip**: required whenever the chart supports `tooltip`. Show the default
+  HTML (`tooltip: {}`), styling with `tooltip.className`, and a custom
+  `tooltip.html` callback when the chart has one.
+- **Labels**: required whenever the chart has a `labels` (or equivalent) prop
+  worth demonstrating.
+- **Other feature sections** as needed, named like existing peers: `Zoom`,
+  `Brushing`, `Highlight`, `Binning`, `Time Scaling` (file `<Name>.time.stories.tsx`).
+
+When adding a variant or prop to an existing chart, add the story to the section
+file it belongs in (create the file if it doesn't exist yet), not just to Intro.
 
 ## Editing charts
 

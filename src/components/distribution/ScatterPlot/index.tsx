@@ -120,6 +120,8 @@ const sortedBands = (labels: string[]) =>
  * - Overplotting hides the pattern — switch to the binned heatmap mode or
  *   use WaffleChart
  * - The x axis is time and the sequence is the point — use LineChart
+ * - More than two or three numeric dimensions need comparing at once — use
+ *   ParallelCoordinatesChart
  *
  * **Specialised types**
  * - Bubble chart — Add `size={{ key: "population", min: 2, max: 20 }}`.
@@ -192,6 +194,8 @@ const sortedBands = (labels: string[]) =>
  * @see LineChart — x is time and the sequence matters
  * @see BoxPlotV — comparing the spread of a measure across groups rather
  *   than two measures
+ * @see ParallelCoordinatesChart — more than two or three numeric
+ *   dimensions need comparing at once
  */
 /* catalog:end */
 const ScatterPlot = <TData = any,>({

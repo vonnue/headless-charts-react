@@ -36,6 +36,8 @@ export interface RadarChartProps<TData = any> extends ChartProps<TData> {
  *   misrepresent them; use ColumnChart grouped
  * - More than about five entities need overlaying — the polygons become
  *   unreadable
+ * - Many records, or more than about eight dimensions, need comparing — use
+ *   ParallelCoordinatesChart
  * - Precise values must be compared — radial position is read poorly; use
  *   BarChart
  * - Only one entity is being shown — use PizzaChart
@@ -68,6 +70,8 @@ export interface RadarChartProps<TData = any> extends ChartProps<TData> {
  *   precisely
  * @see RingGauge — each metric has its own target rather than a shared
  *   scale
+ * @see ParallelCoordinatesChart — many records, or more than about eight
+ *   dimensions, especially with different units
  */
 /* catalog:end */
 const RadarChart = <TData = any,>({

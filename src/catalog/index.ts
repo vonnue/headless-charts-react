@@ -21,6 +21,7 @@ import LollipopHChart from '@/components/linear/LollipopHChart/meta';
 import LollipopVChart from '@/components/linear/LollipopVChart/meta';
 import FunnelChart from '@/components/flow/FunnelChart/meta';
 import Network from '@/components/flow/Network/meta';
+import ParallelCoordinatesChart from '@/components/distribution/ParallelCoordinatesChart/meta';
 import PieChart from '@/components/distribution/PieChart/meta';
 import PizzaChart from '@/components/gauges/PizzaChart/meta';
 import RadarChart from '@/components/gauges/RadarChart/meta';
@@ -55,6 +56,7 @@ export const chartCatalog: ChartMeta[] = [
   SpineChart,
   TimeLineChart,
   // distribution
+  ParallelCoordinatesChart,
   PieChart,
   ScatterPlot,
   TreemapChart,

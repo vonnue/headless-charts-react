@@ -68,6 +68,13 @@ export type {
   HierarchyFields,
   HierarchyPercentKind,
 } from '@/components/distribution/TreemapChart';
+export { default as ParallelCoordinatesChart } from '@/components/distribution/ParallelCoordinatesChart';
+export type {
+  ParallelCoordinatesChartProps,
+  PCDimension,
+  PCBrushSelection,
+  PCDatum,
+} from '@/components/distribution/ParallelCoordinatesChart';
 
 export { default as RingGauge } from '@/components/gauges/RingGauge';
 export { default as BulletChart } from '@/components/gauges/BulletChart';

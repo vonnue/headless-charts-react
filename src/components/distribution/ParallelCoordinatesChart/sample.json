@@ -1,0 +1,218 @@
+[
+  {
+    "model": "Ford Sedan",
+    "origin": "US",
+    "mpg": 16.6,
+    "hp": 129,
+    "weight": 1854,
+    "acceleration": 12.9,
+    "cylinders": 6
+  },
+  {
+    "model": "Chevy GT",
+    "origin": "US",
+    "mpg": 17.0,
+    "hp": 117,
+    "weight": 1969,
+    "acceleration": 10.3,
+    "cylinders": 6
+  },
+  {
+    "model": "Dodge Sedan",
+    "origin": "US",
+    "mpg": 17.6,
+    "hp": 140,
+    "weight": 1542,
+    "acceleration": 12.3,
+    "cylinders": 6
+  },
+  {
+    "model": "Buick GT",
+    "origin": "US",
+    "mpg": 23.4,
+    "hp": 190,
+    "weight": 2092,
+    "acceleration": null,
+    "cylinders": 6
+  },
+  {
+    "model": "Pontiac Wagon",
+    "origin": "US",
+    "mpg": 13.5,
+    "hp": 138,
+    "weight": 1497,
+    "acceleration": 12.3,
+    "cylinders": 6
+  },
+  {
+    "model": "AMC Coupe",
+    "origin": "US",
+    "mpg": 17.6,
+    "hp": 179,
+    "weight": 1570,
+    "acceleration": 12.4,
+    "cylinders": 8
+  },
+  {
+    "model": "Plymouth Sedan",
+    "origin": "US",
+    "mpg": 14.1,
+    "hp": 183,
+    "weight": 1642,
+    "acceleration": 11.2,
+    "cylinders": 8
+  },
+  {
+    "model": "Mercury GT",
+    "origin": "US",
+    "mpg": 19.2,
+    "hp": 189,
+    "weight": 1660,
+    "acceleration": 12.0,
+    "cylinders": 8
+  },
+  {
+    "model": "VW Wagon",
+    "origin": "EU",
+    "mpg": 29.8,
+    "hp": 99,
+    "weight": 1249,
+    "acceleration": 18.5,
+    "cylinders": 4
+  },
+  {
+    "model": "Audi Wagon",
+    "origin": "EU",
+    "mpg": 24.5,
+    "hp": 81,
+    "weight": 1307,
+    "acceleration": 17.7,
+    "cylinders": 4
+  },
+  {
+    "model": "BMW Sedan",
+    "origin": "EU",
+    "mpg": 27.3,
+    "hp": 91,
+    "weight": 1323,
+    "acceleration": 15.7,
+    "cylinders": 5
+  },
+  {
+    "model": "Volvo GT",
+    "origin": "EU",
+    "mpg": 23.2,
+    "hp": 96,
+    "weight": 1034,
+    "acceleration": 17.5,
+    "cylinders": 4
+  },
+  {
+    "model": "Peugeot Wagon",
+    "origin": "EU",
+    "mpg": 26.2,
+    "hp": null,
+    "weight": 989,
+    "acceleration": 17.6,
+    "cylinders": 5
+  },
+  {
+    "model": "Fiat Sedan",
+    "origin": "EU",
+    "mpg": 25.4,
+    "hp": 92,
+    "weight": 1254,
+    "acceleration": 16.0,
+    "cylinders": 4
+  },
+  {
+    "model": "Saab Sedan",
+    "origin": "EU",
+    "mpg": 30.4,
+    "hp": 87,
+    "weight": 1192,
+    "acceleration": 17.2,
+    "cylinders": 4
+  },
+  {
+    "model": "Renault GT",
+    "origin": "EU",
+    "mpg": 29.3,
+    "hp": 89,
+    "weight": 1281,
+    "acceleration": 16.5,
+    "cylinders": 5
+  },
+  {
+    "model": "Toyota Wagon",
+    "origin": "JP",
+    "mpg": 29.4,
+    "hp": 84,
+    "weight": 1027,
+    "acceleration": 14.1,
+    "cylinders": 4
+  },
+  {
+    "model": "Honda Coupe",
+    "origin": "JP",
+    "mpg": 28.0,
+    "hp": 67,
+    "weight": 1102,
+    "acceleration": 14.4,
+    "cylinders": 4
+  },
+  {
+    "model": "Datsun Sedan",
+    "origin": "JP",
+    "mpg": 34.9,
+    "hp": 85,
+    "weight": 1050,
+    "acceleration": 19.5,
+    "cylinders": 4
+  },
+  {
+    "model": "Mazda GT",
+    "origin": "JP",
+    "mpg": 28.0,
+    "hp": 85,
+    "weight": 1131,
+    "acceleration": 15.7,
+    "cylinders": 4
+  },
+  {
+    "model": "Subaru GT",
+    "origin": "JP",
+    "mpg": 36.4,
+    "hp": 77,
+    "weight": 1062,
+    "acceleration": 19.9,
+    "cylinders": 3
+  },
+  {
+    "model": "Mitsubishi Coupe",
+    "origin": "JP",
+    "mpg": 37.5,
+    "hp": 69,
+    "weight": 892,
+    "acceleration": 15.1,
+    "cylinders": 4
+  },
+  {
+    "model": "Isuzu Coupe",
+    "origin": "JP",
+    "mpg": 26.1,
+    "hp": 97,
+    "weight": 943,
+    "acceleration": 15.6,
+    "cylinders": 4
+  },
+  {
+    "model": "Suzuki Sedan",
+    "origin": "JP",
+    "mpg": 31.0,
+    "hp": 83,
+    "weight": 1139,
+    "acceleration": 15.9,
+    "cylinders": 4
+  }
+]

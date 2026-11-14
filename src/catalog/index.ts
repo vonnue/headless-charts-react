@@ -21,6 +21,7 @@ import LollipopHChart from '@/components/linear/LollipopHChart/meta';
 import LollipopVChart from '@/components/linear/LollipopVChart/meta';
 import FunnelChart from '@/components/flow/FunnelChart/meta';
 import Network from '@/components/flow/Network/meta';
+import SankeyChart from '@/components/flow/SankeyChart/meta';
 import PieChart from '@/components/distribution/PieChart/meta';
 import PizzaChart from '@/components/gauges/PizzaChart/meta';
 import RadarChart from '@/components/gauges/RadarChart/meta';
@@ -75,6 +76,7 @@ export const chartCatalog: ChartMeta[] = [
   // flow
   FunnelChart,
   Network,
+  SankeyChart,
 ];
 
 /** A specialised chart type together with the component that produces it. */

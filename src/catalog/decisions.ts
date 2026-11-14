@@ -129,6 +129,10 @@ export const decisionTree: DecisionBranch[] = [
         when: 'Same as BoxPlotV with long group labels',
       },
       {
+        name: 'ViolinChart',
+        when: 'Compare the full shape (peaks, skew, multimodality) of a raw measure across groups — not just the five-number summary',
+      },
+      {
         name: 'ScatterPlot',
         when: 'Two-dimensional density — set `x.bin` or `y.bin` for a binned heatmap',
       },

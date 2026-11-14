@@ -41,12 +41,14 @@ const meta: ChartMeta = {
   ],
   avoidWhen: [
     'Every underlying point should be visible — use ScatterPlot',
+    'The full distribution shape matters, e.g. multimodality — use ViolinChart',
     'The interval is a plain min–max — use RangePlot',
     'Group labels are long — use BoxPlotH',
     'Only the central value matters — use ColumnChart',
   ],
   alternatives: [
     { name: 'BoxPlotH', when: 'group labels are long' },
+    { name: 'ViolinChart', when: 'the full distribution shape matters, e.g. multimodality' },
     { name: 'RangePlot', when: 'showing a plain min–max interval rather than quartiles' },
     { name: 'ScatterPlot', when: 'individual records should stay visible' },
   ],

@@ -76,6 +76,8 @@ export type BoxPlotHProps<TData = any> =
  *
  * **Avoid when**
  * - Every underlying point should be visible — use ScatterPlot
+ * - The full distribution shape matters, e.g. multimodality — use
+ *   ViolinChart
  * - The interval is a plain min–max rather than a statistical summary — use
  *   RangePlot
  * - The audience will not read quartiles; a histogram via ColumnChart with
@@ -124,6 +126,8 @@ export type BoxPlotHProps<TData = any> =
  * ```
  *
  * @see BoxPlotV — a vertical layout fits the space better
+ * @see ViolinChart — the full distribution shape matters, e.g.
+ *   multimodality
  * @see RangePlot — showing a plain min–max interval rather than quartiles
  * @see ColumnChart — a histogram of one group is enough — set `x.bin`
  */

@@ -53,7 +53,7 @@ export interface AxisConfig<TData = any> {
      * calendar days or UTC midnights with `utc: false` logs a one-time hint.
      *
      * Read by AreaChart, LineChart, ColumnChart, ColumnChartStacked,
-     * LollipopVChart and BoxPlotV.
+     * LollipopVChart, BoxPlotV and CandlestickChart.
      */
     utc?: boolean;
     /**

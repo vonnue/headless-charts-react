@@ -383,15 +383,20 @@ const ColumnChartGrouped = <TData = any,>({
     };
 
     // Draw x-axis using shared utility
-    drawAxis({
+    // Narrow the band/time union so each drawAxis call gets one domain type.
+    const xAxisOptions = {
       g,
-      scale: xFn,
       config: effectiveX,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'horizontal',
-    });
+      orientation: 'horizontal' as const,
+    };
+    if ('bandwidth' in xFn) {
+      drawAxis({ ...xAxisOptions, scale: xFn });
+    } else {
+      drawAxis({ ...xAxisOptions, scale: xFn });
+    }
 
     // Draw y-axis using shared utility
     drawAxis({

@@ -430,16 +430,21 @@ const BoxPlotV = <TData = any,>({
       className: 'yAxis axis',
     });
 
-    drawAxis({
+    // Narrow the band/time union so each drawAxis call gets one domain type.
+    const xAxisOptions = {
       g,
-      scale: xFn,
       config: x,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'horizontal',
+      orientation: 'horizontal' as const,
       className: 'axis--x axis',
-    });
+    };
+    if ('bandwidth' in xFn) {
+      drawAxis({ ...xAxisOptions, scale: xFn });
+    } else {
+      drawAxis({ ...xAxisOptions, scale: xFn });
+    }
 
     if (zooming?.enabled) {
       const zoomed = ({ transform }: { transform: ZoomTransform }) => {

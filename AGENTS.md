@@ -67,6 +67,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | SpineChart, population pyramid, age-sex pyramid, butterfly chart, back-to-back bar chart | [`SpineChart`](#spinechart) | Base component, no extra configuration |
 | Step chart, step line chart, staircase chart | [`LineChart`](#linechart) | Set `curve: "step"` on each series. |
 | Streamgraph, stream graph, theme river, stream chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "streamgraph" }}`. Bands are ordered inside-out and offset by wiggle. |
+| SunburstChart, sunburst, sunburst chart, sunburst diagram, radial treemap, multi-level pie chart | [`SunburstChart`](#sunburstchart) | Base component, no extra configuration |
 | Time-scaled area chart, time series area chart | [`AreaChart`](#areachart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled box plot (vertical), time series box plot | [`BoxPlotV`](#boxplotv) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
 | Time-scaled column chart, time series column chart | [`ColumnChart`](#columnchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
@@ -104,6 +105,7 @@ Find the question being asked, then pick among the candidates.
 | [`PizzaChart`](#pizzachart) | Several metrics as radial segments of one entity, each against its own max |
 | [`FunnelChart`](#funnelchart) | Ordered conversion / drop-off through fixed stages (visit → signup → paid); length encodes count, colour must not |
 | [`TreemapChart`](#treemapchart) | A hierarchical whole where nested group totals and their parts both matter; area encodes value (too many parts for a pie) |
+| [`SunburstChart`](#sunburstchart) | A nested part-to-whole as concentric rings, read from the centre outward, with optional drill-down |
 
 ### How does a measure change over time or an ordered axis?
 
@@ -1558,6 +1560,65 @@ Bins points into a grid and colours each cell by how many fell into it, revealin
 - [`LineChart`](#linechart) — x is time and the sequence matters
 - [`BoxPlotV`](#boxplotv) — comparing the spread of a measure across groups rather than two measures
 
+### SunburstChart
+
+Concentric rings for a hierarchical part-to-whole: each depth is a ring and each node’s angle encodes its value, from the root at the centre to the leaves.
+
+**Category:** `distribution` · **Answers:** `composition` · **Storybook:** Distribution/SunburstChart/Intro
+
+**Also called:** sunburst, sunburst chart, sunburst diagram, radial treemap, multi-level pie chart
+
+**Use when**
+
+- A hierarchical part-to-whole with 2–4 levels, where the path from the centre outward is the story
+- There are too many parts for a pie, and the nesting itself is what explains them
+- Readers should drill down into deeper levels — set `zoom`
+
+**Do not use when**
+
+- Sizes of many leaves must be compared precisely — use TreemapChart; area reads better than angle
+- A flat whole with about 6 or fewer parts — use PieChart
+- One entity’s metrics on a radial profile — use PizzaChart; do not stretch it into a sunburst
+- Composition changes over time — use AreaChart
+
+**Data**
+
+- `data` shape: hierarchy
+- Rows: ideal 4–40, max 100 — Leaves. Deep or wide trees need `rings` or click-to-zoom.
+
+| Prop | Role | Required | Notes |
+| --- | --- | --- | --- |
+| `value` | quantitative | yes | Leaf size key. Internal nodes are the sum of their leaves; their own values are ignored. |
+| `name` | label | no | Display-name key. Default `"name"`. |
+| `children` | link | no | Nested children key (default `"children"`). `data` is one root object or a forest. |
+| `classNameMap` | color | no | Optional class per top-level group (see `colorBy`). Colour names the group; angle encodes magnitude. |
+
+**Required props:** `id`, `data`, `value`
+
+```tsx
+<SunburstChart
+  id="files"
+  className="w-full h-96"
+  data={data}
+  value={{ key: 'size', className: 'fill-slate-300 stroke-white' }}
+  classNameMap={{ src: 'fill-sky-400', docs: 'fill-amber-300' }}
+  labels={{ name: true }}
+  title="Repository size by folder"
+/>
+```
+
+**Options**
+
+- **Donut hole** — Set `innerRadius` (a fraction of the outer radius, e.g. `0.3`) to drop the centre disc. Values are clamped to `[0, 0.9]`.
+- **Partial angle** — Set `startAngle` / `endAngle` in radians, clockwise from 12 o’clock, e.g. `-Math.PI / 2` to `Math.PI / 2` for a half sunburst.
+- **Click-to-zoom** — Set `zoom` (or `zoom={{ onChange }}`) to drill into an arc; click the centre (or the donut hole) or press Escape to zoom out.
+- **Visible rings** — Set `rings` to show that many levels below the focus; deeper levels still exist and appear when zoomed. This is not `maxDepth`, which rolls deeper mass into an ancestor.
+- **Percent labels** — Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`.
+
+**Consider instead**
+
+- [`PieChart`](#piechart) — a flat part-to-whole with few slices
+
 ### TreemapChart
 
 Nested rectangles whose area encodes value, showing a hierarchical part-to-whole with groups as labelled blocks.
@@ -2290,6 +2351,7 @@ Equal-angle radial slices, one per metric, each extending from the centre in pro
 
 - Several entities need comparing — a pizza shows one; use RadarChart, which overlays many
 - The metrics are parts of one whole — use PieChart, where angle encodes share
+- A true hierarchical sunburst is needed — PizzaChart is a flat profile; use SunburstChart
 - Precise values matter — radius is read poorly; use ColumnChart
 - Each metric has its own target rather than a shared max — use RingGauge
 
@@ -2330,6 +2392,7 @@ Equal-angle radial slices, one per metric, each extending from the centre in pro
 - [`RadarChart`](#radarchart) — several entities must be compared across the same metrics
 - [`RingGauge`](#ringgauge) — each metric has its own target
 - [`PieChart`](#piechart) — the values are parts of one whole
+- [`SunburstChart`](#sunburstchart) — a hierarchical part-to-whole, not a single-entity profile
 
 ### RadarChart
 

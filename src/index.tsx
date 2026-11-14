@@ -68,6 +68,8 @@ export type {
   HierarchyFields,
   HierarchyPercentKind,
 } from '@/components/distribution/TreemapChart';
+export { default as SunburstChart } from '@/components/distribution/SunburstChart';
+export type { SunburstChartProps } from '@/components/distribution/SunburstChart';
 
 export { default as RingGauge } from '@/components/gauges/RingGauge';
 export { default as BulletChart } from '@/components/gauges/BulletChart';

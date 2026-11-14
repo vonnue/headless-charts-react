@@ -16,6 +16,7 @@ import { warnOnceInDev } from '@/utils/devEnvironment';
 import {
   DEFAULT_TIME_FORMAT,
   createTimeBarLayout,
+  isUtcTime,
   makeDateFormatter,
   useTimeAxisWarnings,
   warnIfBarWidthCapped,
@@ -23,7 +24,6 @@ import {
 import {
   Candle,
   CandleDatum,
-  isUtcTime,
   prepareCandles,
   withResolvedUtc,
 } from './ohlc';

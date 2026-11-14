@@ -1212,3 +1212,23 @@ describe('ParallelCoordinatesChart', () => {
     );
   });
 });
+
+describe('ParallelCoordinatesChart drawing cleanup (#13)', () => {
+  it('interrupts running transitions on unmount, with no error', () => {
+    const { unmount } = render(
+      <ParallelCoordinatesChart
+        id='pc-interrupt'
+        data={rows}
+        dimensions={['x', 'y']}
+        drawing={{ duration: 1000 }}
+        style={STYLE}
+      />
+    );
+    const lines = q('pc-line');
+    expect(lines.some((l) => Reflect.has(l, '__transition'))).toBe(true);
+
+    expect(unmount).not.toThrow();
+
+    expect(lines.some((l) => Reflect.has(l, '__transition'))).toBe(false);
+  });
+});

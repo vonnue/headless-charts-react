@@ -22,6 +22,7 @@ import {
 } from '@/utils/timeScale';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { pinnedEnd, pinnedStart } from '@/utils/domain';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3';
 import { twMerge } from 'tailwind-merge';
 
@@ -359,6 +360,12 @@ const ColumnChartStacked = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
   }, [data, refreshChart, id]);
   /* eslint-enable */
   return (

@@ -8,6 +8,7 @@ import { drawAxis } from '@/hooks/useAxis';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import { pinnedEnd, pinnedStart } from '@/utils/domain';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { stack } from 'd3';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
@@ -293,7 +294,13 @@ const BarChartStacked = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
+  }, [data, refreshChart, id]);
   return (
     <>
       <svg

@@ -4,6 +4,7 @@ import { select, selectAll } from 'd3-selection';
 
 import { ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -199,7 +200,11 @@ const RadarChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
     return () => {
+      interruptTransitions(svg);
       selectAll(`#tooltip-${id}`).remove();
     };
   }, [data, refreshChart]);

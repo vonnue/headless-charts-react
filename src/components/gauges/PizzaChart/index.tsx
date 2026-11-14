@@ -7,6 +7,7 @@ import useTooltip from '@/hooks/useTooltip';
 
 import { GaugeProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { twMerge } from 'tailwind-merge';
 
 export interface PizzaChartProps<TData = any> extends Omit<GaugeProps<TData>, 'data'> {
@@ -206,7 +207,13 @@ const PizzaChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-  }, [refreshChart]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
+  }, [refreshChart, id]);
 
   return (
     <svg

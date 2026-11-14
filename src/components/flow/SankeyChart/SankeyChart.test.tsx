@@ -678,3 +678,22 @@ describe('SankeyChart', () => {
     noNaN();
   });
 });
+
+describe('SankeyChart drawing cleanup (#13)', () => {
+  it('interrupts running transitions on unmount, with no error', () => {
+    const { unmount } = render(
+      <SankeyChart
+        id='sankey-interrupt'
+        links={CROSS}
+        drawing={{ duration: 1000 }}
+        style={STYLE}
+      />
+    );
+    const nodes = all('sankey-node');
+    expect(nodes.some((n) => Reflect.has(n, '__transition'))).toBe(true);
+
+    expect(unmount).not.toThrow();
+
+    expect(nodes.some((n) => Reflect.has(n, '__transition'))).toBe(false);
+  });
+});

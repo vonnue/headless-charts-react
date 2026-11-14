@@ -1314,3 +1314,22 @@ describe('ViolinChart', () => {
     );
   });
 });
+
+describe('ViolinChart drawing cleanup (#13)', () => {
+  it('interrupts running transitions on unmount, with no error', () => {
+    const { unmount } = render(
+      <ViolinChart
+        id='violin-interrupt'
+        data={BASE}
+        {...defaultProps}
+        drawing={{ duration: 1000 }}
+      />
+    );
+    const shapes = shapesOf();
+    expect(shapes.some((s) => Reflect.has(s, '__transition'))).toBe(true);
+
+    expect(unmount).not.toThrow();
+
+    expect(shapes.some((s) => Reflect.has(s, '__transition'))).toBe(false);
+  });
+});

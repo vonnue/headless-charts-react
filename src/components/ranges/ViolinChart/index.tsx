@@ -13,6 +13,7 @@ import { defaultChartClassNames } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import measureSvg from '@/utils/measureSvg';
 import { warnOnceInDev } from '@/utils/devEnvironment';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import {
   BandwidthRule,
   DensityPoint,
@@ -668,13 +669,13 @@ const ViolinChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
   useEffect(() => {
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
-    // document, so interrupt through this reference, not a lookup by id.
-    const plot = plotRef.current;
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
     return () => {
-      if (plot) select(plot).selectAll('*').interrupt();
+      interruptTransitions(svg);
     };
     // style is not read by refreshChart, but it sets the size refreshChart measures.
-  }, [refreshChart, style?.width, style?.height]);
+  }, [refreshChart, id, style?.width, style?.height]);
 
   const titleId = title ? `${id}-title` : undefined;
   const descId = description ? `${id}-desc` : undefined;

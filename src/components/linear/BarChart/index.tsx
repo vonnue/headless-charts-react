@@ -10,6 +10,7 @@ import { defaultChartClassNames, bin1D } from '@/utils';
 import { clampToDomain, pinnedEnd, pinnedStart } from '@/utils/domain';
 import measureSvg from '@/utils/measureSvg';
 import { warnOnceInDev } from '@/utils/devEnvironment';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -394,7 +395,13 @@ const BarChart = <TData = any,>({
   useEffect(() => {
     refreshChart();
     // style is not read by refreshChart, but it sets the size refreshChart measures.
-  }, [data, refreshChart, style?.width, style?.height]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
+  }, [data, refreshChart, id, style?.width, style?.height]);
 
   return (
     <svg

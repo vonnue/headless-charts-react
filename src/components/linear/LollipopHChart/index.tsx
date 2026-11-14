@@ -15,6 +15,7 @@ import {
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import useTooltip from '@/hooks/useTooltip';
@@ -248,6 +249,12 @@ const LollipopHChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
   }, [data, refreshChart, id]);
   return (
     <svg

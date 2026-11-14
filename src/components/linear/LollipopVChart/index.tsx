@@ -23,6 +23,7 @@ import {
   padTimeDomain,
   useTimeAxisWarnings,
 } from '@/utils/timeScale';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { twMerge } from 'tailwind-merge';
 import { drawAxis } from '@/hooks/useAxis';
 
@@ -325,7 +326,11 @@ const LollipopVChart = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
     return () => {
+      interruptTransitions(svg);
       selectAll(`#tooltip-${id}`).remove();
     };
   }, [data, refreshChart]);

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { axisBottom } from 'd3-axis';
 import { defaultChartClassNames } from '@/utils';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { scaleLinear } from 'd3-scale';
 import { select } from 'd3-selection';
 import { transition } from 'd3-transition';
@@ -207,7 +208,13 @@ const BulletChart = <TData = any,>({
   ]);
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
+  }, [data, refreshChart, id]);
 
   return (
     <svg

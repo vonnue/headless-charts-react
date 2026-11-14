@@ -22,6 +22,7 @@ import {
   useTimeAxisWarnings,
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { twMerge } from 'tailwind-merge';
 
 export interface ColumnChartGroupedProps<TData = any> extends ChartProps<TData> {
@@ -405,6 +406,12 @@ const ColumnChartGrouped = <TData = any,>({
   }, [data, onMouseOver, onMouseMove, onMouseLeave]);
   useEffect(() => {
     refreshChart();
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
   }, [data, refreshChart, id]);
   /* eslint-enable */
   return (

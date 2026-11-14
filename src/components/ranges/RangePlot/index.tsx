@@ -22,6 +22,7 @@ import {
   ValueAxisConfig,
 } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
@@ -333,7 +334,13 @@ const RangePlot = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
+  }, [data, refreshChart, id]);
   return (
     <svg
       id={id}

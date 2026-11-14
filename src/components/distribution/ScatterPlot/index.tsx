@@ -18,6 +18,7 @@ import useAxis from '@/hooks/useAxis';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, binData, deepValue } from '@/utils';
 import { resolveBound } from '@/utils/domain';
+import { interruptTransitions } from '@/utils/interruptTransitions';
 import { scaleLinear, scaleBand, scaleSequential } from 'd3-scale';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
@@ -621,7 +622,13 @@ const ScatterPlot = <TData = any,>({
 
   useEffect(() => {
     refreshChart();
-  }, [data, refreshChart]);
+    // Hold the node: on unmount the cleanup runs after the svg has left the
+    // document, so a lookup by id would find nothing to interrupt.
+    const svg = select(`#${id}`).node();
+    return () => {
+      interruptTransitions(svg);
+    };
+  }, [data, refreshChart, id]);
   return (
     <svg
       id={id}

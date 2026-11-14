@@ -287,3 +287,27 @@ describe('BarChart tooltip lifecycle', () => {
     expect(count('ssr')).toBe(0);
   });
 });
+
+describe('BarChart drawing cleanup (#13)', () => {
+  it('interrupts running transitions on unmount, with no error', () => {
+    const { unmount } = render(
+      <BarChart
+        id='bar-interrupt'
+        data={data}
+        x={[{ key: 'reading' }, { key: 'value' }]}
+        y={{ key: 'name' }}
+        drawing={{ duration: 1000 }}
+        style={{ width: '400px', height: '200px' }}
+      />
+    );
+    const bars = Array.from(
+      document.querySelectorAll<SVGRectElement>('#bar-interrupt rect.fill-current')
+    );
+    expect(bars.some((b) => Reflect.has(b, '__transition'))).toBe(true);
+
+    expect(unmount).not.toThrow();
+
+    expect(bars.some((b) => Reflect.has(b, '__transition'))).toBe(false);
+  });
+});
+

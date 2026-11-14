@@ -1381,3 +1381,18 @@ describe('SunburstChart', () => {
     expect(composition?.options.some((o) => o.name === 'SunburstChart')).toBe(true);
   });
 });
+
+describe('SunburstChart drawing cleanup (#13)', () => {
+  it('interrupts running transitions on unmount, with no error', () => {
+    const { unmount } = renderChart({
+      id: 'sunburst-interrupt',
+      drawing: { duration: 1000 },
+    });
+    const arcs = arcsOf();
+    expect(arcs.some((a) => Reflect.has(a, '__transition'))).toBe(true);
+
+    expect(unmount).not.toThrow();
+
+    expect(arcs.some((a) => Reflect.has(a, '__transition'))).toBe(false);
+  });
+});

@@ -68,7 +68,7 @@ export interface ParallelCoordinatesChartProps<TData = any> // eslint-disable-li
   /** Record identity shown first in the tooltip (e.g. a name). Optional. */
   label?: { key: Extract<keyof TData, string> | string };
   line?: {
-    /** Default line class for every record. */
+    /** Line class for every record. With `color`, the category class is merged on top (its stroke wins). */
     className?: string;
     /** Default `'linear'`. `'bump'` uses curveBumpX/Y (smooth, still passes through each axis value). */
     curve?: 'linear' | 'bump';
@@ -568,8 +568,10 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
       const mapped =
         color && cat !== undefined && hasOwn(color.classNameMap, cat)
           ? color.classNameMap![cat]
-          : line?.className;
-      return twMerge('stroke-current', mapped || '');
+          : undefined;
+      // line.className applies to every record; a category class layers on top
+      // (its stroke colour wins), so variants like data-[filtered=true]: survive.
+      return twMerge('stroke-current', line?.className, mapped);
     };
 
     // Present values whose neighbours on both sides are missing (or absent).

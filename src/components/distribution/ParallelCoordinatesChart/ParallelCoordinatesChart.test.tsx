@@ -504,7 +504,7 @@ describe('ParallelCoordinatesChart', () => {
     expect(opacityOf(10, 'pc15d', 0.8)).toEqual({ attr: '0.8', style: null });
   });
 
-  it('16: color.classNameMap[category] sets the line class, a miss falls back to line.className, and no stroke colour is set by default', () => {
+  it('16: color.classNameMap[category] is merged over line.className (category stroke wins, other line classes such as data-[filtered=true]: variants are kept), a miss uses line.className alone, and no stroke colour is set by default', () => {
     const { unmount } = render(
       <ParallelCoordinatesChart id='pc16a' data={rows} dimensions={['x', 'y']} style={STYLE} />
     );
@@ -517,14 +517,18 @@ describe('ParallelCoordinatesChart', () => {
         data={rows}
         dimensions={['x', 'y']}
         color={{ key: 'c', classNameMap: { P: 'stroke-red-500' } }}
-        line={{ className: 'stroke-gray-400' }}
+        line={{ className: 'stroke-gray-400 data-[filtered=true]:stroke-gray-200' }}
         style={STYLE}
       />
     );
-    const cls = q('pc-line').map((l) => l.getAttribute('class'));
+    const cls = q('pc-line').map((l) => l.getAttribute('class')!.split(' '));
     expect(cls[0]).toContain('stroke-red-500');
+    expect(cls[0]).not.toContain('stroke-gray-400');
+    expect(cls[0]).toContain('data-[filtered=true]:stroke-gray-200');
     expect(cls[1]).toContain('stroke-gray-400');
+    expect(cls[1]).toContain('data-[filtered=true]:stroke-gray-200');
     expect(cls[2]).toContain('stroke-red-500');
+    expect(cls[2]).toContain('data-[filtered=true]:stroke-gray-200');
     expect(q('pc-line')[0].getAttribute('stroke')).toBeNull();
   });
 

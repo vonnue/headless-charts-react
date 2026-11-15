@@ -35,9 +35,12 @@ import {
 } from '@/utils/hierarchy';
 
 export type {
+  FlatGroupNode,
+  FlatHierarchyDatum,
   HierarchyDatum,
   HierarchyFields,
   HierarchyPercentKind,
+  NestedHierarchyDatum,
 } from '@/utils/hierarchy';
 
 export type TreemapTileType =

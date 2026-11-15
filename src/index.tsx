@@ -72,9 +72,12 @@ export { default as TreemapChart } from '@/components/distribution/TreemapChart'
 export type {
   TreemapChartProps,
   TreemapTileType,
+  FlatGroupNode,
+  FlatHierarchyDatum,
   HierarchyDatum,
   HierarchyFields,
   HierarchyPercentKind,
+  NestedHierarchyDatum,
 } from '@/components/distribution/TreemapChart';
 export { default as ParallelCoordinatesChart } from '@/components/distribution/ParallelCoordinatesChart';
 export type {
@@ -83,6 +86,7 @@ export type {
   PCBrushSelection,
   PCDatum,
 } from '@/components/distribution/ParallelCoordinatesChart';
+export { isFlatHierarchyDatum, isFlatNode } from '@/utils/hierarchy';
 export { default as SunburstChart } from '@/components/distribution/SunburstChart';
 export type { SunburstChartProps } from '@/components/distribution/SunburstChart';
 

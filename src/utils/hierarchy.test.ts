@@ -9,6 +9,7 @@ import {
   defaultHierarchyTooltipHtml,
   formatPercent,
   hierarchyIssueMessage,
+  isFlatHierarchyDatum,
   isFlatNode,
   isSyntheticRoot,
   labelOption,
@@ -260,7 +261,9 @@ const datumAt = (root: NonNullable<ReturnType<typeof buildHierarchy>>['root'], p
     .descendants()
     .find((n) => toHierarchyDatum(n).path.join('/') === path.join('/'));
   if (!node) throw new Error(`missing node ${path.join('/')}`);
-  return { node, datum: toHierarchyDatum(node) };
+  const datum = toHierarchyDatum(node);
+  if (!isFlatHierarchyDatum(datum)) throw new Error(`expected a flat datum at ${path.join('/')}`);
+  return { node, datum };
 };
 
 describe('hierarchy flat rows', () => {

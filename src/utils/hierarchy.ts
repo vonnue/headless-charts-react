@@ -59,13 +59,13 @@ export interface HierarchyFields<TData = any> {
       | boolean
       | {
           className?: string;
-          format?: (name: string, d: HierarchyDatum<TData>, i: number) => string;
+          format?: (name: string, d: HierarchyDatum<TData, 'either'>, i: number) => string;
         };
     value?:
       | boolean
       | {
           className?: string;
-          format?: (value: number, d: HierarchyDatum<TData>, i: number) => string;
+          format?: (value: number, d: HierarchyDatum<TData, 'either'>, i: number) => string;
         };
     /**
      * Default `false`. `'ofParent'` | `'ofRoot'` | `'both'`, or an object.
@@ -82,7 +82,7 @@ export interface HierarchyFields<TData = any> {
           format?: (
             pct: number | null,
             kind: HierarchyPercentKind,
-            d: HierarchyDatum<TData>,
+            d: HierarchyDatum<TData, 'either'>,
             i: number
           ) => string;
         };
@@ -100,14 +100,8 @@ export interface HierarchyFields<TData = any> {
   ariaLabel?: string;
 }
 
-/** What labels, tooltips and callbacks receive for one node. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface HierarchyDatum<TData = any> {
-  /**
-   * The original node object (children included). In flat mode this is the
-   * built node `{ name, value, level, rows }`, not a source row.
-   */
-  data: TData;
+/** Shared fields on every hierarchy datum, in both input modes. */
+export interface HierarchyDatumBase {
   /** Root = 0. For a forest the synthetic root is 0 and top-level groups are 1. */
   depth: number;
   /** Sanitised value: leaf value, or sum of descendant leaves. */
@@ -122,11 +116,58 @@ export interface HierarchyDatum<TData = any> {
   parentValue: number | null;
   /** Value of the (possibly synthetic) root. */
   rootValue: number;
-  /** Level key of the node, e.g. `'country'`. Set only in flat mode. */
-  level?: string;
-  /** Source rows under the node, in input order. Set only in flat mode. */
-  rows?: TData[];
 }
+
+/**
+ * Node built from flat rows. Source rows live on `rows`; this object is not
+ * one of the input rows.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface FlatGroupNode<TRow = any> {
+  name: string;
+  value: number;
+  /** Level key of this node, e.g. `'country'`. */
+  level: string;
+  /** Source rows under this node, in input order. */
+  rows: TRow[];
+  /** Present on internal nodes. Leaves omit it. */
+  children?: FlatGroupNode<TRow>[];
+}
+
+/** Datum for nested `children` input. `data` is the original node object. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface NestedHierarchyDatum<TData = any> extends HierarchyDatumBase {
+  /** The original node object (children included). */
+  data: TData;
+}
+
+/** Datum for flat `levels` input. `data` is the built group, not a source row. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface FlatHierarchyDatum<TRow = any> extends HierarchyDatumBase {
+  data: FlatGroupNode<TRow>;
+  /** Level key of the node, e.g. `'country'`. */
+  level: string;
+  /** Source rows under the node, in input order. */
+  rows: TRow[];
+}
+
+/**
+ * What labels, tooltips and callbacks receive for one node.
+ *
+ * Defaults to nested mode so existing Treemap typings keep `data: TData`.
+ * Pass `'flat'` when the chart was given `levels` (`data` is a
+ * {@link FlatGroupNode}, and `level` / `rows` are required). Pass `'either'`
+ * for a callback that may see both; narrow with {@link isFlatHierarchyDatum}.
+ */
+export type HierarchyDatum<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TData = any,
+  TMode extends 'nested' | 'flat' | 'either' = 'nested',
+> = [TMode] extends ['either']
+  ? NestedHierarchyDatum<TData> | FlatHierarchyDatum<TData>
+  : [TMode] extends ['flat']
+    ? FlatHierarchyDatum<TData>
+    : NestedHierarchyDatum<TData>;
 
 export type HierarchyPercentKind = 'ofParent' | 'ofRoot';
 
@@ -385,8 +426,13 @@ const rowsToForest = (
 };
 
 /** True for a node object built from flat rows. */
-export const isFlatNode = (d: unknown): boolean =>
+export const isFlatNode = <TRow = unknown>(d: unknown): d is FlatGroupNode<TRow> =>
   !!d && typeof d === 'object' && (d as Node)[FLAT_NODE] === true;
+
+/** Narrow a datum to {@link FlatHierarchyDatum}. */
+export const isFlatHierarchyDatum = <TData,>(
+  d: NestedHierarchyDatum<TData> | FlatHierarchyDatum<TData>
+): d is FlatHierarchyDatum<TData> => isFlatNode<TData>(d.data);
 
 /** Display name for a node object, `''` when missing. */
 export const nameOf = (d: unknown, nameKey = 'name'): string => {
@@ -403,12 +449,11 @@ export const isSyntheticRoot = (node: HierarchyNode<Node>): boolean =>
 export const toHierarchyDatum = <TData,>(
   node: HierarchyNode<Node>,
   nameKey = 'name'
-): HierarchyDatum<TData> => {
+): HierarchyDatum<TData, 'either'> => {
   const real = node.ancestors().reverse().filter((n) => !isSyntheticRoot(n));
   const parent = node.parent;
   const root = node.ancestors().pop() ?? node;
-  const datum: HierarchyDatum<TData> = {
-    data: node.data as unknown as TData,
+  const base: HierarchyDatumBase = {
     depth: node.depth,
     value: node.value ?? 0,
     name: nameOf(node.data, nameKey),
@@ -416,18 +461,21 @@ export const toHierarchyDatum = <TData,>(
     parentValue: parent ? parent.value ?? 0 : null,
     rootValue: root.value ?? 0,
   };
-  if (isFlatNode(node.data)) {
-    datum.level = node.data.level as string;
-    datum.rows = node.data.rows as TData[];
-  }
-  return datum;
+  if (isFlatNode<TData>(node.data))
+    return {
+      ...base,
+      data: node.data,
+      level: node.data.level,
+      rows: node.data.rows,
+    };
+  return { ...base, data: node.data as unknown as TData };
 };
 
 /** `a / b`, or `null` when the divisor is 0 or non-finite. */
 export const ratio = (a: number, b: number | null): number | null =>
   b !== null && isFiniteNumber(b) && b !== 0 && isFiniteNumber(a) ? a / b : null;
 
-export const percentOf = (d: HierarchyDatum, kind: HierarchyPercentKind) =>
+export const percentOf = (d: HierarchyDatum<unknown, 'either'>, kind: HierarchyPercentKind) =>
   kind === 'ofParent' ? ratio(d.value, d.parentValue) : ratio(d.value, d.rootValue);
 
 const pctFormat = format('.1~%');
@@ -476,7 +524,7 @@ export const colorKey = (
 
 /** Default tooltip HTML: breadcrumb, value, then both percents. */
 export const defaultHierarchyTooltipHtml = (datum: unknown): string => {
-  const d = datum as HierarchyDatum;
+  const d = datum as HierarchyDatum<unknown, 'either'>;
   return `${d.path.join(' › ')}<br/>${d.value}<br/>of parent: ${formatPercent(
     percentOf(d, 'ofParent')
   )}<br/>of root: ${formatPercent(percentOf(d, 'ofRoot'))}`;

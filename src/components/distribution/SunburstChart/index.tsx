@@ -28,7 +28,13 @@ import {
   toHierarchyDatum,
 } from '@/utils/hierarchy';
 
-export type { HierarchyDatum, HierarchyFields } from '@/utils/hierarchy';
+export type {
+  FlatGroupNode,
+  FlatHierarchyDatum,
+  HierarchyDatum,
+  HierarchyFields,
+  NestedHierarchyDatum,
+} from '@/utils/hierarchy';
 
 /** Treemap's minWidth/minHeight are rectangular; Sunburst swaps them for arc gates. */
 type BaseLabels = Omit<NonNullable<HierarchyFields['labels']>, 'minWidth' | 'minHeight'>;
@@ -74,7 +80,7 @@ export interface SunburstChartProps<TData = any> // eslint-disable-line @typescr
     | boolean
     | {
         /** Fired after each focus change. `null` = the top level (the real root, or the forest). */
-        onChange?: (focus: HierarchyDatum<TData> | null) => void;
+        onChange?: (focus: HierarchyDatum<TData, 'either'> | null) => void;
       };
 }
 
@@ -204,7 +210,7 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
   // d3 listeners call them through a ref instead of making them redraw deps.
   const tooltipHandlers = useRef<TooltipHandlers | null>(null);
   // Same for zoom.onChange, so an inline `zoom={{ onChange }}` doesn't redraw.
-  const onZoomChange = useRef<((f: HierarchyDatum<TData> | null) => void) | undefined>(
+  const onZoomChange = useRef<((f: HierarchyDatum<TData, 'either'> | null) => void) | undefined>(
     undefined
   );
   useLayoutEffect(() => {
@@ -317,7 +323,7 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
 
     const layout = partition<Node>().size([1, 1])(built.root) as PNode;
     const all = layout.descendants();
-    const datumOf = new Map<PNode, HierarchyDatum<TData>>(
+    const datumOf = new Map<PNode, HierarchyDatum<TData, 'either'>>(
       all.map((n) => [n, toHierarchyDatum<TData>(n, nameKey)])
     );
     const pathOf = (n: PNode) => datumOf.get(n)!.path;

@@ -50,7 +50,8 @@ export const TooltipStyled = meta.story({
 /**
  * `tooltip.html` replaces the default HTML. The datum is a `HierarchyDatum`:
  * `name`, `path`, `value`, `depth`, `parentValue`, `rootValue` and the
- * original node as `data`.
+ * original node as `data` (in flat mode, `data` is the built group;
+ * narrow with `isFlatHierarchyDatum`).
  */
 export const TooltipCustomHtml = meta.story({
   args: {

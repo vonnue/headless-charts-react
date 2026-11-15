@@ -1,6 +1,7 @@
 import preview from '../../../../.storybook/preview';
 import SunburstChart from '.';
 import data from './sample.json';
+import flatData from './sample-flat.json';
 
 /**
  * Set `zoom` to drill in: click an arc (or focus it and press Enter or
@@ -51,5 +52,30 @@ export const OneRingOnChange = meta.story({
       onChange: (focus: { path: string[] } | null) =>
         console.log('focus', focus ? focus.path.join(' / ') : 'top'),
     },
+  },
+});
+
+const flatBase = {
+  className:
+    'w-full h-96 [&_[data-dimmed]]:opacity-30 [&_[data-highlighted]]:opacity-100',
+  data: flatData,
+  levels: ['area', 'folder', 'file'],
+  value: { key: 'size', className: 'fill-slate-300 stroke-white' },
+  classNameMap: {
+    src: 'fill-sky-400 stroke-white',
+    docs: 'fill-amber-300 stroke-white',
+    test: 'fill-emerald-400 stroke-white',
+    scripts: 'fill-violet-400 stroke-white',
+  },
+};
+
+/** Flat rows: click-to-zoom with two visible rings. */
+export const FlatRowsZoom = meta.story({
+  args: {
+    ...flatBase,
+    id: 'sunburst-flat-zoom',
+    labels: { name: true },
+    rings: 2,
+    zoom: true,
   },
 });

@@ -1,6 +1,7 @@
 import preview from '../../../../.storybook/preview';
 import SunburstChart from '.';
 import data from './sample.json';
+import flatData from './sample-flat.json';
 
 /**
  * On first paint, arcs grow in when `drawing.duration` is set, after
@@ -43,6 +44,30 @@ export const Donut = meta.story({
     ...base,
     id: 'sunburst-drawing-donut',
     innerRadius: 0.35,
+    labels: { name: true },
+    drawing: { duration: 1000, delay: 100 },
+  },
+});
+
+const flatBase = {
+  className:
+    'w-full h-96 [&_[data-dimmed]]:opacity-30 [&_[data-highlighted]]:opacity-100',
+  data: flatData,
+  levels: ['area', 'folder', 'file'],
+  value: { key: 'size', className: 'fill-slate-300 stroke-white' },
+  classNameMap: {
+    src: 'fill-sky-400 stroke-white',
+    docs: 'fill-amber-300 stroke-white',
+    test: 'fill-emerald-400 stroke-white',
+    scripts: 'fill-violet-400 stroke-white',
+  },
+};
+
+/** Flat rows: arcs growing in. Remount to replay. */
+export const FlatRowsDrawing = meta.story({
+  args: {
+    ...flatBase,
+    id: 'sunburst-flat-drawing',
     labels: { name: true },
     drawing: { duration: 1000, delay: 100 },
   },

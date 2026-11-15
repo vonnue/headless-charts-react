@@ -1,6 +1,7 @@
 import preview from '../../../../.storybook/preview';
 import SunburstChart, { HierarchyDatum } from '.';
 import data from './sample.json';
+import flatData from './sample-flat.json';
 
 /**
  * Hover an arc to see its details. Enable with `tooltip={{}}`; the default
@@ -67,5 +68,29 @@ export const TooltipCustomHtml = meta.story({
         return `<div class="font-medium">${d.path.join(' / ')}</div><div>${d.value} · ${share}</div>`;
       },
     },
+  },
+});
+
+const flatBase = {
+  className:
+    'w-full h-96 [&_[data-dimmed]]:opacity-30 [&_[data-highlighted]]:opacity-100',
+  data: flatData,
+  levels: ['area', 'folder', 'file'],
+  value: { key: 'size', className: 'fill-slate-300 stroke-white' },
+  classNameMap: {
+    src: 'fill-sky-400 stroke-white',
+    docs: 'fill-amber-300 stroke-white',
+    test: 'fill-emerald-400 stroke-white',
+    scripts: 'fill-violet-400 stroke-white',
+  },
+};
+
+/** Flat rows: default tooltip on a table of category columns. */
+export const FlatRowsTooltip = meta.story({
+  args: {
+    ...flatBase,
+    id: 'sunburst-flat-tooltip',
+    labels: { name: true },
+    tooltip: { className: 'bg-white text-xs p-2 shadow' },
   },
 });

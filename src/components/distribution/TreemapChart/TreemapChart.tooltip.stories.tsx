@@ -1,6 +1,7 @@
 import preview from '../../../../.storybook/preview';
 import TreemapChart, { HierarchyDatum } from '.';
 import data from './sample.json';
+import flatData from './sample-flat.json';
 
 /**
  * Hover a cell or group header to see its details. Enable with
@@ -64,5 +65,28 @@ export const TooltipCustomHtml = meta.story({
         return `<div class="font-medium">${d.path.join(' / ')}</div><div>$${d.value}k · ${share}</div>`;
       },
     },
+  },
+});
+
+const flatBase = {
+  className: 'w-full h-96',
+  data: flatData,
+  levels: ['department', 'team', 'item'],
+  value: { key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' },
+  labels: { name: true },
+  classNameMap: {
+    Ops: 'fill-sky-300 stroke-white stroke-1',
+    Growth: 'fill-amber-300 stroke-white stroke-1',
+    'R&D': 'fill-emerald-300 stroke-white stroke-1',
+    'G&A': 'fill-rose-300 stroke-white stroke-1',
+  },
+};
+
+/** Flat rows: default tooltip on a table of category columns. */
+export const FlatRowsTooltip = meta.story({
+  args: {
+    ...flatBase,
+    id: 'treemap-flat-tooltip',
+    tooltip: { className: 'bg-white text-xs p-2 shadow' },
   },
 });

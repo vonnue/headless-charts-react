@@ -1,6 +1,7 @@
 import preview from '../../../../.storybook/preview';
 import SunburstChart from '.';
 import data from './sample.json';
+import flatData from './sample-flat.json';
 
 /**
  * Name, value and percent labels are off by default. Set `labels.name`,
@@ -61,5 +62,28 @@ export const ValueAndPercent = meta.story({
       },
       minThickness: 20,
     },
+  },
+});
+
+const flatBase = {
+  className:
+    'w-full h-96 [&_[data-dimmed]]:opacity-30 [&_[data-highlighted]]:opacity-100',
+  data: flatData,
+  levels: ['area', 'folder', 'file'],
+  value: { key: 'size', className: 'fill-slate-300 stroke-white' },
+  classNameMap: {
+    src: 'fill-sky-400 stroke-white',
+    docs: 'fill-amber-300 stroke-white',
+    test: 'fill-emerald-400 stroke-white',
+    scripts: 'fill-violet-400 stroke-white',
+  },
+};
+
+/** Flat rows: name labels, including the '(missing)' folder. */
+export const FlatRowsLabels = meta.story({
+  args: {
+    ...flatBase,
+    id: 'sunburst-flat-labels',
+    labels: { name: true },
   },
 });

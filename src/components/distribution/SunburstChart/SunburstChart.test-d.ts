@@ -1,6 +1,7 @@
-import { describe, expectTypeOf, it } from 'vitest';
+import { assertType, describe, expectTypeOf, it } from 'vitest';
 
-import type { SunburstChartProps } from '.';
+import SunburstChart from '.';
+import type { FlatSunburstChartProps, NestedSunburstChartProps, SunburstChartProps } from '.';
 
 describe('SunburstChart types', () => {
   it('31: labels.minWidth and labels.minHeight are type errors on SunburstChart, and labels.minArcLength and labels.minThickness are accepted; flat idKey/parentKey props do not exist', () => {
@@ -51,5 +52,48 @@ describe('SunburstChart types', () => {
       parentKey: 'parent',
     };
     void badParentKey;
+  });
+});
+
+
+
+type Tree = { name: string; amount?: number; size?: number; children?: Tree[] };
+type Row = { region: string; country: string; revenue: number };
+
+describe('SunburstChart levels-keyed callback typings', () => {
+  it('nested mode: zoom.onChange and label formatters can read d.data.amount', () => {
+    assertType<NestedSunburstChartProps<Tree>>({
+      id: 's',
+      data: { name: 'Root', amount: 1, size: 1 },
+      value: { key: 'size' },
+      labels: { name: { format: (n, d) => `${n} ${d.data.amount}` } },
+      zoom: { onChange: (focus) => focus?.data.amount },
+    });
+    void SunburstChart<Tree>({
+      id: 's',
+      data: { name: 'Root', amount: 1, size: 1 },
+      value: { key: 'size' },
+      labels: { name: { format: (n, d) => `${n} ${d.data.amount}` } },
+      zoom: { onChange: (focus) => focus?.data.amount },
+    });
+  });
+
+  it('flat mode: zoom.onChange and label formatters can read d.data.rows', () => {
+    assertType<FlatSunburstChartProps<Row>>({
+      id: 's',
+      data: [{ region: 'EU', country: 'France', revenue: 40 }],
+      levels: ['region', 'country'],
+      value: { key: 'revenue' },
+      labels: { name: { format: (n, d) => `${n} ${d.data.rows.length}` } },
+      zoom: { onChange: (focus) => focus?.data.rows.length },
+    });
+    void SunburstChart<Row>({
+      id: 's',
+      data: [{ region: 'EU', country: 'France', revenue: 40 }],
+      levels: ['region', 'country'],
+      value: { key: 'revenue' },
+      labels: { name: { format: (n, d) => `${n} ${d.data.rows.length}` } },
+      zoom: { onChange: (focus) => focus?.data.rows.length },
+    });
   });
 });

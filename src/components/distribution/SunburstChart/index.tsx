@@ -14,8 +14,12 @@ import measureSvg from '@/utils/measureSvg';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import {
+  type FlatHierarchyFields,
+  type NestedHierarchyFields,
   HierarchyDatum,
-  HierarchyFields,
+  HierarchyFieldsBase,
+  HierarchyLabels,
+  HierarchyLevelKey,
   buildHierarchy,
   colorKey,
   defaultHierarchyTooltipHtml,
@@ -31,24 +35,31 @@ import {
 export type {
   FlatGroupNode,
   FlatHierarchyDatum,
+  FlatHierarchyFields,
   HierarchyDatum,
   HierarchyFields,
   NestedHierarchyDatum,
+  NestedHierarchyFields,
 } from '@/utils/hierarchy';
 
 /** Treemap's minWidth/minHeight are rectangular; Sunburst swaps them for arc gates. */
-type BaseLabels = Omit<NonNullable<HierarchyFields['labels']>, 'minWidth' | 'minHeight'>;
+type SunburstLabels<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TData = any,
+  TMode extends 'nested' | 'flat' | 'either' = 'nested',
+> = Omit<HierarchyLabels<TData, TMode>, 'minWidth' | 'minHeight'> & {
+  /** Hide a label when its arc length at mid-radius is below this, in px. Default `14`. */
+  minArcLength?: number;
+  /** Hide a label when its ring is thinner than this, in px. Default `24`. */
+  minThickness?: number;
+};
 
-// `any` default matches ChartProps<TData = any> and the other charts' props.
-export interface SunburstChartProps<TData = any> // eslint-disable-line @typescript-eslint/no-explicit-any
-  extends Omit<ChartProps<TData>, 'data' | 'zooming'>,
-    Omit<HierarchyFields<TData>, 'labels'> {
-  labels?: BaseLabels & {
-    /** Hide a label when its arc length at mid-radius is below this, in px. Default `14`. */
-    minArcLength?: number;
-    /** Hide a label when its ring is thinner than this, in px. Default `24`. */
-    minThickness?: number;
-  };
+type SunburstSpecific<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TData = any,
+  TMode extends 'nested' | 'flat' | 'either' = 'nested',
+> = {
+  labels?: SunburstLabels<TData, TMode>;
   /**
    * Donut hole as a fraction of the outer radius, `[0, 0.9]`. Default `0`.
    * `0` paints the focus node as a centre disc; `> 0` has no disc and rings
@@ -80,9 +91,35 @@ export interface SunburstChartProps<TData = any> // eslint-disable-line @typescr
     | boolean
     | {
         /** Fired after each focus change. `null` = the top level (the real root, or the forest). */
-        onChange?: (focus: HierarchyDatum<TData, 'either'> | null) => void;
+        onChange?: (focus: HierarchyDatum<TData, TMode> | null) => void;
       };
-}
+};
+
+/**
+ * Public props. A union keyed on `levels`, so label formatters and
+ * `zoom.onChange` infer nested (`data: TData`) when `levels` is omitted and
+ * flat (`data` is the built group) when it is set.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type NestedSunburstChartProps<TData = any> = Omit<ChartProps<TData>, 'data' | 'zooming'> &
+  Omit<NestedHierarchyFields<TData>, 'labels'> &
+  SunburstSpecific<TData, 'nested'>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FlatSunburstChartProps<TData = any> = Omit<ChartProps<TData>, 'data' | 'zooming'> &
+  Omit<FlatHierarchyFields<TData>, 'labels'> &
+  SunburstSpecific<TData, 'flat'>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SunburstChartProps<TData = any> =
+  | NestedSunburstChartProps<TData>
+  | FlatSunburstChartProps<TData>;
+
+/** Implementation props: one function covers both modes. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SunburstChartImplProps<TData = any> = Omit<ChartProps<TData>, 'data' | 'zooming'> &
+  HierarchyFieldsBase<TData> &
+  SunburstSpecific<TData, 'either'> & {
+    levels?: HierarchyLevelKey<TData>[];
+  };
 
 type TooltipHandlers = Pick<
   ReturnType<typeof useTooltip>,
@@ -126,51 +163,7 @@ const fitText = (text: string, px: number): string => {
   return text.length <= max ? text : max === 1 ? '…' : `${text.slice(0, max - 1)}…`;
 };
 
-/* catalog:start */
-/**
- * Concentric rings for a hierarchical part-to-whole: each depth is a ring and
- * each node’s angle encodes its value, from the root at the centre to the
- * leaves.
- *
- * @remarks
- *
- * **Use when**
- * - A hierarchical part-to-whole with 2–4 levels, where the path from the
- *   centre outward is the story
- * - There are too many parts for a pie, and the nesting itself is what
- *   explains them
- * - Readers should drill down into deeper levels — set `zoom`
- * - The data is a flat table with category columns and one measure
- *
- * **Avoid when**
- * - Sizes of many leaves must be compared precisely — use TreemapChart; area
- *   reads better than angle
- * - A flat whole with about 6 or fewer parts — use PieChart
- * - One entity’s metrics on a radial profile — use PizzaChart; do not
- *   stretch it into a sunburst
- * - Composition changes over time — use AreaChart
- *
- * Also called: sunburst, sunburst chart, sunburst diagram, radial treemap, multi-level pie chart.
- *
- * Answers: composition. Required props: `id`, `data`, `value`.
- *
- * @example
- * ```tsx
- * <SunburstChart
- *   id="files"
- *   className="w-full h-96"
- *   data={data}
- *   value={{ key: 'size', className: 'fill-slate-300 stroke-white' }}
- *   classNameMap={{ src: 'fill-sky-400', docs: 'fill-amber-300' }}
- *   labels={{ name: true }}
- *   title="Repository size by folder"
- * />
- * ```
- *
- * @see PieChart — a flat part-to-whole with few slices
- */
-/* catalog:end */
-const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
+const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
   data,
   id,
   className,
@@ -198,7 +191,7 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
   description,
   ariaLabel,
   style = DEFAULT_STYLE,
-}: SunburstChartProps<TData>) => {
+}: SunburstChartImplProps<TData>) => {
   const plotRef = useRef<SVGGElement>(null);
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
@@ -742,4 +735,56 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
   );
 };
 
+/* catalog:start */
+/**
+ * Concentric rings for a hierarchical part-to-whole: each depth is a ring and
+ * each node’s angle encodes its value, from the root at the centre to the
+ * leaves.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - A hierarchical part-to-whole with 2–4 levels, where the path from the
+ *   centre outward is the story
+ * - There are too many parts for a pie, and the nesting itself is what
+ *   explains them
+ * - Readers should drill down into deeper levels — set `zoom`
+ * - The data is a flat table with category columns and one measure
+ *
+ * **Avoid when**
+ * - Sizes of many leaves must be compared precisely — use TreemapChart; area
+ *   reads better than angle
+ * - A flat whole with about 6 or fewer parts — use PieChart
+ * - One entity’s metrics on a radial profile — use PizzaChart; do not
+ *   stretch it into a sunburst
+ * - Composition changes over time — use AreaChart
+ *
+ * Also called: sunburst, sunburst chart, sunburst diagram, radial treemap, multi-level pie chart.
+ *
+ * Answers: composition. Required props: `id`, `data`, `value`.
+ *
+ * @example
+ * ```tsx
+ * <SunburstChart
+ *   id="files"
+ *   className="w-full h-96"
+ *   data={data}
+ *   value={{ key: 'size', className: 'fill-slate-300 stroke-white' }}
+ *   classNameMap={{ src: 'fill-sky-400', docs: 'fill-amber-300' }}
+ *   labels={{ name: true }}
+ *   title="Repository size by folder"
+ * />
+ * ```
+ *
+ * @see PieChart — a flat part-to-whole with few slices
+ */
+/* catalog:end */
+const SunburstChart = SunburstChartImpl as {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  <TData = any>(props: NestedSunburstChartProps<TData>): ReturnType<typeof SunburstChartImpl>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  <TData = any>(props: FlatSunburstChartProps<TData>): ReturnType<typeof SunburstChartImpl>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  <TData = any>(props: SunburstChartImplProps<TData>): ReturnType<typeof SunburstChartImpl>;
+};
 export default SunburstChart;

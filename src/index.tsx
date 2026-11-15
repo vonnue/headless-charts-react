@@ -70,14 +70,18 @@ export { default as PieChart } from '@/components/distribution/PieChart';
 export { default as WaffleChart } from '@/components/distribution/WaffleChart';
 export { default as TreemapChart } from '@/components/distribution/TreemapChart';
 export type {
+  FlatTreemapChartProps,
+  NestedTreemapChartProps,
   TreemapChartProps,
   TreemapTileType,
   FlatGroupNode,
   FlatHierarchyDatum,
+  FlatHierarchyFields,
   HierarchyDatum,
   HierarchyFields,
   HierarchyPercentKind,
   NestedHierarchyDatum,
+  NestedHierarchyFields,
 } from '@/components/distribution/TreemapChart';
 export { default as ParallelCoordinatesChart } from '@/components/distribution/ParallelCoordinatesChart';
 export type {
@@ -88,7 +92,7 @@ export type {
 } from '@/components/distribution/ParallelCoordinatesChart';
 export { isFlatHierarchyDatum, isFlatNode } from '@/utils/hierarchy';
 export { default as SunburstChart } from '@/components/distribution/SunburstChart';
-export type { SunburstChartProps } from '@/components/distribution/SunburstChart';
+export type { FlatSunburstChartProps, NestedSunburstChartProps, SunburstChartProps } from '@/components/distribution/SunburstChart';
 
 export { default as RingGauge } from '@/components/gauges/RingGauge';
 export { default as BulletChart } from '@/components/gauges/BulletChart';

@@ -20,7 +20,11 @@ import { isFiniteNumber } from '@/utils/domain';
 import measureSvg from '@/utils/measureSvg';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import {
-  HierarchyFields,
+  type FlatHierarchyFields,
+  type NestedHierarchyFields,
+  HierarchyFieldsBase,
+  HierarchyLabels,
+  HierarchyLevelKey,
   HierarchyPercentKind,
   buildHierarchy,
   colorKey,
@@ -37,10 +41,12 @@ import {
 export type {
   FlatGroupNode,
   FlatHierarchyDatum,
+  FlatHierarchyFields,
   HierarchyDatum,
   HierarchyFields,
   HierarchyPercentKind,
   NestedHierarchyDatum,
+  NestedHierarchyFields,
 } from '@/utils/hierarchy';
 
 export type TreemapTileType =
@@ -51,10 +57,7 @@ export type TreemapTileType =
   | 'sliceDice'
   | 'resquarify';
 
-// `any` default matches ChartProps<TData = any> and the other charts' props.
-export interface TreemapChartProps<TData = any> // eslint-disable-line @typescript-eslint/no-explicit-any
-  extends Omit<ChartProps<TData>, 'data'>,
-    HierarchyFields<TData> {
+type TreemapSpecific = {
   /** Tiling. Default squarify (golden ratio). `ratio` applies to squarify/resquarify only. */
   tile?: {
     type?: TreemapTileType;
@@ -71,7 +74,34 @@ export interface TreemapChartProps<TData = any> // eslint-disable-line @typescri
    * `paddingTop` header for their name. `true`: leaf cells only.
    */
   leavesOnly?: boolean;
-}
+};
+
+/**
+ * Public props. A union keyed on `levels`, so label formatters infer nested
+ * (`data: TData`) when `levels` is omitted and flat (`data` is the built
+ * group) when it is set.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type NestedTreemapChartProps<TData = any> = Omit<ChartProps<TData>, 'data'> &
+  NestedHierarchyFields<TData> &
+  TreemapSpecific;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FlatTreemapChartProps<TData = any> = Omit<ChartProps<TData>, 'data'> &
+  FlatHierarchyFields<TData> &
+  TreemapSpecific;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TreemapChartProps<TData = any> =
+  | NestedTreemapChartProps<TData>
+  | FlatTreemapChartProps<TData>;
+
+/** Implementation props: one function covers both modes. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TreemapChartImplProps<TData = any> = Omit<ChartProps<TData>, 'data'> &
+  HierarchyFieldsBase<TData> &
+  TreemapSpecific & {
+    levels?: HierarchyLevelKey<TData>[];
+    labels?: HierarchyLabels<TData, 'either'>;
+  };
 
 type TooltipHandlers = Pick<
   ReturnType<typeof useTooltip>,
@@ -102,59 +132,7 @@ const tileFn = (type: TreemapTileType | undefined, ratio: number | undefined) =>
   }
 };
 
-/* catalog:start */
-/**
- * Nested rectangles whose area encodes value, showing a hierarchical
- * part-to-whole with groups as labelled blocks.
- *
- * @remarks
- *
- * **Use when**
- * - A whole splits into nested groups and both the group totals and their
- *   parts matter
- * - There are too many parts for a pie, and the hierarchy is what explains
- *   them
- * - Leaf areas should be comparable at a glance — set `leavesOnly` if group
- *   headers are noise
- * - The data is a flat table with category columns and one measure
- *
- * **Avoid when**
- * - A flat whole with about 6 or fewer parts — use PieChart
- * - Individual units should be countable cells — use WaffleChart
- * - A flat ranked comparison of leaves with no nesting — use BarChart
- * - Composition changes over time — use AreaChart or ColumnChartStacked
- * - Colour is used to encode magnitude — area already encodes value; keep
- *   `classNameMap` as group identity only
- * - Volume moves between categories rather than a static nested split — use
- *   SankeyChart
- * - A radial hierarchy is preferred — wait for SunburstChart; do not stretch
- *   PizzaChart (`sunburst-style profile`) into that role
- *
- * Also called: treemap, squarified treemap, rectangular tree map.
- *
- * Answers: composition. Required props: `id`, `data`, `value`.
- *
- * @example
- * ```tsx
- * <TreemapChart
- *   id="budget"
- *   className="w-full h-96"
- *   data={data}
- *   value={{ key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' }}
- *   classNameMap={{ Ops: 'fill-slate-500', Growth: 'fill-slate-400' }}
- *   labels={{ name: true, value: true, percent: 'ofParent' }}
- *   title="Budget by group"
- * />
- * ```
- *
- * @see PieChart — a flat part-to-whole with few slices
- * @see WaffleChart — cells should be countable units
- * @see BarChart — a flat ranked comparison of the leaves with no nesting
- * @see SankeyChart — volume moves between categories rather than a static
- *   nested split
- */
-/* catalog:end */
-const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
+const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
   data,
   id,
   className,
@@ -177,7 +155,7 @@ const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/
   description,
   ariaLabel,
   style = DEFAULT_STYLE,
-}: TreemapChartProps<TData>) => {
+}: TreemapChartImplProps<TData>) => {
   const plotRef = useRef<SVGGElement>(null);
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
@@ -475,4 +453,64 @@ const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/
   );
 };
 
+/* catalog:start */
+/**
+ * Nested rectangles whose area encodes value, showing a hierarchical
+ * part-to-whole with groups as labelled blocks.
+ *
+ * @remarks
+ *
+ * **Use when**
+ * - A whole splits into nested groups and both the group totals and their
+ *   parts matter
+ * - There are too many parts for a pie, and the hierarchy is what explains
+ *   them
+ * - Leaf areas should be comparable at a glance — set `leavesOnly` if group
+ *   headers are noise
+ * - The data is a flat table with category columns and one measure
+ *
+ * **Avoid when**
+ * - A flat whole with about 6 or fewer parts — use PieChart
+ * - Individual units should be countable cells — use WaffleChart
+ * - A flat ranked comparison of leaves with no nesting — use BarChart
+ * - Composition changes over time — use AreaChart or ColumnChartStacked
+ * - Colour is used to encode magnitude — area already encodes value; keep
+ *   `classNameMap` as group identity only
+ * - Volume moves between categories rather than a static nested split — use
+ *   SankeyChart
+ * - A radial hierarchy is preferred — wait for SunburstChart; do not stretch
+ *   PizzaChart (`sunburst-style profile`) into that role
+ *
+ * Also called: treemap, squarified treemap, rectangular tree map.
+ *
+ * Answers: composition. Required props: `id`, `data`, `value`.
+ *
+ * @example
+ * ```tsx
+ * <TreemapChart
+ *   id="budget"
+ *   className="w-full h-96"
+ *   data={data}
+ *   value={{ key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' }}
+ *   classNameMap={{ Ops: 'fill-slate-500', Growth: 'fill-slate-400' }}
+ *   labels={{ name: true, value: true, percent: 'ofParent' }}
+ *   title="Budget by group"
+ * />
+ * ```
+ *
+ * @see PieChart — a flat part-to-whole with few slices
+ * @see WaffleChart — cells should be countable units
+ * @see BarChart — a flat ranked comparison of the leaves with no nesting
+ * @see SankeyChart — volume moves between categories rather than a static
+ *   nested split
+ */
+/* catalog:end */
+const TreemapChart = TreemapChartImpl as {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  <TData = any>(props: NestedTreemapChartProps<TData>): ReturnType<typeof TreemapChartImpl>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  <TData = any>(props: FlatTreemapChartProps<TData>): ReturnType<typeof TreemapChartImpl>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  <TData = any>(props: TreemapChartImplProps<TData>): ReturnType<typeof TreemapChartImpl>;
+};
 export default TreemapChart;

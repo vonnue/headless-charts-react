@@ -13,21 +13,64 @@ import { format } from 'd3-format';
 import { TooltipConfig } from '@/types';
 import { isFiniteNumber } from '@/utils/domain';
 
-/** Props shared by hierarchical charts. Chart-specific props extend this. */
+/** Category keys used in flat mode, outer to inner. */
+export type HierarchyLevelKey<TData> = Extract<keyof TData, string> | string;
+
+/** Label / percent formatters, parameterised by the input mode. */
+export interface HierarchyLabels<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TData = any,
+  TMode extends 'nested' | 'flat' | 'either' = 'nested',
+> {
+  name?:
+    | boolean
+    | {
+        className?: string;
+        format?: (name: string, d: HierarchyDatum<TData, TMode>, i: number) => string;
+      };
+  value?:
+    | boolean
+    | {
+        className?: string;
+        format?: (value: number, d: HierarchyDatum<TData, TMode>, i: number) => string;
+      };
+  /**
+   * Default `false`. `'ofParent'` | `'ofRoot'` | `'both'`, or an object.
+   * Ratios in `[0, +∞)`; `null` when the divisor is 0 / missing.
+   */
+  percent?:
+    | false
+    | 'ofParent'
+    | 'ofRoot'
+    | 'both'
+    | {
+        of: 'parent' | 'root' | 'both';
+        className?: string;
+        format?: (
+          pct: number | null,
+          kind: HierarchyPercentKind,
+          d: HierarchyDatum<TData, TMode>,
+          i: number
+        ) => string;
+      };
+  /** Hide label text on cells narrower than this. Default `40`. */
+  minWidth?: number;
+  /** Hide label text on cells shorter than this. Default `18`. */
+  minHeight?: number;
+}
+
+/**
+ * Fields shared by both input modes. Chart-specific props extend the
+ * {@link HierarchyFields} union, which is keyed on `levels`.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface HierarchyFields<TData = any> {
+export interface HierarchyFieldsBase<TData = any> {
   /**
    * Either one nested root object or a forest (children under `children.key`,
    * default `"children"`), or flat rows grouped by `levels` (category keys,
    * outer to inner) with `value.key` summed per group.
    */
   data?: TData | TData[];
-  /**
-   * Flat mode: category keys from outer to inner. A non-empty array switches
-   * the input mode. Rows sharing a path are summed; rows with a missing
-   * category are grouped under `'(missing)'`.
-   */
-  levels?: (Extract<keyof TData, string> | string)[];
   /** Nested children key. Default `{ key: 'children' }`. Ignored in flat mode. */
   children?: { key?: Extract<keyof TData, string> | string };
   /** Leaf size. Internal nodes = sum of descendant leaves (their own value is ignored). */
@@ -54,43 +97,6 @@ export interface HierarchyFields<TData = any> {
    * `'value'` is reserved — ignored (treated as `'top'`) with a dev warning.
    */
   colorBy?: 'top' | 'depth' | 'name' | 'value';
-  labels?: {
-    name?:
-      | boolean
-      | {
-          className?: string;
-          format?: (name: string, d: HierarchyDatum<TData, 'either'>, i: number) => string;
-        };
-    value?:
-      | boolean
-      | {
-          className?: string;
-          format?: (value: number, d: HierarchyDatum<TData, 'either'>, i: number) => string;
-        };
-    /**
-     * Default `false`. `'ofParent'` | `'ofRoot'` | `'both'`, or an object.
-     * Ratios in `[0, +∞)`; `null` when the divisor is 0 / missing.
-     */
-    percent?:
-      | false
-      | 'ofParent'
-      | 'ofRoot'
-      | 'both'
-      | {
-          of: 'parent' | 'root' | 'both';
-          className?: string;
-          format?: (
-            pct: number | null,
-            kind: HierarchyPercentKind,
-            d: HierarchyDatum<TData, 'either'>,
-            i: number
-          ) => string;
-        };
-    /** Hide label text on cells narrower than this. Default `40`. */
-    minWidth?: number;
-    /** Hide label text on cells shorter than this. Default `18`. */
-    minHeight?: number;
-  };
   tooltip?: TooltipConfig;
   /** Accessible name → SVG `<title>` + `aria-labelledby`. */
   title?: string;
@@ -99,6 +105,39 @@ export interface HierarchyFields<TData = any> {
   /** Used only when `title` is omitted. Each chart supplies its own default. */
   ariaLabel?: string;
 }
+
+/** Nested `children` input: `levels` is omitted, and callbacks receive `data: TData`. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type NestedHierarchyFields<TData = any> = HierarchyFieldsBase<TData> & {
+  levels?: undefined;
+  labels?: HierarchyLabels<TData, 'nested'>;
+};
+
+/**
+ * Flat-row input: a `levels` array (category keys, outer to inner) switches
+ * the mode. Callbacks receive a {@link FlatHierarchyDatum}.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FlatHierarchyFields<TData = any> = HierarchyFieldsBase<TData> & {
+  /**
+   * Flat mode: category keys from outer to inner. A non-empty array switches
+   * the input mode. Rows sharing a path are summed; rows with a missing
+   * category are grouped under `'(missing)'`.
+   */
+  levels: HierarchyLevelKey<TData>[];
+  labels?: HierarchyLabels<TData, 'flat'>;
+};
+
+/**
+ * Props shared by hierarchical charts. A union keyed on `levels`, so label
+ * (and other) callbacks infer the matching {@link HierarchyDatum} variant:
+ * nested (`data: TData`) when `levels` is omitted, flat (`data` is a
+ * {@link FlatGroupNode}) when `levels` is set.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type HierarchyFields<TData = any> =
+  | NestedHierarchyFields<TData>
+  | FlatHierarchyFields<TData>;
 
 /** Shared fields on every hierarchy datum, in both input modes. */
 export interface HierarchyDatumBase {
@@ -488,7 +527,7 @@ export const labelOption = <T extends object>(
   opt: boolean | T | undefined
 ): Partial<T> | null => (opt === true ? {} : opt ? opt : null);
 
-type PercentOpt = NonNullable<NonNullable<HierarchyFields['labels']>['percent']>;
+type PercentOpt = NonNullable<HierarchyLabels['percent']>;
 
 /** Normalises `labels.percent` to the kinds to print plus class/format. */
 export const percentOption = (opt: PercentOpt | undefined) => {

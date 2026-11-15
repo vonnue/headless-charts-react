@@ -1720,6 +1720,7 @@ Concentric rings for a hierarchical part-to-whole: each depth is a ring and each
 - A hierarchical part-to-whole with 2–4 levels, where the path from the centre outward is the story
 - There are too many parts for a pie, and the nesting itself is what explains them
 - Readers should drill down into deeper levels — set `zoom`
+- The data is a flat table with category columns and one measure
 
 **Do not use when**
 
@@ -1730,14 +1731,16 @@ Concentric rings for a hierarchical part-to-whole: each depth is a ring and each
 
 **Data**
 
-- `data` shape: hierarchy
+- `data` shape: hierarchy, records
 - Rows: ideal 4–40, max 100 — Leaves. Deep or wide trees need `rings` or click-to-zoom.
 
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
+| `data` | link | yes | Either one nested root object or a forest (children under `children.key`, default `"children"`), or flat rows grouped by `levels` (category keys, outer to inner) with `value.key` summed per group. |
 | `value` | quantitative | yes | Leaf size key. Internal nodes are the sum of their leaves; their own values are ignored. |
 | `name` | label | no | Display-name key. Default `"name"`. |
-| `children` | link | no | Nested children key (default `"children"`). `data` is one root object or a forest. |
+| `children` | link | no | Nested children key (default `"children"`). Ignored when `levels` is set. |
+| `levels` | category | no | Flat mode: outer-to-inner category keys. Rows sharing a path are summed; rows with a missing category are grouped under `(missing)`. |
 | `classNameMap` | color | no | Optional class per top-level group (see `colorBy`). Colour names the group; angle encodes magnitude. |
 
 **Required props:** `id`, `data`, `value`
@@ -1761,6 +1764,7 @@ Concentric rings for a hierarchical part-to-whole: each depth is a ring and each
 - **Click-to-zoom** — Set `zoom` (or `zoom={{ onChange }}`) to drill into an arc; click the centre (or the donut hole) or press Escape to zoom out.
 - **Visible rings** — Set `rings` to show that many levels below the focus; deeper levels still exist and appear when zoomed. This is not `maxDepth`, which rolls deeper mass into an ancestor.
 - **Percent labels** — Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`.
+- **Flat rows (`levels`)** — Set `levels` to the category keys, outer to inner (e.g. `["region", "country", "city"]`), and pass an array of rows; `value.key` is summed per path.
 
 **Consider instead**
 
@@ -1779,6 +1783,7 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 - A whole splits into nested groups and both the group totals and their parts matter
 - There are too many parts for a pie, and the hierarchy is what explains them
 - Leaf areas should be comparable at a glance — set `leavesOnly` if group headers are noise
+- The data is a flat table with category columns and one measure
 
 **Do not use when**
 
@@ -1792,13 +1797,14 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 
 **Data**
 
-- `data` shape: hierarchy
+- `data` shape: hierarchy, records
 - Rows: ideal 4–30, max 50 — Leaves. Past ~50 cells labels drop out and areas get hard to compare.
 
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
-| `data` | link | yes | One nested root object or a forest (array of roots). Children nest under `children.key` (default `"children"`); there is no flat id/parent mode. |
-| `children` | link | no | Optional override for the nested-children key. Default `{ key: "children" }`. |
+| `data` | link | yes | Either one nested root object or a forest (children under `children.key`, default `"children"`), or flat rows grouped by `levels` (category keys, outer to inner) with `value.key` summed per group. |
+| `children` | link | no | Optional override for the nested-children key. Default `{ key: "children" }`. Ignored when `levels` is set. |
+| `levels` | category | no | Flat mode: outer-to-inner category keys. Rows sharing a path are summed; rows with a missing category are grouped under `(missing)`. |
 | `value` | quantitative | yes | Leaf size key. Internal nodes are the sum of their descendant leaves; a value on an internal node is ignored. |
 | `name` | label | no | Display-name key. Default `"name"`. |
 | `classNameMap` | color | no | Optional class per group (see `colorBy`, default top-level). Colour names the group; area encodes magnitude — do not map colour to size. |
@@ -1822,6 +1828,7 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 - **Leaves only** — Set `leavesOnly` to drop the group headers and paint leaf cells only (`paddingTop` then defaults to 0).
 - **Tiling** — Set `tile.type` to `squarify` (default), `binary`, `slice`, `dice`, `sliceDice` or `resquarify`; `tile.ratio` applies to squarify/resquarify.
 - **Percent labels** — Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`; a zero or missing divisor prints `n/a`.
+- **Flat rows (`levels`)** — Set `levels` to the category keys, outer to inner (e.g. `["region", "country", "city"]`), and pass an array of rows; `value.key` is summed per path.
 
 **Consider instead**
 

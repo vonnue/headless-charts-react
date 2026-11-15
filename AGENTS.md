@@ -65,6 +65,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | SankeyChart, sankey, sankey diagram, sankey chart, flow diagram, alluvial diagram | [`SankeyChart`](#sankeychart) | Base component, no extra configuration |
 | ScatterPlot, scatter chart, scatter graph, xy plot, correlation plot | [`ScatterPlot`](#scatterplot) | Base component, no extra configuration |
 | Semicircle chart, half donut chart, parliament chart, hemicycle chart, seat chart, gauge donut | [`PieChart`](#piechart) | Set `startAngle={-90}` and `endAngle={90}`. Combine with `innerRadius` for a half donut. |
+| SparklineChart, sparkline, sparklines, sparkline chart, tufte sparkline, word-sized line chart | [`SparklineChart`](#sparklinechart) | Base component, no extra configuration |
 | SpeedometerChart, gauge chart, dial chart, speedometer, needle gauge | [`SpeedometerChart`](#speedometerchart) | Base component, no extra configuration |
 | SpineChart, population pyramid, age-sex pyramid, butterfly chart, back-to-back bar chart | [`SpineChart`](#spinechart) | Base component, no extra configuration |
 | Step chart, step line chart, staircase chart | [`LineChart`](#linechart) | Set `curve: "step"` on each series. |
@@ -116,6 +117,7 @@ Find the question being asked, then pick among the candidates.
 | [`AreaChart`](#areachart) | Trend where the volume under the line or the split of a total matters |
 | [`ColumnChart`](#columnchart) | Few discrete periods where individual values matter more than the trend line |
 | [`TimeLineChart`](#timelinechart) | Discrete events or durations on a date axis rather than a continuous measure |
+| [`SparklineChart`](#sparklinechart) | Many series (beyond ~8) whose trends should be compared without overplotting; one axis-free row per series on a shared scale |
 
 ### How do two measures relate to each other?
 
@@ -1143,6 +1145,68 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
 - [`ColumnChart`](#columnchart) — multiple measures per category, or magnitude should read as area
 - [`LollipopHChart`](#lollipophchart) — category labels are long
 - [`ScatterPlot`](#scatterplot) — both axes are numeric rather than one being categorical
+
+### SparklineChart
+
+One small axis-free line per series, stacked as equal-height rows on one shared y scale, so trends and relative levels compare across many series.
+
+**Category:** `linear` · **Answers:** `trend`, `comparison` · **Storybook:** Linear/SparklineChart/Intro
+
+**Also called:** sparkline, sparklines, sparkline chart, tufte sparkline, word-sized line chart
+
+**Use when**
+
+- Many series (beyond ~8) whose trends should be compared without overplotting
+- A compact trend summary per series, where shape and relative level matter more than exact values
+- Dashboard rows of KPIs on a common scale
+
+**Do not use when**
+
+- Exact values or axis reading matter — use LineChart
+- Series are on different units or scales, so a shared y would flatten some — use separate SparklineCharts or LineChart
+- There are only one or two series — use LineChart
+
+**Data**
+
+- `data` shape: records
+- Series: ideal 3–20, min 1, max 50 — Rows shrink as series are added; past ~30 they may be under 10px tall.
+- Rows: ideal 10–200, max 1000
+
+| Prop | Role | Required | Notes |
+| --- | --- | --- | --- |
+| `x` | temporal | yes | Single key for the shared ordered axis (temporal or ordinal). Set `scalingFunction: "time"` with `time.isISO` or `time.format` for dates; numbers use a linear scale, anything else a point scale in data order. |
+| `y` | series | yes | Array of quantitative series, one row each, top to bottom. All rows share one y domain (min..max, not niced, zero not forced); pin it with the top-level `domain`. |
+| `y[].className` | color | no | Row class for the line and its dots (`text-*` / `stroke-*`). Nothing is coloured by default. |
+
+**Required props:** `id`, `data`, `x`, `y`
+
+```tsx
+<SparklineChart
+  id="kpis"
+  className="w-64 h-48"
+  data={rows}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
+  y={[
+    { key: 'revenue', label: 'Revenue', className: 'text-blue-500' },
+    { key: 'users', label: 'Users', className: 'text-emerald-500' },
+  ]}
+  margin={{ left: 64, right: 40, top: 4, bottom: 4 }}
+  markers={{ last: true, min: { className: 'text-red-500' }, max: { className: 'text-blue-700' } }}
+  labels={{ name: true, last: true }}
+/>
+```
+
+**Options**
+
+- **End, min and max markers** — Set `markers.last`, `markers.min` and/or `markers.max` to `true` or `{ className }`; min/max mark the first occurrence.
+- **Name and last-value labels** — Set `labels.name` and/or `labels.last` (with an optional `format`), and widen `margin.left` / `margin.right` to fit them; the chart does not measure text.
+- **Time x** — Set `x.scalingFunction: "time"` with `x.time.isISO` or `x.time.format`; ISO dates are read in UTC unless `x.time.utc: false`.
+- **Pinned domain** — Set `domain.start` / `domain.end` to pin the shared y domain; values outside are clipped to their row.
+
+**Consider instead**
+
+- [`LineChart`](#linechart) — axes and exact reading matter, with few series
+- [`AreaChart`](#areachart) — cumulative magnitude under the line matters
 
 ### SpineChart
 

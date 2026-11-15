@@ -52,8 +52,8 @@ export interface AxisConfig<TData = any> {
      * as Dec 30 west of UTC; in development, `isISO` data made only of
      * calendar days or UTC midnights with `utc: false` logs a one-time hint.
      *
-     * Read by AreaChart, LineChart, ColumnChart, ColumnChartStacked,
-     * LollipopVChart, BoxPlotV and CandlestickChart.
+     * Read by AreaChart, LineChart, SparklineChart, ColumnChart,
+     * ColumnChartStacked, LollipopVChart, BoxPlotV and CandlestickChart.
      */
     utc?: boolean;
     /**

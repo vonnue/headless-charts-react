@@ -92,6 +92,10 @@ export const decisionTree: DecisionBranch[] = [
         name: 'TimeLineChart',
         when: 'Discrete events or durations on a date axis rather than a continuous measure',
       },
+      {
+        name: 'SparklineChart',
+        when: 'Many series (beyond ~8) whose trends should be compared without overplotting; one axis-free row per series on a shared scale',
+      },
     ],
   },
   {

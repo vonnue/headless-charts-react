@@ -97,6 +97,8 @@ const DEFAULT_DRAWING = { duration: 0 };
 const DEFAULT_MARGIN = { top: 4, right: 4, bottom: 4, left: 4 };
 const DEFAULT_ROW_PADDING = 0.3;
 const MARKER_RADIUS = 2;
+/** Clip rect overhang past the row band on every side. */
+const CLIP_INSET = MARKER_RADIUS + 1;
 const LABEL_OFFSET = 6;
 const FADE_MS = 150;
 
@@ -351,10 +353,12 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
         .append('clipPath')
         .attr('id', clipId)
         .append('rect')
-        .attr('x', 0)
-        .attr('y', top)
-        .attr('width', innerWidth)
-        .attr('height', bh);
+        // Inset by a marker radius (+1 for the stroke) so edge dots and the
+        // line's peak stroke at the domain ends aren't cut in half.
+        .attr('x', -CLIP_INSET)
+        .attr('y', top - CLIP_INSET)
+        .attr('width', innerWidth + 2 * CLIP_INSET)
+        .attr('height', bh + 2 * CLIP_INSET);
 
       const g = rowsG
         .append('g')

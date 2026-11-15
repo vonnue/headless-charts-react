@@ -182,9 +182,11 @@ describe('SparklineChart', () => {
     expect(coords(path?.getAttribute('d'))[1][1]).toBeCloseTo(-200, 6);
     const clipId = /url\(#(.+)\)/.exec(path?.getAttribute('clip-path') ?? '')?.[1];
     const clipRect = document.getElementById(clipId ?? '')?.querySelector('rect');
-    expect(num(clipRect, 'y')).toBe(0);
-    expect(num(clipRect, 'height')).toBe(200);
-    expect(num(clipRect, 'width')).toBe(400);
+    // Band grown by MARKER_RADIUS + 1 (3px) on every side so edge dots aren't halved.
+    expect(num(clipRect, 'x')).toBe(-3);
+    expect(num(clipRect, 'y')).toBe(-3);
+    expect(num(clipRect, 'height')).toBe(206);
+    expect(num(clipRect, 'width')).toBe(406);
   });
 
   it('6: all values equal → v ± 1, line mid-row', () => {

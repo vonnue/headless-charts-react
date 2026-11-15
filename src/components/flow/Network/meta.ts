@@ -53,11 +53,13 @@ const meta: ChartMeta = {
     'The relationships are strictly hierarchical — a tree layout communicates depth better than a force graph',
     'The data has no explicit edges; a network cannot be inferred from records alone',
     'Node values are the real question — use BarChart or ScatterPlot',
+    'How much volume flows between layered stages — use SankeyChart',
     'The graph is dense enough to become a hairball — aggregate or filter first',
   ],
   alternatives: [
     { name: 'ScatterPlot', when: 'entities have two measures and no meaningful links' },
     { name: 'WaffleChart', when: 'the relationships form a matrix better read as a heatmap' },
+    { name: 'SankeyChart', when: 'how much volume flows between layered stages' },
   ],
   requiredProps: ['id', 'nodes', 'edges', 'nodeDef', 'edgeDef'],
   example: `<Network

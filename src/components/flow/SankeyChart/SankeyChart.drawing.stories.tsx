@@ -3,8 +3,9 @@ import SankeyChart from '.';
 import sample from './sample.json';
 
 /**
- * Links widen and nodes grow in when `drawing.duration` is set, after
- * `drawing.delay`. Remount a story to replay.
+ * Painted links and nodes are revealed from the first layer to the last
+ * (left → right, or top → bottom when vertical) when `drawing.duration`
+ * is set, after `drawing.delay`. Remount a story to replay.
  */
 const meta = preview.meta({
   title: 'Flow/SankeyChart/Drawing',
@@ -47,7 +48,7 @@ const base = {
   },
 };
 
-/** Energy flows growing in. */
+/** Energy flows revealed from the first layer to the last. */
 export const Drawing = meta.story({
   args: {
     ...base,
@@ -57,7 +58,7 @@ export const Drawing = meta.story({
   },
 });
 
-/** Vertical flows growing in. */
+/** Vertical flows revealed from the first layer to the last. */
 export const Vertical = meta.story({
   args: {
     ...base,

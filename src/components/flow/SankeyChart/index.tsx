@@ -421,6 +421,8 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
 
     const duration = drawing?.duration ?? 0;
     const delay = drawing?.delay ?? 0;
+    const animate = Number.isFinite(duration) && duration > 0;
+    const startDelay = Number.isFinite(delay) && delay > 0 ? delay : 0;
 
     const chartG = root
       .append('g')
@@ -429,8 +431,48 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
       .attr('data-py', layout.py)
       .attr('data-columns', layout.columnCount);
 
+    /**
+     * Draw-in: with `drawing.duration`, a clipPath on the painted links and
+     * nodes grows along the flow axis (x, or y when vertical) over that
+     * duration, after `drawing.delay`, so the chart reveals from the first
+     * layer to the last. Hit areas and labels are not clipped. Duration 0
+     * adds no clip and no transition. The clip id is prefixed with the
+     * chart `id`. On end or interrupt the clip is set to the full plot and
+     * dropped from the marks group so hover and highlight are unaffected.
+     */
+    const marksG = chartG.append('g').attr('class', 'marks');
+    if (animate) {
+      const clipId = `${id}-draw-clip`;
+      const flow0 = vertical ? plotTop : plotLeft;
+      const flowSpan = Math.max(0, (vertical ? plotBottom : plotRight) - flow0);
+      const fullW = vertical ? width : flowSpan;
+      const fullH = vertical ? flowSpan : height;
+      const clipRect = chartG
+        .append('defs')
+        .append('clipPath')
+        .attr('id', clipId)
+        .append('rect')
+        .attr('data-testid', 'sankey-draw-clip')
+        .attr('x', vertical ? 0 : flow0)
+        .attr('y', vertical ? flow0 : 0)
+        .attr('width', vertical ? width : 0)
+        .attr('height', vertical ? 0 : height);
+      marksG.attr('clip-path', `url(#${clipId})`);
+      const releaseClip = () => {
+        clipRect.attr('width', fullW).attr('height', fullH);
+        marksG.attr('clip-path', null);
+      };
+      clipRect
+        .transition()
+        .duration(duration)
+        .delay(startDelay)
+        .attr('width', fullW)
+        .attr('height', fullH)
+        .on('end interrupt', releaseClip);
+    }
+
     // Painted marks: links under nodes. No handlers here.
-    const linkPaths = chartG
+    const linkPaths = marksG
       .append('g')
       .attr('class', 'links')
       .attr('fill', 'none')
@@ -446,15 +488,9 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
       .attr('d', (l) => linkPath(l))
       .attr('fill', 'none')
       .attr('stroke-opacity', 0.5)
-      .attr('stroke-width', (l) => (duration ? 0 : l.width));
-    if (duration)
-      linkPaths
-        .transition()
-        .duration(duration)
-        .delay(delay)
-        .attr('stroke-width', (l) => l.width);
+      .attr('stroke-width', (l) => l.width);
 
-    const nodeRects = chartG
+    const nodeRects = marksG
       .append('g')
       .attr('class', 'nodes')
       .selectAll('rect')
@@ -466,19 +502,10 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
       .attr('data-column', (n) => n.layer)
       .attr('data-value', (n) => n.value)
       .attr('class', nodeClass)
-      .attr('x', (n) => nodeRect(n, duration ? 0 : 1).x)
-      .attr('y', (n) => nodeRect(n, duration ? 0 : 1).y)
-      .attr('width', (n) => nodeRect(n, duration ? 0 : 1).width)
-      .attr('height', (n) => nodeRect(n, duration ? 0 : 1).height);
-    if (duration)
-      nodeRects
-        .transition()
-        .duration(duration)
-        .delay(delay)
-        .attr('x', (n) => nodeRect(n).x)
-        .attr('y', (n) => nodeRect(n).y)
-        .attr('width', (n) => nodeRect(n).width)
-        .attr('height', (n) => nodeRect(n).height);
+      .attr('x', (n) => nodeRect(n).x)
+      .attr('y', (n) => nodeRect(n).y)
+      .attr('width', (n) => nodeRect(n).width)
+      .attr('height', (n) => nodeRect(n).height);
 
     // Hit areas sit above the painted marks; labels (pointer-events none)
     // are drawn above both.

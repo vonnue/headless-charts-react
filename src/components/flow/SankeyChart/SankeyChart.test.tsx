@@ -32,6 +32,9 @@ const linkHit = (s: string, t: string) =>
     `[data-testid="sankey-link-hit"][data-source="${s}"][data-target="${t}"]`
   )!;
 const num = (el: Element | null, attr: string) => Number(el?.getAttribute(attr) ?? NaN);
+const drawClip = () =>
+  document.querySelector<SVGRectElement>('[data-testid="sankey-draw-clip"]');
+const wait = (ms: number) => act(() => new Promise((r) => setTimeout(r, ms)));
 const ky = () => num(document.querySelector('g.sankey'), 'data-ky');
 const tooltipOf = (id: string) => document.getElementById(`tooltip-${id}`);
 const noNaN = () =>
@@ -564,18 +567,22 @@ describe('SankeyChart', () => {
     const { rerender, unmount } = render(
       <SankeyChart id='s27' links={CROSS} drawing={drawing} style={STYLE} />
     );
-    expect(num(nodeEl('A'), 'height')).toBe(0);
-    expect(num(linkEl('A', 'E'), 'stroke-width')).toBe(0);
+    // Marks are at final geometry immediately; the clip starts at zero extent.
+    expect(num(nodeEl('A'), 'height')).toBeGreaterThan(0);
+    expect(num(linkEl('A', 'E'), 'stroke-width')).toBeGreaterThan(0);
+    expect(num(drawClip(), 'width')).toBe(0);
     const next = [link('p', 'q', 1)];
     rerender(<SankeyChart id='s27' links={next} drawing={drawing} style={STYLE} />);
     expect(all('sankey-node')).toHaveLength(2);
     expect(nodeEl('A')).toBeNull();
-    await act(() => new Promise((r) => setTimeout(r, 650)));
+    expect(num(drawClip(), 'width')).toBe(0);
+    await wait(650);
     expect(num(linkEl('p', 'q'), 'stroke-width')).toBeCloseTo(PLOT.y1 - PLOT.y0, 3);
+    expect(num(drawClip(), 'width')).toBeCloseTo(PLOT.x1 - PLOT.x0, 3);
     rerender(<SankeyChart id='s27' links={CROSS} drawing={drawing} style={STYLE} />);
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     unmount();
-    await act(() => new Promise((r) => setTimeout(r, 600)));
+    await wait(600);
     expect(err).not.toHaveBeenCalled();
     err.mockRestore();
   });
@@ -689,11 +696,80 @@ describe('SankeyChart drawing cleanup (#13)', () => {
         style={STYLE}
       />
     );
-    const nodes = all('sankey-node');
-    expect(nodes.some((n) => Reflect.has(n, '__transition'))).toBe(true);
+    const clip = drawClip();
+    expect(clip && Reflect.has(clip, '__transition')).toBe(true);
 
     expect(unmount).not.toThrow();
 
-    expect(nodes.some((n) => Reflect.has(n, '__transition'))).toBe(false);
+    expect(clip && Reflect.has(clip, '__transition')).toBe(false);
+  });
+});
+
+describe('SankeyChart draw-in', () => {
+  it('clip starts at zero flow extent and reaches full extent at the end', async () => {
+    render(
+      <SankeyChart
+        id='s-draw'
+        links={CROSS}
+        drawing={{ duration: 100, delay: 40 }}
+        labels={{ name: true }}
+        style={STYLE}
+      />
+    );
+    const clip = drawClip();
+    expect(clip).not.toBeNull();
+    expect(clip!.parentElement?.getAttribute('id')).toBe('s-draw-draw-clip');
+    expect(num(clip, 'x')).toBe(PLOT.x0);
+    expect(num(clip, 'width')).toBe(0);
+    expect(num(clip, 'height')).toBe(400);
+    expect(document.querySelector('g.marks')?.getAttribute('clip-path')).toBe(
+      'url(#s-draw-draw-clip)'
+    );
+    expect(document.querySelector('g.marks [data-testid="sankey-link"]')).not.toBeNull();
+    expect(document.querySelector('g.marks [data-testid="sankey-node"]')).not.toBeNull();
+    expect(document.querySelector('g.marks [data-testid="sankey-link-hit"]')).toBeNull();
+    expect(document.querySelector('g.marks [data-testid="sankey-label"]')).toBeNull();
+    expect(num(nodeEl('A'), 'height')).toBeGreaterThan(0);
+    expect(num(linkEl('A', 'E'), 'stroke-width')).toBeGreaterThan(0);
+    await wait(25);
+    expect(num(drawClip(), 'width')).toBe(0);
+    await wait(160);
+    expect(num(drawClip(), 'width')).toBeCloseTo(PLOT.x1 - PLOT.x0, 3);
+    expect(num(drawClip(), 'height')).toBe(400);
+    expect(document.querySelector('g.marks')?.getAttribute('clip-path')).toBeNull();
+  });
+
+  it('vertical clip grows along the y axis', async () => {
+    render(
+      <SankeyChart
+        id='s-draw-v'
+        links={CROSS}
+        orientation='vertical'
+        drawing={{ duration: 100 }}
+        style={STYLE}
+      />
+    );
+    const clip = drawClip();
+    expect(num(clip, 'y')).toBe(PLOT.y0);
+    expect(num(clip, 'height')).toBe(0);
+    expect(num(clip, 'width')).toBe(600);
+    await wait(200);
+    expect(num(drawClip(), 'height')).toBeCloseTo(PLOT.y1 - PLOT.y0, 3);
+    expect(num(drawClip(), 'width')).toBe(600);
+    expect(document.querySelector('g.marks')?.getAttribute('clip-path')).toBeNull();
+  });
+
+  it('duration 0 adds no clip and no transition', () => {
+    render(
+      <SankeyChart id='s-draw-0' links={CROSS} drawing={{ duration: 0 }} style={STYLE} />
+    );
+    expect(drawClip()).toBeNull();
+    expect(document.querySelector('clipPath')).toBeNull();
+    expect(document.querySelector('g.marks')?.getAttribute('clip-path')).toBeNull();
+    expect(num(nodeEl('A'), 'height')).toBeGreaterThan(0);
+    expect(num(linkEl('A', 'E'), 'stroke-width')).toBeGreaterThan(0);
+    expect(
+      [...all('sankey-node'), ...all('sankey-link')].some((n) => Reflect.has(n, '__transition'))
+    ).toBe(false);
   });
 });

@@ -6,7 +6,7 @@ import { decisionTree, resolveChartRequest } from '@/catalog';
 import { resetDevWarnings } from '@/utils/devEnvironment';
 
 import CandlestickChart, { type CandleDatum } from '.';
-import { isUtcTime } from './ohlc';
+import { isUtcTime } from '@/utils/timeScale';
 
 const STYLE = { width: '400px', height: '300px' } as const;
 const MARGIN = { top: 20, right: 20, bottom: 40, left: 50 } as const;

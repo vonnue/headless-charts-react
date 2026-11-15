@@ -1,22 +1,11 @@
 import type { AxisConfig } from '@/types';
 import deepValue from '@/utils/deepValue';
-import { makeDateAccessor } from '@/utils/timeScale';
-
-/**
- * Whether dates are read and shown in UTC: `x.time.utc` when it is set,
- * otherwise `true` for `x.time.isISO` data and `false` for `x.time.format`
- * data. This is the same rule as PR #57's `isUtcTime` in
- * `src/utils/timeScale.ts`, kept local so CandlestickChart behaves the same
- * whether or not #57 has merged. Once #57 is on main this can import it.
- */
-export const isUtcTime = (x: Pick<AxisConfig, 'time'>): boolean =>
-  x.time?.utc ?? Boolean(x.time?.isISO);
+import { isUtcTime, makeDateAccessor } from '@/utils/timeScale';
 
 /**
  * `x` with `time.utc` set explicitly to `isUtcTime(x)`. The shared helpers
  * (`makeDateParser`, `makeDateFormatter`, `createTimeBarLayout`,
- * `useTimeAxisWarnings`) then pick UTC vs local time by the #57 rule on main
- * and on #57 alike, because an explicit `utc` means the same in both.
+ * `useTimeAxisWarnings`) then pick UTC vs local time from that explicit `utc`.
  */
 export const withResolvedUtc = <TData>(x: AxisConfig<TData>): AxisConfig<TData> => ({
   ...x,

@@ -31,6 +31,7 @@ import SpeedometerChart from '@/components/gauges/SpeedometerChart/meta';
 import SpineChart from '@/components/linear/SpineChart/meta';
 import TimeLineChart from '@/components/linear/TimeLineChart/meta';
 import TreemapChart from '@/components/distribution/TreemapChart/meta';
+import ViolinChart from '@/components/ranges/ViolinChart/meta';
 import WaffleChart from '@/components/distribution/WaffleChart/meta';
 
 export * from './types';
@@ -65,6 +66,7 @@ export const chartCatalog: ChartMeta[] = [
   CandlestickChart,
   CometPlot,
   RangePlot,
+  ViolinChart,
   // gauges
   BulletChart,
   LinearGauge,

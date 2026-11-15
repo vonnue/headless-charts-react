@@ -1,0 +1,482 @@
+[
+{
+"dept": "Eng",
+"salary": 141
+},
+{
+"dept": "Sales",
+"salary": 123
+},
+{
+"dept": "Ops",
+"salary": 73
+},
+{
+"dept": "Eng",
+"salary": 96
+},
+{
+"dept": "Sales",
+"salary": 101
+},
+{
+"dept": "Ops",
+"salary": 85
+},
+{
+"dept": "Eng",
+"salary": 128
+},
+{
+"dept": "Sales",
+"salary": 63
+},
+{
+"dept": "Ops",
+"salary": 83
+},
+{
+"dept": "Eng",
+"salary": 118
+},
+{
+"dept": "Sales",
+"salary": 63
+},
+{
+"dept": "Ops",
+"salary": 69
+},
+{
+"dept": "Eng",
+"salary": 143
+},
+{
+"dept": "Sales",
+"salary": 73
+},
+{
+"dept": "Ops",
+"salary": 82
+},
+{
+"dept": "Eng",
+"salary": 96
+},
+{
+"dept": "Sales",
+"salary": 76
+},
+{
+"dept": "Ops",
+"salary": 67
+},
+{
+"dept": "Eng",
+"salary": 139
+},
+{
+"dept": "Sales",
+"salary": 61
+},
+{
+"dept": "Ops",
+"salary": 80
+},
+{
+"dept": "Eng",
+"salary": 85
+},
+{
+"dept": "Sales",
+"salary": 77
+},
+{
+"dept": "Ops",
+"salary": 72
+},
+{
+"dept": "Eng",
+"salary": 143
+},
+{
+"dept": "Sales",
+"salary": 68
+},
+{
+"dept": "Ops",
+"salary": 72
+},
+{
+"dept": "Eng",
+"salary": 76
+},
+{
+"dept": "Sales",
+"salary": 67
+},
+{
+"dept": "Ops",
+"salary": 80
+},
+{
+"dept": "Eng",
+"salary": 132
+},
+{
+"dept": "Sales",
+"salary": 81
+},
+{
+"dept": "Ops",
+"salary": 84
+},
+{
+"dept": "Eng",
+"salary": 94
+},
+{
+"dept": "Sales",
+"salary": 84
+},
+{
+"dept": "Ops",
+"salary": 80
+},
+{
+"dept": "Eng",
+"salary": 123
+},
+{
+"dept": "Sales",
+"salary": 60
+},
+{
+"dept": "Ops",
+"salary": 70
+},
+{
+"dept": "Eng",
+"salary": 95
+},
+{
+"dept": "Sales",
+"salary": 68
+},
+{
+"dept": "Ops",
+"salary": 79
+},
+{
+"dept": "Eng",
+"salary": 160
+},
+{
+"dept": "Sales",
+"salary": 94
+},
+{
+"dept": "Ops",
+"salary": 60
+},
+{
+"dept": "Eng",
+"salary": 88
+},
+{
+"dept": "Sales",
+"salary": 101
+},
+{
+"dept": "Ops",
+"salary": 83
+},
+{
+"dept": "Eng",
+"salary": 129
+},
+{
+"dept": "Sales",
+"salary": 83
+},
+{
+"dept": "Ops",
+"salary": 83
+},
+{
+"dept": "Eng",
+"salary": 90
+},
+{
+"dept": "Sales",
+"salary": 68
+},
+{
+"dept": "Ops",
+"salary": 84
+},
+{
+"dept": "Eng",
+"salary": 140
+},
+{
+"dept": "Sales",
+"salary": 62
+},
+{
+"dept": "Ops",
+"salary": 65
+},
+{
+"dept": "Eng",
+"salary": 106
+},
+{
+"dept": "Sales",
+"salary": 62
+},
+{
+"dept": "Ops",
+"salary": 76
+},
+{
+"dept": "Eng",
+"salary": 132
+},
+{
+"dept": "Sales",
+"salary": 74
+},
+{
+"dept": "Ops",
+"salary": 69
+},
+{
+"dept": "Eng",
+"salary": 89
+},
+{
+"dept": "Sales",
+"salary": 63
+},
+{
+"dept": "Ops",
+"salary": 86
+},
+{
+"dept": "Eng",
+"salary": 123
+},
+{
+"dept": "Sales",
+"salary": 65
+},
+{
+"dept": "Ops",
+"salary": 82
+},
+{
+"dept": "Eng",
+"salary": 120
+},
+{
+"dept": "Sales",
+"salary": 122
+},
+{
+"dept": "Ops",
+"salary": 73
+},
+{
+"dept": "Eng",
+"salary": 157
+},
+{
+"dept": "Sales",
+"salary": 75
+},
+{
+"dept": "Ops",
+"salary": 66
+},
+{
+"dept": "Eng",
+"salary": 99
+},
+{
+"dept": "Sales",
+"salary": 61
+},
+{
+"dept": "Ops",
+"salary": 67
+},
+{
+"dept": "Eng",
+"salary": 155
+},
+{
+"dept": "Sales",
+"salary": 65
+},
+{
+"dept": "Ops",
+"salary": 66
+},
+{
+"dept": "Eng",
+"salary": 91
+},
+{
+"dept": "Sales",
+"salary": 82
+},
+{
+"dept": "Ops",
+"salary": 80
+},
+{
+"dept": "Eng",
+"salary": 144
+},
+{
+"dept": "Sales",
+"salary": 61
+},
+{
+"dept": "Ops",
+"salary": 89
+},
+{
+"dept": "Eng",
+"salary": 84
+},
+{
+"dept": "Sales",
+"salary": 72
+},
+{
+"dept": "Ops",
+"salary": 84
+},
+{
+"dept": "Eng",
+"salary": 137
+},
+{
+"dept": "Sales",
+"salary": 81
+},
+{
+"dept": "Ops",
+"salary": 77
+},
+{
+"dept": "Eng",
+"salary": 101
+},
+{
+"dept": "Sales",
+"salary": 77
+},
+{
+"dept": "Ops",
+"salary": 78
+},
+{
+"dept": "Eng",
+"salary": 134
+},
+{
+"dept": "Sales",
+"salary": 89
+},
+{
+"dept": "Ops",
+"salary": 77
+},
+{
+"dept": "Eng",
+"salary": 93
+},
+{
+"dept": "Sales",
+"salary": 62
+},
+{
+"dept": "Ops",
+"salary": 63
+},
+{
+"dept": "Eng",
+"salary": 109
+},
+{
+"dept": "Sales",
+"salary": 73
+},
+{
+"dept": "Ops",
+"salary": 77
+},
+{
+"dept": "Eng",
+"salary": 94
+},
+{
+"dept": "Sales",
+"salary": 68
+},
+{
+"dept": "Ops",
+"salary": 96
+},
+{
+"dept": "Eng",
+"salary": 129
+},
+{
+"dept": "Sales",
+"salary": 96
+},
+{
+"dept": "Ops",
+"salary": 74
+},
+{
+"dept": "Eng",
+"salary": 91
+},
+{
+"dept": "Sales",
+"salary": 72
+},
+{
+"dept": "Ops",
+"salary": 65
+},
+{
+"dept": "Eng",
+"salary": 129
+},
+{
+"dept": "Sales",
+"salary": 73
+},
+{
+"dept": "Ops",
+"salary": 83
+},
+{
+"dept": "Eng",
+"salary": 108
+},
+{
+"dept": "Sales",
+"salary": 85
+},
+{
+"dept": "Ops",
+"salary": 77
+}
+]

@@ -41,12 +41,14 @@ const meta: ChartMeta = {
   ],
   avoidWhen: [
     'Every underlying point should be visible — use ScatterPlot',
+    'The full distribution shape matters, e.g. multimodality — use ViolinChart',
     'The interval is a plain min–max rather than a statistical summary — use RangePlot',
     'The audience will not read quartiles; a histogram via ColumnChart with `x.bin` is more intuitive',
     'A vertical layout fits better — use BoxPlotV',
   ],
   alternatives: [
     { name: 'BoxPlotV', when: 'a vertical layout fits the space better' },
+    { name: 'ViolinChart', when: 'the full distribution shape matters, e.g. multimodality' },
     { name: 'RangePlot', when: 'showing a plain min–max interval rather than quartiles' },
     { name: 'ColumnChart', when: 'a histogram of one group is enough — set `x.bin`' },
   ],

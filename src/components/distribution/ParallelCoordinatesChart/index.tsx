@@ -1,8 +1,8 @@
 import { axisBottom, axisLeft, AxisScale } from 'd3-axis';
-import { brushX, brushY, D3BrushEvent } from 'd3-brush';
+import { BrushBehavior, brushX, brushY, D3BrushEvent } from 'd3-brush';
 import { format as d3Format } from 'd3-format';
 import { scaleLinear, scaleLog, scalePoint } from 'd3-scale';
-import { select } from 'd3-selection';
+import { select, Selection } from 'd3-selection';
 import { curveBumpX, curveBumpY, curveLinear, line as d3Line } from 'd3-shape';
 import 'd3-transition';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
@@ -843,6 +843,7 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
     };
 
     const brushLayer = root.append('g').attr('class', 'pc-brushes');
+    const brushes: Array<{ g: Selection<SVGGElement, unknown, null, undefined>; behaviour: BrushBehavior<unknown> }> = [];
     dims.forEach((d, k) => {
       if (d.empty) return;
       const pos = along(k);
@@ -893,6 +894,7 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
         .attr('data-testid', 'pc-brush')
         .attr('data-key', d.key)
         .call(behaviour);
+      brushes.push({ g, behaviour });
       g.select('.selection').attr('class', twMerge('selection', brushClassName));
       const st = brushStates.current.get(d.key);
       const span = st ? restoreSpan(d, st) : undefined;
@@ -902,6 +904,28 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
         g.call(behaviour.move, span);
       }
     });
+    // Clicking empty plot area (not a line, dot or brush band) clears every brush.
+    // Sits beneath everything, so line hits and brush overlays take priority.
+    // Use mousedown, not click: after a drag, d3-brush installs a capturing window
+    // click listener (cleared on setTimeout(0)) that swallows the leftover click.
+    root
+      .insert('rect', ':first-child')
+      .attr('data-testid', 'pc-brush-clear')
+      .attr('x', left)
+      .attr('y', top)
+      .attr('width', Math.max(0, right - left))
+      .attr('height', Math.max(0, bottom - top))
+      .attr('fill', 'transparent')
+      .attr('pointer-events', 'all')
+      .on('mousedown', (event: MouseEvent) => {
+        if (event.button !== 0 || gesture || spans.size === 0) return;
+        spans.clear();
+        brushStates.current.clear();
+        // Programmatic moves carry no sourceEvent, so the handlers above ignore them.
+        brushes.forEach(({ g, behaviour }) => g.call(behaviour.move, null));
+        applyFilter();
+        emit();
+      });
     applyFilter();
     // After a redraw, fire only if the selected set actually changed.
     const key = selectionKey();

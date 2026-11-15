@@ -1022,6 +1022,47 @@ describe('ParallelCoordinatesChart', () => {
     expect(document.getElementById('tooltip-pc29')!.innerHTML).toContain('x: 3');
   });
 
+  it('29b: clicking the empty plot area clears every brush, resets data-filtered and fires onChange once with all records; it does nothing when no brush is active or when brushing is off', () => {
+    const onChange = vi.fn();
+    const { unmount } = render(
+      <ParallelCoordinatesChart
+        id='pc29b'
+        data={rows}
+        dimensions={['x', 'y']}
+        brushing={{ onChange }}
+        style={STYLE}
+      />
+    );
+    const clear = q('pc-brush-clear')[0];
+    expect(clear).toBeTruthy();
+    fireEvent.mouseDown(clear);
+    expect(onChange).not.toHaveBeenCalled();
+
+    const overlays = q('pc-brush').map((b) => b.querySelector('.overlay')!);
+    mouse(overlays[0], 'mousedown', 32, 200);
+    mouse(window, 'mousemove', 32, 20);
+    mouse(window, 'mouseup', 32, 20);
+    mouse(overlays[1], 'mousedown', 368, 100);
+    mouse(window, 'mousemove', 368, 20);
+    mouse(window, 'mouseup', 368, 20);
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(q('pc-line').some((l) => l.getAttribute('data-filtered') === 'true')).toBe(true);
+
+    fireEvent.mouseDown(q('pc-brush-clear')[0]);
+    expect(q('pc-line').every((l) => l.getAttribute('data-filtered') === null)).toBe(true);
+    expect(onChange).toHaveBeenCalledTimes(3);
+    expect(onChange.mock.calls[2][0].active).toEqual({});
+    expect(onChange.mock.calls[2][0].indices).toEqual([0, 1, 2]);
+    // d3-brush hides the selection via the CSS style, not the SVG attribute.
+    q('pc-brush').forEach((b) =>
+      expect((b.querySelector('.selection') as SVGElement).style.display).toBe('none')
+    );
+    unmount();
+
+    render(<ParallelCoordinatesChart id='pc29c' data={rows} dimensions={['x', 'y']} style={STYLE} />);
+    expect(q('pc-brush-clear')).toHaveLength(0);
+  });
+
   it('30: when data changes mid-transition, the old transition is interrupted, the final geometry matches the new data, and no nodes are left over; unmounting mid-transition interrupts with no errors or leftover timers', async () => {
     const { rerender, unmount } = render(
       <ParallelCoordinatesChart

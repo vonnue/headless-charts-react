@@ -5,8 +5,9 @@ import data from './sample.json';
 /**
  * Set `brushing` to drag along an axis and filter records. Lines outside
  * every active brush get `data-filtered="true"`; style them with
- * `data-[filtered=true]:`. `brushing.onChange` fires on brush end and on
- * clear with the selected rows and their indices.
+ * `data-[filtered=true]:`. Clicking the empty plot area clears every brush.
+ * `brushing.onChange` fires on brush end and on clear with the selected rows
+ * and their indices.
  */
 const meta = preview.meta({
   title: 'Distribution/ParallelCoordinatesChart/Brushing',

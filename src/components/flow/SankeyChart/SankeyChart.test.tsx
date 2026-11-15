@@ -32,9 +32,15 @@ const linkHit = (s: string, t: string) =>
     `[data-testid="sankey-link-hit"][data-source="${s}"][data-target="${t}"]`
   )!;
 const num = (el: Element | null, attr: string) => Number(el?.getAttribute(attr) ?? NaN);
-const drawClip = () =>
-  document.querySelector<SVGRectElement>('[data-testid="sankey-draw-clip"]');
 const wait = (ms: number) => act(() => new Promise((r) => setTimeout(r, ms)));
+type DrawSchedule = { delay: number; duration: number };
+const scheduleOf = (el: Element | null): DrawSchedule => {
+  const schedules = (
+    el as (Element & { __transition?: Record<string, DrawSchedule> }) | null
+  )?.__transition;
+  const first = schedules && Object.values(schedules)[0];
+  return { delay: first?.delay ?? NaN, duration: first?.duration ?? NaN };
+};
 const ky = () => num(document.querySelector('g.sankey'), 'data-ky');
 const tooltipOf = (id: string) => document.getElementById(`tooltip-${id}`);
 const noNaN = () =>
@@ -567,18 +573,19 @@ describe('SankeyChart', () => {
     const { rerender, unmount } = render(
       <SankeyChart id='s27' links={CROSS} drawing={drawing} style={STYLE} />
     );
-    // Marks are at final geometry immediately; the clip starts at zero extent.
-    expect(num(nodeEl('A'), 'height')).toBeGreaterThan(0);
+    // Layer-0 nodes start collapsed at their top edge; links are at full width.
+    expect(num(nodeEl('A'), 'height')).toBe(0);
+    expect(num(nodeEl('A'), 'y')).toBeCloseTo(D3_SANKEY_NODES.A[2], 3);
     expect(num(linkEl('A', 'E'), 'stroke-width')).toBeGreaterThan(0);
-    expect(num(drawClip(), 'width')).toBe(0);
     const next = [link('p', 'q', 1)];
     rerender(<SankeyChart id='s27' links={next} drawing={drawing} style={STYLE} />);
     expect(all('sankey-node')).toHaveLength(2);
     expect(nodeEl('A')).toBeNull();
-    expect(num(drawClip(), 'width')).toBe(0);
+    expect(num(nodeEl('p'), 'height')).toBe(0);
     await wait(650);
     expect(num(linkEl('p', 'q'), 'stroke-width')).toBeCloseTo(PLOT.y1 - PLOT.y0, 3);
-    expect(num(drawClip(), 'width')).toBeCloseTo(PLOT.x1 - PLOT.x0, 3);
+    expect(num(nodeEl('p'), 'height')).toBeGreaterThan(0);
+    expect(num(nodeEl('q'), 'height')).toBeGreaterThan(0);
     rerender(<SankeyChart id='s27' links={CROSS} drawing={drawing} style={STYLE} />);
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     unmount();
@@ -696,50 +703,87 @@ describe('SankeyChart drawing cleanup (#13)', () => {
         style={STYLE}
       />
     );
-    const clip = drawClip();
-    expect(clip && Reflect.has(clip, '__transition')).toBe(true);
+    const nodes = all('sankey-node');
+    expect(nodes.some((n) => Reflect.has(n, '__transition'))).toBe(true);
 
     expect(unmount).not.toThrow();
 
-    expect(clip && Reflect.has(clip, '__transition')).toBe(false);
+    expect(nodes.some((n) => Reflect.has(n, '__transition'))).toBe(false);
   });
 });
 
 describe('SankeyChart draw-in', () => {
-  it('clip starts at zero flow extent and reaches full extent at the end', async () => {
+  // CROSS has 3 layers → 5 equal steps. duration 1000, delay 100 → step 200.
+  const DRAWING = { duration: 1000, delay: 100 } as const;
+  const STEP = 200;
+  const svgProto = SVGElement.prototype as typeof SVGElement.prototype & {
+    getTotalLength?: () => number;
+  };
+  const originalLength = svgProto.getTotalLength;
+
+  afterEach(() => {
+    if (originalLength) svgProto.getTotalLength = originalLength;
+    else delete svgProto.getTotalLength;
+  });
+
+  const stubPathLength = (len = 80) => {
+    svgProto.getTotalLength = () => len;
+  };
+
+  it('nodes grow from the top edge, delayed by layer', () => {
+    render(<SankeyChart id='s-draw' links={CROSS} drawing={DRAWING} style={STYLE} />);
+    expect(document.querySelector('clipPath')).toBeNull();
+    // Layer 0 starts collapsed at y0; later layers share the same start geometry.
+    for (const [id, [, x0, y0]] of Object.entries(D3_SANKEY_NODES)) {
+      expect(num(nodeEl(id), 'y')).toBeCloseTo(y0, 3);
+      expect(num(nodeEl(id), 'x')).toBeCloseTo(x0, 3);
+      expect(num(nodeEl(id), 'width')).toBe(12);
+      expect(num(nodeEl(id), 'height')).toBe(0);
+    }
+    expect(scheduleOf(nodeEl('A'))).toEqual({ delay: 100, duration: STEP });
+    expect(scheduleOf(nodeEl('B'))).toEqual({ delay: 100, duration: STEP });
+    expect(scheduleOf(nodeEl('C'))).toEqual({ delay: 100, duration: STEP });
+    expect(scheduleOf(nodeEl('D'))).toEqual({ delay: 100 + 2 * STEP, duration: STEP });
+    expect(scheduleOf(nodeEl('E'))).toEqual({ delay: 100 + 4 * STEP, duration: STEP });
+    expect(scheduleOf(nodeEl('F'))).toEqual({ delay: 100 + 4 * STEP, duration: STEP });
+  });
+
+  it('link delays and durations span from after the source nodes until the target nodes start', () => {
+    stubPathLength();
+    render(<SankeyChart id='s-draw-links' links={CROSS} drawing={DRAWING} style={STYLE} />);
+    // Adjacent 0→1: one step, starting after layer-0 nodes.
+    expect(scheduleOf(linkEl('A', 'D'))).toEqual({ delay: 100 + STEP, duration: STEP });
+    expect(scheduleOf(linkEl('B', 'D'))).toEqual({ delay: 100 + STEP, duration: STEP });
+    // Skip 0→2: three steps, ending when layer-2 nodes start (900).
+    expect(scheduleOf(linkEl('A', 'E'))).toEqual({ delay: 100 + STEP, duration: 3 * STEP });
+    expect(scheduleOf(linkEl('C', 'E'))).toEqual({ delay: 100 + STEP, duration: 3 * STEP });
+    expect(scheduleOf(linkEl('C', 'F'))).toEqual({ delay: 100 + STEP, duration: 3 * STEP });
+    expect(scheduleOf(linkEl('B', 'F'))).toEqual({ delay: 100 + STEP, duration: 3 * STEP });
+    // Adjacent 1→2.
+    expect(scheduleOf(linkEl('D', 'F'))).toEqual({ delay: 100 + 3 * STEP, duration: STEP });
+    expect(linkEl('A', 'E').getAttribute('stroke-dasharray')).toBe('80,80');
+    expect(num(linkEl('A', 'E'), 'stroke-dashoffset')).toBe(80);
+    expect(num(linkEl('A', 'E'), 'stroke-width')).toBeGreaterThan(0);
+  });
+
+  it('clears stroke-dasharray when the link transition ends', async () => {
+    stubPathLength();
+    // 2 layers (p→q) → 3 steps. duration 60 → step 20. Adjacent link ends at 40.
     render(
       <SankeyChart
-        id='s-draw'
-        links={CROSS}
-        drawing={{ duration: 100, delay: 40 }}
-        labels={{ name: true }}
+        id='s-draw-dash'
+        links={[link('p', 'q', 1)]}
+        drawing={{ duration: 60 }}
         style={STYLE}
       />
     );
-    const clip = drawClip();
-    expect(clip).not.toBeNull();
-    expect(clip!.parentElement?.getAttribute('id')).toBe('s-draw-draw-clip');
-    expect(num(clip, 'x')).toBe(PLOT.x0);
-    expect(num(clip, 'width')).toBe(0);
-    expect(num(clip, 'height')).toBe(400);
-    expect(document.querySelector('g.marks')?.getAttribute('clip-path')).toBe(
-      'url(#s-draw-draw-clip)'
-    );
-    expect(document.querySelector('g.marks [data-testid="sankey-link"]')).not.toBeNull();
-    expect(document.querySelector('g.marks [data-testid="sankey-node"]')).not.toBeNull();
-    expect(document.querySelector('g.marks [data-testid="sankey-link-hit"]')).toBeNull();
-    expect(document.querySelector('g.marks [data-testid="sankey-label"]')).toBeNull();
-    expect(num(nodeEl('A'), 'height')).toBeGreaterThan(0);
-    expect(num(linkEl('A', 'E'), 'stroke-width')).toBeGreaterThan(0);
-    await wait(25);
-    expect(num(drawClip(), 'width')).toBe(0);
-    await wait(160);
-    expect(num(drawClip(), 'width')).toBeCloseTo(PLOT.x1 - PLOT.x0, 3);
-    expect(num(drawClip(), 'height')).toBe(400);
-    expect(document.querySelector('g.marks')?.getAttribute('clip-path')).toBeNull();
+    expect(linkEl('p', 'q').getAttribute('stroke-dasharray')).toBe('80,80');
+    await wait(100);
+    expect(linkEl('p', 'q').getAttribute('stroke-dasharray')).toBeNull();
+    expect(linkEl('p', 'q').getAttribute('stroke-dashoffset')).toBeNull();
   });
 
-  it('vertical clip grows along the y axis', async () => {
+  it('vertical nodes grow from the leading edge along the cross axis', async () => {
     render(
       <SankeyChart
         id='s-draw-v'
@@ -749,25 +793,29 @@ describe('SankeyChart draw-in', () => {
         style={STYLE}
       />
     );
-    const clip = drawClip();
-    expect(num(clip, 'y')).toBe(PLOT.y0);
-    expect(num(clip, 'height')).toBe(0);
-    expect(num(clip, 'width')).toBe(600);
+    const a = nodeEl('A');
+    const startX = num(a, 'x');
+    expect(num(a, 'width')).toBe(0);
+    expect(num(a, 'height')).toBe(12);
+    expect(startX).toBeGreaterThan(0);
+    expect(scheduleOf(a).delay).toBe(0);
+    expect(scheduleOf(nodeEl('D')).delay).toBeCloseTo(40, 6);
+    expect(scheduleOf(nodeEl('E')).delay).toBeCloseTo(80, 6);
     await wait(200);
-    expect(num(drawClip(), 'height')).toBeCloseTo(PLOT.y1 - PLOT.y0, 3);
-    expect(num(drawClip(), 'width')).toBe(600);
-    expect(document.querySelector('g.marks')?.getAttribute('clip-path')).toBeNull();
+    expect(num(nodeEl('A'), 'x')).toBeCloseTo(startX, 3);
+    expect(num(nodeEl('A'), 'width')).toBeGreaterThan(0);
+    expect(num(nodeEl('A'), 'height')).toBe(12);
   });
 
-  it('duration 0 adds no clip and no transition', () => {
+  it('duration 0 adds no transition and draws final geometry', () => {
     render(
       <SankeyChart id='s-draw-0' links={CROSS} drawing={{ duration: 0 }} style={STYLE} />
     );
-    expect(drawClip()).toBeNull();
     expect(document.querySelector('clipPath')).toBeNull();
-    expect(document.querySelector('g.marks')?.getAttribute('clip-path')).toBeNull();
     expect(num(nodeEl('A'), 'height')).toBeGreaterThan(0);
+    expect(num(nodeEl('A'), 'y')).toBeCloseTo(D3_SANKEY_NODES.A[2], 3);
     expect(num(linkEl('A', 'E'), 'stroke-width')).toBeGreaterThan(0);
+    expect(linkEl('A', 'E').getAttribute('stroke-dasharray')).toBeNull();
     expect(
       [...all('sankey-node'), ...all('sankey-link')].some((n) => Reflect.has(n, '__transition'))
     ).toBe(false);

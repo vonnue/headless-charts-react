@@ -216,6 +216,16 @@ const checkedSetting = (
 const has = (map: Record<string, string> | undefined, key: string) =>
   !!map && Object.prototype.hasOwnProperty.call(map, key);
 
+/** Path length for a dash reveal, or 0 when getTotalLength is missing (jsdom). */
+const pathLength = (node: Element | null): number => {
+  try {
+    const len = (node as SVGPathElement | null)?.getTotalLength?.() ?? NaN;
+    return Number.isFinite(len) && len > 0 ? len : 0;
+  } catch {
+    return 0;
+  }
+};
+
 /* catalog:start */
 /**
  * Weighted flows between nodes arranged in layered columns; node size and link
@@ -384,13 +394,14 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
       })
     );
 
-    // Screen geometry of a node rect (optionally collapsed onto its centre line).
+    // Screen geometry of a node rect (optionally collapsed onto its leading
+    // edge — y0 — so a grow-in expands top → bottom, or along the cross
+    // axis when vertical).
     const nodeRect = (n: LayoutNode, grow = 1) => {
-      const mid = (n.y0 + n.y1) / 2;
-      const half = ((n.y1 - n.y0) / 2) * grow;
+      const along = (n.y1 - n.y0) * grow;
       return vertical
-        ? { x: mid - half, y: n.x0, width: half * 2, height: n.x1 - n.x0 }
-        : { x: n.x0, y: mid - half, width: n.x1 - n.x0, height: half * 2 };
+        ? { x: n.y0, y: n.x0, width: along, height: n.x1 - n.x0 }
+        : { x: n.x0, y: n.y0, width: n.x1 - n.x0, height: along };
     };
     const linkPath = vertical
       ? linkVertical<LayoutLink, [number, number]>()
@@ -423,6 +434,20 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
     const delay = drawing?.delay ?? 0;
     const animate = Number.isFinite(duration) && duration > 0;
     const startDelay = Number.isFinite(delay) && delay > 0 ? delay : 0;
+    // Split duration into 2L−1 equal steps: nodes 0, links from 0, nodes 1,
+    // …, nodes L−1. A link from layer s to t starts after s's nodes and
+    // ends when t's nodes start, so a skip-layer link lasts 2(t−s)−1 steps.
+    const layers = layout.columnCount;
+    const steps = Math.max(1, 2 * layers - 1);
+    const step = animate ? duration / steps : 0;
+    const nodeDraw = (layer: number) => ({
+      delay: startDelay + 2 * layer * step,
+      duration: step,
+    });
+    const linkDraw = (sourceLayer: number, targetLayer: number) => ({
+      delay: startDelay + (2 * sourceLayer + 1) * step,
+      duration: Math.max(0, 2 * (targetLayer - sourceLayer) - 1) * step,
+    });
 
     const chartG = root
       .append('g')
@@ -432,44 +457,15 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
       .attr('data-columns', layout.columnCount);
 
     /**
-     * Draw-in: with `drawing.duration`, a clipPath on the painted links and
-     * nodes grows along the flow axis (x, or y when vertical) over that
-     * duration, after `drawing.delay`, so the chart reveals from the first
-     * layer to the last. Hit areas and labels are not clipped. Duration 0
-     * adds no clip and no transition. The clip id is prefixed with the
-     * chart `id`. On end or interrupt the clip is set to the full plot and
-     * dropped from the marks group so hover and highlight are unaffected.
+     * Draw-in: with `drawing.duration`, each layer's nodes grow from their
+     * leading edge, then the links leaving that layer reveal from source
+     * to target with a stroke-dash offset, then the next layer, over that
+     * total duration, after `drawing.delay`. Duration 0 adds no transition.
+     * Dash attributes are cleared on end or interrupt so hover styling
+     * stays clean. When `getTotalLength` is missing (jsdom), links are
+     * drawn at full length with no dash transition.
      */
     const marksG = chartG.append('g').attr('class', 'marks');
-    if (animate) {
-      const clipId = `${id}-draw-clip`;
-      const flow0 = vertical ? plotTop : plotLeft;
-      const flowSpan = Math.max(0, (vertical ? plotBottom : plotRight) - flow0);
-      const fullW = vertical ? width : flowSpan;
-      const fullH = vertical ? flowSpan : height;
-      const clipRect = chartG
-        .append('defs')
-        .append('clipPath')
-        .attr('id', clipId)
-        .append('rect')
-        .attr('data-testid', 'sankey-draw-clip')
-        .attr('x', vertical ? 0 : flow0)
-        .attr('y', vertical ? flow0 : 0)
-        .attr('width', vertical ? width : 0)
-        .attr('height', vertical ? 0 : height);
-      marksG.attr('clip-path', `url(#${clipId})`);
-      const releaseClip = () => {
-        clipRect.attr('width', fullW).attr('height', fullH);
-        marksG.attr('clip-path', null);
-      };
-      clipRect
-        .transition()
-        .duration(duration)
-        .delay(startDelay)
-        .attr('width', fullW)
-        .attr('height', fullH)
-        .on('end interrupt', releaseClip);
-    }
 
     // Painted marks: links under nodes. No handlers here.
     const linkPaths = marksG
@@ -489,6 +485,24 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
       .attr('fill', 'none')
       .attr('stroke-opacity', 0.5)
       .attr('stroke-width', (l) => l.width);
+    if (animate)
+      linkPaths.each(function (l) {
+        const len = pathLength(this);
+        if (!(len > 0)) return;
+        const { delay: dly, duration: dur } = linkDraw(l.source.layer, l.target.layer);
+        select(this)
+          .attr('stroke-dasharray', `${len},${len}`)
+          .attr('stroke-dashoffset', len)
+          .transition()
+          .delay(dly)
+          .duration(dur)
+          .attr('stroke-dashoffset', 0)
+          .on('end interrupt', function () {
+            select(this)
+              .attr('stroke-dasharray', null)
+              .attr('stroke-dashoffset', null);
+          });
+      });
 
     const nodeRects = marksG
       .append('g')
@@ -502,10 +516,19 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
       .attr('data-column', (n) => n.layer)
       .attr('data-value', (n) => n.value)
       .attr('class', nodeClass)
-      .attr('x', (n) => nodeRect(n).x)
-      .attr('y', (n) => nodeRect(n).y)
-      .attr('width', (n) => nodeRect(n).width)
-      .attr('height', (n) => nodeRect(n).height);
+      .attr('x', (n) => nodeRect(n, animate ? 0 : 1).x)
+      .attr('y', (n) => nodeRect(n, animate ? 0 : 1).y)
+      .attr('width', (n) => nodeRect(n, animate ? 0 : 1).width)
+      .attr('height', (n) => nodeRect(n, animate ? 0 : 1).height);
+    if (animate)
+      nodeRects
+        .transition()
+        .delay((n) => nodeDraw(n.layer).delay)
+        .duration(step)
+        .attr('x', (n) => nodeRect(n).x)
+        .attr('y', (n) => nodeRect(n).y)
+        .attr('width', (n) => nodeRect(n).width)
+        .attr('height', (n) => nodeRect(n).height);
 
     // Hit areas sit above the painted marks; labels (pointer-events none)
     // are drawn above both.

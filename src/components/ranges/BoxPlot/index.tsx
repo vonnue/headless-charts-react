@@ -1,4 +1,4 @@
-import { ZoomTransform, zoom } from 'd3-zoom';
+import { ZoomTransform, zoom, zoomIdentity } from 'd3-zoom';
 import { max, min } from 'd3-array';
 import { scaleBand, scaleLinear, type ScaleTime } from 'd3-scale';
 import { select, type Selection } from 'd3-selection';
@@ -183,6 +183,10 @@ export const BoxPlotRenderer = <TData,>(
     orientation: givenOrientation,
   } = props;
   const svgRef = useRef<SVGSVGElement>(null);
+  // One zoom behaviour per chart, re-configured on each redraw: a wheel
+  // gesture still in progress across a redraw then reports to the current
+  // handler (and the current marks), not to a discarded one.
+  const zoomRef = useRef(zoom<SVGSVGElement, unknown>());
 
   const evidence = boxPlotEvidence(x, y);
   const resolution = resolveOrientation({
@@ -296,6 +300,10 @@ export const BoxPlotRenderer = <TData,>(
     const svg = select(svgNode);
     interruptTransitions(svgNode);
     svg.on('.zoom', null);
+    // d3-zoom keeps the last transform on the node (`__zoom`) and a re-bound
+    // zoom behaviour resumes from it. The marks are redrawn unzoomed, so reset
+    // it too, or the first zoom after a redraw jumps to the stale transform.
+    svg.property('__zoom', zoomIdentity);
     svg.selectAll('*').remove();
 
     // The configs describe the other orientation: draw nothing (warned).
@@ -597,7 +605,7 @@ export const BoxPlotRenderer = <TData,>(
           ),
         );
       };
-      const zoomFn = zoom<SVGSVGElement, unknown>()
+      const zoomFn = zoomRef.current
         .extent([
           [0, 0],
           [width, height],

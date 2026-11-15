@@ -719,6 +719,40 @@ describe('BoxPlot (#76)', () => {
     },
   );
 
+  it('23b: a redraw or orientation change resets the zoom, so the next zoom does not jump', () => {
+    const wheel = (id: string) =>
+      svgOf(id).dispatchEvent(
+        new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -200, clientX: 300, clientY: 200 }),
+      );
+    const zoomK = (id: string) => (svgOf(id) as unknown as { __zoom: { k: number } }).__zoom.k;
+    const scaleOf = (id: string) => {
+      const t = rowsOf(id)[0].getAttribute('transform') ?? '';
+      return Number(/scale\(([\d.]+), ([\d.]+)\)/.exec(t)?.slice(1).find((v) => v !== '1') ?? 1);
+    };
+    const zooming = { enabled: true, min: 1, max: 4 };
+    const { rerender } = render(<BoxPlot id='bp23b' style={STYLE} zooming={zooming} {...vProps} />);
+    wheel('bp23b');
+    const oneStep = zoomK('bp23b');
+    expect(oneStep).toBeGreaterThan(1);
+
+    // data change: redrawn unzoomed, and the next wheel is one step from 1
+    rerender(<BoxPlot id='bp23b' style={STYLE} zooming={zooming} {...vProps} data={ROWS.slice(0, 2)} />);
+    expect(zoomK('bp23b')).toBe(1);
+    expect(rowsOf('bp23b')[0].getAttribute('transform')).toBeNull();
+    wheel('bp23b');
+    expect(zoomK('bp23b')).toBeCloseTo(oneStep, 6);
+    expect(scaleOf('bp23b')).toBeCloseTo(oneStep, 6);
+
+    // orientation change: same
+    rerender(
+      <BoxPlot id='bp23b' style={STYLE} zooming={zooming} orientation='horizontal' {...hProps} />,
+    );
+    expect(zoomK('bp23b')).toBe(1);
+    wheel('bp23b');
+    expect(zoomK('bp23b')).toBeCloseTo(oneStep, 6);
+    expect(scaleOf('bp23b')).toBeCloseTo(oneStep, 6);
+  });
+
   it.each(['vertical', 'horizontal'] as const)(
     '24: %s empty data does not throw or produce NaN',
     (orientation) => {

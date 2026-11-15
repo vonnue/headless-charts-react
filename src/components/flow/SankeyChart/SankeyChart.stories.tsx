@@ -47,10 +47,10 @@ export const Default = meta.story({
 });
 
 /** Explicit `nodes` with labels, per-node colours and value labels. */
-export const Energy = meta.story({
+export const Styled = meta.story({
   args: {
     ...Default.input.args,
-    id: 'sankey-energy',
+    id: 'sankey-styled',
     nodes: sample.nodes,
     nodeDef: {
       labelKey: 'name',
@@ -70,7 +70,7 @@ export const Energy = meta.story({
 /** `orientation="vertical"`: columns run top → bottom. */
 export const Vertical = meta.story({
   args: {
-    ...Energy.input.args,
+    ...Styled.input.args,
     id: 'sankey-vertical',
     className: 'w-full h-[32rem] text-slate-500',
     orientation: 'vertical',
@@ -81,7 +81,7 @@ export const Vertical = meta.story({
 /** `align="left"`: nodes by depth; sinks are not pushed to the last column. */
 export const AlignLeft = meta.story({
   args: {
-    ...Energy.input.args,
+    ...Styled.input.args,
     id: 'sankey-align-left',
     align: 'left',
   },
@@ -90,7 +90,7 @@ export const AlignLeft = meta.story({
 /** `nodeSort="input"`: node input order in each column, no relaxation. */
 export const InputOrder = meta.story({
   args: {
-    ...Energy.input.args,
+    ...Styled.input.args,
     id: 'sankey-input-order',
     nodeSort: 'input',
   },

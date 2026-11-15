@@ -337,14 +337,14 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
         .domain(hasDomain ? [yLo, yHi] : [0, 1])
         .range([top + bh, top]);
       const points = pointsBySeries[i];
-      const values = points.map((p) => p.value);
       const last = points[points.length - 1];
-      const minP = points.length
-        ? points.find((p) => p.value === Math.min(...values))
-        : undefined;
-      const maxP = points.length
-        ? points.find((p) => p.value === Math.max(...values))
-        : undefined;
+      // One pass; strict comparisons keep the first occurrence on ties.
+      let minP: Point | undefined;
+      let maxP: Point | undefined;
+      for (const p of points) {
+        if (!minP || p.value < minP.value) minP = p;
+        if (!maxP || p.value > maxP.value) maxP = p;
+      }
       const fmt = (v: number | undefined) => (v === undefined ? 'n/a' : defaultValueFormat(v));
       const rowDelay = i * delayStep;
 

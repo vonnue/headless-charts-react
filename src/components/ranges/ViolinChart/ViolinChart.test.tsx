@@ -1289,7 +1289,7 @@ describe('ViolinChart', () => {
 
     expect(resolveChartRequest('density plot')?.chart.name).toBe('ScatterPlot');
     expect(resolveChartRequest('grouped distribution plot')?.chart.name).toBe(
-      'BoxPlotH'
+      'BoxPlot'
     );
     expect(resolveChartRequest('heatmap')?.chart.name).toBe('WaffleChart');
     expect(resolveChartRequest('slope chart')?.chart.name).toBe('CometPlot');

@@ -226,8 +226,7 @@ interface Group {
  * />
  * ```
  *
- * @see BoxPlotV — only the five-number summary matters
- * @see BoxPlotH — the five-number summary with long category labels
+ * @see BoxPlot — only the five-number summary matters
  * @see ColumnChart — one group's distribution as a histogram — set
  *   `x.bin`
  * @see ScatterPlot — very small samples per group, or every point should

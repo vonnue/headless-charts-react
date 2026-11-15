@@ -50,8 +50,7 @@ const meta: ChartMeta = {
     'Colour would encode magnitude — colour names the group; density is width only',
   ],
   alternatives: [
-    { name: 'BoxPlotV', when: 'only the five-number summary matters' },
-    { name: 'BoxPlotH', when: 'the five-number summary with long category labels' },
+    { name: 'BoxPlot', when: 'only the five-number summary matters' },
     { name: 'ColumnChart', when: "one group's distribution as a histogram — set `x.bin`" },
     { name: 'ScatterPlot', when: 'very small samples per group, or every point should stay visible' },
   ],

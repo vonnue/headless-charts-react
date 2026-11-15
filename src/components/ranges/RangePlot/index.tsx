@@ -59,7 +59,7 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
  * **Avoid when**
  * - Direction of movement matters — use CometPlot, whose tapered tail shows
  *   which way the value moved
- * - The interval is a statistical summary with quartiles — use BoxPlotH
+ * - The interval is a statistical summary with quartiles — use BoxPlot
  * - Only one value per category exists — use LollipopHChart
  * - The endpoints are times rather than numbers — use TimeLineChart
  *
@@ -81,7 +81,7 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
  *
  * @see CometPlot — the direction of movement between the two values
  *   matters
- * @see BoxPlotH — the interval is a quartile summary
+ * @see BoxPlot — the interval is a quartile summary
  * @see LollipopHChart — there is a single value per category
  */
 /* catalog:end */

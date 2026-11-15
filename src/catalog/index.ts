@@ -9,8 +9,7 @@ import {
 import AreaChart from '@/components/linear/AreaChart/meta';
 import BarChart from '@/components/linear/BarChart/meta';
 import BarChartStacked from '@/components/linear/BarChartStacked/meta';
-import BoxPlotH from '@/components/ranges/BoxPlotH/meta';
-import BoxPlotV from '@/components/ranges/BoxPlotV/meta';
+import BoxPlot from '@/components/ranges/BoxPlot/meta';
 import BulletChart from '@/components/gauges/BulletChart/meta';
 import CandlestickChart from '@/components/ranges/CandlestickChart/meta';
 import ColumnChart from '@/components/linear/ColumnChart/meta';
@@ -69,8 +68,7 @@ export const chartCatalog: ChartMeta[] = [
   TreemapChart,
   WaffleChart,
   // ranges
-  BoxPlotH,
-  BoxPlotV,
+  BoxPlot,
   CandlestickChart,
   CometPlot,
   RangePlot,

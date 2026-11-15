@@ -50,7 +50,7 @@ const meta: ChartMeta = {
   alternatives: [
     { name: 'WaffleChart', when: 'both axes are categorical or binned and density is the message' },
     { name: 'LineChart', when: 'x is time and the sequence matters' },
-    { name: 'BoxPlotV', when: 'comparing the spread of a measure across groups rather than two measures' },
+    { name: 'BoxPlot', when: 'comparing the spread of a measure across groups rather than two measures' },
     {
       name: 'ParallelCoordinatesChart',
       when: 'more than two or three numeric dimensions need comparing at once',

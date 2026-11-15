@@ -1,9 +1,30 @@
-// Shared configuration types and helpers for BoxPlotH and BoxPlotV.
+// Shared configuration types and helpers for BoxPlot and its BoxPlotH /
+// BoxPlotV wrappers.
 import { useEffect, useMemo } from 'react';
 import { AxisConfig, ValueAxisConfig } from '@/types';
 import { deepValue } from '@/utils';
 import type { BinStatsResult } from '@/utils';
 import { isDevEnvironment, warnOnceInDev } from '@/utils/devEnvironment';
+import type { OrientationEvidence } from '@/utils/orientation';
+
+/** Class names for the box-plot marks */
+export interface BoxPlotClassNames {
+  /** Q1–Q3 rect */
+  boxes?: string;
+  /** Whisker and both caps */
+  lines?: string;
+  /** Median line */
+  data?: string;
+}
+
+/**
+ * BoxPlotH / BoxPlotV's draw-in when they are given no `drawing`: today's
+ * always-on 1 s animation. BoxPlot itself defaults to `{ duration: 0 }`.
+ */
+export const WRAPPER_DRAWING = { duration: 1000, delay: 0 };
+
+/** The component the caller rendered, used in dev warnings */
+export type BoxPlotChartName = 'BoxPlot' | 'BoxPlotH' | 'BoxPlotV';
 
 /** Row fields holding the pre-computed box statistics (summary mode) */
 export interface BoxPlotStatKeys<TData = unknown> {
@@ -21,7 +42,9 @@ export interface BoxPlotStatKeys<TData = unknown> {
 export interface BoxPlotValueAxisBase<
   TData = unknown,
 > extends ValueAxisConfig<TData> {
+  /** @deprecated Use start */
   min?: number;
+  /** @deprecated Use end */
   max?: number;
   /** Class names keyed by category value */
   classNameMap?: Record<string, string>;
@@ -89,6 +112,50 @@ export const resolveValueConfig = <TData = unknown>(
   return hasStatKeys(config) ? config : null;
 };
 
+const STAT_KEY_NAMES = [
+  'minKey',
+  'maxKey',
+  'boxStart',
+  'boxEnd',
+  'midKey',
+] as const satisfies readonly (keyof BoxPlotStatKeys)[];
+
+/** Does the config name any of the five statistic keys? */
+export const hasAnyStatKey = (config: unknown): boolean =>
+  !!config &&
+  typeof config === 'object' &&
+  STAT_KEY_NAMES.some(
+    (k) => (config as Record<string, unknown>)[k] !== undefined,
+  );
+
+/**
+ * BoxPlot's evidence rule. Horizontal evidence: `x` names a statistic key or
+ * `y.bin` is set. Vertical evidence: `y` names one or `x.bin` is set. Exactly
+ * one side with evidence gives that orientation; both or neither gives null.
+ * The clause is the first that applies, in the order: stat keys on x, stat
+ * keys on y, bin on y, bin on x.
+ */
+export const boxPlotEvidence = (
+  x: unknown,
+  y: unknown,
+): OrientationEvidence | null => {
+  const statsOnX = hasAnyStatKey(x);
+  const statsOnY = hasAnyStatKey(y);
+  const binOnY = !!y && (y as { bin?: unknown }).bin != null;
+  const binOnX = !!x && (x as { bin?: unknown }).bin != null;
+  const horizontal = statsOnX || binOnY;
+  const vertical = statsOnY || binOnX;
+  if (horizontal === vertical) return null;
+  const clauses: [boolean, OrientationEvidence][] = [
+    [statsOnX, { orientation: 'horizontal', clause: 'the statistic keys are on x' }],
+    [statsOnY, { orientation: 'vertical', clause: 'the statistic keys are on y' }],
+    [binOnY, { orientation: 'horizontal', clause: 'bin is set on y' }],
+    [binOnX, { orientation: 'vertical', clause: 'bin is set on x' }],
+  ];
+  const orientation = horizontal ? 'horizontal' : 'vertical';
+  return clauses.find(([on, e]) => on && e.orientation === orientation)![1];
+};
+
 /** Maps binDataStats output to rows keyed by BINNED_STAT_KEYS */
 export const toBinnedRows = (stats: BinStatsResult[], categoryKey: string) =>
   stats.map((s) => ({
@@ -131,7 +198,7 @@ const ISSUE_MESSAGES: Record<BoxPlotConfigIssue, (detail: string) => string> = {
  * effects don't repeat it.
  */
 export const warnBoxPlotConfig = (
-  chart: 'BoxPlotH' | 'BoxPlotV',
+  chart: BoxPlotChartName,
   id: string,
   issue: BoxPlotConfigIssue,
   detail = '',
@@ -192,7 +259,7 @@ export const getBoxPlotConfigIssues = ({
  * every render).
  */
 export const useBoxPlotConfigWarnings = <TData = unknown>(
-  chart: 'BoxPlotH' | 'BoxPlotV',
+  chart: BoxPlotChartName,
   id: string,
   {
     data,
@@ -200,7 +267,13 @@ export const useBoxPlotConfigWarnings = <TData = unknown>(
     valueConfig,
     valueKey,
     timeMode = false,
+    disabled = false,
   }: {
+    /**
+     * Skip the checks, e.g. when an orientation mismatch already explains
+     * why nothing is drawn.
+     */
+    disabled?: boolean;
     data: TData[];
     categoryConfig: Pick<AxisConfig, 'bin'>;
     valueConfig: BoxPlotBinnedValueConfig<TData>;
@@ -213,14 +286,16 @@ export const useBoxPlotConfigWarnings = <TData = unknown>(
   const statKeysPresent = hasStatKeys(valueConfig);
   const issuesKey = useMemo(
     () =>
-      getBoxPlotConfigIssues({
-        data,
-        hasBin,
-        statKeysPresent,
-        valueKey,
-        timeMode,
-      }).join('|'),
-    [data, hasBin, statKeysPresent, valueKey, timeMode],
+      disabled
+        ? ''
+        : getBoxPlotConfigIssues({
+            data,
+            hasBin,
+            statKeysPresent,
+            valueKey,
+            timeMode,
+          }).join('|'),
+    [data, hasBin, statKeysPresent, valueKey, timeMode, disabled],
   );
 
   useEffect(() => {

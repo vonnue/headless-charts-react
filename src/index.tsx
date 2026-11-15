@@ -65,6 +65,13 @@ export type {
   DecisionBranch,
 } from '@/catalog/types';
 
+export { default as BoxPlot } from '@/components/ranges/BoxPlot';
+export type {
+  BoxPlotProps,
+  BoxPlotHProps,
+  BoxPlotVProps,
+  BoxPlotClassNames,
+} from '@/components/ranges/BoxPlot';
 export { default as BoxPlotH } from '@/components/ranges/BoxPlotH';
 export { default as BoxPlotV } from '@/components/ranges/BoxPlotV';
 export { default as CandlestickChart } from '@/components/ranges/CandlestickChart';

@@ -27,6 +27,7 @@ import { interruptTransitions } from '@/utils/interruptTransitions';
 import measureSvg from '@/utils/measureSvg';
 import {
   orientationMessages,
+  otherOrientation,
   resolveOrientation,
   warnOrientation,
   warnOrientationResolution,
@@ -216,10 +217,9 @@ export const BoxPlotRenderer = <TData,>(
   useEffect(() => {
     warnOrientationResolution(chartName, 'BoxPlot', id, {
       orientation,
-      source: 'pinned',
       ignoredGiven,
       mismatch: mismatchClause
-        ? { orientation, clause: mismatchClause }
+        ? { orientation: otherOrientation(orientation), clause: mismatchClause }
         : undefined,
     });
     if (!isVertical && timeRequested && !mismatch) {

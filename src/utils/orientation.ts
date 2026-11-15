@@ -109,12 +109,22 @@ export const warnOrientation = (
     `[headless-charts] ${rendered}#${id}: ${body}`,
   );
 
-/** Logs the `orientation-ignored` / `orientation-mismatch` warnings that apply. */
+/** The parts of an {@link OrientationResolution} that drive its warnings. */
+export type OrientationWarningInput = Pick<
+  OrientationResolution,
+  'orientation' | 'ignoredGiven' | 'mismatch'
+>;
+
+/**
+ * Logs the `orientation-ignored` / `orientation-mismatch` warnings that apply.
+ * Takes only the fields it reads, so a full resolution or a chart's own
+ * derived state can be passed without inventing a `source`.
+ */
 export const warnOrientationResolution = (
   rendered: string,
   unified: string,
   id: string,
-  resolution: OrientationResolution,
+  resolution: OrientationWarningInput,
 ): void => {
   if (resolution.ignoredGiven) {
     warnOrientation(

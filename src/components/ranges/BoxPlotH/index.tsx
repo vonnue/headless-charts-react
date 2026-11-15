@@ -16,12 +16,19 @@ export type BoxPlotHSummaryProps<TData = any> = BoxPlotHorizontalSummaryProps<TD
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type BoxPlotHBinnedProps<TData = any> = BoxPlotHorizontalBinnedProps<TData>;
 
+/* catalog:start */
 /**
- * A {@link BoxPlot} pinned to `orientation="horizontal"`. It accepts the same
- * props it always has, and draws in over 1 s unless `drawing` is given.
- * Permanent public API; for the other orientation use `BoxPlotV` or
- * `<BoxPlot orientation=…>`.
+ * Wrapper component: {@link BoxPlot} with `orientation="horizontal"` pinned,
+ * rendering the Horizontal box plot. Accepts the props it always has, and
+ * draws in over 1 s unless `drawing` is given.
+ *
+ * A stable public API. Prefer `<BoxPlot orientation="horizontal">` in new
+ * code. Selection guidance (use when, avoid when, examples, alternatives) is
+ * on {@link BoxPlot}.
+ *
+ * @see BoxPlot
  */
+/* catalog:end */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 const BoxPlotH = <TData = any,>(props: BoxPlotHProps<TData>) => (
   <BoxPlotRenderer<TData>

@@ -135,8 +135,12 @@ export const renderAgentsMarkdown = (
         lines.push(
           `- \`${wrapper.name}\` — \`<${chart.name} ${wrapper.pins}>\`${
             wrapper.variant ? ` (${wrapper.variant})` : ''
-          }`,
+          }${wrapper.note ? `. ${wrapper.note}` : ''}`,
         ),
+      );
+      lines.push('');
+      lines.push(
+        `Prefer \`<${chart.name}>\` with the prop set in new code; the wrappers remain a stable public API.`,
       );
       lines.push('');
     }

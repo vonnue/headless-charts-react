@@ -719,7 +719,8 @@ export const BoxPlotRenderer = <TData,>(
  * Also called: box plot, box and whisker plot, box and whisker chart, box chart, quartile plot, vertical box plot.
  *
  * Wrapper components: `BoxPlotH` (`orientation="horizontal"`), `BoxPlotV`
- * (`orientation="vertical"`).
+ * (`orientation="vertical"`). Prefer `<BoxPlot>` with the prop set in new
+ * code; the wrappers remain a stable public API.
  *
  * Answers: distribution, range. Required props: `id`, `data`, `x`, `y`.
  *

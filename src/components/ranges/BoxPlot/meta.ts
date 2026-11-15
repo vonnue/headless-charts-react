@@ -91,8 +91,17 @@ const meta: ChartMeta = {
 />`,
   storybook: 'Ranges/BoxPlot/Intro',
   wrappers: [
-    { name: 'BoxPlotH', pins: 'orientation="horizontal"', variant: 'Horizontal box plot' },
-    { name: 'BoxPlotV', pins: 'orientation="vertical"' },
+    {
+      name: 'BoxPlotH',
+      pins: 'orientation="horizontal"',
+      variant: 'Horizontal box plot',
+      note: 'Accepts the props it always has, and draws in over 1 s unless `drawing` is given.',
+    },
+    {
+      name: 'BoxPlotV',
+      pins: 'orientation="vertical"',
+      note: 'Accepts the props it always has, and draws in over 1 s unless `drawing` is given.',
+    },
   ],
   variants: [
     {

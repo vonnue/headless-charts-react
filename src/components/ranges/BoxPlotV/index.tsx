@@ -16,12 +16,19 @@ export type BoxPlotVSummaryProps<TData = any> = BoxPlotVerticalSummaryProps<TDat
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type BoxPlotVBinnedProps<TData = any> = BoxPlotVerticalBinnedProps<TData>;
 
+/* catalog:start */
 /**
- * A {@link BoxPlot} pinned to `orientation="vertical"`. It accepts the same
- * props it always has, and draws in over 1 s unless `drawing` is given.
- * Permanent public API; for the other orientation use `BoxPlotH` or
- * `<BoxPlot orientation=…>`.
+ * Wrapper component: {@link BoxPlot} with `orientation="vertical"` pinned.
+ * Accepts the props it always has, and draws in over 1 s unless `drawing` is
+ * given.
+ *
+ * A stable public API. Prefer `<BoxPlot orientation="vertical">` in new code.
+ * Selection guidance (use when, avoid when, examples, alternatives) is on
+ * {@link BoxPlot}.
+ *
+ * @see BoxPlot
  */
+/* catalog:end */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 const BoxPlotV = <TData = any,>(props: BoxPlotVProps<TData>) => (
   <BoxPlotRenderer<TData>

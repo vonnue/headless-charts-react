@@ -95,7 +95,9 @@ const buildBlock = (chart) => {
     const list = chart.wrappers
       .map((w) => `\`${w.name}\` (\`${w.pins}\`)`)
       .join(', ');
-    wrap(`Wrapper components: ${list}.`).forEach((line) => push(line));
+    wrap(
+      `Wrapper components: ${list}. Prefer \`<${chart.name}>\` with the prop set in new code; the wrappers remain a stable public API.`,
+    ).forEach((line) => push(line));
     push('');
   }
 
@@ -129,25 +131,46 @@ const buildBlock = (chart) => {
   return out.join('\n');
 };
 
+/**
+ * A short pointer for a wrapper component's file: what it pins, and where the
+ * selection guidance lives. Wrappers carry no guidance of their own.
+ */
+const buildWrapperBlock = (chart, wrapper) => {
+  const out = [START, '/**'];
+  const push = (text) => out.push(text ? ` * ${text}` : ' *');
+  wrap(
+    `Wrapper component: {@link ${chart.name}} with \`${wrapper.pins}\` pinned${
+      wrapper.variant ? `, rendering the ${wrapper.variant}` : ''
+    }.${wrapper.note ? ` ${wrapper.note}` : ''}`,
+  ).forEach((line) => push(line));
+  push('');
+  wrap(
+    `A stable public API. Prefer \`<${chart.name} ${wrapper.pins}>\` in new code. Selection guidance (use when, avoid when, examples, alternatives) is on {@link ${chart.name}}.`,
+  ).forEach((line) => push(line));
+  push('');
+  push(`@see ${chart.name}`);
+  out.push(' */');
+  out.push(END);
+  return out.join('\n');
+};
+
 /** Where each chart's implementation lives, derived from its category. */
-const componentPath = (chart) =>
-  path.join(repoRoot, 'src/components', chart.category, chart.name, 'index.tsx');
+const componentPath = (chart, name = chart.name) =>
+  path.join(repoRoot, 'src/components', chart.category, name, 'index.tsx');
 
 const stale = [];
 let rewritten = 0;
 
-for (const chart of catalog.charts) {
-  const file = componentPath(chart);
+/** Rewrites (or, with --check, compares) the generated block in one file. */
+const syncFile = (label, file, block) => {
   let source;
   try {
     source = readFileSync(file, 'utf8');
   } catch {
-    console.error(`✗ ${chart.name}: no component at ${path.relative(repoRoot, file)}`);
+    console.error(`✗ ${label}: no component at ${path.relative(repoRoot, file)}`);
     process.exitCode = 1;
-    continue;
+    return;
   }
-
-  const block = buildBlock(chart);
 
   // Anchor on the identifier that is actually default-exported rather than on
   // the chart name: a couple of components declare a local name that differs
@@ -155,21 +178,23 @@ for (const chart of catalog.charts) {
   // ColumnChartGrouped, CometPlot declares RangePlot).
   const exported = /^export default (\w+);/m.exec(source);
   if (!exported) {
-    console.error(`✗ ${chart.name}: no default export found in ${path.relative(repoRoot, file)}`);
+    console.error(`✗ ${label}: no default export found in ${path.relative(repoRoot, file)}`);
     process.exitCode = 1;
-    continue;
+    return;
   }
 
+  // The block goes above the declaration and above any `// eslint-disable-next-line`
+  // comments directly on it, so those keep applying to the declaration.
   const declaration = new RegExp(
-    `^(?:const ${exported[1]} = |function ${exported[1]}\\b)`,
+    `^(?:[ \\t]*// eslint-disable-next-line[^\\n]*\\n)*(?:const ${exported[1]} = |function ${exported[1]}\\b)`,
     'm',
   );
   if (!declaration.test(source)) {
     console.error(
-      `✗ ${chart.name}: could not find \`const ${exported[1]} = \` or \`function ${exported[1]}\` to anchor the JSDoc block`,
+      `✗ ${label}: could not find \`const ${exported[1]} = \` or \`function ${exported[1]}\` to anchor the JSDoc block`,
     );
     process.exitCode = 1;
-    continue;
+    return;
   }
 
   const existing = new RegExp(
@@ -179,14 +204,25 @@ for (const chart of catalog.charts) {
   const anchor = declaration.exec(stripped);
   const next = `${stripped.slice(0, anchor.index)}${block}\n${stripped.slice(anchor.index)}`;
 
-  if (next === source) continue;
+  if (next === source) return;
 
   if (check) {
-    stale.push(chart.name);
+    stale.push(label);
   } else {
     writeFileSync(file, next);
     rewritten += 1;
   }
+};
+
+let files = 0;
+for (const chart of catalog.charts) {
+  syncFile(chart.name, componentPath(chart), buildBlock(chart));
+  files += 1;
+  // Wrapper components live beside the unified chart, in the same category.
+  (chart.wrappers ?? []).forEach((wrapper) => {
+    syncFile(wrapper.name, componentPath(chart, wrapper.name), buildWrapperBlock(chart, wrapper));
+    files += 1;
+  });
 }
 
 if (check) {
@@ -196,9 +232,9 @@ if (check) {
     );
     process.exit(1);
   }
-  console.log(`✓ JSDoc in sync for ${catalog.charts.length} charts`);
+  console.log(`✓ JSDoc in sync for ${catalog.charts.length} charts (${files} files)`);
 } else {
   console.log(
-    `✓ Synced JSDoc for ${rewritten} of ${catalog.charts.length} charts`,
+    `✓ Synced JSDoc in ${rewritten} of ${files} files (${catalog.charts.length} charts)`,
   );
 }

@@ -156,6 +156,12 @@ export interface ChartWrapper {
   pins: string;
   /** Name of the chart-type variant it renders; omitted when it renders the default form. */
   variant?: string;
+  /**
+   * One sentence on how the wrapper differs from the unified component beyond
+   * its pins, e.g. a different default. Generated into the docs and into the
+   * wrapper file's JSDoc.
+   */
+  note?: string;
 }
 
 export interface ChartMeta {

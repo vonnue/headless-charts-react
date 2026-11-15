@@ -152,10 +152,13 @@ for (const chart of catalog.charts) {
     continue;
   }
 
-  const declaration = new RegExp(`^const ${exported[1]} = `, 'm');
+  const declaration = new RegExp(
+    `^(?:const ${exported[1]} = |function ${exported[1]}\\b)`,
+    'm',
+  );
   if (!declaration.test(source)) {
     console.error(
-      `✗ ${chart.name}: could not find \`const ${exported[1]} = \` to anchor the JSDoc block`,
+      `✗ ${chart.name}: could not find \`const ${exported[1]} = \` or \`function ${exported[1]}\` to anchor the JSDoc block`,
     );
     process.exitCode = 1;
     continue;

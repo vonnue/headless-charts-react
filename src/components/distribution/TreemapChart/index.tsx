@@ -89,6 +89,11 @@ export type NestedTreemapChartProps<TData = any> = Omit<ChartProps<TData>, 'data
 export type FlatTreemapChartProps<TData = any> = Omit<ChartProps<TData>, 'data'> &
   FlatHierarchyFields<TData> &
   TreemapSpecific;
+/**
+ * Public props. A union keyed on `levels`. Because this is a union, you cannot
+ * write `interface X extends TreemapChartProps`; use
+ * `type X = TreemapChartProps & { ... }` instead.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TreemapChartProps<TData = any> =
   | NestedTreemapChartProps<TData>
@@ -453,6 +458,7 @@ const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-esl
   );
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- generic default matches ChartProps */
 /* catalog:start */
 /**
  * Nested rectangles whose area encodes value, showing a hierarchical
@@ -505,12 +511,22 @@ const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-esl
  *   nested split
  */
 /* catalog:end */
-const TreemapChart = TreemapChartImpl as {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <TData = any>(props: NestedTreemapChartProps<TData>): ReturnType<typeof TreemapChartImpl>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <TData = any>(props: FlatTreemapChartProps<TData>): ReturnType<typeof TreemapChartImpl>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <TData = any>(props: TreemapChartImplProps<TData>): ReturnType<typeof TreemapChartImpl>;
-};
+function TreemapChart<TData = any>(
+  props: NestedTreemapChartProps<TData>
+): ReturnType<typeof TreemapChartImpl>;
+function TreemapChart<TData = any>(
+  props: FlatTreemapChartProps<TData>
+): ReturnType<typeof TreemapChartImpl>;
+function TreemapChart<TData = any>(
+  props: TreemapChartImplProps<TData>
+): ReturnType<typeof TreemapChartImpl>;
+function TreemapChart<TData = any>(
+  props:
+    | NestedTreemapChartProps<TData>
+    | FlatTreemapChartProps<TData>
+    | TreemapChartImplProps<TData>,
+) {
+  return TreemapChartImpl(props as TreemapChartImplProps<TData>);
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 export default TreemapChart;

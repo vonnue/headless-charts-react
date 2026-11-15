@@ -108,6 +108,11 @@ export type NestedSunburstChartProps<TData = any> = Omit<ChartProps<TData>, 'dat
 export type FlatSunburstChartProps<TData = any> = Omit<ChartProps<TData>, 'data' | 'zooming'> &
   Omit<FlatHierarchyFields<TData>, 'labels'> &
   SunburstSpecific<TData, 'flat'>;
+/**
+ * Public props. A union keyed on `levels`. Because this is a union, you cannot
+ * write `interface X extends SunburstChartProps`; use
+ * `type X = SunburstChartProps & { ... }` instead.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SunburstChartProps<TData = any> =
   | NestedSunburstChartProps<TData>
@@ -735,6 +740,7 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
   );
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- generic default matches ChartProps */
 /* catalog:start */
 /**
  * Concentric rings for a hierarchical part-to-whole: each depth is a ring and
@@ -779,12 +785,22 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
  * @see PieChart — a flat part-to-whole with few slices
  */
 /* catalog:end */
-const SunburstChart = SunburstChartImpl as {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <TData = any>(props: NestedSunburstChartProps<TData>): ReturnType<typeof SunburstChartImpl>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <TData = any>(props: FlatSunburstChartProps<TData>): ReturnType<typeof SunburstChartImpl>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <TData = any>(props: SunburstChartImplProps<TData>): ReturnType<typeof SunburstChartImpl>;
-};
+function SunburstChart<TData = any>(
+  props: NestedSunburstChartProps<TData>
+): ReturnType<typeof SunburstChartImpl>;
+function SunburstChart<TData = any>(
+  props: FlatSunburstChartProps<TData>
+): ReturnType<typeof SunburstChartImpl>;
+function SunburstChart<TData = any>(
+  props: SunburstChartImplProps<TData>
+): ReturnType<typeof SunburstChartImpl>;
+function SunburstChart<TData = any>(
+  props:
+    | NestedSunburstChartProps<TData>
+    | FlatSunburstChartProps<TData>
+    | SunburstChartImplProps<TData>,
+) {
+  return SunburstChartImpl(props as SunburstChartImplProps<TData>);
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 export default SunburstChart;

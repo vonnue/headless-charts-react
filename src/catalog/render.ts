@@ -1,4 +1,10 @@
-import { ChartMeta, DecisionBranch, isNamedChartType } from './types';
+import { ChartMeta, ChartWrapper, DecisionBranch, isNamedChartType } from './types';
+
+/** How a wrapper component maps onto its chart, e.g. `<BoxPlot orientation="horizontal">`. */
+const wrapperConfig = (chart: ChartMeta, wrapper: ChartWrapper): string =>
+  `Wrapper component: same as \`<${chart.name} ${wrapper.pins}>\`${
+    wrapper.variant ? ` (${wrapper.variant})` : ''
+  }`;
 
 /**
  * Projects the catalog into the two generated artefacts: `AGENTS.md` at the repo
@@ -75,6 +81,13 @@ export const renderAgentsMarkdown = (
         config: variant.how,
       });
     });
+    (chart.wrappers ?? []).forEach((wrapper) => {
+      rows.push({
+        asked: wrapper.name,
+        render: `[\`${chart.name}\`](#${chart.name.toLowerCase()})`,
+        config: wrapperConfig(chart, wrapper),
+      });
+    });
   });
 
   rows
@@ -113,6 +126,18 @@ export const renderAgentsMarkdown = (
     lines.push('');
     if (chart.aliases.length) {
       lines.push(`**Also called:** ${chart.aliases.join(', ')}`);
+      lines.push('');
+    }
+    if (chart.wrappers?.length) {
+      lines.push('**Wrapper components** (exported; same chart with props pinned)');
+      lines.push('');
+      chart.wrappers.forEach((wrapper) =>
+        lines.push(
+          `- \`${wrapper.name}\` — \`<${chart.name} ${wrapper.pins}>\`${
+            wrapper.variant ? ` (${wrapper.variant})` : ''
+          }`,
+        ),
+      );
       lines.push('');
     }
 

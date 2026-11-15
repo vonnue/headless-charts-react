@@ -1,6 +1,13 @@
 // Standardized Axis Configuration Types
 
 /**
+ * Which way a chart's marks run. `x` is always the horizontal axis and `y`
+ * the vertical one: `'vertical'` puts the categories on `x` (marks run
+ * up/down), `'horizontal'` puts them on `y` (marks run left/right).
+ */
+export type ChartOrientation = 'vertical' | 'horizontal';
+
+/**
  * Flexible axis configuration that works for both categorical and continuous data
  */
 export interface AxisConfig<TData = any> {

@@ -26,20 +26,28 @@ export { default as useTooltip } from '@/hooks/useTooltip';
 export type { UseTooltipResult, TooltipSelection } from '@/hooks/useTooltip';
 
 // Types
-export type { AxisConfig, SeriesAxisConfig, TooltipConfig, ChartProps, GaugeProps } from '@/types';
+export type {
+  AxisConfig,
+  SeriesAxisConfig,
+  TooltipConfig,
+  ChartProps,
+  GaugeProps,
+  ChartOrientation,
+} from '@/types';
 
 // Catalog — machine-readable guidance on which chart suits which question.
 // See AGENTS.md for the generated decision table.
 export {
   chartCatalog,
   chartTypeIndex,
+  chartWrapperIndex,
   getChartMeta,
   getChartsByIntent,
   resolveChartRequest,
   decisionTree,
   globalRules,
 } from '@/catalog';
-export type { ChartTypeEntry } from '@/catalog';
+export type { ChartTypeEntry, ChartWrapperEntry } from '@/catalog';
 export { isNamedChartType } from '@/catalog/types';
 export type {
   ChartMeta,
@@ -49,6 +57,7 @@ export type {
   ChartEncoding,
   ChartAlternative,
   ChartVariant,
+  ChartWrapper,
   NamedChartType,
   ChartOption,
   Cardinality,

@@ -91,6 +91,14 @@ const buildBlock = (chart) => {
     push('');
   }
 
+  if (chart.wrappers?.length) {
+    const list = chart.wrappers
+      .map((w) => `\`${w.name}\` (\`${w.pins}\`)`)
+      .join(', ');
+    wrap(`Wrapper components: ${list}.`).forEach((line) => push(line));
+    push('');
+  }
+
   push(
     `Answers: ${chart.intents.join(', ')}. Required props: ${chart.requiredProps
       .map((p) => `\`${p}\``)

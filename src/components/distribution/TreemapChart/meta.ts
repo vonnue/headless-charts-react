@@ -8,20 +8,27 @@ const meta: ChartMeta = {
     'Nested rectangles whose area encodes value, showing a hierarchical part-to-whole with groups as labelled blocks.',
   intents: ['composition'],
   data: {
-    form: 'hierarchy',
+    form: ['hierarchy', 'records'],
     encodings: [
       {
         prop: 'data',
         role: 'link',
         required: true,
         description:
-          'One nested root object or a forest (array of roots). Children nest under `children.key` (default `"children"`); there is no flat id/parent mode.',
+          'Either one nested root object or a forest (children under `children.key`, default `"children"`), or flat rows grouped by `levels` (category keys, outer to inner) with `value.key` summed per group.',
       },
       {
         prop: 'children',
         role: 'link',
         required: false,
-        description: 'Optional override for the nested-children key. Default `{ key: "children" }`.',
+        description: 'Optional override for the nested-children key. Default `{ key: "children" }`. Ignored when `levels` is set.',
+      },
+      {
+        prop: 'levels',
+        role: 'category',
+        required: false,
+        description:
+          'Flat mode: outer-to-inner category keys. Rows sharing a path are summed; rows with a missing category are grouped under `(missing)`.',
       },
       {
         prop: 'value',
@@ -54,6 +61,7 @@ const meta: ChartMeta = {
     'A whole splits into nested groups and both the group totals and their parts matter',
     'There are too many parts for a pie, and the hierarchy is what explains them',
     'Leaf areas should be comparable at a glance — set `leavesOnly` if group headers are noise',
+    'The data is a flat table with category columns and one measure',
   ],
   avoidWhen: [
     'A flat whole with about 6 or fewer parts — use PieChart',
@@ -96,6 +104,11 @@ const meta: ChartMeta = {
       kind: 'option',
       name: 'Percent labels',
       how: 'Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`; a zero or missing divisor prints `n/a`.',
+    },
+    {
+      kind: 'option',
+      name: 'Flat rows (`levels`)',
+      how: 'Set `levels` to the category keys, outer to inner (e.g. `["region", "country", "city"]`), and pass an array of rows; `value.key` is summed per path.',
     },
   ],
 };

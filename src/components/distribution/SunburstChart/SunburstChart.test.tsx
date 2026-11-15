@@ -1357,7 +1357,7 @@ describe('SunburstChart', () => {
     );
   });
 
-  it('32: catalog — sunburst, sunburst chart, sunburst diagram, radial treemap and multi-level pie chart resolve to SunburstChart; sunburst-style profile still resolves to PizzaChart; ring chart still resolves to the PieChart donut; category is distribution, data.form is hierarchy, and composition is the primary intent on that branch', () => {
+  it('32: catalog — sunburst, sunburst chart, sunburst diagram, radial treemap and multi-level pie chart resolve to SunburstChart; sunburst-style profile still resolves to PizzaChart; ring chart still resolves to the PieChart donut; category is distribution, data.form is hierarchy+records, and composition is the primary intent on that branch', () => {
     for (const alias of [
       'sunburst',
       'sunburst chart',
@@ -1374,13 +1374,95 @@ describe('SunburstChart', () => {
 
     const meta = resolveChartRequest('SunburstChart')?.chart;
     expect(meta?.category).toBe('distribution');
-    expect(meta?.data.form).toBe('hierarchy');
+    expect(meta?.data.form).toEqual(['hierarchy', 'records']);
     expect(meta?.intents[0]).toBe('composition');
 
     const composition = decisionTree.find((b) => b.intent === 'composition');
     expect(composition?.options.some((o) => o.name === 'SunburstChart')).toBe(true);
   });
 });
+
+
+  it('17: tooltip on a flat leaf shows the path and summed value, never NaN', () => {
+    const rows = [
+      { region: 'EU', country: 'France', city: 'Paris', revenue: 10 },
+      { region: 'EU', country: 'France', city: 'Paris', revenue: 30 },
+      { region: 'EU', country: 'France', city: 'Lyon', revenue: 20 },
+      { region: 'US', country: 'USA', city: 'Austin', revenue: 15 },
+    ];
+    render(
+      <SunburstChart
+        id='s-flat-tip'
+        data={rows}
+        levels={['region', 'country', 'city']}
+        value={{ key: 'revenue' }}
+        style={STYLE}
+        arc={NO_PAD}
+        tooltip={{}}
+      />
+    );
+    fireEvent.mouseEnter(hitByPath('EU/France/Paris')!, { clientX: 20, clientY: 20 });
+    const html = tooltipHtml('s-flat-tip');
+    expect(html).toContain('EU › France › Paris');
+    expect(html).toContain('40');
+    expect(html).not.toMatch(/NaN|Infinity/);
+  });
+
+  it('18: 3-level flat fixture renders the expected leaf count and total', () => {
+    const rows = [
+      { region: 'EU', country: 'France', city: 'Paris', revenue: 40 },
+      { region: 'EU', country: 'France', city: 'Lyon', revenue: 20 },
+      { region: 'EU', country: 'Germany', city: 'Berlin', revenue: 30 },
+      { region: 'US', country: 'USA', city: 'New York', revenue: 50 },
+      { region: 'US', country: 'USA', city: 'Austin', revenue: 15 },
+    ];
+    const values: number[] = [];
+    render(
+      <SunburstChart
+        id='s-flat-smoke'
+        data={rows}
+        levels={['region', 'country', 'city']}
+        value={{ key: 'revenue' }}
+        style={STYLE}
+        arc={NO_PAD}
+        tooltip={{
+          html: (d) => {
+            const datum = d as HierarchyDatum;
+            if (datum.path.length === 3) values.push(datum.value);
+            return String(datum.value);
+          },
+        }}
+      />
+    );
+    const leafArcs = arcsOf().filter((a) => a.getAttribute('data-depth') === '3');
+    expect(leafArcs).toHaveLength(5);
+    const paths = leafArcs.map((a) => a.getAttribute('data-path')).sort();
+    expect(paths).toEqual([
+      'EU/France/Lyon',
+      'EU/France/Paris',
+      'EU/Germany/Berlin',
+      'US/USA/Austin',
+      'US/USA/New York',
+    ]);
+    for (const arc of leafArcs) {
+      fireEvent.mouseEnter(hitByPath(arc.getAttribute('data-path')!)!, {
+        clientX: 20,
+        clientY: 20,
+      });
+    }
+    expect(values.reduce((s, v) => s + v, 0)).toBe(155);
+  });
+
+  it('19: catalog lists the records form and the levels prop; no-flat-mode wording is gone', () => {
+    const meta = resolveChartRequest('SunburstChart')?.chart;
+    expect(meta?.data.form).toEqual(['hierarchy', 'records']);
+    const levels = meta?.data.encodings.find((e) => e.prop === 'levels');
+    expect(levels?.description).toMatch(/\(missing\)/);
+    expect(JSON.stringify(meta)).not.toMatch(/no flat id\/parent/i);
+    expect(JSON.stringify(meta)).not.toMatch(/there is no flat/i);
+    expect(meta?.useWhen.some((w) => /flat table/i.test(w))).toBe(true);
+    expect(meta?.variants?.some((v) => v.name.includes('levels'))).toBe(true);
+  });
 
 describe('SunburstChart drawing cleanup (#13)', () => {
   it('interrupts running transitions on unmount, with no error', () => {

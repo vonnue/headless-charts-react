@@ -79,17 +79,22 @@ export interface Cardinality {
   note?: string;
 }
 
+export type DataForm = 'records' | 'scalar' | 'graph' | 'hierarchy';
+
 export interface ChartDataSpec {
   /**
-   * Shape of the value passed to `data`:
+   * Shape of the value passed to `data`. A chart that accepts more than one
+   * shape lists them as an array (e.g. TreemapChart and SunburstChart are
+   * `['hierarchy', 'records']`).
    * - `records` — an array of objects, one per row
    * - `scalar`  — a single number (gauges)
    * - `graph`   — nodes plus edges (passed as separate props)
    * - `hierarchy` — one nested root object, or a forest, with children under
-   *   a children key (default `"children"`). Flat id/parent tables are not
-   *   accepted; use for TreemapChart and the future SunburstChart.
+   *   a children key (default `"children"`). Parent/id (adjacency) input is
+   *   not supported. Combined with `records` when the chart also accepts
+   *   flat rows grouped by `levels`.
    */
-  form: 'records' | 'scalar' | 'graph' | 'hierarchy';
+  form: DataForm | DataForm[];
   encodings: ChartEncoding[];
   /** How many series/measures the chart can carry at once. */
   seriesCount?: Cardinality;

@@ -26,6 +26,7 @@ import {
   colorKey,
   defaultHierarchyTooltipHtml,
   formatPercent,
+  hierarchyIssueMessage,
   isSyntheticRoot,
   labelOption,
   percentOf,
@@ -112,6 +113,7 @@ const tileFn = (type: TreemapTileType | undefined, ratio: number | undefined) =>
  *   them
  * - Leaf areas should be comparable at a glance — set `leavesOnly` if group
  *   headers are noise
+ * - The data is a flat table with category columns and one measure
  *
  * **Avoid when**
  * - A flat whole with about 6 or fewer parts — use PieChart
@@ -154,6 +156,7 @@ const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/
   id,
   className,
   children,
+  levels,
   value,
   name,
   sort = true,
@@ -201,6 +204,13 @@ const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/
       nameKey,
       sort,
       maxDepth,
+      levels,
+      childrenSpecified: children !== undefined,
+      onIssue: (issue) =>
+        warnOnceInDev(
+          `TreemapChart#${id}:${issue.issue}`,
+          `TreemapChart#${id}: ${hierarchyIssueMessage(issue)}`
+        ),
     });
     if (!built) return;
     if (built.invalidLeaf)
@@ -415,6 +425,7 @@ const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/
     data,
     id,
     children,
+    levels,
     value,
     name,
     sort,

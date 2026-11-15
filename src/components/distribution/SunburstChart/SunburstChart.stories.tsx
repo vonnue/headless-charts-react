@@ -72,3 +72,28 @@ export const Empty = meta.story({
     data: [],
   },
 });
+
+const flatRows = [
+  { region: 'EU', country: 'France', city: 'Paris', revenue: 40 },
+  { region: 'EU', country: 'France', city: 'Lyon', revenue: 20 },
+  { region: 'EU', country: 'Germany', city: 'Berlin', revenue: 30 },
+  { region: 'US', country: 'USA', city: 'New York', revenue: 50 },
+  { region: 'US', country: 'USA', city: 'Austin', revenue: 15 },
+];
+
+/** Flat rows: `levels` groups category columns from outer to inner. */
+export const FlatRows = meta.story({
+  args: {
+    id: 'sunburst-flat-rows',
+    className: highlightClass,
+    data: flatRows,
+    levels: ['region', 'country', 'city'],
+    value: { key: 'revenue', className: 'fill-slate-300 stroke-white' },
+    classNameMap: {
+      EU: 'fill-sky-400 stroke-white',
+      US: 'fill-amber-300 stroke-white',
+    },
+    labels: { name: true },
+    tooltip: { className: 'bg-white text-xs p-2 shadow' },
+  },
+});

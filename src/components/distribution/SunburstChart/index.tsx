@@ -20,6 +20,7 @@ import {
   colorKey,
   defaultHierarchyTooltipHtml,
   formatPercent,
+  hierarchyIssueMessage,
   isSyntheticRoot,
   labelOption,
   percentOf,
@@ -133,6 +134,7 @@ const fitText = (text: string, px: number): string => {
  * - There are too many parts for a pie, and the nesting itself is what
  *   explains them
  * - Readers should drill down into deeper levels — set `zoom`
+ * - The data is a flat table with category columns and one measure
  *
  * **Avoid when**
  * - Sizes of many leaves must be compared precisely — use TreemapChart; area
@@ -167,6 +169,7 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
   id,
   className,
   children,
+  levels,
   value,
   name,
   sort = true,
@@ -232,6 +235,13 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
       nameKey,
       sort,
       maxDepth,
+      levels,
+      childrenSpecified: children !== undefined,
+      onIssue: (issue) =>
+        warnOnceInDev(
+          `SunburstChart#${id}:${issue.issue}`,
+          `SunburstChart#${id}: ${hierarchyIssueMessage(issue)}`
+        ),
     });
     if (!built) {
       if (focusPath.current !== null) {
@@ -667,6 +677,7 @@ const SunburstChart = <TData = any,>({ // eslint-disable-line @typescript-eslint
     data,
     id,
     children,
+    levels,
     value,
     name,
     sort,

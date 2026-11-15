@@ -8,8 +8,15 @@ const meta: ChartMeta = {
     'Concentric rings for a hierarchical part-to-whole: each depth is a ring and each node’s angle encodes its value, from the root at the centre to the leaves.',
   intents: ['composition'],
   data: {
-    form: 'hierarchy',
+    form: ['hierarchy', 'records'],
     encodings: [
+      {
+        prop: 'data',
+        role: 'link',
+        required: true,
+        description:
+          'Either one nested root object or a forest (children under `children.key`, default `"children"`), or flat rows grouped by `levels` (category keys, outer to inner) with `value.key` summed per group.',
+      },
       {
         prop: 'value',
         role: 'quantitative',
@@ -21,7 +28,14 @@ const meta: ChartMeta = {
         prop: 'children',
         role: 'link',
         required: false,
-        description: 'Nested children key (default `"children"`). `data` is one root object or a forest.',
+        description: 'Nested children key (default `"children"`). Ignored when `levels` is set.',
+      },
+      {
+        prop: 'levels',
+        role: 'category',
+        required: false,
+        description:
+          'Flat mode: outer-to-inner category keys. Rows sharing a path are summed; rows with a missing category are grouped under `(missing)`.',
       },
       {
         prop: 'classNameMap',
@@ -36,6 +50,7 @@ const meta: ChartMeta = {
     'A hierarchical part-to-whole with 2–4 levels, where the path from the centre outward is the story',
     'There are too many parts for a pie, and the nesting itself is what explains them',
     'Readers should drill down into deeper levels — set `zoom`',
+    'The data is a flat table with category columns and one measure',
   ],
   avoidWhen: [
     'Sizes of many leaves must be compared precisely — use TreemapChart; area reads better than angle',
@@ -61,6 +76,11 @@ const meta: ChartMeta = {
     { kind: 'option', name: 'Click-to-zoom', how: 'Set `zoom` (or `zoom={{ onChange }}`) to drill into an arc; click the centre (or the donut hole) or press Escape to zoom out.' },
     { kind: 'option', name: 'Visible rings', how: 'Set `rings` to show that many levels below the focus; deeper levels still exist and appear when zoomed. This is not `maxDepth`, which rolls deeper mass into an ancestor.' },
     { kind: 'option', name: 'Percent labels', how: 'Set `labels.percent` to `"ofParent"`, `"ofRoot"` or `"both"`.' },
+    {
+      kind: 'option',
+      name: 'Flat rows (`levels`)',
+      how: 'Set `levels` to the category keys, outer to inner (e.g. `["region", "country", "city"]`), and pass an array of rows; `value.key` is summed per path.',
+    },
   ],
 };
 

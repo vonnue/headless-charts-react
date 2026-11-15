@@ -961,7 +961,7 @@
             5
           ],
           "max": 8,
-          "note": "Beyond ~8 lines the chart becomes a hairball; facet instead."
+          "note": "Beyond ~8 lines the chart becomes a hairball; use SparklineChart instead."
         },
         "rowCount": {
           "min": 2,
@@ -1000,6 +1000,10 @@
         {
           "name": "ScatterPlot",
           "when": "the x axis is a measure rather than time, and points should not be joined"
+        },
+        {
+          "name": "SparklineChart",
+          "when": "more than ~8 series would overplot; one comparable row per series"
         }
       ],
       "requiredProps": [

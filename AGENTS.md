@@ -844,7 +844,7 @@ Plots one or more numeric series against a shared ordered or time axis to show h
 **Data**
 
 - `data` shape: records
-- Series: ideal 1–5, min 1, max 8 — Beyond ~8 lines the chart becomes a hairball; facet instead.
+- Series: ideal 1–5, min 1, max 8 — Beyond ~8 lines the chart becomes a hairball; use SparklineChart instead.
 - Rows: ideal 5–200, min 2, max 1000
 
 | Prop | Role | Required | Notes |
@@ -1001,6 +1001,7 @@ A line chart whose x axis parses real dates rather than treating the key as a pl
 - [`ColumnChart`](#columnchart) — few discrete periods, individual values matter more than the trend
 - [`TimeLineChart`](#timelinechart) — plotting events and durations rather than a continuous measure
 - [`ScatterPlot`](#scatterplot) — the x axis is a measure rather than time, and points should not be joined
+- [`SparklineChart`](#sparklinechart) — more than ~8 series would overplot; one comparable row per series
 
 ### LollipopHChart
 

@@ -918,9 +918,12 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
       .attr('fill', 'transparent')
       .attr('pointer-events', 'all')
       .on('mousedown', (event: MouseEvent) => {
-        if (event.button !== 0 || gesture || spans.size === 0) return;
-        spans.clear();
+        if (event.button !== 0 || gesture) return;
+        // Drop persisted brushes even when none is drawn (e.g. one whose
+        // categories are missing from the current data), so they can't return later.
         brushStates.current.clear();
+        if (spans.size === 0) return;
+        spans.clear();
         // Programmatic moves carry no sourceEvent, so the handlers above ignore them.
         brushes.forEach(({ g, behaviour }) => g.call(behaviour.move, null));
         applyFilter();

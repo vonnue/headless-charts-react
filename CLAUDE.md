@@ -85,8 +85,10 @@ review and update the catalog; they never commit or push.
    `yarn tsc --noEmit && yarn lint && yarn test:hooks && yarn test:unit && yarn docs:check && yarn vite build`
 
    Use `yarn test:unit` (or `vitest run --project unit`) for jsdom unit tests.
-   A bare `yarn vitest run` would also start the Playwright `storybook` project;
-   run that explicitly with `yarn test:storybook`.
+   For targeted runs, pass paths to it: `yarn test:unit src/components/<path>`.
+   A bare `yarn vitest run` (even with a path filter) also starts the Playwright
+   `storybook` project and fails if Chromium isn't installed; run that project
+   explicitly with `yarn test:storybook`.
 
 Existing lint debt lives in `eslint-suppressions.json`. If you fix suppressed
 violations, run `yarn lint:prune` and commit the smaller file. Never run

@@ -1,3 +1,4 @@
+import { expect, userEvent, waitFor } from 'storybook/test';
 import preview from '../../../../.storybook/preview';
 import BarChart from '.';
 import data from './sample.json';
@@ -31,6 +32,23 @@ export const Tooltip = meta.story({
     ],
     y: { key: 'year' },
     tooltip: {},
+  },
+  // First-batch interaction test: jsdom unit tests can fire mouseenter, but
+  // this runs the same hover in a real Chromium via @storybook/addon-vitest.
+  play: async ({ canvasElement }) => {
+    const chartId = 'tooltip-default';
+    const bar = await waitFor(() => {
+      const el = canvasElement.querySelector(`#${chartId} .marks rect`);
+      if (!el) throw new Error(`no bar mark in #${chartId}`);
+      return el;
+    });
+    await userEvent.hover(bar);
+    await waitFor(() => {
+      const tip = document.getElementById(`tooltip-${chartId}`);
+      expect(tip).toBeTruthy();
+      expect(tip?.className).toContain('opacity-100');
+      expect(tip?.innerHTML.length).toBeGreaterThan(0);
+    });
   },
 });
 

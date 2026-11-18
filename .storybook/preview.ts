@@ -1,5 +1,6 @@
 import addonDocs from '@storybook/addon-docs';
 import addonLinks from '@storybook/addon-links';
+import addonVitest from '@storybook/addon-vitest';
 import { definePreview } from '@storybook/react-vite';
 import '../src/index.css';
 import './styles.css';
@@ -41,5 +42,5 @@ export default definePreview({
     },
   },
 
-  addons: [addonLinks(), addonDocs()],
+  addons: [addonLinks(), addonDocs(), addonVitest()],
 });

@@ -1,3 +1,4 @@
+import { expect, userEvent, waitFor } from 'storybook/test';
 import preview from '../../../../.storybook/preview';
 import ScatterPlot from '.';
 import data from './sample.json';
@@ -28,6 +29,22 @@ export const Default = meta.story({
       key: 'purchasing_power',
     },
     tooltip: {},
+  },
+  // First-batch interaction test: hover a point in Chromium and assert the tooltip.
+  play: async ({ canvasElement }) => {
+    const chartId = 'scatterplot-tooltip';
+    const point = await waitFor(() => {
+      const el = canvasElement.querySelector(`#${chartId} path[transform]`);
+      if (!el) throw new Error(`no point mark in #${chartId}`);
+      return el;
+    });
+    await userEvent.hover(point);
+    await waitFor(() => {
+      const tip = document.getElementById(`tooltip-${chartId}`);
+      expect(tip).toBeTruthy();
+      expect(tip?.className).toContain('opacity-100');
+      expect(tip?.innerHTML.length).toBeGreaterThan(0);
+    });
   },
 });
 

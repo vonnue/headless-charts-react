@@ -32,6 +32,28 @@ jobs:
       - run: yarn tsc --noEmit
       - run: yarn lint
       - run: yarn test:hooks
-      - run: yarn vitest run
+      - run: yarn test:unit
       - run: yarn docs:check
       - run: yarn vite build
+
+  storybook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: ~/.yarn/berry/cache
+          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: yarn-${{ runner.os }}-
+      - run: yarn install --immutable
+      # Real-browser story tests (Playwright Chromium). Optional SB_URL points
+      # failing-test links at a published Storybook; unset, they use localhost.
+      - run: yarn playwright install --with-deps chromium
+      - run: yarn test:storybook
+        env:
+          SB_URL: ${{ vars.SB_URL }}

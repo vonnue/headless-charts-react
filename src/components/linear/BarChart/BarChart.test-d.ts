@@ -6,6 +6,7 @@ import { assertType, describe, expectTypeOf, test } from 'vitest';
 import type { ComponentProps } from 'react';
 
 import type {
+  BarStacking,
   BarAxisConfig,
   BarCategoryConfig,
   BarChart,
@@ -95,5 +96,17 @@ describe('27: BarChart types', () => {
     expectTypeOf<BarCategoryConfig>().toMatchTypeOf<{ padding?: number }>();
     expectTypeOf<BarReferenceLine>().toMatchTypeOf<{ x?: number; y?: number; className?: string }>();
     expectTypeOf<BarDataLabel<{ v: number }>>().toMatchTypeOf<{ className?: string; text?: (row: { v: number }, series: BarSeriesConfig<{ v: number }>) => string }>();
+  });
+});
+
+describe('BarStacking (#41 test 22)', () => {
+  test('negative is required for diverging and rejected on the other types', () => {
+    assertType<BarStacking>({ type: 'diverging', negative: ['a'] });
+    // @ts-expect-error negative is required
+    assertType<BarStacking>({ type: 'diverging' });
+    // @ts-expect-error negative only exists on diverging
+    assertType<BarStacking>({ type: 'normal', negative: ['a'] });
+    // @ts-expect-error negative only exists on diverging
+    assertType<BarStacking>({ type: '100%', negative: ['a'] });
   });
 });

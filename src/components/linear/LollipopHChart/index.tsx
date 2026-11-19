@@ -1,269 +1,34 @@
-import { useCallback, useEffect } from 'react';
-import { max, min } from 'd3-array';
-import { select } from 'd3-selection';
-import { scaleLinear, scalePoint } from 'd3-scale';
 import {
-  symbol,
-  symbolCircle,
-  symbolCross,
-  symbolDiamond,
-  symbolSquare,
-  symbolStar,
-  symbolTriangle,
-  symbolWye,
-} from 'd3-shape';
+  LollipopRenderer,
+  type LollipopHChartProps,
+} from '../LollipopChart';
 
-import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { defaultChartClassNames } from '@/utils';
-import { interruptTransitions } from '@/utils/interruptTransitions';
-import { transition } from 'd3-transition';
-import { twMerge } from 'tailwind-merge';
-import useTooltip from '@/hooks/useTooltip';
-import { drawAxis } from '@/hooks/useAxis';
+import { WRAPPER_DRAWING } from '../lollipopConfig';
 
-export interface LollipopChartClassNames {
-  points?: string;
-  lines?: string;
-  symbols?: string;
-}
+export type { LollipopChartClassNames, LollipopHChartProps, LollipopShape } from '../LollipopChart';
 
-export interface LollipopHChartProps<TData = any> extends ChartProps<TData> {
-  data: TData[];
-  classNames?: LollipopChartClassNames;
-  tooltip?: TooltipConfig;
-  shape?:
-    | 'circle'
-    | 'diamond'
-    | 'triangle'
-    | 'square'
-    | 'cross'
-    | 'star'
-    | 'wye';
-  x?: AxisConfig<TData>;
-  y?: AxisConfig<TData>;
-}
 
 /* catalog:start */
 /**
- * Horizontal stems ending in a symbol, marking one value per category with far
- * less ink than a bar.
+ * Wrapper component: {@link LollipopChart} with `orientation="horizontal"`
+ * pinned, rendering the Horizontal lollipop chart. Accepts the props it always
+ * has, and draws in over 1 s unless `drawing` is given.
  *
- * @remarks
+ * A stable public API. Prefer `<LollipopChart orientation="horizontal">` in
+ * new code. Selection guidance (use when, avoid when, examples, alternatives)
+ * is on {@link LollipopChart}.
  *
- * **Use when**
- * - There are many categories and a wall of bars would look heavy
- * - The exact value point matters more than the magnitude-as-area a bar
- *   implies
- * - Category labels are long enough to need horizontal orientation
- * - Values are clustered in a narrow band where bar lengths would look
- *   nearly identical
- *
- * **Avoid when**
- * - Several measures need comparing per category — a lollipop carries one
- *   value; use BarChart
- * - The magnitude should read as accumulated quantity — bars encode that
- *   better
- * - The axis is time — use LineChart
- * - A vertical layout is wanted — use LollipopVChart
- *
- * Also called: horizontal lollipop chart, lollipop chart, stem plot.
- *
- * Answers: comparison, ranking. Required props: `id`, `data`, `x`, `y`.
- *
- * @example
- * ```tsx
- * <LollipopHChart
- *   id="scores-by-team"
- *   className="w-full h-64"
- *   data={data}
- *   y={{ key: 'name' }}
- *   x={{ key: 'value', start: 0 }}
- * />
- * ```
- *
- * @see BarChart — multiple measures per category, or magnitude should
- *   read as area
- * @see LollipopVChart — a vertical layout fits the space better
- * @see RangePlot — each category has an interval rather than a single
- *   value
+ * @see LollipopChart
  */
 /* catalog:end */
-const LollipopHChart = <TData = any,>({
-  data = [],
-  id,
-  className,
-  classNames,
-  margin = {
-    left: 80,
-    right: 40,
-    top: 40,
-    bottom: 40,
-  },
-  padding = {
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-  tooltip = undefined,
-  shape = 'circle',
-  x = { key: 'x', axis: { location: 'bottom', ticks: 2 } },
-  y = { key: 'y', axis: { location: 'left' } },
-  style = {},
-}: LollipopHChartProps<TData>) => {
-  const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
-    id,
-    tooltip,
-    defaultHtml: (d: any) => `${d[y.key]}: ${d[x.key]}`,
-  });
-
-  const refreshChart = useCallback(() => {
-    const svg = select(`#${id}`);
-
-    // Clear svg
-
-    svg.selectAll('*').remove();
-
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
-
-    data.sort((a: any, b: any) => b[x.key] - a[x.key]);
-
-    const shapeMapping = {
-      circle: symbolCircle,
-      diamond: symbolDiamond,
-      triangle: symbolTriangle,
-      square: symbolSquare,
-      cross: symbolCross,
-      star: symbolStar,
-      wye: symbolWye,
-    };
-
-    const xFn = scaleLinear()
-      .domain([
-        Number.isFinite(x.start) ? x.start : min(data, (d: any) => d[x.key]),
-        Number.isFinite(x.end) ? x.end : max(data, (d: any) => d[x.key]),
-      ])
-      .range([
-        (margin.left || 0) + (padding.left || 0),
-        width - (padding.right || 0) - (margin.right || 0),
-      ]);
-
-    const yFn = scalePoint()
-      .domain(data.map((d: any) => d[y.key]))
-      .range([
-        (margin.top || 0) + (padding.top || 0),
-        height - (margin.bottom || 0) - (padding.bottom || 0),
-      ])
-      .padding(0.5);
-
-    const g = svg.append('g');
-
-    // Draw x-axis using shared utility
-    drawAxis({
-      g,
-      scale: xFn,
-      config: x,
-      dimensions: { width, height },
-      margin,
-      padding,
-      orientation: 'horizontal',
-    });
-
-    // Draw y-axis using shared utility
-    drawAxis({
-      g,
-      scale: yFn,
-      config: y,
-      dimensions: { width, height },
-      margin,
-      padding,
-      orientation: 'vertical',
-    });
-
-    const dataGroup = g.append('g');
-
-    const drawLinesAndCircles = () => {
-      const pointGroup = dataGroup
-        .selectAll('.line')
-        .data(data)
-        .enter()
-        .append('g')
-        .on('mouseenter', onMouseOver)
-        .on('mousemove', onMouseMove)
-        .on('mouseleave', onMouseLeave);
-
-      transition();
-
-      pointGroup
-        .append('line')
-        .attr(
-          'class',
-          twMerge(
-            'stroke-2 stroke-current',
-            classNames?.points,
-            classNames?.lines
-          )
-        )
-        .attr('x1', (margin.left || 0) + (padding.left || 0))
-        .attr('y1', (d: any) => yFn(d[y.key]) || 0)
-        .attr('x2', margin.left || 0)
-        .attr('y2', (d: any) => yFn(d[y.key]) || 0)
-        .transition()
-        .duration(1000)
-        .attr('x2', (d: any) => xFn(d[x.key]));
-
-      pointGroup
-        .append('path')
-        .attr('class', twMerge(classNames?.points, classNames?.symbols))
-        .attr('d', () => symbol(shapeMapping[shape], 100)())
-        .attr(
-          'transform',
-          (d: any) =>
-            `translate(${(margin.left || 0) + (padding.left || 0)},${yFn(
-              d[y.key]
-            )})`
-        )
-        .transition()
-        .duration(1000)
-        .attr(
-          'transform',
-          (d: any) => `translate(${xFn(d[x.key])},${yFn(d[y.key])} )`
-        );
-    };
-
-    drawLinesAndCircles();
-  }, [
-    classNames,
-    data,
-    id,
-    margin,
-    padding,
-    shape,
-    x,
-    y,
-    onMouseOver,
-    onMouseMove,
-    onMouseLeave,
-  ]);
-
-  useEffect(() => {
-    refreshChart();
-    // Hold the node: on unmount the cleanup runs after the svg has left the
-    // document, so a lookup by id would find nothing to interrupt.
-    const svg = select(`#${id}`).node();
-    return () => {
-      interruptTransitions(svg);
-    };
-  }, [data, refreshChart, id]);
-  return (
-    <svg
-      id={id}
-      style={style}
-      className={twMerge(defaultChartClassNames, className)}
-      data-testid='lollipop-h-chart'
-    />
-  );
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
+const LollipopHChart = <TData = any,>(props: LollipopHChartProps<TData>) => (
+  <LollipopRenderer<TData>
+    {...props}
+    drawing={props.drawing ?? WRAPPER_DRAWING}
+    chartName='LollipopHChart'
+    pinned='horizontal'
+  />
+);
 
 export default LollipopHChart;

@@ -9,6 +9,14 @@ export { default as ColumnChart } from '@/components/linear/ColumnChart';
 export { default as ColumnChartStacked } from '@/components/linear/ColumnChartStacked';
 export { default as BarChart } from '@/components/linear/BarChart';
 export { default as BarChartStacked } from '@/components/linear/BarChartStacked';
+export { default as LollipopChart } from '@/components/linear/LollipopChart';
+export type {
+  LollipopChartProps,
+  LollipopHChartProps,
+  LollipopVChartProps,
+  LollipopShape,
+  LollipopChartClassNames,
+} from '@/components/linear/LollipopChart';
 export { default as LollipopHChart } from '@/components/linear/LollipopHChart';
 export { default as LollipopVChart } from '@/components/linear/LollipopVChart';
 export { default as SpineChart } from '@/components/linear/SpineChart';

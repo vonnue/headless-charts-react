@@ -43,7 +43,7 @@ const meta: ChartMeta = {
   alternatives: [
     { name: 'ColumnChart', when: 'few categories with short labels' },
     { name: 'BarChartStacked', when: 'measures are parts of a whole' },
-    { name: 'LollipopHChart', when: 'bars look heavy and the value point is the focus' },
+    { name: 'LollipopChart', when: 'bars look heavy and the value point is the focus' },
     { name: 'SpineChart', when: 'two opposing measures per category' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],

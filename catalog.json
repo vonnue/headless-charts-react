@@ -24,12 +24,8 @@
           "when": "Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis"
         },
         {
-          "name": "LollipopVChart",
-          "when": "Values matter more than magnitude-as-area, and bars would look heavy; vertical orientation"
-        },
-        {
-          "name": "LollipopHChart",
-          "when": "Same as LollipopVChart but with long category labels"
+          "name": "LollipopChart",
+          "when": "Values matter more than magnitude-as-area, and bars would look heavy. Set orientation=\"horizontal\" for long category labels"
         },
         {
           "name": "SpineChart",
@@ -483,7 +479,7 @@
           "when": "measures are parts of a whole"
         },
         {
-          "name": "LollipopHChart",
+          "name": "LollipopChart",
           "when": "bars look heavy and the value point is the focus"
         },
         {
@@ -716,7 +712,7 @@
         "Category labels are long or there are more than ~20 categories — use BarChart, where horizontal bars give labels room",
         "The measures are parts of one whole — use ColumnChartStacked so the total is readable",
         "The x axis is continuous time with many points — use LineChart",
-        "The bars would be nearly equal in height, making differences invisible — use LollipopVChart or a dot-based chart"
+        "The bars would be nearly equal in height, making differences invisible — use LollipopChart or a dot-based chart"
       ],
       "alternatives": [
         {
@@ -728,7 +724,7 @@
           "when": "measures are parts of a whole"
         },
         {
-          "name": "LollipopVChart",
+          "name": "LollipopChart",
           "when": "bars look heavy and values are the focus"
         },
         {
@@ -1107,14 +1103,17 @@
       ]
     },
     {
-      "name": "LollipopHChart",
+      "name": "LollipopChart",
       "aliases": [
-        "horizontal lollipop chart",
         "lollipop chart",
-        "stem plot"
+        "lollipop",
+        "lollipop plot",
+        "stem plot",
+        "stem and dot chart",
+        "vertical lollipop chart"
       ],
       "category": "linear",
-      "summary": "Horizontal stems ending in a symbol, marking one value per category with far less ink than a bar.",
+      "summary": "Vertical stems ending in a symbol, marking one value per category with far less ink than a bar or column. Set `orientation=\"horizontal\"` for long category labels.",
       "intents": [
         "comparison",
         "ranking"
@@ -1123,16 +1122,22 @@
         "form": "records",
         "encodings": [
           {
-            "prop": "y",
+            "prop": "x",
             "role": "category",
             "required": true,
-            "description": "Single key holding the category label for each row."
+            "description": "Vertical (default): the category axis — key holding the category label, or dates when `scalingFunction: \"time\"`. Horizontal: the value axis — a single numeric key; set `start`/`end` to pin the domain."
           },
           {
-            "prop": "x",
-            "role": "quantitative",
+            "prop": "y",
+            "role": "value",
             "required": true,
-            "description": "Single numeric key. Set `start: 0` to anchor stems at zero."
+            "description": "Vertical (default): the value axis — a single numeric key; set `start`/`end` to pin the domain. Horizontal: the category axis (see `x`)."
+          },
+          {
+            "prop": "orientation",
+            "role": "shape",
+            "required": false,
+            "description": "`\"vertical\"` (default: categories on `x`, values on `y`) or `\"horizontal\"` (categories on `y`, values on `x`). When omitted the chart is always vertical; the configs never show an orientation."
           },
           {
             "prop": "shape",
@@ -1149,23 +1154,22 @@
         "rowCount": {
           "ideal": [
             5,
-            30
+            20
           ],
-          "max": 50,
-          "note": "Lollipops stay legible where bars would look like a solid block."
+          "max": 30,
+          "note": "Horizontal (orientation=\"horizontal\") holds ~30 ideal, 50 max, with long labels."
         }
       },
       "useWhen": [
-        "There are many categories and a wall of bars would look heavy",
+        "A bar or column chart would look heavy but the value point should stay visible",
         "The exact value point matters more than the magnitude-as-area a bar implies",
-        "Category labels are long enough to need horizontal orientation",
-        "Values are clustered in a narrow band where bar lengths would look nearly identical"
+        "Category labels are long or there are many categories — set `orientation=\"horizontal\"`"
       ],
       "avoidWhen": [
-        "Several measures need comparing per category — a lollipop carries one value; use BarChart",
+        "Several measures need comparing per category — a lollipop carries one value; use BarChart or ColumnChart",
         "The magnitude should read as accumulated quantity — bars encode that better",
-        "The axis is time — use LineChart",
-        "A vertical layout is wanted — use LollipopVChart"
+        "The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: \"time\"`)",
+        "Values cluster far from zero and only their differences matter — a zero-based stem hides them; use RangePlot/ScatterPlot or pin `start`"
       ],
       "alternatives": [
         {
@@ -1173,104 +1177,8 @@
           "when": "multiple measures per category, or magnitude should read as area"
         },
         {
-          "name": "LollipopVChart",
-          "when": "a vertical layout fits the space better"
-        },
-        {
           "name": "RangePlot",
           "when": "each category has an interval rather than a single value"
-        }
-      ],
-      "requiredProps": [
-        "id",
-        "data",
-        "x",
-        "y"
-      ],
-      "example": "<LollipopHChart\n  id=\"scores-by-team\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'name' }}\n  x={{ key: 'value', start: 0 }}\n/>",
-      "storybook": "Linear/LollipopHChart",
-      "variants": [
-        {
-          "kind": "option",
-          "name": "Custom symbol",
-          "how": "Pass `shape=\"diamond\"` (or star, triangle, square, cross, wye)."
-        },
-        {
-          "kind": "option",
-          "name": "Axis labels",
-          "how": "Set `x.axis.label` and `y.axis.label` to title each axis."
-        },
-        {
-          "kind": "option",
-          "name": "Styling",
-          "how": "Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately."
-        }
-      ]
-    },
-    {
-      "name": "LollipopVChart",
-      "aliases": [
-        "vertical lollipop chart",
-        "stem and dot chart"
-      ],
-      "category": "linear",
-      "summary": "Vertical stems ending in a symbol, marking one value per category with far less ink than a column.",
-      "intents": [
-        "comparison",
-        "ranking"
-      ],
-      "data": {
-        "form": "records",
-        "encodings": [
-          {
-            "prop": "x",
-            "role": "category",
-            "required": true,
-            "description": "Single key holding the category label for each row."
-          },
-          {
-            "prop": "y",
-            "role": "quantitative",
-            "required": true,
-            "description": "Single numeric key. Set `start: 0` to anchor stems at zero."
-          },
-          {
-            "prop": "shape",
-            "role": "shape",
-            "required": true,
-            "description": "Symbol at the end of each stem: circle, diamond, triangle, square, cross, star or wye. Unlike LollipopHChart this prop has no default."
-          }
-        ],
-        "seriesCount": {
-          "min": 1,
-          "max": 1
-        },
-        "rowCount": {
-          "ideal": [
-            5,
-            20
-          ],
-          "max": 30
-        }
-      },
-      "useWhen": [
-        "A column chart would look heavy but the vertical orientation should be kept",
-        "The value point matters more than magnitude-as-area",
-        "Category labels are short enough to sit under vertical stems"
-      ],
-      "avoidWhen": [
-        "Several measures need comparing per category — use ColumnChart",
-        "Category labels are long — use LollipopHChart",
-        "The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: \"time\"`)"
-      ],
-      "alternatives": [
-        {
-          "name": "ColumnChart",
-          "when": "multiple measures per category, or magnitude should read as area"
-        },
-        {
-          "name": "LollipopHChart",
-          "when": "category labels are long"
         },
         {
           "name": "ScatterPlot",
@@ -1281,26 +1189,43 @@
         "id",
         "data",
         "x",
-        "y",
-        "shape"
+        "y"
       ],
-      "example": "<LollipopVChart\n  id=\"readings-by-name\"\n  className=\"w-full h-64\"\n  data={data}\n  shape=\"circle\"\n  x={{ key: 'name', axis: { location: 'bottom' } }}\n  y={{ key: 'reading', start: 0, axis: { location: 'left' } }}\n/>",
-      "storybook": "Linear/LollipopVChart",
+      "example": "<LollipopChart\n  id=\"readings-by-name\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'name', axis: { location: 'bottom' } }}\n  y={{ key: 'reading', start: 0, axis: { location: 'left' } }}\n/>",
+      "storybook": "Linear/LollipopChart/Intro",
+      "wrappers": [
+        {
+          "name": "LollipopHChart",
+          "pins": "orientation=\"horizontal\"",
+          "variant": "Horizontal lollipop chart",
+          "note": "Accepts the props it always has, and draws in over 1 s unless `drawing` is given."
+        },
+        {
+          "name": "LollipopVChart",
+          "pins": "orientation=\"vertical\"",
+          "note": "Accepts the props it always has, and draws in over 1 s unless `drawing` is given."
+        }
+      ],
       "variants": [
         {
-          "kind": "option",
-          "name": "Custom symbol",
-          "how": "Pass `shape=\"star\"` (or diamond, triangle, square, cross, wye)."
-        },
-        {
-          "kind": "option",
-          "name": "Styling",
-          "how": "Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately."
-        },
-        {
-          "kind": "option",
-          "name": "Fixed value range",
-          "how": "Set `y.start` and `y.end` to pin the value axis (0 counts, and a range narrower than the data is honoured)."
+          "kind": "chart-type",
+          "name": "Horizontal lollipop chart",
+          "aliases": [
+            "lollipop chart (horizontal)",
+            "horizontal stem plot",
+            "ranked lollipop chart"
+          ],
+          "summary": "The same lollipop chart with categories running down the y axis and values along x, so long category labels fit.",
+          "how": "Set `orientation=\"horizontal\"`; categories go on `y` and values on `x`. `LollipopHChart` renders this form.",
+          "useWhen": [
+            "Category labels are long",
+            "There are many categories",
+            "A ranked list is being shown"
+          ],
+          "avoidWhen": [
+            "The axis is time — time scaling is vertical only; use LineChart or the vertical time-scaled variant"
+          ],
+          "example": "<LollipopChart\n  id=\"scores-by-team\"\n  className=\"w-full h-64\"\n  orientation=\"horizontal\"\n  data={data}\n  y={{ key: 'name' }}\n  x={{ key: 'value', start: 0 }}\n/>"
         },
         {
           "kind": "chart-type",
@@ -1318,7 +1243,22 @@
             "Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled ColumnChart overlaps the same way)",
             "The axis is continuous time with many points and the trend matters more than individual values — use LineChart"
           ],
-          "example": "<LollipopVChart\n  id=\"weekly-readings\"\n  className=\"w-full h-64\"\n  data={data}\n  shape=\"circle\"\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{ key: 'reading', start: 0 }}\n/>"
+          "example": "<LollipopChart\n  id=\"weekly-readings\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{ key: 'reading', start: 0 }}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Custom symbol",
+          "how": "Pass `shape=\"diamond\"` (or star, triangle, square, cross, wye). The default is `circle`."
+        },
+        {
+          "kind": "option",
+          "name": "Styling",
+          "how": "Use `classNames.points` for stems and symbols together, `classNames.lines` for stems only, and `classNames.symbols` for symbols only."
+        },
+        {
+          "kind": "option",
+          "name": "Fixed value range",
+          "how": "Set `start` and `end` on the value config (`y` when vertical, `x` when horizontal) to pin the domain. Pin `start` to leave zero out deliberately."
         }
       ]
     },
@@ -2905,7 +2845,7 @@
       "avoidWhen": [
         "Direction of movement matters — use CometPlot, whose tapered tail shows which way the value moved",
         "The interval is a statistical summary with quartiles — use BoxPlot",
-        "Only one value per category exists — use LollipopHChart",
+        "Only one value per category exists — use LollipopChart",
         "The endpoints are times rather than numbers — use TimeLineChart"
       ],
       "alternatives": [
@@ -2918,7 +2858,7 @@
           "when": "the interval is a quartile summary"
         },
         {
-          "name": "LollipopHChart",
+          "name": "LollipopChart",
           "when": "there is a single value per category"
         }
       ],

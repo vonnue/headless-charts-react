@@ -50,11 +50,13 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Histogram, frequency distribution, binned column chart, frequency chart | [`ColumnChart`](#columnchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
 | Horizontal box plot, box plot (horizontal), horizontal box and whisker plot | [`BoxPlot`](#boxplot) | Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form. |
 | Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically. |
+| Horizontal lollipop chart, lollipop chart (horizontal), horizontal stem plot, ranked lollipop chart | [`LollipopChart`](#lollipopchart) | Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` renders this form. |
 | Horizontal waterfall chart, horizontal bridge chart, horizontal cascade chart | [`BarChartStacked`](#barchartstacked) | Set `waterfall` on a BarChartStacked. Each `x` series becomes a step rather than a segment stacked from the baseline. |
 | LinearGauge, progress bar chart, linear progress gauge, meter | [`LinearGauge`](#lineargauge) | Base component, no extra configuration |
 | LineChart, line graph, multi-line chart, trend line chart | [`LineChart`](#linechart) | Base component, no extra configuration |
-| LollipopHChart, horizontal lollipop chart, lollipop chart, stem plot | [`LollipopHChart`](#lollipophchart) | Base component, no extra configuration |
-| LollipopVChart, vertical lollipop chart, stem and dot chart | [`LollipopVChart`](#lollipopvchart) | Base component, no extra configuration |
+| LollipopChart, lollipop chart, lollipop, lollipop plot, stem plot, stem and dot chart, vertical lollipop chart | [`LollipopChart`](#lollipopchart) | Base component, no extra configuration |
+| LollipopHChart | [`LollipopChart`](#lollipopchart) | Wrapper component: same as `<LollipopChart orientation="horizontal">` (Horizontal lollipop chart) |
+| LollipopVChart | [`LollipopChart`](#lollipopchart) | Wrapper component: same as `<LollipopChart orientation="vertical">` |
 | Network, network graph, node-link diagram, force-directed graph, graph chart, relationship map | [`Network`](#network) | Base component, no extra configuration |
 | OHLC chart, ohlc, ohlc bar chart, open-high-low-close chart | [`CandlestickChart`](#candlestickchart) | Set `shape: 'ohlc'`. |
 | ParallelCoordinatesChart, parallel coordinates, parallel coordinates plot, parallel coordinates chart, parallel coordinate plot, parallel plot, parallel axes | [`ParallelCoordinatesChart`](#parallelcoordinateschart) | Base component, no extra configuration |
@@ -77,7 +79,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Time-scaled box plot, time series box plot, time-scaled box plot (vertical) | [`BoxPlot`](#boxplot) | Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). With `orientation="horizontal"`, `y.scalingFunction: "time"` is ignored with a dev warning. |
 | Time-scaled column chart, time series column chart | [`ColumnChart`](#columnchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
 | Time-scaled line chart, time series chart, time series line chart | [`LineChart`](#linechart) | Set `x.scalingFunction: "time"` and `x.time.format` (or `x.time.isISO`) to parse date strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
-| Time-scaled lollipop chart, time series lollipop chart | [`LollipopVChart`](#lollipopvchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
+| Time-scaled lollipop chart, time series lollipop chart | [`LollipopChart`](#lollipopchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled stacked column chart, time series stacked column chart | [`ColumnChartStacked`](#columnchartstacked) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
 | TimeLineChart, timeline, event plot, activity timeline | [`TimeLineChart`](#timelinechart) | Base component, no extra configuration |
 | TreemapChart, treemap, squarified treemap, rectangular tree map | [`TreemapChart`](#treemapchart) | Base component, no extra configuration |
@@ -95,8 +97,7 @@ Find the question being asked, then pick among the candidates.
 | --- | --- |
 | [`ColumnChart`](#columnchart) | Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed |
 | [`BarChart`](#barchart) | Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis |
-| [`LollipopVChart`](#lollipopvchart) | Values matter more than magnitude-as-area, and bars would look heavy; vertical orientation |
-| [`LollipopHChart`](#lollipophchart) | Same as LollipopVChart but with long category labels |
+| [`LollipopChart`](#lollipopchart) | Values matter more than magnitude-as-area, and bars would look heavy. Set orientation="horizontal" for long category labels |
 | [`SpineChart`](#spinechart) | Two opposing measures per category read outward from a shared centre axis, e.g. male/female |
 | [`RadarChart`](#radarchart) | Five or more metrics compared across a handful of entities on one shared 0–max scale |
 
@@ -486,7 +487,7 @@ Bars growing left and right of a zero baseline, with negative values styled sepa
 
 - [`ColumnChart`](#columnchart) — few categories with short labels
 - [`BarChartStacked`](#barchartstacked) — measures are parts of a whole
-- [`LollipopHChart`](#lollipophchart) — bars look heavy and the value point is the focus
+- [`LollipopChart`](#lollipopchart) — bars look heavy and the value point is the focus
 - [`SpineChart`](#spinechart) — two opposing measures per category
 
 ### BarChartStacked
@@ -598,7 +599,7 @@ Vertical bars comparing one or more measures across categories; grouped side by 
 - Category labels are long or there are more than ~20 categories — use BarChart, where horizontal bars give labels room
 - The measures are parts of one whole — use ColumnChartStacked so the total is readable
 - The x axis is continuous time with many points — use LineChart
-- The bars would be nearly equal in height, making differences invisible — use LollipopVChart or a dot-based chart
+- The bars would be nearly equal in height, making differences invisible — use LollipopChart or a dot-based chart
 
 **Data**
 
@@ -694,7 +695,7 @@ A grouped column chart whose x axis parses real dates and spaces bars proportion
 
 - [`BarChart`](#barchart) — long labels or many categories
 - [`ColumnChartStacked`](#columnchartstacked) — measures are parts of a whole
-- [`LollipopVChart`](#lollipopvchart) — bars look heavy and values are the focus
+- [`LollipopChart`](#lollipopchart) — bars look heavy and values are the focus
 - [`LineChart`](#linechart) — the axis is continuous time with many points
 
 ### ColumnChartStacked
@@ -1007,110 +1008,89 @@ A line chart whose x axis parses real dates rather than treating the key as a pl
 - [`ScatterPlot`](#scatterplot) — the x axis is a measure rather than time, and points should not be joined
 - [`SparklineChart`](#sparklinechart) — more than ~8 series would overplot; one comparable row per series
 
-### LollipopHChart
+### LollipopChart
 
-Horizontal stems ending in a symbol, marking one value per category with far less ink than a bar.
+Vertical stems ending in a symbol, marking one value per category with far less ink than a bar or column. Set `orientation="horizontal"` for long category labels.
 
-**Category:** `linear` · **Answers:** `comparison`, `ranking` · **Storybook:** Linear/LollipopHChart
+**Category:** `linear` · **Answers:** `comparison`, `ranking` · **Storybook:** Linear/LollipopChart/Intro
 
-**Also called:** horizontal lollipop chart, lollipop chart, stem plot
+**Also called:** lollipop chart, lollipop, lollipop plot, stem plot, stem and dot chart, vertical lollipop chart
+
+**Wrapper components** (exported; same chart with props pinned)
+
+- `LollipopHChart` — `<LollipopChart orientation="horizontal">` (Horizontal lollipop chart). Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `LollipopVChart` — `<LollipopChart orientation="vertical">`. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+
+Prefer `<LollipopChart>` with the prop set in new code; the wrappers remain a stable public API.
 
 **Use when**
 
-- There are many categories and a wall of bars would look heavy
+- A bar or column chart would look heavy but the value point should stay visible
 - The exact value point matters more than the magnitude-as-area a bar implies
-- Category labels are long enough to need horizontal orientation
-- Values are clustered in a narrow band where bar lengths would look nearly identical
+- Category labels are long or there are many categories — set `orientation="horizontal"`
 
 **Do not use when**
 
-- Several measures need comparing per category — a lollipop carries one value; use BarChart
+- Several measures need comparing per category — a lollipop carries one value; use BarChart or ColumnChart
 - The magnitude should read as accumulated quantity — bars encode that better
-- The axis is time — use LineChart
-- A vertical layout is wanted — use LollipopVChart
+- The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: "time"`)
+- Values cluster far from zero and only their differences matter — a zero-based stem hides them; use RangePlot/ScatterPlot or pin `start`
 
 **Data**
 
 - `data` shape: records
 - Series: min 1, max 1 — One value per category; use BarChart for multiple measures.
-- Rows: ideal 5–30, max 50 — Lollipops stay legible where bars would look like a solid block.
+- Rows: ideal 5–20, max 30 — Horizontal (orientation="horizontal") holds ~30 ideal, 50 max, with long labels.
 
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
-| `y` | category | yes | Single key holding the category label for each row. |
-| `x` | quantitative | yes | Single numeric key. Set `start: 0` to anchor stems at zero. |
+| `x` | category | yes | Vertical (default): the category axis — key holding the category label, or dates when `scalingFunction: "time"`. Horizontal: the value axis — a single numeric key; set `start`/`end` to pin the domain. |
+| `y` | value | yes | Vertical (default): the value axis — a single numeric key; set `start`/`end` to pin the domain. Horizontal: the category axis (see `x`). |
+| `orientation` | shape | no | `"vertical"` (default: categories on `x`, values on `y`) or `"horizontal"` (categories on `y`, values on `x`). When omitted the chart is always vertical; the configs never show an orientation. |
 | `shape` | shape | no | Symbol at the end of each stem: circle (default), diamond, triangle, square, cross, star or wye. |
 
 **Required props:** `id`, `data`, `x`, `y`
 
 ```tsx
-<LollipopHChart
+<LollipopChart
+  id="readings-by-name"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'name', axis: { location: 'bottom' } }}
+  y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
+/>
+```
+
+#### Horizontal lollipop chart (LollipopChart)
+
+The same lollipop chart with categories running down the y axis and values along x, so long category labels fit.
+
+**Also called:** lollipop chart (horizontal), horizontal stem plot, ranked lollipop chart
+
+**Configuration:** Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` renders this form.
+
+**Use when**
+
+- Category labels are long
+- There are many categories
+- A ranked list is being shown
+
+**Do not use when**
+
+- The axis is time — time scaling is vertical only; use LineChart or the vertical time-scaled variant
+
+```tsx
+<LollipopChart
   id="scores-by-team"
   className="w-full h-64"
+  orientation="horizontal"
   data={data}
   y={{ key: 'name' }}
   x={{ key: 'value', start: 0 }}
 />
 ```
 
-**Options**
-
-- **Custom symbol** — Pass `shape="diamond"` (or star, triangle, square, cross, wye).
-- **Axis labels** — Set `x.axis.label` and `y.axis.label` to title each axis.
-- **Styling** — Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately.
-
-**Consider instead**
-
-- [`BarChart`](#barchart) — multiple measures per category, or magnitude should read as area
-- [`LollipopVChart`](#lollipopvchart) — a vertical layout fits the space better
-- [`RangePlot`](#rangeplot) — each category has an interval rather than a single value
-
-### LollipopVChart
-
-Vertical stems ending in a symbol, marking one value per category with far less ink than a column.
-
-**Category:** `linear` · **Answers:** `comparison`, `ranking` · **Storybook:** Linear/LollipopVChart
-
-**Also called:** vertical lollipop chart, stem and dot chart
-
-**Use when**
-
-- A column chart would look heavy but the vertical orientation should be kept
-- The value point matters more than magnitude-as-area
-- Category labels are short enough to sit under vertical stems
-
-**Do not use when**
-
-- Several measures need comparing per category — use ColumnChart
-- Category labels are long — use LollipopHChart
-- The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: "time"`)
-
-**Data**
-
-- `data` shape: records
-- Series: min 1, max 1
-- Rows: ideal 5–20, max 30
-
-| Prop | Role | Required | Notes |
-| --- | --- | --- | --- |
-| `x` | category | yes | Single key holding the category label for each row. |
-| `y` | quantitative | yes | Single numeric key. Set `start: 0` to anchor stems at zero. |
-| `shape` | shape | yes | Symbol at the end of each stem: circle, diamond, triangle, square, cross, star or wye. Unlike LollipopHChart this prop has no default. |
-
-**Required props:** `id`, `data`, `x`, `y`, `shape`
-
-```tsx
-<LollipopVChart
-  id="readings-by-name"
-  className="w-full h-64"
-  data={data}
-  shape="circle"
-  x={{ key: 'name', axis: { location: 'bottom' } }}
-  y={{ key: 'reading', start: 0, axis: { location: 'left' } }}
-/>
-```
-
-#### Time-scaled lollipop chart (LollipopVChart)
+#### Time-scaled lollipop chart (LollipopChart)
 
 A vertical lollipop chart whose x axis parses real dates and positions each stem proportionally to elapsed time, rather than as an equal-width slot.
 
@@ -1129,11 +1109,10 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
 - The axis is continuous time with many points and the trend matters more than individual values — use LineChart
 
 ```tsx
-<LollipopVChart
+<LollipopChart
   id="weekly-readings"
   className="w-full h-64"
   data={data}
-  shape="circle"
   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={{ key: 'reading', start: 0 }}
 />
@@ -1141,14 +1120,14 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
 
 **Options**
 
-- **Custom symbol** — Pass `shape="star"` (or diamond, triangle, square, cross, wye).
-- **Styling** — Use `classNames.classNameLines` and `classNames.classNameSymbols` to style stems and heads separately.
-- **Fixed value range** — Set `y.start` and `y.end` to pin the value axis (0 counts, and a range narrower than the data is honoured).
+- **Custom symbol** — Pass `shape="diamond"` (or star, triangle, square, cross, wye). The default is `circle`.
+- **Styling** — Use `classNames.points` for stems and symbols together, `classNames.lines` for stems only, and `classNames.symbols` for symbols only.
+- **Fixed value range** — Set `start` and `end` on the value config (`y` when vertical, `x` when horizontal) to pin the domain. Pin `start` to leave zero out deliberately.
 
 **Consider instead**
 
-- [`ColumnChart`](#columnchart) — multiple measures per category, or magnitude should read as area
-- [`LollipopHChart`](#lollipophchart) — category labels are long
+- [`BarChart`](#barchart) — multiple measures per category, or magnitude should read as area
+- [`RangePlot`](#rangeplot) — each category has an interval rather than a single value
 - [`ScatterPlot`](#scatterplot) — both axes are numeric rather than one being categorical
 
 ### SparklineChart
@@ -2291,7 +2270,7 @@ A dumbbell per category: two endpoints joined by a bar, showing the interval bet
 
 - Direction of movement matters — use CometPlot, whose tapered tail shows which way the value moved
 - The interval is a statistical summary with quartiles — use BoxPlot
-- Only one value per category exists — use LollipopHChart
+- Only one value per category exists — use LollipopChart
 - The endpoints are times rather than numbers — use TimeLineChart
 
 **Data**
@@ -2326,7 +2305,7 @@ A dumbbell per category: two endpoints joined by a bar, showing the interval bet
 
 - [`CometPlot`](#cometplot) — the direction of movement between the two values matters
 - [`BoxPlot`](#boxplot) — the interval is a quartile summary
-- [`LollipopHChart`](#lollipophchart) — there is a single value per category
+- [`LollipopChart`](#lollipopchart) — there is a single value per category
 
 ### ViolinChart
 

@@ -60,7 +60,7 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
  * - Direction of movement matters — use CometPlot, whose tapered tail shows
  *   which way the value moved
  * - The interval is a statistical summary with quartiles — use BoxPlot
- * - Only one value per category exists — use LollipopHChart
+ * - Only one value per category exists — use LollipopChart
  * - The endpoints are times rather than numbers — use TimeLineChart
  *
  * Also called: dumbbell chart, dumbbell plot, barbell chart, dot plot, DNA chart, range chart.
@@ -82,7 +82,7 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
  * @see CometPlot — the direction of movement between the two values
  *   matters
  * @see BoxPlot — the interval is a quartile summary
- * @see LollipopHChart — there is a single value per category
+ * @see LollipopChart — there is a single value per category
  */
 /* catalog:end */
 const RangePlot = <TData = any,>({

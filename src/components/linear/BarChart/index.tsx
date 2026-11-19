@@ -112,7 +112,7 @@ const DEFAULT_STYLE = {};
  *
  * @see ColumnChart — few categories with short labels
  * @see BarChartStacked — measures are parts of a whole
- * @see LollipopHChart — bars look heavy and the value point is the focus
+ * @see LollipopChart — bars look heavy and the value point is the focus
  * @see SpineChart — two opposing measures per category
  */
 /* catalog:end */

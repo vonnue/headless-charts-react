@@ -40,11 +40,11 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Slices need precise comparison — angles are read far less accurately than lengths; use BarChart or ColumnChart',
     'The values do not sum to a meaningful whole, e.g. independent metrics or averages',
-    'Composition must be compared across categories or over time — use ColumnChartStacked or AreaChart',
+    'Composition must be compared across categories or over time — use BarChart with `stacking` or AreaChart',
     'Any value is negative — a slice cannot represent it',
   ],
   alternatives: [
-    { name: 'ColumnChartStacked', when: 'composition compared across several categories or periods' },
+    { name: 'BarChart', when: 'composition compared across several categories or periods (`stacking`)' },
     { name: 'BarChart', when: 'slices need precise comparison' },
     { name: 'WaffleChart', when: 'part-to-whole shown as countable cells rather than angles' },
   ],

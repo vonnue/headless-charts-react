@@ -1140,8 +1140,8 @@ export const BarRenderer = <TData,>(
  *   `orientation="horizontal"` and `direction: "left"`
  *
  * **Avoid when**
- * - The measures are parts of one whole — use BarChartStacked or
- *   ColumnChartStacked so the total is readable
+ * - The measures are parts of one whole and the grouped default is used —
+ *   set `stacking` so the total is readable
  * - The x axis is continuous time with many points — use LineChart
  * - The bars would be nearly equal in height, making differences invisible —
  *   use LollipopChart or a dot-based chart
@@ -1173,14 +1173,41 @@ export const BarRenderer = <TData,>(
  *   marks inside, pin half a step outside the data (e.g. `start:
  *   Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan
  *   2025).
+ * - Stacked bar chart — Set `stacking={{ type: 'normal' }}`. Segments stack
+ *   from 0 in series order; negative values stack below 0.
+ *   `ColumnChartStacked` is this form as a wrapper.
+ * - Horizontal stacked bar chart — Set `orientation="horizontal"` and
+ *   `stacking={{ type: 'normal' }}`; categories go on `y`, the series array
+ *   on `x`. `BarChartStacked` is this form as a wrapper.
+ * - 100% stacked bar chart — Set `stacking={{ type: '100%' }}`. The axis is
+ *   [0, 1] with `.0%` ticks (`tickFormat` overrides it); negative values
+ *   count as 0; pinned `start`/`end` are ignored. Tooltips and labels show
+ *   the share.
+ * - Diverging stacked bar chart — Set `stacking={{ type: 'diverging',
+ *   negative: ['strongly_disagree', 'disagree'], neutral: 'neutral' }}`.
+ *   List series in scale order; the last `negative` key and the first
+ *   positive key touch 0; `neutral` is split across 0; `percent: true`
+ *   normalises each row to 100%. The example is horizontal. Use a diverging
+ *   palette (RdBu, BrBG) with grey for neutral.
+ * - Waterfall chart — Set `waterfall` (or `waterfall={{ padding: 4 }}` to
+ *   narrow the steps). Each series becomes its own step within the category,
+ *   starting where the previous one ended. `waterfall` wins over `stacking`.
+ * - Horizontal waterfall chart — Set `orientation="horizontal"` and
+ *   `waterfall`; categories go on `y`, the series array on `x`.
+ * - Time-scaled stacked column chart — Vertical only. Set `stacking={{ type:
+ *   'normal' }}` and `x.scalingFunction: "time"` with `x.time.format` or
+ *   `x.time.isISO`; bar width follows the median gap between dates, as for
+ *   the time-scaled column chart.
  *
  * Also called: bar chart, bar graph, column chart, column graph, vertical bar chart, grouped bar chart, grouped column chart, clustered column chart, clustered bar chart.
  *
- * Wrapper components: `ColumnChart` (`orientation="vertical"`). Prefer
- * `<BarChart>` with the prop set in new code; the wrappers remain a stable
- * public API.
+ * Wrapper components: `ColumnChart` (`orientation="vertical"`),
+ * `BarChartStacked` (`orientation="horizontal" stacking={{ type: "normal"
+ * }}`), `ColumnChartStacked` (`orientation="vertical" stacking={{ type:
+ * "normal" }}`). Prefer `<BarChart>` with the prop set in new code; the
+ * wrappers remain a stable public API.
  *
- * Answers: comparison, distribution, ranking. Required props: `id`, `data`, `x`, `y`.
+ * Answers: comparison, composition, distribution, ranking. Required props: `id`, `data`, `x`, `y`.
  *
  * @example
  * ```tsx
@@ -1261,9 +1288,115 @@ export const BarRenderer = <TData,>(
  * />
  * ```
  *
- * @see BarChartStacked — measures are parts of a whole and labels are
- *   long
- * @see ColumnChartStacked — measures are parts of a whole, vertical
+ * @example Stacked bar chart
+ * ```tsx
+ * <BarChart
+ *   id="revenue-split"
+ *   className="w-full h-64"
+ *   data={data}
+ *   stacking={{ type: 'normal' }}
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @example Horizontal stacked bar chart
+ * ```tsx
+ * <BarChart
+ *   id="revenue-by-region"
+ *   className="w-full h-64"
+ *   data={data}
+ *   orientation="horizontal"
+ *   stacking={{ type: 'normal' }}
+ *   y={{ key: 'year' }}
+ *   x={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @example 100% stacked bar chart
+ * ```tsx
+ * <BarChart
+ *   id="share-split"
+ *   className="w-full h-64"
+ *   data={data}
+ *   stacking={{ type: '100%' }}
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @example Diverging stacked bar chart
+ * ```tsx
+ * <BarChart
+ *   id="survey"
+ *   className="w-full h-64"
+ *   data={data}
+ *   orientation="horizontal"
+ *   stacking={{ type: 'diverging', negative: ['disagree'], neutral: 'neutral', percent: true }}
+ *   y={{ key: 'question' }}
+ *   x={[
+ *     { key: 'disagree', className: 'fill-red-600' },
+ *     { key: 'neutral', className: 'fill-gray-400' },
+ *     { key: 'agree', className: 'fill-blue-600' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @example Waterfall chart
+ * ```tsx
+ * <BarChart
+ *   id="revenue-bridge"
+ *   className="w-full h-64"
+ *   data={data}
+ *   waterfall
+ *   x={{ key: 'year' }}
+ *   y={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @example Horizontal waterfall chart
+ * ```tsx
+ * <BarChart
+ *   id="profit-walk"
+ *   className="w-full h-64"
+ *   data={data}
+ *   orientation="horizontal"
+ *   waterfall
+ *   y={{ key: 'year' }}
+ *   x={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *   ]}
+ * />
+ * ```
+ *
+ * @example Time-scaled stacked column chart
+ * ```tsx
+ * <BarChart
+ *   id="daily-revenue-split"
+ *   className="w-full h-64"
+ *   data={data}
+ *   stacking={{ type: 'normal' }}
+ *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+ *   y={[
+ *     { key: 'macbook', className: 'fill-purple-800' },
+ *     { key: 'iphone', className: 'fill-purple-600' },
+ *   ]}
+ * />
+ * ```
+ *
  * @see LollipopChart — bars look heavy and the value point is the focus
  * @see SpineChart — two opposing measures per category
  * @see LineChart — the axis is continuous time with many points

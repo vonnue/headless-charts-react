@@ -489,7 +489,8 @@ const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-esl
  * - A flat whole with about 6 or fewer parts — use PieChart
  * - Individual units should be countable cells — use WaffleChart
  * - A flat ranked comparison of leaves with no nesting — use BarChart
- * - Composition changes over time — use AreaChart or ColumnChartStacked
+ * - Composition changes over time — use AreaChart or BarChart with
+ *   `stacking`
  * - Colour is used to encode magnitude — area already encodes value; keep
  *   `classNameMap` as group identity only
  * - Volume moves between categories rather than a static nested split — use

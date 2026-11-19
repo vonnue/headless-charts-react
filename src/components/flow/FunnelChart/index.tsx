@@ -189,8 +189,8 @@ const defaultTooltipHtml =
  * - The parts are an unordered split of one whole — use PieChart
  * - It is a ranked snapshot with no stage-to-stage drop-off story — use
  *   BarChart
- * - The steps are additive bridge steps to a total — use ColumnChartStacked
- *   with `waterfall`
+ * - The steps are additive bridge steps to a total — use BarChart with
+ *   `waterfall`
  * - Colour is used to encode magnitude (darker = larger) — length already
  *   encodes value; keep `classNameMap` / `value.className` as stage identity
  *   only
@@ -217,7 +217,7 @@ const defaultTooltipHtml =
  * ```
  *
  * @see BarChart — a ranked snapshot with no stage-to-stage drop-off
- * @see ColumnChartStacked — additive steps to a total (waterfall)
+ * @see BarChart — additive steps to a total (`waterfall`)
  * @see PieChart — an unordered part-to-whole split
  * @see SankeyChart — flows that branch or merge between stages, or volume
  *   between arbitrary nodes

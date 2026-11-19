@@ -39,12 +39,8 @@ export const decisionTree: DecisionBranch[] = [
         when: 'One whole split into ~6 or fewer slices at a single point in time',
       },
       {
-        name: 'ColumnChartStacked',
-        when: 'Composition compared across several categories or periods, vertical',
-      },
-      {
-        name: 'BarChartStacked',
-        when: 'Same as ColumnChartStacked but with long category labels; also does waterfall',
+        name: 'BarChart',
+        when: 'Composition compared across several categories or periods: set `stacking` (normal, 100% or diverging), or `waterfall` for a running total; `orientation="horizontal"` for long labels',
       },
       {
         name: 'AreaChart',

@@ -223,7 +223,7 @@ describe('named chart types', () => {
     expect(resolveChartRequest('dumbbell chart')?.chart.name).toBe('RangePlot');
 
     const waterfall = resolveChartRequest('waterfall');
-    expect(waterfall?.chart.name).toBe('ColumnChartStacked');
+    expect(waterfall?.chart.name).toBe('BarChart');
     expect(waterfall?.variant?.name).toBe('Waterfall chart');
 
     const streamgraph = resolveChartRequest('  Stream Graph  ');
@@ -256,7 +256,7 @@ describe('named chart types', () => {
     const find = (name: string) =>
       chartTypeIndex.find((e) => e.variant.name.toLowerCase() === name);
     expect(find('streamgraph')?.chart.name).toBe('AreaChart');
-    expect(find('waterfall chart')?.chart.name).toBe('ColumnChartStacked');
+    expect(find('waterfall chart')?.chart.name).toBe('BarChart');
     expect(
       chartCatalog
         .find((c) => c.name === 'BarChart')

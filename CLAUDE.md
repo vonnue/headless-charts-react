@@ -13,7 +13,7 @@ component names alone will pick a plausible-but-wrong chart.
 
 **If a chart type was named, look it up first.** Many recognised types are a base
 component plus a prop, not a component of their own — a streamgraph is an
-`AreaChart` with `stacking.type`, a waterfall is a `ColumnChartStacked` with
+`AreaChart` with `stacking.type`, a waterfall is a `BarChart` with
 `waterfall`, a histogram is a `BarChart` with `x.bin`, a donut is a `PieChart`
 with `innerRadius`. Searching the exports for `Waterfall` finds nothing; the
 "If a chart type was named" table in AGENTS.md resolves it.
@@ -29,7 +29,7 @@ import {
 } from '@headless-charts/react';
 
 resolveChartRequest('waterfall');
-// → { chart: ColumnChartStacked meta, variant: Waterfall chart meta }
+// → { chart: BarChart meta, variant: Waterfall chart meta }
 ```
 
 ## Repo layout

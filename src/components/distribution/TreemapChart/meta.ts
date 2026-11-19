@@ -67,7 +67,7 @@ const meta: ChartMeta = {
     'A flat whole with about 6 or fewer parts — use PieChart',
     'Individual units should be countable cells — use WaffleChart',
     'A flat ranked comparison of leaves with no nesting — use BarChart',
-    'Composition changes over time — use AreaChart or ColumnChartStacked',
+    'Composition changes over time — use AreaChart or BarChart with `stacking`',
     'Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only',
     'Volume moves between categories rather than a static nested split — use SankeyChart',
     'A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role',

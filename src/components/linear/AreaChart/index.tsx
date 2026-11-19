@@ -92,8 +92,8 @@ const DEFAULT_STYLE = {};
  *   make all but the bottom one hard to read; use LineChart
  * - Series can be negative and would overlap confusingly — use LineChart, or
  *   `stacking.type: "diverging"`
- * - The x axis is categorical rather than continuous — use
- *   ColumnChartStacked
+ * - The x axis is categorical rather than continuous — use BarChart with
+ *   `stacking`
  * - There is a single series and no notion of a total — use LineChart
  *
  * **Specialised types**
@@ -188,8 +188,8 @@ const DEFAULT_STYLE = {};
  *
  * @see LineChart — series must be compared precisely, or there is no
  *   meaningful total
- * @see ColumnChartStacked — the x axis is categorical rather than
- *   continuous
+ * @see BarChart — the x axis is categorical rather than continuous
+ *   (`stacking`)
  * @see PieChart — showing composition at one point in time only
  */
 /* catalog:end */

@@ -16,7 +16,7 @@ const meta: ChartMeta = {
   category: 'linear',
   summary:
     'Vertical or horizontal bars comparing one or more measures across categories, grouped side by side when several measures are passed. Set `orientation="horizontal"` for long category labels.',
-  intents: ['comparison', 'distribution', 'ranking'],
+  intents: ['comparison', 'composition', 'distribution', 'ranking'],
   data: {
     form: 'records',
     encodings: [
@@ -59,14 +59,12 @@ const meta: ChartMeta = {
     'Bars should grow leftward from the right edge — set `orientation="horizontal"` and `direction: "left"`',
   ],
   avoidWhen: [
-    'The measures are parts of one whole — use BarChartStacked or ColumnChartStacked so the total is readable',
+    'The measures are parts of one whole and the grouped default is used — set `stacking` so the total is readable',
     'The x axis is continuous time with many points — use LineChart',
     'The bars would be nearly equal in height, making differences invisible — use LollipopChart or a dot-based chart',
     'Two measures should read outward from a shared centre — use SpineChart',
   ],
   alternatives: [
-    { name: 'BarChartStacked', when: 'measures are parts of a whole and labels are long' },
-    { name: 'ColumnChartStacked', when: 'measures are parts of a whole, vertical' },
     { name: 'LollipopChart', when: 'bars look heavy and the value point is the focus' },
     { name: 'SpineChart', when: 'two opposing measures per category' },
     { name: 'LineChart', when: 'the axis is continuous time with many points' },
@@ -85,6 +83,8 @@ const meta: ChartMeta = {
   storybook: 'Linear/BarChart/Intro',
   wrappers: [
     { name: 'ColumnChart', pins: 'orientation="vertical"' },
+    { name: 'BarChartStacked', pins: 'orientation="horizontal" stacking={{ type: "normal" }}', variant: 'Horizontal stacked bar chart' },
+    { name: 'ColumnChartStacked', pins: 'orientation="vertical" stacking={{ type: "normal" }}', variant: 'Stacked bar chart' },
   ],
   variants: [
     {
@@ -219,6 +219,152 @@ const meta: ChartMeta = {
   data={data}
   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={[{ key: 'signups', className: 'fill-purple-600' }]}
+/>`,
+    },
+    {
+      kind: 'chart-type',
+      name: 'Stacked bar chart',
+      aliases: ['stacked column chart', 'stacked bar chart (vertical)'],
+      summary:
+        'Vertical bars where each measure stacks on the previous one, showing the total per category and its composition.',
+      how: 'Set `stacking={{ type: \'normal\' }}`. Segments stack from 0 in series order; negative values stack below 0. `ColumnChartStacked` is this form as a wrapper.',
+      useWhen: ['The total per category matters as much as its breakdown', 'Segments are genuinely parts of one whole, not independent measures'],
+      avoidWhen: ['Individual segments need precise comparison across categories — only the first segment shares a baseline; use the grouped default'],
+      example: `<BarChart
+  id="revenue-split"
+  className="w-full h-64"
+  data={data}
+  stacking={{ type: 'normal' }}
+  x={{ key: 'year' }}
+  y={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>`,
+    },
+    {
+      kind: 'chart-type',
+      name: 'Horizontal stacked bar chart',
+      aliases: ['stacked bar chart (horizontal)'],
+      summary:
+        'Horizontal bars where measures stack end to end, for long category labels.',
+      how: 'Set `orientation="horizontal"` and `stacking={{ type: \'normal\' }}`; categories go on `y`, the series array on `x`. `BarChartStacked` is this form as a wrapper.',
+      useWhen: ['Composition needs comparing across categories whose labels are long'],
+      example: `<BarChart
+  id="revenue-by-region"
+  className="w-full h-64"
+  data={data}
+  orientation="horizontal"
+  stacking={{ type: 'normal' }}
+  y={{ key: 'year' }}
+  x={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>`,
+    },
+    {
+      kind: 'chart-type',
+      name: '100% stacked bar chart',
+      aliases: ['percentage bar chart', 'percentage column chart', '100% stacked column chart'],
+      summary:
+        'Every bar fills the axis and each segment shows its share of the row total.',
+      how: 'Set `stacking={{ type: \'100%\' }}`. The axis is [0, 1] with `.0%` ticks (`tickFormat` overrides it); negative values count as 0; pinned `start`/`end` are ignored. Tooltips and labels show the share.',
+      useWhen: ['Composition (shares) is compared across categories and totals do not matter'],
+      avoidWhen: ['Absolute totals matter — use `stacking={{ type: \'normal\' }}` or show the total separately'],
+      example: `<BarChart
+  id="share-split"
+  className="w-full h-64"
+  data={data}
+  stacking={{ type: '100%' }}
+  x={{ key: 'year' }}
+  y={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>`,
+    },
+    {
+      kind: 'chart-type',
+      name: 'Diverging stacked bar chart',
+      aliases: ['likert chart', 'likert scale chart', 'diverging stacked column chart'],
+      summary:
+        'Survey or sentiment responses split around 0: the negative answers extend one way and the positive answers the other.',
+      how: 'Set `stacking={{ type: \'diverging\', negative: [\'strongly_disagree\', \'disagree\'], neutral: \'neutral\' }}`. List series in scale order; the last `negative` key and the first positive key touch 0; `neutral` is split across 0; `percent: true` normalises each row to 100%. The example is horizontal. Use a diverging palette (RdBu, BrBG) with grey for neutral.',
+      useWhen: ['Showing agreement scales (Likert) or positive versus negative sentiment per category'],
+      example: `<BarChart
+  id="survey"
+  className="w-full h-64"
+  data={data}
+  orientation="horizontal"
+  stacking={{ type: 'diverging', negative: ['disagree'], neutral: 'neutral', percent: true }}
+  y={{ key: 'question' }}
+  x={[
+    { key: 'disagree', className: 'fill-red-600' },
+    { key: 'neutral', className: 'fill-gray-400' },
+    { key: 'agree', className: 'fill-blue-600' },
+  ]}
+/>`,
+    },
+    {
+      kind: 'chart-type',
+      name: 'Waterfall chart',
+      aliases: ['waterfall', 'bridge chart', 'cascade chart', 'flying bricks chart'],
+      summary:
+        'Each series is a step of a running total, so gains and losses read as floating bars.',
+      how: 'Set `waterfall` (or `waterfall={{ padding: 4 }}` to narrow the steps). Each series becomes its own step within the category, starting where the previous one ended. `waterfall` wins over `stacking`.',
+      useWhen: ['Showing a walk of running gains and losses to a total'],
+      example: `<BarChart
+  id="revenue-bridge"
+  className="w-full h-64"
+  data={data}
+  waterfall
+  x={{ key: 'year' }}
+  y={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>`,
+    },
+    {
+      kind: 'chart-type',
+      name: 'Horizontal waterfall chart',
+      aliases: ['horizontal bridge chart', 'horizontal cascade chart'],
+      summary:
+        'A waterfall with the steps running left to right, for long category labels.',
+      how: 'Set `orientation="horizontal"` and `waterfall`; categories go on `y`, the series array on `x`.',
+      useWhen: ['A waterfall whose category labels are long'],
+      example: `<BarChart
+  id="profit-walk"
+  className="w-full h-64"
+  data={data}
+  orientation="horizontal"
+  waterfall
+  y={{ key: 'year' }}
+  x={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>`,
+    },
+    {
+      kind: 'chart-type',
+      name: 'Time-scaled stacked column chart',
+      aliases: ['time series stacked column chart'],
+      summary:
+        'Stacked columns on a real date axis, spaced by elapsed time.',
+      how: 'Vertical only. Set `stacking={{ type: \'normal\' }}` and `x.scalingFunction: "time"` with `x.time.format` or `x.time.isISO`; bar width follows the median gap between dates, as for the time-scaled column chart.',
+      useWhen: ['Composition per dated period, where gaps between periods should show'],
+      example: `<BarChart
+  id="daily-revenue-split"
+  className="w-full h-64"
+  data={data}
+  stacking={{ type: 'normal' }}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+  y={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
 />`,
     },
     { kind: 'option', name: 'Data labels', how: 'Pass `dataLabel={{ className: "fill-white text-xs" }}` to print values on the bars, or `dataLabel.text` to override the text.' },

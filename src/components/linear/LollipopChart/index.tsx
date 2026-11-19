@@ -135,7 +135,11 @@ const DEFAULT_STYLE: CSSProperties = {};
 /** Stand-in for useTimeAxisWarnings when the category axis is not a time axis */
 const NO_TIME_AXIS: AxisConfig = { key: '' };
 
-const num = (d: Row, key: string): number => Number(d[key]);
+const num = (d: Row, key: string): number => {
+  const v = d[key];
+  // null/'' would coerce to 0; treat them as missing so the non-finite rule applies.
+  return v == null || v === '' ? Number.NaN : Number(v);
+};
 
 /** Value-descending; non-finite values sort last. Does not mutate `rows`. */
 const sortByValueDesc = (rows: Row[], valueKey: string): Row[] =>
@@ -414,7 +418,7 @@ export const LollipopRenderer = <TData,>(
       .on('mouseleave', handlers.leave);
 
     let warnedNonFinite = false;
-    pointGroup.each(function (d) {
+    pointGroup.each(function (d, rowIndex) {
       const value = num(d, valueKey);
       if (!Number.isFinite(value)) {
         if (!warnedNonFinite) {
@@ -464,12 +468,11 @@ export const LollipopRenderer = <TData,>(
         ? `translate(${pos},${baseline})`
         : `translate(${baseline},${pos})`;
       const endTransform = isVertical
-        ? `translate(${pos},${symbolAt} )`
+        ? `translate(${pos},${symbolAt})`
         : `translate(${symbolAt},${pos})`;
 
       const duration = drawing.duration ?? 0;
       const delayMs = drawing.delay ?? 0;
-      const rowIndex = rows.indexOf(d);
       if (!duration) {
         applyStemEnd();
         marker.attr('transform', endTransform);

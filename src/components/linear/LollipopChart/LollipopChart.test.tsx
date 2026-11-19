@@ -515,6 +515,33 @@ describe('12: horizontal time', () => {
 });
 
 describe('13: non-finite value', () => {
+  it.each([
+    ['null', null],
+    ['empty string', ''],
+  ] as const)('treats %s as missing, not 0', (_label, missing) => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <LollipopChart
+        id='lp13n'
+        style={STYLE}
+        data={[
+          { name: 'a', v: 10 },
+          { name: 'b', v: missing as unknown as number },
+          { name: 'c', v: 30 },
+        ]}
+        x={X_CAT}
+        y={Y_VAL}
+      />,
+    );
+    expect(stemsOf('lp13n')).toHaveLength(2);
+    expect(symbolsOf('lp13n')).toHaveLength(2);
+    expect(hitsOf('lp13n')).toHaveLength(3);
+    expect(warn.mock.calls.map((c) => String(c[0])).join('\n')).toContain(
+      'non-numeric value for y.key "v"',
+    );
+    warn.mockRestore();
+  });
+
   it('draws no stem or symbol for that row, one warning, no NaN attributes, and keeps the hit rect', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     render(

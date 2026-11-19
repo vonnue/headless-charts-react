@@ -51,7 +51,7 @@ const meta: ChartMeta = {
   ],
   alternatives: [
     { name: 'BoxPlot', when: 'only the five-number summary matters' },
-    { name: 'ColumnChart', when: "one group's distribution as a histogram — set `x.bin`" },
+    { name: 'BarChart', when: "one group's distribution as a histogram — set `x.bin`" },
     { name: 'ScatterPlot', when: 'very small samples per group, or every point should stay visible' },
   ],
   requiredProps: ['id', 'data', 'category', 'value'],

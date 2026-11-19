@@ -134,8 +134,7 @@ interface drawHLineProps {
  * />
  * ```
  *
- * @see ColumnChart — segments must be compared precisely across
- *   categories
+ * @see BarChart — segments must be compared precisely across categories
  * @see BarChartStacked — long category labels
  * @see AreaChart — the axis is dense continuous time and the flow matters
  *   more than per-period totals

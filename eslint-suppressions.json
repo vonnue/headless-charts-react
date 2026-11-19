@@ -150,11 +150,6 @@
       "count": 4
     }
   },
-  "src/components/linear/BarChart/BarChart.stories.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 11
-    }
-  },
   "src/components/linear/BarChart/BarChart.tooltip.stories.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -162,10 +157,7 @@
   },
   "src/components/linear/BarChart/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 16
-    },
-    "@typescript-eslint/no-unused-expressions": {
-      "count": 2
+      "count": 10
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -185,16 +177,6 @@
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
-    }
-  },
-  "src/components/linear/ColumnChart/ColumnChartGrouped.stories.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "src/components/linear/ColumnChart/index.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
     }
   },
   "src/components/linear/ColumnChartStacked/ColumnChartStacked.stories.tsx": {

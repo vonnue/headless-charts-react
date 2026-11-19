@@ -38,7 +38,7 @@ const meta: ChartMeta = {
     'The axis is dense continuous time and the flow matters more than each period\'s total — use AreaChart; for a modest number of dated periods use the time-scaled variant (`x.scalingFunction: "time"`)',
   ],
   alternatives: [
-    { name: 'ColumnChart', when: 'segments must be compared precisely across categories' },
+    { name: 'BarChart', when: 'segments must be compared precisely across categories' },
     { name: 'BarChartStacked', when: 'long category labels' },
     { name: 'AreaChart', when: 'the axis is dense continuous time and the flow matters more than per-period totals' },
     { name: 'PieChart', when: 'a single whole at one point in time' },

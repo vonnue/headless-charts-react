@@ -13,12 +13,8 @@ export const decisionTree: DecisionBranch[] = [
     intent: 'comparison',
     options: [
       {
-        name: 'ColumnChart',
-        when: 'Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed',
-      },
-      {
         name: 'BarChart',
-        when: 'Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis',
+        when: 'Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed. Set `orientation="horizontal"` for long category labels or more than ~12 categories. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis',
       },
       {
         name: 'LollipopChart',
@@ -85,7 +81,7 @@ export const decisionTree: DecisionBranch[] = [
         when: 'Trend where the volume under the line or the split of a total matters',
       },
       {
-        name: 'ColumnChart',
+        name: 'BarChart',
         when: 'Few discrete periods where individual values matter more than the trend line',
       },
       {
@@ -117,12 +113,8 @@ export const decisionTree: DecisionBranch[] = [
     intent: 'distribution',
     options: [
       {
-        name: 'ColumnChart',
-        when: 'Histogram of raw continuous values — set `x.bin` and bar heights become counts',
-      },
-      {
         name: 'BarChart',
-        when: 'Same histogram horizontally — set `x[0].bin`; better for many bins',
+        when: 'Histogram of raw continuous values — set `x.bin` (or `orientation="horizontal"` and `y.bin`) and bar lengths become counts',
       },
       {
         name: 'BoxPlot',

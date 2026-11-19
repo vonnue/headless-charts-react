@@ -16,12 +16,8 @@
       "intent": "comparison",
       "options": [
         {
-          "name": "ColumnChart",
-          "when": "Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed"
-        },
-        {
           "name": "BarChart",
-          "when": "Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis"
+          "when": "Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed. Set `orientation=\"horizontal\"` for long category labels or more than ~12 categories. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis"
         },
         {
           "name": "LollipopChart",
@@ -88,7 +84,7 @@
           "when": "Trend where the volume under the line or the split of a total matters"
         },
         {
-          "name": "ColumnChart",
+          "name": "BarChart",
           "when": "Few discrete periods where individual values matter more than the trend line"
         },
         {
@@ -120,12 +116,8 @@
       "intent": "distribution",
       "options": [
         {
-          "name": "ColumnChart",
-          "when": "Histogram of raw continuous values — set `x.bin` and bar heights become counts"
-        },
-        {
           "name": "BarChart",
-          "when": "Same histogram horizontally — set `x[0].bin`; better for many bins"
+          "when": "Histogram of raw continuous values — set `x.bin` (or `orientation=\"horizontal\"` and `y.bin`) and bar lengths become counts"
         },
         {
           "name": "BoxPlot",
@@ -412,12 +404,18 @@
     {
       "name": "BarChart",
       "aliases": [
-        "horizontal bar chart",
+        "bar chart",
+        "bar graph",
+        "column chart",
+        "column graph",
+        "vertical bar chart",
         "grouped bar chart",
-        "ranked bar chart"
+        "grouped column chart",
+        "clustered column chart",
+        "clustered bar chart"
       ],
       "category": "linear",
-      "summary": "Horizontal bars comparing one or more measures across categories, with room for long category labels.",
+      "summary": "Vertical or horizontal bars comparing one or more measures across categories, grouped side by side when several measures are passed. Set `orientation=\"horizontal\"` for long category labels.",
       "intents": [
         "comparison",
         "distribution",
@@ -427,16 +425,22 @@
         "form": "records",
         "encodings": [
           {
-            "prop": "y",
+            "prop": "x",
             "role": "category",
             "required": true,
-            "description": "Single key holding the category label for each row; becomes the vertical axis."
+            "description": "Vertical (default): the category axis — key holding the category label, one group per row; set `bin` here for a histogram, or `scalingFunction: \"time\"` for dates. Horizontal: the series array — one bar per key per category. Each series entry also takes `rx` for rounded corners."
           },
           {
-            "prop": "x",
-            "role": "series",
+            "prop": "y",
+            "role": "value",
             "required": true,
-            "description": "Array of numeric keys; one bar per key per category. Each entry also takes `rx` for rounded ends."
+            "description": "Vertical (default): the series array (see `x` in horizontal). Horizontal: the category axis — key holding the category label; set `bin` here for a horizontal histogram (`x[0].bin` is still read, and `y.bin` wins)."
+          },
+          {
+            "prop": "orientation",
+            "role": "shape",
+            "required": false,
+            "description": "`\"vertical\"` (default: categories on `x`, series on `y`) or `\"horizontal\"` (categories on `y`, series on `x`). When omitted it is inferred from which of `x` or `y` is the series array, so existing `<BarChart x={[…]} y={{…}}>` still renders horizontally."
           }
         ],
         "seriesCount": {
@@ -445,38 +449,41 @@
             1,
             4
           ],
-          "max": 6
+          "max": 6,
+          "note": "Stacked layouts take 2–8."
         },
         "rowCount": {
           "ideal": [
             2,
-            25
+            12
           ],
-          "max": 40,
-          "note": "Past ~40 rows the chart needs scrolling — bin the values instead."
+          "max": 20,
+          "note": "Horizontal (orientation=\"horizontal\") holds ~25 ideal, 40 max, with long labels."
         }
       },
       "useWhen": [
-        "Category labels are long enough that vertical bars would truncate or rotate them",
-        "There are more categories than vertical bars can hold (roughly 12 or more)",
-        "Presenting a ranked list, sorted by value",
-        "Showing a histogram horizontally — set `bin` on the first `x` entry and bar lengths become counts",
-        "Bars should grow leftward from the right edge — set `direction: \"left\"`"
+        "Comparing a numeric measure across a modest number of categories with short labels",
+        "Several measures need comparing within each category, side by side",
+        "The categories are periods (years, quarters) and individual values matter more than the trend line",
+        "Category labels are long or there are more than ~12 categories — set `orientation=\"horizontal\"`",
+        "Presenting a ranked list, sorted by value — set `orientation=\"horizontal\"`",
+        "Showing a histogram of raw continuous values — set `bin` on the category config (`x.bin` in vertical, `y.bin` in horizontal)",
+        "Bars should grow leftward from the right edge — set `orientation=\"horizontal\"` and `direction: \"left\"`"
       ],
       "avoidWhen": [
-        "The x axis is time — a horizontal bar per period breaks the reading order; use LineChart or ColumnChart",
-        "Measures are parts of a whole — use BarChartStacked so the total is readable",
-        "Labels are short and there are few categories — ColumnChart is the more conventional read",
+        "The measures are parts of one whole — use BarChartStacked or ColumnChartStacked so the total is readable",
+        "The x axis is continuous time with many points — use LineChart",
+        "The bars would be nearly equal in height, making differences invisible — use LollipopChart or a dot-based chart",
         "Two measures should read outward from a shared centre — use SpineChart"
       ],
       "alternatives": [
         {
-          "name": "ColumnChart",
-          "when": "few categories with short labels"
+          "name": "BarChartStacked",
+          "when": "measures are parts of a whole and labels are long"
         },
         {
-          "name": "BarChartStacked",
-          "when": "measures are parts of a whole"
+          "name": "ColumnChartStacked",
+          "when": "measures are parts of a whole, vertical"
         },
         {
           "name": "LollipopChart",
@@ -485,6 +492,10 @@
         {
           "name": "SpineChart",
           "when": "two opposing measures per category"
+        },
+        {
+          "name": "LineChart",
+          "when": "the axis is continuous time with many points"
         }
       ],
       "requiredProps": [
@@ -493,9 +504,58 @@
         "x",
         "y"
       ],
-      "example": "<BarChart\n  id=\"sales-by-region\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'region' }}\n  x={[{ key: 'revenue', className: 'fill-blue-500' }]}\n/>",
+      "example": "<BarChart\n  id=\"sales-by-year\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'macbook', className: 'fill-purple-800' },\n    { key: 'iphone', className: 'fill-purple-600' },\n  ]}\n/>",
       "storybook": "Linear/BarChart/Intro",
+      "wrappers": [
+        {
+          "name": "ColumnChart",
+          "pins": "orientation=\"vertical\""
+        }
+      ],
       "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Horizontal bar chart",
+          "aliases": [
+            "bar chart (horizontal)",
+            "ranked bar chart",
+            "horizontal grouped bar chart"
+          ],
+          "summary": "The same bar chart with categories running down the y axis and values along x, so long category labels fit.",
+          "how": "Set `orientation=\"horizontal\"`; categories go on `y` and the series array on `x`.",
+          "useWhen": [
+            "Category labels are long enough that vertical bars would truncate or rotate them",
+            "There are more categories than vertical bars can hold (roughly 12 or more)",
+            "Presenting a ranked list, sorted by value"
+          ],
+          "avoidWhen": [
+            "The x axis is time — a horizontal bar per period breaks the reading order; keep the default orientation or use LineChart",
+            "Labels are short and there are few categories — the vertical default is the more conventional read"
+          ],
+          "example": "<BarChart\n  id=\"sales-by-region\"\n  className=\"w-full h-64\"\n  orientation=\"horizontal\"\n  data={data}\n  y={{ key: 'region' }}\n  x={[{ key: 'revenue', className: 'fill-blue-500' }]}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Histogram",
+          "aliases": [
+            "frequency distribution",
+            "binned column chart",
+            "frequency chart"
+          ],
+          "summary": "Bins raw continuous values into ranges and plots how many records fall into each, showing the shape of a distribution.",
+          "how": "Set `x={{ key: \"score\", bin: { count: 8 } }}` and `y={[{ key: \"count\" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges.",
+          "useWhen": [
+            "The data is raw measurements and the question is how they are spread, not what each one is",
+            "Skew, spread, gaps or multiple peaks need to be visible",
+            "Bin width should be tuned to reveal structure — adjust `bin.count`"
+          ],
+          "avoidWhen": [
+            "The x values are already categories — a histogram bins continuous data; use a plain BarChart",
+            "Groups need comparing by their summary statistics rather than their full shape — use BoxPlot",
+            "There are too few records for bin heights to mean anything"
+          ],
+          "example": "<BarChart\n  id=\"score-histogram\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}\n  y={[{ key: 'count', className: 'text-blue-500' }]}\n/>"
+        },
         {
           "kind": "chart-type",
           "name": "Horizontal histogram",
@@ -504,16 +564,16 @@
             "horizontal frequency distribution"
           ],
           "summary": "Bins raw continuous values and draws the count per bin as horizontal bars, with bin ranges as labels down the y axis.",
-          "how": "Set `bin` on the first `x` entry: `x={[{ key: \"score\", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically.",
+          "how": "Set `orientation=\"horizontal\"`, `y={{ key, bin }}` and `x={[{ key: \"count\" }]}`. Legacy `x[0].bin` is still read; if both are set, `y.bin` wins.",
           "useWhen": [
             "A distribution has many bins, which fit better stacked vertically than squeezed across",
             "Bin range labels are long, e.g. \"10,000–20,000\""
           ],
           "avoidWhen": [
-            "The conventional histogram orientation is expected — use ColumnChart with `x.bin`",
+            "The conventional histogram orientation is expected — use `x.bin` on the vertical default",
             "The x values are already categorical rather than continuous"
           ],
-          "example": "<BarChart\n  id=\"score-histogram\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  x={[{ key: 'score', bin: { count: 8 }, className: 'fill-blue-500' }]}\n  y={{ key: 'count' }}\n/>"
+          "example": "<BarChart\n  id=\"score-histogram\"\n  className=\"w-full h-64\"\n  orientation=\"horizontal\"\n  data={rawRows}\n  y={{ key: 'score', bin: { count: 8 } }}\n  x={[{ key: 'count', className: 'fill-blue-500' }]}\n/>"
         },
         {
           "kind": "chart-type",
@@ -524,7 +584,7 @@
             "deviation chart"
           ],
           "summary": "Bars growing left and right of a zero baseline, with negative values styled separately to show direction of change.",
-          "how": "Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`.",
+          "how": "Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. The example is horizontal.",
           "useWhen": [
             "Values are changes against a baseline and the sign is the message, e.g. year-on-year delta",
             "Gains and losses should be distinguishable at a glance by colour and direction"
@@ -533,17 +593,58 @@
             "All values share a sign — nothing diverges, so use a plain BarChart",
             "The two directions are separate measures rather than one signed measure — use SpineChart"
           ],
-          "example": "<BarChart\n  id=\"yoy-change\"\n  className=\"w-full h-64\"\n  data={data}\n  x={[{\n    key: 'delta',\n    className: 'text-green-500',\n    classNameNegative: 'text-red-500',\n    start: -10,\n    end: 10,\n    axis: { location: 'top' },\n  }]}\n  y={{ key: 'year', padding: 10 }}\n/>"
+          "example": "<BarChart\n  id=\"yoy-change\"\n  className=\"w-full h-64\"\n  orientation=\"horizontal\"\n  data={data}\n  x={[{\n    key: 'delta',\n    className: 'text-green-500',\n    classNameNegative: 'text-red-500',\n    start: -10,\n    end: 10,\n    axis: { location: 'top' },\n  }]}\n  y={{ key: 'year', padding: 10 }}\n/>"
+        },
+        {
+          "kind": "chart-type",
+          "name": "Time-scaled column chart",
+          "aliases": [
+            "time series column chart",
+            "time-scaled bar chart"
+          ],
+          "summary": "A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.",
+          "how": "Vertical only. Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
+          "useWhen": [
+            "The x values are real dates and spacing between bars should be proportional to elapsed time, not category index",
+            "Some periods are missing and the gap should read as whitespace rather than being silently collapsed",
+            "Axis ticks should fall on real date boundaries"
+          ],
+          "avoidWhen": [
+            "Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead",
+            "The categories are ordinal labels rather than true dates, e.g. \"Q1\"/\"Q2\" — use a plain BarChart",
+            "A horizontal time axis — `y.scalingFunction: \"time\"` is ignored; time scaling is vertical only"
+          ],
+          "example": "<BarChart\n  id=\"daily-signups\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={[{ key: 'signups', className: 'fill-purple-600' }]}\n/>"
         },
         {
           "kind": "option",
           "name": "Data labels",
-          "how": "Pass `dataLabel={{ className: \"fill-white text-xs\" }}` to print values on the bars."
+          "how": "Pass `dataLabel={{ className: \"fill-white text-xs\" }}` to print values on the bars, or `dataLabel.text` to override the text."
         },
         {
           "kind": "option",
           "name": "Right-to-left",
-          "how": "Set `direction=\"left\"` to anchor bars at the right edge."
+          "how": "Set `orientation=\"horizontal\"` and `direction=\"left\"` to anchor bars at the right edge."
+        },
+        {
+          "kind": "option",
+          "name": "Reference lines",
+          "how": "Pass `referenceLines={[{ y: 50, className: \"stroke-red-500\" }]}` in vertical, or `{ x: 50 }` in horizontal. A line at 0 is drawn."
+        },
+        {
+          "kind": "option",
+          "name": "Whole numbers",
+          "how": "Set `wholeNumbers` to force integer ticks on the value axis."
+        },
+        {
+          "kind": "option",
+          "name": "Rounded corners",
+          "how": "Set `rx` on a series, e.g. `y={[{ key: \"revenue\", rx: 3 }]}`."
+        },
+        {
+          "kind": "option",
+          "name": "Tick format",
+          "how": "Pass `tickFormat` as a d3-format specifier for value-axis ticks."
         }
       ]
     },
@@ -656,145 +757,6 @@
       ]
     },
     {
-      "name": "ColumnChart",
-      "aliases": [
-        "vertical bar chart",
-        "grouped column chart",
-        "clustered column chart"
-      ],
-      "category": "linear",
-      "summary": "Vertical bars comparing one or more measures across categories; grouped side by side when several measures are passed.",
-      "intents": [
-        "comparison",
-        "distribution"
-      ],
-      "data": {
-        "form": "records",
-        "encodings": [
-          {
-            "prop": "x",
-            "role": "category",
-            "required": true,
-            "description": "Single key holding the category label for each row."
-          },
-          {
-            "prop": "y",
-            "role": "series",
-            "required": true,
-            "description": "Array of numeric keys; one bar per key per category, drawn as a group."
-          }
-        ],
-        "seriesCount": {
-          "min": 1,
-          "ideal": [
-            1,
-            4
-          ],
-          "max": 6,
-          "note": "Groups wider than ~4 bars get hard to scan."
-        },
-        "rowCount": {
-          "ideal": [
-            2,
-            12
-          ],
-          "max": 20,
-          "note": "Past ~20 categories the labels collide — switch to BarChart."
-        }
-      },
-      "useWhen": [
-        "Comparing a numeric measure across a modest number of categories with short labels",
-        "Several measures need comparing within each category, side by side",
-        "The categories are periods (years, quarters) and individual values matter more than the trend line",
-        "Showing a histogram of raw continuous values — set `x.bin` and pass `y={[{ key: \"count\" }]}`"
-      ],
-      "avoidWhen": [
-        "Category labels are long or there are more than ~20 categories — use BarChart, where horizontal bars give labels room",
-        "The measures are parts of one whole — use ColumnChartStacked so the total is readable",
-        "The x axis is continuous time with many points — use LineChart",
-        "The bars would be nearly equal in height, making differences invisible — use LollipopChart or a dot-based chart"
-      ],
-      "alternatives": [
-        {
-          "name": "BarChart",
-          "when": "long labels or many categories"
-        },
-        {
-          "name": "ColumnChartStacked",
-          "when": "measures are parts of a whole"
-        },
-        {
-          "name": "LollipopChart",
-          "when": "bars look heavy and values are the focus"
-        },
-        {
-          "name": "LineChart",
-          "when": "the axis is continuous time with many points"
-        }
-      ],
-      "requiredProps": [
-        "id",
-        "data",
-        "x",
-        "y"
-      ],
-      "example": "<ColumnChart\n  id=\"sales-by-year\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'year' }}\n  y={[\n    { key: 'macbook', className: 'fill-purple-800' },\n    { key: 'iphone', className: 'fill-purple-600' },\n  ]}\n/>",
-      "storybook": "Linear/ColumnChartGrouped",
-      "variants": [
-        {
-          "kind": "chart-type",
-          "name": "Histogram",
-          "aliases": [
-            "frequency distribution",
-            "binned column chart",
-            "frequency chart"
-          ],
-          "summary": "Bins raw continuous values into ranges and plots how many records fall into each, showing the shape of a distribution.",
-          "how": "Set `x={{ key: \"score\", bin: { count: 8 } }}` and `y={[{ key: \"count\" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges.",
-          "useWhen": [
-            "The data is raw measurements and the question is how they are spread, not what each one is",
-            "Skew, spread, gaps or multiple peaks need to be visible",
-            "Bin width should be tuned to reveal structure — adjust `bin.count`"
-          ],
-          "avoidWhen": [
-            "The x values are already categories — a histogram bins continuous data; use a plain ColumnChart",
-            "Groups need comparing by their summary statistics rather than their full shape — use BoxPlot",
-            "There are too few records for bin heights to mean anything"
-          ],
-          "example": "<ColumnChart\n  id=\"score-histogram\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}\n  y={[{ key: 'count', className: 'text-blue-500' }]}\n/>"
-        },
-        {
-          "kind": "option",
-          "name": "Reference lines",
-          "how": "Pass `referenceLines={[{ y: 50, className: \"stroke-red-500\" }]}`."
-        },
-        {
-          "kind": "option",
-          "name": "Whole numbers",
-          "how": "Set `wholeNumbers` to force integer ticks on the value axis."
-        },
-        {
-          "kind": "chart-type",
-          "name": "Time-scaled column chart",
-          "aliases": [
-            "time series column chart"
-          ],
-          "summary": "A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.",
-          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
-          "useWhen": [
-            "The x values are real dates and spacing between bars should be proportional to elapsed time, not category index",
-            "Some periods are missing and the gap should read as whitespace rather than being silently collapsed",
-            "Axis ticks should fall on real date boundaries"
-          ],
-          "avoidWhen": [
-            "Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead",
-            "The categories are ordinal labels rather than true dates, e.g. \"Q1\"/\"Q2\" — use a plain ColumnChart"
-          ],
-          "example": "<ColumnChart\n  id=\"daily-signups\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={[{ key: 'signups', className: 'fill-purple-600' }]}\n/>"
-        }
-      ]
-    },
-    {
       "name": "ColumnChartStacked",
       "aliases": [
         "stacked column chart",
@@ -851,7 +813,7 @@
       ],
       "alternatives": [
         {
-          "name": "ColumnChart",
+          "name": "BarChart",
           "when": "segments must be compared precisely across categories"
         },
         {
@@ -990,7 +952,7 @@
           "when": "volume under the curve or composition of a total matters"
         },
         {
-          "name": "ColumnChart",
+          "name": "BarChart",
           "when": "few discrete periods, individual values matter more than the trend"
         },
         {
@@ -1532,7 +1494,7 @@
           "when": "tracking a measured value over time rather than discrete events"
         },
         {
-          "name": "ColumnChart",
+          "name": "BarChart",
           "when": "event counts per period are enough"
         },
         {
@@ -2328,7 +2290,7 @@
           "when": "axes are continuous measures rather than categories"
         },
         {
-          "name": "ColumnChart",
+          "name": "BarChart",
           "when": "only one categorical dimension is involved"
         },
         {
@@ -2473,7 +2435,7 @@
           "when": "individual records should stay visible"
         },
         {
-          "name": "ColumnChart",
+          "name": "BarChart",
           "when": "a histogram of one group is enough — set `x.bin`"
         }
       ],
@@ -2948,7 +2910,7 @@
           "when": "only the five-number summary matters"
         },
         {
-          "name": "ColumnChart",
+          "name": "BarChart",
           "when": "one group's distribution as a histogram — set `x.bin`"
         },
         {
@@ -3369,7 +3331,7 @@
           "when": "profiling a single entity"
         },
         {
-          "name": "ColumnChart",
+          "name": "BarChart",
           "when": "metrics have different units, or values must be read precisely"
         },
         {

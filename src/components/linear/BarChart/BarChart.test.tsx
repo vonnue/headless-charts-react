@@ -236,7 +236,8 @@ describe('BarChart tooltip lifecycle', () => {
 
     expect(count('c3')).toBe(1);
     expect(tooltipOf('c3')?.className).toContain('opacity-100');
-    expect(tooltipOf('c3')?.innerHTML).toContain('n: y');
+    expect(tooltipOf('c3')?.innerHTML).toContain('y');
+    expect(tooltipOf('c3')?.innerHTML).toContain('v: ');
   });
 
   it('C4: shows one populated tooltip on hover under StrictMode', () => {
@@ -249,7 +250,8 @@ describe('BarChart tooltip lifecycle', () => {
     fireEvent.mouseEnter(lastRect('c4'), { clientX: 10, clientY: 10 });
 
     expect(count('c4')).toBe(1);
-    expect(tooltipOf('c4')?.innerHTML).toContain('n: y');
+    expect(tooltipOf('c4')?.innerHTML).toContain('y');
+    expect(tooltipOf('c4')?.innerHTML).toContain('v: ');
   });
 
   it('C7: removes its tooltip on unmount', () => {

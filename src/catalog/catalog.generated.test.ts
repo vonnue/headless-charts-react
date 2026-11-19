@@ -259,7 +259,7 @@ describe('named chart types', () => {
     expect(find('waterfall chart')?.chart.name).toBe('ColumnChartStacked');
     expect(
       chartCatalog
-        .find((c) => c.name === 'ColumnChart')
+        .find((c) => c.name === 'BarChart')
         ?.variants?.filter(isNamedChartType)
         .map((v) => v.name),
     ).toContain('Histogram');

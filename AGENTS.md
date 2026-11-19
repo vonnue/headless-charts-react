@@ -24,7 +24,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | --- | --- | --- |
 | 100% stacked area chart, percentage area chart, normalised area chart, share of total area chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "100%" }}`. The y axis becomes 0–100% of the period total. |
 | AreaChart, area graph, stacked area chart, mountain chart | [`AreaChart`](#areachart) | Base component, no extra configuration |
-| BarChart, horizontal bar chart, grouped bar chart, ranked bar chart | [`BarChart`](#barchart) | Base component, no extra configuration |
+| BarChart, bar chart, bar graph, column chart, column graph, vertical bar chart, grouped bar chart, grouped column chart, clustered column chart, clustered bar chart | [`BarChart`](#barchart) | Base component, no extra configuration |
 | BarChartStacked, stacked bar chart, horizontal stacked bar chart | [`BarChartStacked`](#barchartstacked) | Base component, no extra configuration |
 | Binned 2D histogram, binned heatmap, two-dimensional histogram | [`WaffleChart`](#wafflechart) | Set `bin` on `x` and/or `y`; each cell then shows the count for that (xBin, yBin) pair rather than a value from the data. |
 | Binned box plot, box plot from raw data, grouped distribution plot, binned box plot (vertical), vertical box plot from raw data, distribution by band | [`BoxPlot`](#boxplot) | Set `bin` on the category-axis config (`x` in vertical, `y` in horizontal) and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on the value axis are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and the value axis still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges. |
@@ -36,21 +36,21 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Bump chart, rank chart, ranking chart, bump plot, rank over time | [`LineChart`](#linechart) | Convert values to ranks with `utils.convertToRanks(data, y, x)` — it takes the same `y` array and `x` object you pass to the chart — then set `curve: "bumpX"` and `label: { show: true }` on each series, and `reverse` so rank 1 sits at the top. |
 | Calendar heatmap, month-year heatmap, seasonality chart, activity heatmap | [`WaffleChart`](#wafflechart) | Map the finer time unit to `y` and the coarser to `x`, then colour by the measure. Use a diverging scale such as `interpolateRdYlGn` for values with a meaningful middle. |
 | CandlestickChart, candlestick, candlestick chart, japanese candlestick chart, stock chart, financial chart | [`CandlestickChart`](#candlestickchart) | Base component, no extra configuration |
-| ColumnChart, vertical bar chart, grouped column chart, clustered column chart | [`ColumnChart`](#columnchart) | Base component, no extra configuration |
+| ColumnChart | [`BarChart`](#barchart) | Wrapper component: same as `<BarChart orientation="vertical">` |
 | ColumnChartStacked, stacked column chart, stacked bar chart (vertical) | [`ColumnChartStacked`](#columnchartstacked) | Base component, no extra configuration |
 | CometPlot, comet chart, change plot, movement plot, slope chart | [`CometPlot`](#cometplot) | Base component, no extra configuration |
 | Connected scatterplot, connected scatter, path plot, trajectory plot | [`ScatterPlot`](#scatterplot) | Set `connect={{ enabled: true, className: "stroke-gray-400" }}`. Points join in the order the data is given, so sort it first. |
 | Density heatmap, 2d histogram, binned scatter plot, density plot | [`ScatterPlot`](#scatterplot) | Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` over `binColor.domain` (default `[0, maxCount]`). An axis without `bin` is grouped too: numeric values into d3's default bin count, other values one band per distinct value in sorted order. Without a `margin` prop, the left and bottom margins grow to fit the bin labels, and x labels wider than their bands are rotated. |
 | Diverging area chart, diverging stacked area chart, bidirectional area chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "diverging" }}`. Series order is reversed so positive and negative stacks mirror each other. |
-| Diverging bar chart, tornado chart, bidirectional bar chart, deviation chart | [`BarChart`](#barchart) | Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. |
+| Diverging bar chart, tornado chart, bidirectional bar chart, deviation chart | [`BarChart`](#barchart) | Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. The example is horizontal. |
 | Donut chart, doughnut chart, ring chart | [`PieChart`](#piechart) | Set `innerRadius` above 0. Values are a fraction of `outerRadius`, so `innerRadius={0.5}` hollows half the radius. |
 | Dual-axis line chart, two axis chart, secondary axis chart, combo chart | [`LineChart`](#linechart) | Give the second series `axis: { location: "right" }` and widen `margin.right`. Label the scales with `yLeftLabel` and `yRightLabel`. |
 | FunnelChart, funnel, funnel chart, conversion funnel | [`FunnelChart`](#funnelchart) | Base component, no extra configuration |
 | Gantt chart, gantt, schedule chart, project timeline, swimlane chart | [`TimeLineChart`](#timelinechart) | Pass both `events.startKey` and `events.endKey` with `events.isTime: true`, and set `y` to the lane key. Spans render as rects; overlapping work in a lane is visible as stacked bars. |
-| Histogram, frequency distribution, binned column chart, frequency chart | [`ColumnChart`](#columnchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
+| Histogram, frequency distribution, binned column chart, frequency chart | [`BarChart`](#barchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
+| Horizontal bar chart, bar chart (horizontal), ranked bar chart, horizontal grouped bar chart | [`BarChart`](#barchart) | Set `orientation="horizontal"`; categories go on `y` and the series array on `x`. |
 | Horizontal box plot, box plot (horizontal), horizontal box and whisker plot | [`BoxPlot`](#boxplot) | Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form. |
-| Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically. |
-| Horizontal lollipop chart, lollipop chart (horizontal), horizontal stem plot, ranked lollipop chart | [`LollipopChart`](#lollipopchart) | Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` is a deprecated alias for this form. |
+| Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `orientation="horizontal"`, `y={{ key, bin }}` and `x={[{ key: "count" }]}`. Legacy `x[0].bin` is still read; if both are set, `y.bin` wins. |
 | Horizontal waterfall chart, horizontal bridge chart, horizontal cascade chart | [`BarChartStacked`](#barchartstacked) | Set `waterfall` on a BarChartStacked. Each `x` series becomes a step rather than a segment stacked from the baseline. |
 | LinearGauge, progress bar chart, linear progress gauge, meter | [`LinearGauge`](#lineargauge) | Base component, no extra configuration |
 | LineChart, line graph, multi-line chart, trend line chart | [`LineChart`](#linechart) | Base component, no extra configuration |
@@ -77,7 +77,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | SunburstChart, sunburst, sunburst chart, sunburst diagram, radial treemap, multi-level pie chart | [`SunburstChart`](#sunburstchart) | Base component, no extra configuration |
 | Time-scaled area chart, time series area chart | [`AreaChart`](#areachart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled box plot, time series box plot, time-scaled box plot (vertical) | [`BoxPlot`](#boxplot) | Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). With `orientation="horizontal"`, `y.scalingFunction: "time"` is ignored with a dev warning. |
-| Time-scaled column chart, time series column chart | [`ColumnChart`](#columnchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
+| Time-scaled column chart, time series column chart, time-scaled bar chart | [`BarChart`](#barchart) | Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
 | Time-scaled line chart, time series chart, time series line chart | [`LineChart`](#linechart) | Set `x.scalingFunction: "time"` and `x.time.format` (or `x.time.isISO`) to parse date strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled lollipop chart, time series lollipop chart | [`LollipopChart`](#lollipopchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled stacked column chart, time series stacked column chart | [`ColumnChartStacked`](#columnchartstacked) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
@@ -95,9 +95,9 @@ Find the question being asked, then pick among the candidates.
 
 | Chart | Choose it when |
 | --- | --- |
-| [`ColumnChart`](#columnchart) | Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed |
-| [`BarChart`](#barchart) | Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis |
-| [`LollipopChart`](#lollipopchart) | Values matter more than magnitude-as-area, and bars would look heavy. Set orientation="horizontal" for long category labels |
+| [`BarChart`](#barchart) | Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed. Set `orientation="horizontal"` for long category labels or more than ~12 categories. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis |
+| [`LollipopVChart`](#lollipopvchart) | Values matter more than magnitude-as-area, and bars would look heavy; vertical orientation |
+| [`LollipopHChart`](#lollipophchart) | Same as LollipopVChart but with long category labels |
 | [`SpineChart`](#spinechart) | Two opposing measures per category read outward from a shared centre axis, e.g. male/female |
 | [`RadarChart`](#radarchart) | Five or more metrics compared across a handful of entities on one shared 0–max scale |
 
@@ -120,7 +120,7 @@ Find the question being asked, then pick among the candidates.
 | --- | --- |
 | [`LineChart`](#linechart) | Trend of one or more series; the default choice for time on x |
 | [`AreaChart`](#areachart) | Trend where the volume under the line or the split of a total matters |
-| [`ColumnChart`](#columnchart) | Few discrete periods where individual values matter more than the trend line |
+| [`BarChart`](#barchart) | Few discrete periods where individual values matter more than the trend line |
 | [`TimeLineChart`](#timelinechart) | Discrete events or durations on a date axis rather than a continuous measure |
 | [`SparklineChart`](#sparklinechart) | Many series (beyond ~8) whose trends should be compared without overplotting; one axis-free row per series on a shared scale |
 
@@ -135,8 +135,7 @@ Find the question being asked, then pick among the candidates.
 
 | Chart | Choose it when |
 | --- | --- |
-| [`ColumnChart`](#columnchart) | Histogram of raw continuous values — set `x.bin` and bar heights become counts |
-| [`BarChart`](#barchart) | Same histogram horizontally — set `x[0].bin`; better for many bins |
+| [`BarChart`](#barchart) | Histogram of raw continuous values — set `x.bin` (or `orientation="horizontal"` and `y.bin`) and bar lengths become counts |
 | [`BoxPlot`](#boxplot) | Compare the spread, median and quartiles of several groups — set `orientation="horizontal"` for long group labels |
 | [`ViolinChart`](#violinchart) | Compare the full shape (peaks, skew, multimodality) of a raw measure across groups — not just the five-number summary |
 | [`ScatterPlot`](#scatterplot) | Two-dimensional density — set `x.bin` or `y.bin` for a binned heatmap |
@@ -371,47 +370,119 @@ An area chart whose x axis parses real dates rather than treating the key as a p
 
 ### BarChart
 
-Horizontal bars comparing one or more measures across categories, with room for long category labels.
+Vertical or horizontal bars comparing one or more measures across categories, grouped side by side when several measures are passed. Set `orientation="horizontal"` for long category labels.
 
 **Category:** `linear` · **Answers:** `comparison`, `distribution`, `ranking` · **Storybook:** Linear/BarChart/Intro
 
-**Also called:** horizontal bar chart, grouped bar chart, ranked bar chart
+**Also called:** bar chart, bar graph, column chart, column graph, vertical bar chart, grouped bar chart, grouped column chart, clustered column chart, clustered bar chart
+
+**Wrapper components** (exported; same chart with props pinned)
+
+- `ColumnChart` — `<BarChart orientation="vertical">`
+
+Prefer `<BarChart>` with the prop set in new code; the wrappers remain a stable public API.
+
+**Use when**
+
+- Comparing a numeric measure across a modest number of categories with short labels
+- Several measures need comparing within each category, side by side
+- The categories are periods (years, quarters) and individual values matter more than the trend line
+- Category labels are long or there are more than ~12 categories — set `orientation="horizontal"`
+- Presenting a ranked list, sorted by value — set `orientation="horizontal"`
+- Showing a histogram of raw continuous values — set `bin` on the category config (`x.bin` in vertical, `y.bin` in horizontal)
+- Bars should grow leftward from the right edge — set `orientation="horizontal"` and `direction: "left"`
+
+**Do not use when**
+
+- The measures are parts of one whole — use BarChartStacked or ColumnChartStacked so the total is readable
+- The x axis is continuous time with many points — use LineChart
+- The bars would be nearly equal in height, making differences invisible — use LollipopChart or a dot-based chart
+- Two measures should read outward from a shared centre — use SpineChart
+
+**Data**
+
+- `data` shape: records
+- Series: ideal 1–4, min 1, max 6 — Stacked layouts take 2–8.
+- Rows: ideal 2–12, max 20 — Horizontal (orientation="horizontal") holds ~25 ideal, 40 max, with long labels.
+
+| Prop | Role | Required | Notes |
+| --- | --- | --- | --- |
+| `x` | category | yes | Vertical (default): the category axis — key holding the category label, one group per row; set `bin` here for a histogram, or `scalingFunction: "time"` for dates. Horizontal: the series array — one bar per key per category. Each series entry also takes `rx` for rounded corners. |
+| `y` | value | yes | Vertical (default): the series array (see `x` in horizontal). Horizontal: the category axis — key holding the category label; set `bin` here for a horizontal histogram (`x[0].bin` is still read, and `y.bin` wins). |
+| `orientation` | shape | no | `"vertical"` (default: categories on `x`, series on `y`) or `"horizontal"` (categories on `y`, series on `x`). When omitted it is inferred from which of `x` or `y` is the series array, so existing `<BarChart x={[…]} y={{…}}>` still renders horizontally. |
+
+**Required props:** `id`, `data`, `x`, `y`
+
+```tsx
+<BarChart
+  id="sales-by-year"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'year' }}
+  y={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>
+```
+
+#### Horizontal bar chart (BarChart)
+
+The same bar chart with categories running down the y axis and values along x, so long category labels fit.
+
+**Also called:** bar chart (horizontal), ranked bar chart, horizontal grouped bar chart
+
+**Configuration:** Set `orientation="horizontal"`; categories go on `y` and the series array on `x`.
 
 **Use when**
 
 - Category labels are long enough that vertical bars would truncate or rotate them
 - There are more categories than vertical bars can hold (roughly 12 or more)
 - Presenting a ranked list, sorted by value
-- Showing a histogram horizontally — set `bin` on the first `x` entry and bar lengths become counts
-- Bars should grow leftward from the right edge — set `direction: "left"`
 
 **Do not use when**
 
-- The x axis is time — a horizontal bar per period breaks the reading order; use LineChart or ColumnChart
-- Measures are parts of a whole — use BarChartStacked so the total is readable
-- Labels are short and there are few categories — ColumnChart is the more conventional read
-- Two measures should read outward from a shared centre — use SpineChart
-
-**Data**
-
-- `data` shape: records
-- Series: ideal 1–4, min 1, max 6
-- Rows: ideal 2–25, max 40 — Past ~40 rows the chart needs scrolling — bin the values instead.
-
-| Prop | Role | Required | Notes |
-| --- | --- | --- | --- |
-| `y` | category | yes | Single key holding the category label for each row; becomes the vertical axis. |
-| `x` | series | yes | Array of numeric keys; one bar per key per category. Each entry also takes `rx` for rounded ends. |
-
-**Required props:** `id`, `data`, `x`, `y`
+- The x axis is time — a horizontal bar per period breaks the reading order; keep the default orientation or use LineChart
+- Labels are short and there are few categories — the vertical default is the more conventional read
 
 ```tsx
 <BarChart
   id="sales-by-region"
   className="w-full h-64"
+  orientation="horizontal"
   data={data}
   y={{ key: 'region' }}
   x={[{ key: 'revenue', className: 'fill-blue-500' }]}
+/>
+```
+
+#### Histogram (BarChart)
+
+Bins raw continuous values into ranges and plots how many records fall into each, showing the shape of a distribution.
+
+**Also called:** frequency distribution, binned column chart, frequency chart
+
+**Configuration:** Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges.
+
+**Use when**
+
+- The data is raw measurements and the question is how they are spread, not what each one is
+- Skew, spread, gaps or multiple peaks need to be visible
+- Bin width should be tuned to reveal structure — adjust `bin.count`
+
+**Do not use when**
+
+- The x values are already categories — a histogram bins continuous data; use a plain BarChart
+- Groups need comparing by their summary statistics rather than their full shape — use BoxPlot
+- There are too few records for bin heights to mean anything
+
+```tsx
+<BarChart
+  id="score-histogram"
+  className="w-full h-64"
+  data={rawRows}
+  x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}
+  y={[{ key: 'count', className: 'text-blue-500' }]}
 />
 ```
 
@@ -421,7 +492,7 @@ Bins raw continuous values and draws the count per bin as horizontal bars, with 
 
 **Also called:** binned bar chart, horizontal frequency distribution
 
-**Configuration:** Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically.
+**Configuration:** Set `orientation="horizontal"`, `y={{ key, bin }}` and `x={[{ key: "count" }]}`. Legacy `x[0].bin` is still read; if both are set, `y.bin` wins.
 
 **Use when**
 
@@ -430,16 +501,17 @@ Bins raw continuous values and draws the count per bin as horizontal bars, with 
 
 **Do not use when**
 
-- The conventional histogram orientation is expected — use ColumnChart with `x.bin`
+- The conventional histogram orientation is expected — use `x.bin` on the vertical default
 - The x values are already categorical rather than continuous
 
 ```tsx
 <BarChart
   id="score-histogram"
   className="w-full h-64"
+  orientation="horizontal"
   data={rawRows}
-  x={[{ key: 'score', bin: { count: 8 }, className: 'fill-blue-500' }]}
-  y={{ key: 'count' }}
+  y={{ key: 'score', bin: { count: 8 } }}
+  x={[{ key: 'count', className: 'fill-blue-500' }]}
 />
 ```
 
@@ -449,7 +521,7 @@ Bars growing left and right of a zero baseline, with negative values styled sepa
 
 **Also called:** tornado chart, bidirectional bar chart, deviation chart
 
-**Configuration:** Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`.
+**Configuration:** Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. The example is horizontal.
 
 **Use when**
 
@@ -465,6 +537,7 @@ Bars growing left and right of a zero baseline, with negative values styled sepa
 <BarChart
   id="yoy-change"
   className="w-full h-64"
+  orientation="horizontal"
   data={data}
   x={[{
     key: 'delta',
@@ -478,17 +551,52 @@ Bars growing left and right of a zero baseline, with negative values styled sepa
 />
 ```
 
+#### Time-scaled column chart (BarChart)
+
+A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.
+
+**Also called:** time series column chart, time-scaled bar chart
+
+**Configuration:** Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).
+
+**Use when**
+
+- The x values are real dates and spacing between bars should be proportional to elapsed time, not category index
+- Some periods are missing and the gap should read as whitespace rather than being silently collapsed
+- Axis ticks should fall on real date boundaries
+
+**Do not use when**
+
+- Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead
+- The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain BarChart
+- A horizontal time axis — `y.scalingFunction: "time"` is ignored; time scaling is vertical only
+
+```tsx
+<BarChart
+  id="daily-signups"
+  className="w-full h-64"
+  data={data}
+  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
+  y={[{ key: 'signups', className: 'fill-purple-600' }]}
+/>
+```
+
 **Options**
 
-- **Data labels** — Pass `dataLabel={{ className: "fill-white text-xs" }}` to print values on the bars.
-- **Right-to-left** — Set `direction="left"` to anchor bars at the right edge.
+- **Data labels** — Pass `dataLabel={{ className: "fill-white text-xs" }}` to print values on the bars, or `dataLabel.text` to override the text.
+- **Right-to-left** — Set `orientation="horizontal"` and `direction="left"` to anchor bars at the right edge.
+- **Reference lines** — Pass `referenceLines={[{ y: 50, className: "stroke-red-500" }]}` in vertical, or `{ x: 50 }` in horizontal. A line at 0 is drawn.
+- **Whole numbers** — Set `wholeNumbers` to force integer ticks on the value axis.
+- **Rounded corners** — Set `rx` on a series, e.g. `y={[{ key: "revenue", rx: 3 }]}`.
+- **Tick format** — Pass `tickFormat` as a d3-format specifier for value-axis ticks.
 
 **Consider instead**
 
-- [`ColumnChart`](#columnchart) — few categories with short labels
-- [`BarChartStacked`](#barchartstacked) — measures are parts of a whole
+- [`BarChartStacked`](#barchartstacked) — measures are parts of a whole and labels are long
+- [`ColumnChartStacked`](#columnchartstacked) — measures are parts of a whole, vertical
 - [`LollipopChart`](#lollipopchart) — bars look heavy and the value point is the focus
 - [`SpineChart`](#spinechart) — two opposing measures per category
+- [`LineChart`](#linechart) — the axis is continuous time with many points
 
 ### BarChartStacked
 
@@ -578,125 +686,6 @@ Floating horizontal bars where each segment continues from the previous total, s
 - [`BarChart`](#barchart) — segments must be compared precisely rather than summed
 - [`ColumnChartStacked`](#columnchartstacked) — short labels and few categories
 - [`PieChart`](#piechart) — a single whole at one point in time
-
-### ColumnChart
-
-Vertical bars comparing one or more measures across categories; grouped side by side when several measures are passed.
-
-**Category:** `linear` · **Answers:** `comparison`, `distribution` · **Storybook:** Linear/ColumnChartGrouped
-
-**Also called:** vertical bar chart, grouped column chart, clustered column chart
-
-**Use when**
-
-- Comparing a numeric measure across a modest number of categories with short labels
-- Several measures need comparing within each category, side by side
-- The categories are periods (years, quarters) and individual values matter more than the trend line
-- Showing a histogram of raw continuous values — set `x.bin` and pass `y={[{ key: "count" }]}`
-
-**Do not use when**
-
-- Category labels are long or there are more than ~20 categories — use BarChart, where horizontal bars give labels room
-- The measures are parts of one whole — use ColumnChartStacked so the total is readable
-- The x axis is continuous time with many points — use LineChart
-- The bars would be nearly equal in height, making differences invisible — use LollipopChart or a dot-based chart
-
-**Data**
-
-- `data` shape: records
-- Series: ideal 1–4, min 1, max 6 — Groups wider than ~4 bars get hard to scan.
-- Rows: ideal 2–12, max 20 — Past ~20 categories the labels collide — switch to BarChart.
-
-| Prop | Role | Required | Notes |
-| --- | --- | --- | --- |
-| `x` | category | yes | Single key holding the category label for each row. |
-| `y` | series | yes | Array of numeric keys; one bar per key per category, drawn as a group. |
-
-**Required props:** `id`, `data`, `x`, `y`
-
-```tsx
-<ColumnChart
-  id="sales-by-year"
-  className="w-full h-64"
-  data={data}
-  x={{ key: 'year' }}
-  y={[
-    { key: 'macbook', className: 'fill-purple-800' },
-    { key: 'iphone', className: 'fill-purple-600' },
-  ]}
-/>
-```
-
-#### Histogram (ColumnChart)
-
-Bins raw continuous values into ranges and plots how many records fall into each, showing the shape of a distribution.
-
-**Also called:** frequency distribution, binned column chart, frequency chart
-
-**Configuration:** Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges.
-
-**Use when**
-
-- The data is raw measurements and the question is how they are spread, not what each one is
-- Skew, spread, gaps or multiple peaks need to be visible
-- Bin width should be tuned to reveal structure — adjust `bin.count`
-
-**Do not use when**
-
-- The x values are already categories — a histogram bins continuous data; use a plain ColumnChart
-- Groups need comparing by their summary statistics rather than their full shape — use BoxPlot
-- There are too few records for bin heights to mean anything
-
-```tsx
-<ColumnChart
-  id="score-histogram"
-  className="w-full h-64"
-  data={rawRows}
-  x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}
-  y={[{ key: 'count', className: 'text-blue-500' }]}
-/>
-```
-
-#### Time-scaled column chart (ColumnChart)
-
-A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.
-
-**Also called:** time series column chart
-
-**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).
-
-**Use when**
-
-- The x values are real dates and spacing between bars should be proportional to elapsed time, not category index
-- Some periods are missing and the gap should read as whitespace rather than being silently collapsed
-- Axis ticks should fall on real date boundaries
-
-**Do not use when**
-
-- Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead
-- The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain ColumnChart
-
-```tsx
-<ColumnChart
-  id="daily-signups"
-  className="w-full h-64"
-  data={data}
-  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
-  y={[{ key: 'signups', className: 'fill-purple-600' }]}
-/>
-```
-
-**Options**
-
-- **Reference lines** — Pass `referenceLines={[{ y: 50, className: "stroke-red-500" }]}`.
-- **Whole numbers** — Set `wholeNumbers` to force integer ticks on the value axis.
-
-**Consider instead**
-
-- [`BarChart`](#barchart) — long labels or many categories
-- [`ColumnChartStacked`](#columnchartstacked) — measures are parts of a whole
-- [`LollipopChart`](#lollipopchart) — bars look heavy and values are the focus
-- [`LineChart`](#linechart) — the axis is continuous time with many points
 
 ### ColumnChartStacked
 
@@ -819,7 +808,7 @@ A stacked column chart whose x axis parses real dates and spaces bars proportion
 
 **Consider instead**
 
-- [`ColumnChart`](#columnchart) — segments must be compared precisely across categories
+- [`BarChart`](#barchart) — segments must be compared precisely across categories
 - [`BarChartStacked`](#barchartstacked) — long category labels
 - [`AreaChart`](#areachart) — the axis is dense continuous time and the flow matters more than per-period totals
 - [`PieChart`](#piechart) — a single whole at one point in time
@@ -1003,7 +992,7 @@ A line chart whose x axis parses real dates rather than treating the key as a pl
 **Consider instead**
 
 - [`AreaChart`](#areachart) — volume under the curve or composition of a total matters
-- [`ColumnChart`](#columnchart) — few discrete periods, individual values matter more than the trend
+- [`BarChart`](#barchart) — few discrete periods, individual values matter more than the trend
 - [`TimeLineChart`](#timelinechart) — plotting events and durations rather than a continuous measure
 - [`ScatterPlot`](#scatterplot) — the x axis is a measure rather than time, and points should not be joined
 - [`SparklineChart`](#sparklinechart) — more than ~8 series would overplot; one comparable row per series
@@ -1343,7 +1332,7 @@ Draws each row’s work as a horizontal bar spanning its start and end dates, on
 **Consider instead**
 
 - [`LineChart`](#linechart) — tracking a measured value over time rather than discrete events
-- [`ColumnChart`](#columnchart) — event counts per period are enough
+- [`BarChart`](#barchart) — event counts per period are enough
 - [`RangePlot`](#rangeplot) — intervals are numeric ranges rather than moments in time
 
 ### ParallelCoordinatesChart
@@ -1928,7 +1917,7 @@ Groups raw continuous values into ranges on both axes and colours each cell by h
 **Consider instead**
 
 - [`ScatterPlot`](#scatterplot) — axes are continuous measures rather than categories
-- [`ColumnChart`](#columnchart) — only one categorical dimension is involved
+- [`BarChart`](#barchart) — only one categorical dimension is involved
 - [`PieChart`](#piechart) — showing part-to-whole for a single set of categories
 
 ### BoxPlot
@@ -2101,7 +2090,7 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
 
 - [`RangePlot`](#rangeplot) — showing a plain min–max interval rather than quartiles
 - [`ScatterPlot`](#scatterplot) — individual records should stay visible
-- [`ColumnChart`](#columnchart) — a histogram of one group is enough — set `x.bin`
+- [`BarChart`](#barchart) — a histogram of one group is enough — set `x.bin`
 
 ### CandlestickChart
 
@@ -2396,7 +2385,7 @@ A half violin with the raw samples jittered on the empty side, showing density a
 **Consider instead**
 
 - [`BoxPlot`](#boxplot) — only the five-number summary matters
-- [`ColumnChart`](#columnchart) — one group's distribution as a histogram — set `x.bin`
+- [`BarChart`](#barchart) — one group's distribution as a histogram — set `x.bin`
 - [`ScatterPlot`](#scatterplot) — very small samples per group, or every point should stay visible
 
 ### BulletChart
@@ -2637,7 +2626,7 @@ Plots several metrics on spokes radiating from a centre and joins them into a po
 **Consider instead**
 
 - [`PizzaChart`](#pizzachart) — profiling a single entity
-- [`ColumnChart`](#columnchart) — metrics have different units, or values must be read precisely
+- [`BarChart`](#barchart) — metrics have different units, or values must be read precisely
 - [`RingGauge`](#ringgauge) — each metric has its own target rather than a shared scale
 - [`ParallelCoordinatesChart`](#parallelcoordinateschart) — many records, or more than about eight dimensions, especially with different units
 

@@ -187,7 +187,7 @@ const DEFAULT_STYLE = {};
  *
  * @see AreaChart — volume under the curve or composition of a total
  *   matters
- * @see ColumnChart — few discrete periods, individual values matter more
+ * @see BarChart — few discrete periods, individual values matter more
  *   than the trend
  * @see TimeLineChart — plotting events and durations rather than a
  *   continuous measure

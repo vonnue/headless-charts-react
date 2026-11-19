@@ -17,8 +17,11 @@ export type {
   BarDataLabel,
   BarReferenceLine,
   BarSeriesConfig,
+  BarStacking,
+  BarChartStackedProps,
   ColumnChartGroupedProps,
   ColumnChartProps,
+  ColumnChartStackedProps,
 } from '@/components/linear/BarChart';
 export { default as BarChartStacked } from '@/components/linear/BarChartStacked';
 export { default as LollipopChart } from '@/components/linear/LollipopChart';

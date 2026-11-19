@@ -8,11 +8,9 @@ import {
 
 import AreaChart from '@/components/linear/AreaChart/meta';
 import BarChart from '@/components/linear/BarChart/meta';
-import BarChartStacked from '@/components/linear/BarChartStacked/meta';
 import BoxPlot from '@/components/ranges/BoxPlot/meta';
 import BulletChart from '@/components/gauges/BulletChart/meta';
 import CandlestickChart from '@/components/ranges/CandlestickChart/meta';
-import ColumnChartStacked from '@/components/linear/ColumnChartStacked/meta';
 import CometPlot from '@/components/ranges/CometPlot/meta';
 import LineChart from '@/components/linear/LineChart/meta';
 import LinearGauge from '@/components/gauges/LinearGauge/meta';
@@ -49,8 +47,6 @@ export const chartCatalog: ChartMeta[] = [
   // linear
   AreaChart,
   BarChart,
-  BarChartStacked,
-  ColumnChartStacked,
   LineChart,
   LollipopChart,
   SparklineChart,

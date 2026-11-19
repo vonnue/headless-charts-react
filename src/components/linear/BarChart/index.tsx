@@ -69,14 +69,27 @@ export interface BarReferenceLine {
   className?: string;
 }
 
+export type BarStacking =
+  | { type: 'normal' }
+  | { type: '100%' }
+  | { type: 'diverging'; negative: string[]; neutral?: string; percent?: boolean };
+
 export interface BarDataLabel<TData = any> {
   className?: string;
-  /** Label text. Default: the value. */
+  /** Label text. Default: the value (the share for '100%' stacking). */
   text?: (row: TData, series: BarSeriesConfig<TData>) => string;
 }
 
 interface BarChartBaseProps<TData> extends ChartProps<TData> {
   data: TData[];
+  /**
+   * Omitted = grouped. `'normal'` stacks from 0 in series order (negatives
+   * stack the other way), `'100%'` normalises each row to its total, and
+   * `'diverging'` puts the `negative` series on the negative side of 0.
+   */
+  stacking?: BarStacking;
+  /** Each series becomes a step of a running total. Wins over `stacking`. */
+  waterfall?: boolean | { padding?: number };
   /** Horizontal only: bars grow to the right (default) or to the left. */
   direction?: 'left' | 'right';
   referenceLines?: BarReferenceLine[];
@@ -112,7 +125,15 @@ export type ColumnChartProps<TData = any> = BarChartVerticalProps<TData>;
 /** @deprecated Use {@link ColumnChartProps}. */
 export type ColumnChartGroupedProps<TData = any> = ColumnChartProps<TData>;
 
-export type BarChartName = 'BarChart' | 'ColumnChart';
+/** Wrapper props: `stacking` defaults to `{ type: 'normal' }`. */
+export type BarChartStackedProps<TData = any> = BarChartHorizontalProps<TData>;
+export type ColumnChartStackedProps<TData = any> = BarChartVerticalProps<TData>;
+
+export type BarChartName =
+  | 'BarChart'
+  | 'ColumnChart'
+  | 'BarChartStacked'
+  | 'ColumnChartStacked';
 
 /** Set by the public component or a wrapper; not part of the public props. */
 export interface BarRendererProps {
@@ -120,7 +141,23 @@ export interface BarRendererProps {
   chartName: BarChartName;
   /** Orientation a wrapper pins */
   pinned?: ChartOrientation;
+  /** A wrapper's default margin (BarChartStacked) */
+  defaultMargin?: NonNullable<ChartProps['margin']>;
+  /** A wrapper's default band padding (BarChartStacked: 0.3) */
+  defaultBandPadding?: number;
 }
+
+type Layout = 'grouped' | 'normal' | '100%' | 'diverging' | 'waterfall';
+/** One drawn segment: value-axis extent [lo, hi] in domain units. */
+interface Segment {
+  lo: number;
+  hi: number;
+  /** The row's raw value (NaN when missing) */
+  value: number;
+  /** Share of the row ('100%' and diverging `percent`) */
+  share?: number;
+}
+const PERCENT = d3format('.0%');
 
 type Row = Record<string, unknown>;
 type TooltipHandlers = Pick<
@@ -164,6 +201,84 @@ const horizontalMargin = (
   right: direction === 'right' ? 20 : 40,
 });
 
+/**
+ * Segments per series (outer) and row (inner) for a stacked or waterfall
+ * layout. Missing values (NaN) give zero-length segments.
+ */
+const stackSegments = (
+  layout: Exclude<Layout, 'grouped'>,
+  rows: Row[],
+  keys: string[],
+  diverging: { negative: Set<string>; neutral?: string; percent: boolean },
+): Segment[][] => {
+  const out: Segment[][] = keys.map(() => []);
+  rows.forEach((row) => {
+    const values = keys.map((key) => num(row, key));
+    if (layout === 'waterfall') {
+      let cum = 0;
+      values.forEach((v, i) => {
+        const prev = cum;
+        if (Number.isFinite(v)) cum += v;
+        out[i].push({ lo: Math.min(prev, cum), hi: Math.max(prev, cum), value: v });
+      });
+    } else if (layout === 'normal') {
+      let pos = 0;
+      let neg = 0;
+      values.forEach((v, i) => {
+        if (!Number.isFinite(v)) {
+          out[i].push({ lo: pos, hi: pos, value: v });
+        } else if (v >= 0) {
+          out[i].push({ lo: pos, hi: pos + v, value: v });
+          pos += v;
+        } else {
+          out[i].push({ lo: neg + v, hi: neg, value: v });
+          neg += v;
+        }
+      });
+    } else if (layout === '100%') {
+      const parts = values.map((v) => (Number.isFinite(v) ? Math.max(0, v) : 0));
+      const total = parts.reduce((a, b) => a + b, 0);
+      let cum = 0;
+      parts.forEach((part, i) => {
+        const share = total > 0 ? part / total : 0;
+        out[i].push({ lo: cum, hi: cum + share, value: values[i], share });
+        cum += share;
+      });
+    } else {
+      const parts = values.map((v) => (Number.isFinite(v) ? Math.abs(v) : 0));
+      const total = parts.reduce((a, b) => a + b, 0);
+      const scale = diverging.percent ? (total > 0 ? 1 / total : 0) : 1;
+      const neutralIndex = diverging.neutral ? keys.indexOf(diverging.neutral) : -1;
+      const half = neutralIndex >= 0 ? (parts[neutralIndex] * scale) / 2 : 0;
+      const segs: Segment[] = keys.map(() => ({ lo: 0, hi: 0, value: Number.NaN }));
+      let negCur = -half;
+      // The last `negative` key touches 0, so walk them from the end outward.
+      for (let i = keys.length - 1; i >= 0; i -= 1) {
+        if (!diverging.negative.has(keys[i]) || i === neutralIndex) continue;
+        const len = parts[i] * scale;
+        segs[i] = { lo: negCur - len, hi: negCur, value: values[i] };
+        negCur -= len;
+      }
+      let posCur = half;
+      keys.forEach((key, i) => {
+        if (i === neutralIndex) {
+          segs[i] = { lo: -half, hi: half, value: values[i] };
+          return;
+        }
+        if (diverging.negative.has(key)) return;
+        const len = parts[i] * scale;
+        segs[i] = { lo: posCur, hi: posCur + len, value: values[i] };
+        posCur += len;
+      });
+      segs.forEach((seg, i) => {
+        if (diverging.percent) seg.share = parts[i] * scale;
+        out[i].push(seg);
+      });
+    }
+  });
+  return out;
+};
+
 const resolveBandPadding = (
   paddingBarProp: number | undefined,
   paddingBarKey: number | undefined,
@@ -185,6 +300,10 @@ export const BarRenderer = <TData,>(
   const {
     chartName,
     pinned,
+    defaultMargin,
+    defaultBandPadding,
+    stacking: stackingProp,
+    waterfall: waterfallProp,
     className,
     data: dataProp,
     id,
@@ -219,13 +338,16 @@ export const BarRenderer = <TData,>(
 
   const padding = props.padding ?? DEFAULT_PADDING;
   const margin = useMemo(
-    () => props.margin ?? (isVertical ? VERTICAL_MARGIN : horizontalMargin(series, direction)),
-    [props.margin, isVertical, series, direction],
+    () =>
+      props.margin
+      ?? defaultMargin
+      ?? (isVertical ? VERTICAL_MARGIN : horizontalMargin(series, direction)),
+    [props.margin, defaultMargin, isVertical, series, direction],
   );
   const bandPadding = resolveBandPadding(
     paddingBar,
     padding.bar,
-    isVertical ? 0.2 : 0.1,
+    defaultBandPadding ?? (isVertical ? 0.2 : 0.1),
   );
 
   const valueAxis = isVertical ? 'y' : 'x';
@@ -239,6 +361,33 @@ export const BarRenderer = <TData,>(
   const isTime = isVertical && timeRequested;
   const binConfig = isTime ? undefined : (categoryBin ?? legacySeriesBin);
   const isBinned = binConfig != null;
+
+  // Inline `stacking={{ … }}` objects are new every render; key them by value.
+  const stackingKey = stackingProp ? JSON.stringify(stackingProp) : '';
+  const stacking = useMemo<BarStacking | undefined>(
+    () => (stackingKey ? (JSON.parse(stackingKey) as BarStacking) : undefined),
+    [stackingKey],
+  );
+  const waterfallOn = !!waterfallProp;
+  const waterfallPadding =
+    typeof waterfallProp === 'object' && isFiniteNumber(waterfallProp.padding)
+      ? waterfallProp.padding
+      : 0;
+  const requestedLayout: Layout = waterfallOn
+    ? 'waterfall'
+    : stacking?.type ?? 'grouped';
+  const layout: Layout = isBinned ? 'grouped' : requestedLayout;
+  const seriesKeyList = isSeriesArray(series) ? series.map((column) => column.key) : [];
+  const seriesKeysJoined = seriesKeyList.join('\u0000');
+  const diverging = useMemo(() => {
+    const keys = seriesKeysJoined ? seriesKeysJoined.split('\u0000') : [];
+    const spec = stacking?.type === 'diverging' ? stacking : undefined;
+    const neutral = spec?.neutral && keys.includes(spec.neutral) ? spec.neutral : undefined;
+    const negative = new Set(
+      (spec?.negative ?? []).filter((key) => keys.includes(key) && key !== neutral),
+    );
+    return { negative, neutral, percent: !!spec?.percent };
+  }, [stacking, seriesKeysJoined]);
 
   useEffect(() => {
     warnOrientationResolution(chartName, 'BarChart', id, resolution);
@@ -256,6 +405,37 @@ export const BarRenderer = <TData,>(
         `[headless-charts] ${chartName}#${id}: direction is only read when orientation is "horizontal".`,
       );
     }
+    if (isBinned && requestedLayout !== 'grouped') {
+      warnOnceInDev(
+        `${chartName}#${id}:bin-layout`,
+        `[headless-charts] ${chartName}#${id}: bin draws one count series; stacking/waterfall are ignored.`,
+      );
+    }
+    if (waterfallOn && stacking) {
+      warnOnceInDev(
+        `${chartName}#${id}:waterfall-stacking`,
+        `[headless-charts] ${chartName}#${id}: waterfall and stacking are both set; waterfall wins and stacking is ignored.`,
+      );
+    }
+    if (stacking?.type === 'diverging' && !isBinned && !waterfallOn) {
+      const keys = seriesKeysJoined ? seriesKeysJoined.split('\u0000') : [];
+      const unknown = [
+        ...(stacking.negative ?? []),
+        ...(stacking.neutral ? [stacking.neutral] : []),
+      ].filter((key) => !keys.includes(key));
+      if (unknown.length) {
+        warnOnceInDev(
+          `${chartName}#${id}:diverging-unknown`,
+          `[headless-charts] ${chartName}#${id}: stacking keys ${unknown.map((k) => `"${k}"`).join(', ')} are not series keys and are ignored.`,
+        );
+      }
+      if (stacking.neutral && stacking.negative?.includes(stacking.neutral)) {
+        warnOnceInDev(
+          `${chartName}#${id}:diverging-neutral`,
+          `[headless-charts] ${chartName}#${id}: stacking.neutral "${stacking.neutral}" is also in stacking.negative; it is treated as neutral.`,
+        );
+      }
+    }
     if (!isVertical && categoryBin && legacySeriesBin) {
       warnOnceInDev(
         `${chartName}#${id}:bin-both`,
@@ -271,6 +451,11 @@ export const BarRenderer = <TData,>(
     givenDirection,
     categoryBin,
     legacySeriesBin,
+    isBinned,
+    requestedLayout,
+    waterfallOn,
+    stacking,
+    seriesKeysJoined,
   ]);
 
   const categoryKey = category?.key ?? '';
@@ -290,7 +475,8 @@ export const BarRenderer = <TData,>(
   const formatDate = makeDateFormatter(timeAxis ?? NO_TIME_AXIS);
   useTimeAxisWarnings(chartName, id, data, isTime && timeAxis ? timeAxis : NO_TIME_AXIS);
 
-  const seriesKeys = isSeriesArray(series) ? series.map((column) => column.key) : [];
+  const seriesKeys = seriesKeyList;
+  const shareLayout = layout === '100%' || (layout === 'diverging' && diverging.percent);
 
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
@@ -302,7 +488,15 @@ export const BarRenderer = <TData,>(
         ? formatDate(date)
         : String(row[categoryKey] ?? '');
       const keys = isBinned ? [COUNT_KEY] : seriesKeys;
-      return `${categoryValue} <br/> ${keys.map((key) => `${key}: ${row[key]}`).join('<br/>')}`;
+      const shares = shareLayout
+        ? stackSegments(layout as Exclude<Layout, 'grouped'>, [row], keys, diverging)
+        : null;
+      return `${categoryValue} <br/> ${keys
+        .map((key, i) => {
+          const share = shares?.[i][0]?.share;
+          return `${key}: ${row[key]}${share === undefined ? '' : ` (${PERCENT(share)})`}`;
+        })
+        .join('<br/>')}`;
     },
   });
 
@@ -429,15 +623,70 @@ export const BarRenderer = <TData,>(
       const v = num(d, key);
       return Number.isFinite(v) ? v : undefined;
     };
-    const dataMin = min(effectiveSeries, (column) =>
-      min(effectiveData, (d) => valueOf(d, column.key)),
+    const stacked = layout !== 'grouped';
+    const segments = stacked
+      ? stackSegments(
+        layout,
+        effectiveData,
+        effectiveSeries.map((column) => column.key),
+        diverging,
+      )
+      : [];
+    const anyFinite = effectiveSeries.some((column) =>
+      effectiveData.some((d) => valueOf(d, column.key) !== undefined),
     );
-    const dataMax = max(effectiveSeries, (column) =>
-      max(effectiveData, (d) => valueOf(d, column.key)),
-    );
-    const start = pinnedStart(effectiveSeries.map((column) => column.start))
+    let dataMin: number | undefined;
+    let dataMax: number | undefined;
+    if (!stacked) {
+      dataMin = min(effectiveSeries, (column) =>
+        min(effectiveData, (d) => valueOf(d, column.key)),
+      );
+      dataMax = max(effectiveSeries, (column) =>
+        max(effectiveData, (d) => valueOf(d, column.key)),
+      );
+    } else if (anyFinite) {
+      if (layout === '100%') {
+        dataMin = 0;
+        dataMax = 1;
+      } else if (layout === 'diverging') {
+        const m = diverging.percent
+          ? 1
+          : max(segments.flat(), (seg) => Math.max(Math.abs(seg.lo), Math.abs(seg.hi))) ?? 0;
+        dataMin = -m;
+        dataMax = m;
+      } else {
+        dataMin = min(segments.flat(), (seg) => seg.lo);
+        dataMax = max(segments.flat(), (seg) => seg.hi);
+      }
+    }
+    if (layout === '100%') {
+      if (effectiveData.some((d) =>
+        effectiveSeries.some((column) => num(d, column.key) < 0))) {
+        warnOnceInDev(
+          `${chartName}#${id}:percent-negative`,
+          `[headless-charts] ${chartName}#${id}: '100%' stacking treats negative values as 0.`,
+        );
+      }
+      if (
+        pinnedStart(effectiveSeries.map((column) => column.start)) !== undefined
+        || pinnedEnd(effectiveSeries.map((column) => column.end)) !== undefined
+      ) {
+        warnOnceInDev(
+          `${chartName}#${id}:percent-pins`,
+          `[headless-charts] ${chartName}#${id}: '100%' stacking uses a [0, 1] share axis; ${valueAxis} start/end are ignored.`,
+        );
+      }
+    }
+    const pinsIgnored = layout === '100%';
+    const pinStart = pinsIgnored
+      ? undefined
+      : pinnedStart(effectiveSeries.map((column) => column.start));
+    const pinEnd = pinsIgnored
+      ? undefined
+      : pinnedEnd(effectiveSeries.map((column) => column.end));
+    const start = pinStart
       ?? (dataMin === undefined ? 0 : Math.min(dataMin, 0));
-    const end = pinnedEnd(effectiveSeries.map((column) => column.end))
+    const end = pinEnd
       ?? (dataMax === undefined
         // No finite values: keep a finite [start, start+1] domain so nothing renders NaN.
         ? Math.max(isFiniteNumber(start) ? start : 0, 0) + 1
@@ -460,10 +709,20 @@ export const BarRenderer = <TData,>(
         : valueScale(clampToDomain(value, domain));
 
     const seriesCount = Math.max(1, effectiveSeries.length);
-    const slot = bandSize / seriesCount;
-    const inset = effectiveCategory.padding ?? 0;
+    // Grouped and waterfall split the band per series; stacks use the full band.
+    const slot = layout === 'normal' || layout === '100%' || layout === 'diverging'
+      ? bandSize
+      : bandSize / seriesCount;
+    const inset = (effectiveCategory.padding ?? 0) + (layout === 'waterfall' ? waterfallPadding : 0);
     const rawThickness = slot - inset;
-    if (rawThickness <= 0 && inset) {
+    if (layout === 'waterfall' && effectiveData.length > 0 && !(rawThickness > 0)) {
+      const thicknessName = isVertical ? 'width' : 'height';
+      warnOnceInDev(
+        `${chartName}#${id}:waterfall-zero-width`,
+        `[headless-charts] ${chartName}#${id}: waterfall bars have no ${thicknessName}: each step gets ${+slot.toFixed(1)}px of the bar (${+bandSize.toFixed(1)}px / ${seriesCount} series) and the waterfall padding takes all of it, so the bars are invisible. Reduce the waterfall padding, use fewer series, or widen the bars`,
+      );
+    }
+    if (rawThickness <= 0 && inset && layout !== 'waterfall') {
       const thicknessName = isVertical ? 'width' : 'height';
       warnOnceInDev(
         `${chartName}#${id}:${categoryAxis}.padding`,
@@ -496,7 +755,85 @@ export const BarRenderer = <TData,>(
       .attr('class', 'marks')
       .attr('clip-path', `url(#${clipId})`);
 
+    const segmentAlong = (seg: Segment) => {
+      const a = valueEnd(seg.lo);
+      const b = valueEnd(seg.hi);
+      const len = inverted || !Number.isFinite(seg.lo) ? 0 : Math.abs(b - a);
+      return { lo: Math.min(a, b), len, mid: (a + b) / 2 };
+    };
+    // Segments grow from their side nearer 0.
+    const segmentFrom = (seg: Segment) =>
+      valueEnd(seg.lo >= 0 || seg.hi <= 0 ? (seg.lo >= 0 ? seg.lo : seg.hi) : 0);
+
     effectiveSeries.forEach((column, seriesIndex) => {
+      if (stacked) {
+        if (effectiveData.some((d) => !Number.isFinite(num(d, column.key)))) {
+          warnOnceInDev(
+            `${chartName}#${id}:${valueAxis}.key:${column.key}`,
+            `${chartName}#${id}: non-numeric value for ${valueAxis}.key "${column.key}"; those bars are drawn empty.`,
+          );
+        }
+        const segs = segments[seriesIndex];
+        const offset = layout === 'waterfall' ? seriesIndex * slot : 0;
+        const barsG = marksG.append('g');
+        if (column.className) barsG.attr('class', column.className);
+        const bars = barsG
+          .selectAll('rect')
+          .data(effectiveData)
+          .enter()
+          .append('rect')
+          .attr('class', (d) =>
+            twMerge(
+              'fill-current',
+              column.classNameNegative && num(d, column.key) < 0
+                ? column.classNameNegative
+                : column.className,
+            ),
+          )
+          .attr('rx', column.rx || 0)
+          .on('mouseenter', handlers.over)
+          .on('mousemove', handlers.move)
+          .on('mouseleave', handlers.leave);
+        const across = isVertical ? 'x' : 'y';
+        const alongAttr = isVertical ? 'y' : 'x';
+        const thick = isVertical ? 'width' : 'height';
+        const long = isVertical ? 'height' : 'width';
+        bars
+          .attr(across, (d) => bandStart(d) + offset)
+          .attr(thick, thickness)
+          .attr(alongAttr, (_, i) => (duration ? segmentFrom(segs[i]) : segmentAlong(segs[i]).lo))
+          .attr(long, (_, i) => (duration ? 0 : segmentAlong(segs[i]).len));
+        if (duration) {
+          bars
+            .transition()
+            .duration(duration)
+            .delay((_, rowIndex) => rowIndex * delay)
+            .attr(alongAttr, (_, i) => segmentAlong(segs[i]).lo)
+            .attr(long, (_, i) => segmentAlong(segs[i]).len);
+        }
+        if (dataLabel) {
+          barsG
+            .selectAll('text')
+            .data(effectiveData)
+            .enter()
+            .append('text')
+            .text((d, i) => {
+              if (dataLabel.text) {
+                return dataLabel.text(d as TData, column as BarSeriesConfig<TData>);
+              }
+              const share = segs[i].share;
+              return share === undefined ? String(d[column.key] ?? '') : PERCENT(share);
+            })
+            .attr('class', twMerge('fill-current', dataLabel.className || ''))
+            .attr('data-testid', 'label')
+            .attr('font-size', '0.5em')
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .attr(across, (d) => bandStart(d) + offset + thickness / 2)
+            .attr(alongAttr, (_, i) => segmentAlong(segs[i]).mid);
+        }
+        return;
+      }
       if (effectiveData.some((d) => !Number.isFinite(num(d, column.key)))) {
         warnOnceInDev(
           `${chartName}#${id}:${valueAxis}.key:${column.key}`,
@@ -646,11 +983,11 @@ export const BarRenderer = <TData,>(
       effectiveSeries.find((col) => col.axis?.location)?.axis?.location
       ?? (isVertical ? 'left' : 'bottom');
     // No finite values and no pinned end: the domain is a placeholder, so draw no value ticks.
-    const placeholderDomain = dataMax === undefined
-      && pinnedEnd(effectiveSeries.map((column) => column.end)) === undefined;
+    const placeholderDomain = dataMax === undefined && pinEnd === undefined;
+    const tickMax = stacked ? end : dataMax;
     const valueTicks =
       effectiveSeries[0]?.axis?.ticks
-      ?? (wholeNumbers && isFiniteNumber(dataMax) && dataMax < 10 ? dataMax : 5);
+      ?? (wholeNumbers && isFiniteNumber(tickMax) && tickMax < 10 ? tickMax : 5);
     const valueLabel = isBinned
       ? 'Count'
       : effectiveSeries.map((column) => column.axis?.label || column.key || '').join(', ');
@@ -710,10 +1047,17 @@ export const BarRenderer = <TData,>(
       padding,
       orientation: 'vertical',
     });
-    if (tickFormat) {
-      const formatted = d3format(tickFormat);
+    const percentAxis = layout === '100%' || (layout === 'diverging' && diverging.percent);
+    if (tickFormat || percentAxis) {
+      const base = tickFormat ? d3format(tickFormat) : PERCENT;
+      // Diverging percent ticks show absolute shares: -40% reads 40%.
+      const formatted = layout === 'diverging' && diverging.percent
+        ? (v: number) => base(Math.abs(v))
+        : base;
       const valueDrawn = isVertical ? yAxis : xAxis;
-      valueDrawn.axisG.call(valueDrawn.axis.tickFormat(formatted));
+      valueDrawn.axisG.call(
+        valueDrawn.axis.tickFormat(formatted as (v: unknown) => string),
+      );
     }
     if (placeholderDomain) {
       const valueDrawn = isVertical ? yAxis : xAxis;
@@ -729,6 +1073,9 @@ export const BarRenderer = <TData,>(
     data,
     dataLabel,
     direction,
+    diverging,
+    layout,
+    waterfallPadding,
     drawing.delay,
     drawing.duration,
     id,

@@ -1,10 +1,14 @@
 import preview from '../../../../.storybook/preview';
-import ColumnChartGrouped from '.';
+import BarChart from '.';
 import data from './sample.json';
 
+/**
+ * Time scaling is vertical only: `x.scalingFunction: "time"` spaces columns
+ * by elapsed time rather than treating each category as an equal-width slot.
+ */
 const meta = preview.meta({
-  title: 'Linear/ColumnChartGrouped/Time Scaling',
-  component: ColumnChartGrouped,
+  title: 'Linear/BarChart/Time Scaling',
+  component: BarChart,
   tags: ['autodocs'],
 });
 

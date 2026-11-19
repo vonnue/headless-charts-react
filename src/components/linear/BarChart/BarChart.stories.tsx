@@ -1,33 +1,55 @@
 import preview from '../../../../.storybook/preview';
-import BarChart, { BarChartProps } from '.';
+import BarChart from '.';
 import data from './sample.json';
 
 /**
- * Bar charts are used to compare values across categories by using horizontal bars.  Bar charts are useful for showing data changes over a period of time or for comparing data among items.
- *
- * To create a bar chart, use the `<BarChart />` component.
- *
- * */
+ * Vertical or horizontal bars comparing one or more measures across
+ * categories. The default is vertical; set `orientation="horizontal"`
+ * (or pass the series array on `x`) for long category labels.
+ * `ColumnChart` is the same chart with `orientation="vertical"` pinned.
+ */
 const meta = preview.meta({
   title: 'Linear/BarChart/Intro',
   component: BarChart,
   tags: ['autodocs'],
 });
 
-/** Default Bar Chart (Grouped). */
+const verticalBase = {
+  className: 'w-full h-80',
+  data,
+  x: { key: 'year' },
+  y: [
+    { key: 'macbook', className: 'fill-amber-500' },
+    { key: 'iphone', className: 'fill-blue-500' },
+  ],
+};
+
+const horizontalBase = {
+  data,
+  x: [
+    { key: 'macbook' },
+    { key: 'services' },
+    { key: 'ipad' },
+    { key: 'iphone' },
+    { key: 'wearables' },
+  ],
+  y: { key: 'year' },
+};
+
+/** Vertical (default): categories on `x`, series on `y`. */
+export const Vertical = meta.story({
+  args: {
+    ...verticalBase,
+    id: 'bar-chart-intro-vertical',
+  },
+});
+
+/** Horizontal: categories on `y`, series array on `x`. Existing `<BarChart x={[…]} y={{…}}>` usage is unchanged. */
 export const Default = meta.story({
   args: {
-    data,
+    ...horizontalBase,
     id: 'bar-chart-default',
-    x: [
-      { key: 'macbook' },
-      { key: 'services' },
-      { key: 'ipad' },
-      { key: 'iphone' },
-      { key: 'wearables' },
-    ],
-    y: { key: 'year' },
-  } as any,
+  },
 });
 
 /** Styled bar charts (padding, margin, classNames) */
@@ -60,7 +82,7 @@ export const Styled = meta.story({
       { key: 'wearables', className: 'fill-red-500 dark:fill-red-100' },
     ],
     y: { key: 'year', className: 'text-red-500 dark:text-red-50', padding: 0.5 },
-  } as any,
+  },
 });
 
 /**
@@ -84,46 +106,16 @@ export const NegativeStyling = meta.story({
         classNameNegative: 'text-amber-400 dark:text-amber-200',
       },
     ],
-  } as any,
+  },
 });
 
-/**
- * You can animate the bars by using the `drawing` prop.
- */
-export const Drawing = meta.story({
+/** Bar chart with left direction */
+export const LeftDirection = meta.story({
   args: {
     ...Default.input.args,
-    id: 'bar-chart-drawing',
-    drawing: {
-      duration: 1000,
-      delay: 100,
-    },
-  } as any,
-});
-
-/**
- * You can add a data label to the bars by using the `dataLabel` prop. You can style the data label by using the `className` prop.
- */
-export const DataLabel = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'bar-chart-data-label',
-    dataLabel: {
-      className: 'text-white dark:text-gray-900',
-    },
-  } as any,
-});
-
-/** Styled Y Axis with custom className */
-export const StyledYAxis = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'bar-chart-styled-y-axis',
-    y: {
-      key: 'year',
-      className: 'text-red-500',
-    },
-  } as any,
+    id: 'bar-chart-left-direction',
+    direction: 'left',
+  },
 });
 
 /** Add border radius to bars using the `rx` prop */
@@ -138,43 +130,19 @@ export const BorderRadius = meta.story({
       { key: 'iphone', className: 'text-blue-500', rx: 3 },
       { key: 'wearables', className: 'text-red-500', rx: 3 },
     ],
-  } as any,
+  },
 });
 
-/** Bar chart with left direction */
-export const LeftDirection = meta.story({
+/** Styled Y Axis with custom className */
+export const StyledYAxis = meta.story({
   args: {
     ...Default.input.args,
-    id: 'bar-chart-left-direction',
-    direction: 'left',
-  } as any,
-});
-
-/** Left direction with drawing animation */
-export const LeftDrawing = meta.story({
-  args: {
-    ...LeftDirection.input.args,
-    id: 'bar-chart-left-drawing',
-    drawing: {
-      duration: 1000,
-      delay: 100,
+    id: 'bar-chart-styled-y-axis',
+    y: {
+      key: 'year',
+      className: 'text-red-500',
     },
-  } as any,
-});
-
-/** Different axis locations for different series */
-export const DifferentAxis = meta.story({
-  args: {
-    ...Default.input.args,
-    id: 'bar-chart-different-axis',
-    x: [
-      { key: 'macbook', axis: { location: 'top' } },
-      { key: 'services', axis: { location: 'top' } },
-      { key: 'ipad', axis: { location: 'bottom' } },
-      { key: 'iphone', axis: { location: 'bottom' } },
-      { key: 'wearables', axis: { location: 'bottom' } },
-    ],
-  } as BarChartProps<any>,
+  },
 });
 
 /** Custom axis labels */
@@ -186,5 +154,47 @@ export const CustomAxisLabel = meta.story({
       { key: 'macbook', axis: { location: 'top', label: 'Macbook' } },
       { key: 'services', axis: { label: 'Services' } },
     ],
-  } as any,
+  },
+});
+
+/** Negative values in the vertical default: columns grow down from 0. */
+export const NegativeVertical = meta.story({
+  args: {
+    className: 'w-full h-80',
+    id: 'bar-chart-intro-negative-vertical',
+    data: [
+      { name: 'A', value: -12 },
+      { name: 'B', value: -4 },
+      { name: 'C', value: 8 },
+      { name: 'D', value: 15 },
+    ],
+    x: { key: 'name' },
+    y: [{ key: 'value', className: 'fill-blue-500', classNameNegative: 'fill-red-500' }],
+  },
+});
+
+/** Negative values in the horizontal orientation: bars grow left from 0. */
+export const NegativeHorizontal = meta.story({
+  args: {
+    className: 'w-full h-80',
+    id: 'bar-chart-intro-negative-horizontal',
+    orientation: 'horizontal',
+    data: [
+      { name: 'A', value: -12 },
+      { name: 'B', value: -4 },
+      { name: 'C', value: 8 },
+      { name: 'D', value: 15 },
+    ],
+    y: { key: 'name' },
+    x: [{ key: 'value', className: 'fill-blue-500', classNameNegative: 'fill-red-500' }],
+  },
+});
+
+/** Empty data: axes only, no marks. */
+export const Empty = meta.story({
+  args: {
+    ...verticalBase,
+    id: 'bar-chart-intro-empty',
+    data: [],
+  },
 });

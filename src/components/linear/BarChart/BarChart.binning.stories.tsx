@@ -24,6 +24,28 @@ const continuousData = [
  * When `x[0].bin` is set, the BarChart becomes a horizontal histogram.
  * Bin labels appear on the y-axis and bar lengths show the count per bin.
  */
+
+/**
+ * Vertical histogram: set `bin` on the category config (`x`).
+ */
+export const Histogram = meta.story({
+  args: {
+    data: continuousData,
+    id: 'bar-histogram-vertical',
+    x: {
+      key: 'score',
+      bin: { count: 8 },
+      axis: { location: 'bottom', label: 'Score' },
+    },
+    y: [
+      {
+        key: 'count',
+        className: 'text-blue-500',
+      },
+    ],
+  },
+});
+
 export const HorizontalHistogram = meta.story({
   args: {
     data: continuousData,

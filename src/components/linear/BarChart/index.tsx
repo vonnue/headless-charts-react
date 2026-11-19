@@ -438,7 +438,10 @@ export const BarRenderer = <TData,>(
     const start = pinnedStart(effectiveSeries.map((column) => column.start))
       ?? (dataMin === undefined ? 0 : Math.min(dataMin, 0));
     const end = pinnedEnd(effectiveSeries.map((column) => column.end))
-      ?? (dataMax === undefined ? Number.NaN : Math.max(dataMax, 0));
+      ?? (dataMax === undefined
+        // No finite values: keep a finite [start, start+1] domain so nothing renders NaN.
+        ? Math.max(isFiniteNumber(start) ? start : 0, 0) + 1
+        : Math.max(dataMax, 0));
     const inverted = isFiniteNumber(start) && isFiniteNumber(end) && start > end;
     if (inverted) {
       warnOnceInDev(
@@ -642,6 +645,9 @@ export const BarRenderer = <TData,>(
     const valueLocation =
       effectiveSeries.find((col) => col.axis?.location)?.axis?.location
       ?? (isVertical ? 'left' : 'bottom');
+    // No finite values and no pinned end: the domain is a placeholder, so draw no value ticks.
+    const placeholderDomain = dataMax === undefined
+      && pinnedEnd(effectiveSeries.map((column) => column.end)) === undefined;
     const valueTicks =
       effectiveSeries[0]?.axis?.ticks
       ?? (wholeNumbers && isFiniteNumber(dataMax) && dataMax < 10 ? dataMax : 5);
@@ -708,6 +714,10 @@ export const BarRenderer = <TData,>(
       const formatted = d3format(tickFormat);
       const valueDrawn = isVertical ? yAxis : xAxis;
       valueDrawn.axisG.call(valueDrawn.axis.tickFormat(formatted));
+    }
+    if (placeholderDomain) {
+      const valueDrawn = isVertical ? yAxis : xAxis;
+      valueDrawn.axisG.call(valueDrawn.axis.tickValues([]));
     }
   }, [
     bandPadding,

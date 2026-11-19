@@ -656,3 +656,19 @@ describe('BarChart orientation (#78, grouped)', () => {
     expect(root.ColumnChartStacked).toBeTypeOf('function');
   });
 });
+
+describe('all-missing values', () => {
+  const nullRows = [
+    { name: 'a', v: null },
+    { name: 'b', v: '' },
+  ] as unknown as typeof rows;
+  it.each([
+    ['vertical', 'nanV', { ...vProps, data: nullRows, referenceLines: [{ y: 2 }] }],
+    ['horizontal', 'nanH', { ...hProps, data: nullRows, referenceLines: [{ x: 2 }] }],
+    ['vertical, empty data', 'nanE', { ...vProps, data: [], referenceLines: [{ y: 2 }] }],
+  ] as const)('%s: renders no NaN attributes', (_label, id, props) => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(<BarChart id={id} {...(props as typeof vProps)} />);
+    expect(svgOf(id).innerHTML).not.toMatch(/NaN/);
+  });
+});

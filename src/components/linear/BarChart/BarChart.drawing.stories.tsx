@@ -46,3 +46,63 @@ export const DrawingHorizontal = meta.story({
     ],
   },
 });
+
+const stackedSeries = [
+  { key: 'macbook', className: 'fill-purple-800' },
+  { key: 'iphone', className: 'fill-purple-600' },
+  { key: 'ipad', className: 'fill-purple-400' },
+];
+
+/** Vertical stacked draw-in: segments grow from their start. */
+export const DrawingStackedVertical = meta.story({
+  args: {
+    className: 'w-full h-80',
+    data,
+    id: 'bar-chart-drawing-stacked-vertical',
+    drawing,
+    stacking: { type: 'normal' },
+    x: { key: 'year' },
+    y: stackedSeries,
+  },
+});
+
+/** Horizontal stacked draw-in. */
+export const DrawingStackedHorizontal = meta.story({
+  args: {
+    className: 'w-full h-80',
+    data,
+    id: 'bar-chart-drawing-stacked-horizontal',
+    drawing,
+    orientation: 'horizontal',
+    stacking: { type: 'normal' },
+    y: { key: 'year' },
+    x: stackedSeries,
+  },
+});
+
+/** Vertical waterfall draw-in. */
+export const DrawingWaterfallVertical = meta.story({
+  args: {
+    className: 'w-full h-80',
+    data: data.filter((d) => d.year >= 2020),
+    id: 'bar-chart-drawing-waterfall-vertical',
+    drawing,
+    waterfall: true,
+    x: { key: 'year' },
+    y: stackedSeries,
+  },
+});
+
+/** Horizontal waterfall draw-in. */
+export const DrawingWaterfallHorizontal = meta.story({
+  args: {
+    className: 'w-full h-80',
+    data: data.filter((d) => d.year >= 2020),
+    id: 'bar-chart-drawing-waterfall-horizontal',
+    drawing,
+    orientation: 'horizontal',
+    waterfall: true,
+    y: { key: 'year' },
+    x: stackedSeries,
+  },
+});

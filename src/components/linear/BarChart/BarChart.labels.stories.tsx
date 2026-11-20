@@ -53,3 +53,43 @@ export const CustomText = meta.story({
     y: [{ key: 'macbook', className: 'fill-amber-500' }],
   },
 });
+
+const stacked = [
+  { key: 'macbook', className: 'fill-purple-800' },
+  { key: 'iphone', className: 'fill-purple-600' },
+];
+
+/** Stacked labels are centred in their segment. */
+export const LabelsStackedVertical = meta.story({
+  args: {
+    className: 'w-full h-80',
+    data,
+    id: 'bar-chart-labels-stacked-vertical',
+    dataLabel,
+    stacking: { type: 'normal' },
+    x: { key: 'year' },
+    y: stacked,
+  },
+});
+
+export const LabelsStackedHorizontal = meta.story({
+  args: {
+    className: 'w-full h-80',
+    data,
+    id: 'bar-chart-labels-stacked-horizontal',
+    dataLabel,
+    orientation: 'horizontal',
+    stacking: { type: 'normal' },
+    y: { key: 'year' },
+    x: stacked,
+  },
+});
+
+/** 100% stacking labels default to the share. */
+export const LabelsPercent = meta.story({
+  args: {
+    ...LabelsStackedVertical.input.args,
+    id: 'bar-chart-labels-percent',
+    stacking: { type: '100%' },
+  },
+});

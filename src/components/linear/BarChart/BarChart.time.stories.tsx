@@ -51,3 +51,47 @@ export const ExplicitBarWidthColumnChart = meta.story({
     x: { ...TimeScaledColumnChart.input.args.x, time: { isISO: true, utc: true, barWidth: 30 } },
   },
 });
+
+const stackedSeries = [
+  { key: 'macbook', className: 'fill-purple-800' },
+  { key: 'iphone', className: 'fill-purple-600' },
+  { key: 'ipad', className: 'fill-purple-400' },
+];
+
+/** Time-scaled stacked columns (the old ColumnChartStacked time stories). */
+export const TimeScaledStackedColumnChart = meta.story({
+  args: {
+    id: 'time-column-chart-stacked',
+    data: timeSeriesData,
+    stacking: { type: 'normal' },
+    x: { key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } },
+    y: stackedSeries,
+    padding: { left: 10, right: 10 },
+  },
+});
+
+export const SparseTimeScaledStackedColumnChart = meta.story({
+  args: {
+    ...TimeScaledStackedColumnChart.input.args,
+    id: 'sparse-time-column-chart-stacked',
+    data: timeSeriesData.filter((d) => ![2015, 2016, 2019].includes(d.year)),
+  },
+});
+
+export const ExplicitBarWidthStackedColumnChart = meta.story({
+  args: {
+    ...TimeScaledStackedColumnChart.input.args,
+    id: 'explicit-bar-width-column-chart-stacked',
+    x: { key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true, barWidth: 30 } },
+  },
+});
+
+/** Waterfall on a time axis: steps share each dated slot. */
+export const TimeScaledWaterfall = meta.story({
+  args: {
+    ...TimeScaledStackedColumnChart.input.args,
+    id: 'time-column-chart-waterfall',
+    stacking: undefined,
+    waterfall: true,
+  },
+});

@@ -28,6 +28,10 @@ export interface SpeedometerChartProps<TData = any> extends GaugeProps<TData> {
   needleRadius?: number;
 }
 
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const DEFAULT_MARGIN = { top: 0, bottom: 20, left: 40, right: 40 };
+
 /* catalog:start */
 /**
  * A dial with a needle showing one value against a scale that can be split
@@ -75,12 +79,7 @@ const SpeedometerChart = <TData = any,>({
   label,
   id,
   className,
-  margin = {
-    top: 0,
-    bottom: 20,
-    left: 40,
-    right: 40,
-  },
+  margin = DEFAULT_MARGIN,
   regions = [],
   axisTicks = 5,
   needleRadius = 0.8,

@@ -18,6 +18,13 @@ export interface RadarChartProps<TData = any> extends ChartProps<TData> {
   max?: number;
 }
 
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const DEFAULT_METRICS: RadarChartProps['metrics'] = [];
+const DEFAULT_LABEL = { key: 'name' };
+const DEFAULT_CLASS_NAME_MAP = {};
+const DEFAULT_MARGIN = { top: 20, bottom: 20, left: 20, right: 20 };
+
 /* catalog:start */
 /**
  * Plots several metrics on spokes radiating from a centre and joins them into
@@ -79,14 +86,12 @@ const RadarChart = <TData = any,>({
   id,
   data,
   className,
-  metrics = [],
-  label = {
-    key: 'name',
-  },
-  classNameMap = {},
+  metrics = DEFAULT_METRICS,
+  label = DEFAULT_LABEL,
+  classNameMap = DEFAULT_CLASS_NAME_MAP,
   min = 0,
   max = 1,
-  margin = { top: 20, bottom: 20, left: 20, right: 20 },
+  margin = DEFAULT_MARGIN,
   drawing = undefined,
   style = {},
 }: RadarChartProps<TData>) => {

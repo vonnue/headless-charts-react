@@ -43,6 +43,13 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
   tooltip?: TooltipConfig;
 }
 
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const EMPTY_DATA: unknown[] = [];
+const DEFAULT_Y = { key: 'label', axis: { location: 'left' as const } };
+const DEFAULT_MARGIN = { top: 40, bottom: 40, left: 40, right: 20 };
+const DEFAULT_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
+
 /* catalog:start */
 /**
  * A dumbbell per category: two endpoints joined by a bar, showing the interval
@@ -89,22 +96,12 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
 const RangePlot = <TData = any,>({
   id,
   className,
-  data = [],
+  data = EMPTY_DATA as TData[],
   classNameData,
-  y = { key: 'label', axis: { location: 'left' } },
+  y = DEFAULT_Y,
   x,
-  margin = {
-    top: 40,
-    bottom: 40,
-    left: 40,
-    right: 20,
-  },
-  padding = {
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
+  margin = DEFAULT_MARGIN,
+  padding = DEFAULT_PADDING,
   shape = 'circle',
   tooltip = {},
   zooming,

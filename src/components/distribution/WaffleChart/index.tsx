@@ -46,6 +46,11 @@ interface CellDatum {
   data: any;
 }
 
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const DEFAULT_PADDING = { left: 0, top: 0, right: 0, bottom: 0 };
+const DEFAULT_MARGIN = { left: 40, right: 40, top: 40, bottom: 40 };
+
 /* catalog:start */
 /**
  * A grid of cells indexed by two categorical axes, with a third value encoded
@@ -127,18 +132,8 @@ const WaffleChart = <TData = any,>({
   id,
   className = '',
   classNameCell = '',
-  padding = {
-    left: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
-  },
-  margin = {
-    left: 40,
-    right: 40,
-    top: 40,
-    bottom: 40,
-  },
+  padding = DEFAULT_PADDING,
+  margin = DEFAULT_MARGIN,
   x,
   y,
   color,

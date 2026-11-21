@@ -24,6 +24,12 @@ export interface PizzaChartProps<TData = any> extends Omit<GaugeProps<TData>, 'd
   }[];
 }
 
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const DEFAULT_DATA = {};
+const DEFAULT_MARGIN = { top: 20, bottom: 20, left: 20, right: 20 };
+const DEFAULT_METRICS: PizzaChartProps['metrics'] = [];
+
 /* catalog:start */
 /**
  * Equal-angle radial slices, one per metric, each extending from the centre in
@@ -74,16 +80,16 @@ export interface PizzaChartProps<TData = any> extends Omit<GaugeProps<TData>, 'd
  */
 /* catalog:end */
 const PizzaChart = <TData = any,>({
-  data = {} as TData,
+  data = DEFAULT_DATA as TData,
   className,
   id,
-  margin = { top: 20, bottom: 20, left: 20, right: 20 },
+  margin = DEFAULT_MARGIN,
   max = 1,
   min = 0,
   drawing = undefined,
   paddingAngle = 2,
   cornerRadius = 0,
-  metrics = [],
+  metrics = DEFAULT_METRICS,
   tooltip,
   style = {},
 }: PizzaChartProps<TData>) => {

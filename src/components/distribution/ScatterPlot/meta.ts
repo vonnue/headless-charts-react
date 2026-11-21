@@ -45,11 +45,16 @@ const meta: ChartMeta = {
     'There are only a handful of records — a table or bar chart communicates more directly',
     'Overplotting hides the pattern — switch to the binned heatmap mode or use WaffleChart',
     'The x axis is time and the sequence is the point — use LineChart',
+    'More than two or three numeric dimensions need comparing at once — use ParallelCoordinatesChart',
   ],
   alternatives: [
     { name: 'WaffleChart', when: 'both axes are categorical or binned and density is the message' },
     { name: 'LineChart', when: 'x is time and the sequence matters' },
     { name: 'BoxPlotV', when: 'comparing the spread of a measure across groups rather than two measures' },
+    {
+      name: 'ParallelCoordinatesChart',
+      when: 'more than two or three numeric dimensions need comparing at once',
+    },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],
   example: `<ScatterPlot

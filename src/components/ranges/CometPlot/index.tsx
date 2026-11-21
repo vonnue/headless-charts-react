@@ -14,6 +14,7 @@ import {
 } from 'd3-shape';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
+import useChartSize from '@/hooks/useChartSize';
 
 import {
   AxisConfig,
@@ -21,7 +22,7 @@ import {
   TooltipConfig,
   ValueAxisConfig,
 } from '@/types';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { defaultChartClassNames } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
@@ -125,6 +126,14 @@ const RangePlot = <TData = any,>({
     defaultHtml: (d: any) => `${d[y.key]}: ${d[x.fromKey]} to ${d[x.toKey]}`,
   });
   const { drawAxis } = useAxis();
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const chartSize = useChartSize(svgRef);
+  const measured = chartSize !== null;
+  const width = chartSize?.width ?? 0;
+  const height = chartSize?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const shapeMapping = {
       circle: symbolCircle,
@@ -140,8 +149,6 @@ const RangePlot = <TData = any,>({
 
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
 
     const g = svg.append('g');
 
@@ -304,6 +311,8 @@ const RangePlot = <TData = any,>({
       svg.call(zoomFn);
     }
   }, [
+    width,
+    height,
     data,
     id,
     margin,
@@ -320,6 +329,8 @@ const RangePlot = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -327,10 +338,11 @@ const RangePlot = <TData = any,>({
     return () => {
       interruptTransitions(svg);
     };
-  }, [data, refreshChart, id]);
+  }, [data, refreshChart, id, measured]);
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className || '')}

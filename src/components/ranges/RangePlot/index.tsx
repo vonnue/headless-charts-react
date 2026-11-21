@@ -11,9 +11,10 @@ import {
   symbolTriangle,
   symbolWye,
 } from 'd3-shape';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
+import useChartSize from '@/hooks/useChartSize';
 
 import {
   AxisConfig,
@@ -115,6 +116,14 @@ const RangePlot = <TData = any,>({
     defaultHtml: (d: any) => `${d[y.key]}: ${d[x.minKey]} to ${d[x.maxKey]}`,
   });
   const { drawAxis } = useAxis();
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const shapeMapping = {
       circle: symbolCircle,
@@ -130,8 +139,6 @@ const RangePlot = <TData = any,>({
 
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0];
-    const height = +svg.style('height').split('px')[0];
 
     const g = svg.append('g');
 
@@ -317,6 +324,8 @@ const RangePlot = <TData = any,>({
       svg.call(zoomFunc);
     }
   }, [
+    width,
+    height,
     classNameData,
     data,
     id,
@@ -333,6 +342,8 @@ const RangePlot = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -340,9 +351,10 @@ const RangePlot = <TData = any,>({
     return () => {
       interruptTransitions(svg);
     };
-  }, [data, refreshChart, id]);
+  }, [data, refreshChart, id, measured]);
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}

@@ -15,6 +15,7 @@ import { twMerge } from 'tailwind-merge';
 
 import useTooltip, { type UseTooltipResult } from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
+import useChartSize from '@/hooks/useChartSize';
 import type {
   AxisConfig,
   ChartOrientation,
@@ -24,7 +25,6 @@ import type {
 import { defaultChartClassNames, binDataStats } from '@/utils';
 import { resolveBound } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
-import measureSvg from '@/utils/measureSvg';
 import {
   orientationMessages,
   otherOrientation,
@@ -191,6 +191,12 @@ export const BoxPlotRenderer = <TData,>(
     orientation: givenOrientation,
   } = props;
   const svgRef = useRef<SVGSVGElement>(null);
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
   // One zoom behaviour per chart, re-configured on each redraw: a wheel
   // gesture still in progress across a redraw then reports to the current
   // handler (and the current marks), not to a discarded one.
@@ -320,7 +326,6 @@ export const BoxPlotRenderer = <TData,>(
     // Only reachable when the props types are bypassed: nothing to draw
     if (!effectiveValue) return;
 
-    const { width, height } = measureSvg(svgNode);
     const catKey = categoryConfig.key;
     const rows: Row[] =
       binValueKey !== undefined
@@ -642,6 +647,8 @@ export const BoxPlotRenderer = <TData,>(
       svg.call(zoomFn);
     }
   }, [
+    width,
+    height,
     chartName,
     id,
     mismatch,
@@ -665,6 +672,8 @@ export const BoxPlotRenderer = <TData,>(
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so interrupt through this reference, not a lookup by id.
@@ -673,7 +682,7 @@ export const BoxPlotRenderer = <TData,>(
       interruptTransitions(node);
     };
     // style is not read by refreshChart, but it sets the size it measures.
-  }, [refreshChart, style?.width, style?.height]);
+  }, [refreshChart, measured]);
 
   return (
     <svg

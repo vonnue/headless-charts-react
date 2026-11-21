@@ -7,10 +7,10 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 import useTooltip from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 import { ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
-import measureSvg from '@/utils/measureSvg';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import {
@@ -222,9 +222,16 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
   const zoomOutRef = useRef<(() => void) | null>(null);
   const zoomEnabled = !!zoom;
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     if (!plotRef.current) return;
-    const svgNode = plotRef.current.ownerSVGElement;
     const root = select(plotRef.current);
     root.interrupt('zoom');
     root.selectAll('*').interrupt();
@@ -312,7 +319,6 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
     // --- plot
     const m = { top: 0, right: 0, bottom: 0, left: 0, ...margin };
     const p = { top: 0, right: 0, bottom: 0, left: 0, ...padding };
-    const { width, height } = measureSvg(svgNode);
     const plotW = Math.max(0, width - m.left - m.right - p.left - p.right);
     const plotH = Math.max(0, height - m.top - m.bottom - p.top - p.bottom);
     const cx = m.left + p.left + plotW / 2,
@@ -678,6 +684,8 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
 
     draw(focus, { initial: true, moveFocus: false });
   }, [
+    width,
+    height,
     data,
     id,
     children,
@@ -702,6 +710,7 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
   ]);
 
   useEffect(() => {
+    if (!measured) return;
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -709,14 +718,15 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
     return () => {
       interruptTransitions(svg);
     };
-    // style is not read by refreshChart, but it sets the size refreshChart measures.
-  }, [refreshChart, id, style?.width, style?.height]);
+    // A style/className size change reaches refreshChart through useChartSize.
+  }, [refreshChart, id, measured]);
 
   const titleId = title ? `${id}-title` : undefined;
   const descId = description ? `${id}-desc` : undefined;
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}

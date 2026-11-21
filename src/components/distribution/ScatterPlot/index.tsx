@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   line,
   symbol,
@@ -14,6 +14,7 @@ import { max, min, thresholdSturges } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
+import useChartSize from '@/hooks/useChartSize';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames, binData, deepValue } from '@/utils';
@@ -238,14 +239,20 @@ const ScatterPlot = <TData = any,>({
     defaultHtml,
   });
   const { drawAxis } = useAxis();
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const chartSize = useChartSize(svgRef);
+  const measured = chartSize !== null;
+  const width = chartSize?.width ?? 0;
+  const height = chartSize?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     // Clear svg
 
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
 
     const g = svg.append('g');
 
@@ -603,6 +610,8 @@ const ScatterPlot = <TData = any,>({
       svg.call(zoomFn);
     }
   }, [
+    width,
+    height,
     id,
     x,
     y,
@@ -625,6 +634,8 @@ const ScatterPlot = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -632,9 +643,10 @@ const ScatterPlot = <TData = any,>({
     return () => {
       interruptTransitions(svg);
     };
-  }, [data, refreshChart, id]);
+  }, [data, refreshChart, id, measured]);
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className || '')}

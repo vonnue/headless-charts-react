@@ -7,7 +7,7 @@ import data from '../sample.json';
  * quartiles, median and max. Vertical by default; set
  * `orientation="horizontal"` for long group labels. `BoxPlotV` and
  * `BoxPlotH` are deprecated aliases for the same chart with the orientation
- * pinned, and will be removed in the next breaking release.
+ * pinned, and will be removed in 0.4.0.
  */
 const meta = preview.meta({
   title: 'Ranges/BoxPlot/Intro',

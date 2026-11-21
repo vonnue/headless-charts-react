@@ -17,8 +17,7 @@ import ColumnChartStacked from '@/components/linear/ColumnChartStacked/meta';
 import CometPlot from '@/components/ranges/CometPlot/meta';
 import LineChart from '@/components/linear/LineChart/meta';
 import LinearGauge from '@/components/gauges/LinearGauge/meta';
-import LollipopHChart from '@/components/linear/LollipopHChart/meta';
-import LollipopVChart from '@/components/linear/LollipopVChart/meta';
+import LollipopChart from '@/components/linear/LollipopChart/meta';
 import FunnelChart from '@/components/flow/FunnelChart/meta';
 import Network from '@/components/flow/Network/meta';
 import SankeyChart from '@/components/flow/SankeyChart/meta';
@@ -55,8 +54,7 @@ export const chartCatalog: ChartMeta[] = [
   ColumnChart,
   ColumnChartStacked,
   LineChart,
-  LollipopHChart,
-  LollipopVChart,
+  LollipopChart,
   SparklineChart,
   SpineChart,
   TimeLineChart,

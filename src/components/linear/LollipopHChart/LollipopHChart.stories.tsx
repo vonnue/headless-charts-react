@@ -1,11 +1,12 @@
 import preview from '../../../../.storybook/preview';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
 import LollipopHChart from '.';
 import data from './sample.json';
 
 const meta = preview.meta({
   title: 'Linear/LollipopHChart',
   component: LollipopHChart,
-  tags: ['autodocs'],
+  ...deprecatedWrapperStoryMeta('LollipopChart'),
 });
 
 export const Default = meta.story({
@@ -37,7 +38,7 @@ export const WithCustomTooltip = meta.story({
     ...Default.input.args,
     id: 'lollipop-h-chart-with-custom-tooltip',
     tooltip: {
-      html: (d: any) =>
+      html: (d: { name: string; value: number }) =>
         `<div class='bg-gray-800 text-white p-2 rounded'>${d.name} - ${d.value}</div>`,
     },
   },

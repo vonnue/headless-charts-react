@@ -68,7 +68,7 @@ interface drawHLineProps {
  *   total is readable
  * - The x axis is continuous time with many points — use LineChart
  * - The bars would be nearly equal in height, making differences invisible —
- *   use LollipopVChart or a dot-based chart
+ *   use LollipopChart or a dot-based chart
  *
  * **Specialised types**
  * - Histogram — Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{
@@ -130,7 +130,7 @@ interface drawHLineProps {
  *
  * @see BarChart — long labels or many categories
  * @see ColumnChartStacked — measures are parts of a whole
- * @see LollipopVChart — bars look heavy and values are the focus
+ * @see LollipopChart — bars look heavy and values are the focus
  * @see LineChart — the axis is continuous time with many points
  */
 /* catalog:end */

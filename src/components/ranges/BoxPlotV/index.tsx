@@ -11,13 +11,13 @@ export type { BoxPlotClassNames } from '../boxPlotConfig';
 export type { BoxPlotVProps } from '../BoxPlot';
 /**
  * Summary mode: each row already carries the statistics named on the value axis.
- * @deprecated Use {@link BoxPlotProps} with `orientation="vertical"`. Will be removed in the next breaking release.
+ * @deprecated Use {@link BoxPlotProps} with `orientation="vertical"`. Will be removed in 0.4.0.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type BoxPlotVSummaryProps<TData = any> = BoxPlotVerticalSummaryProps<TData>;
 /**
  * Binned mode: the category axis has `bin` and `valueKey` names the field to summarise.
- * @deprecated Use {@link BoxPlotProps} with `orientation="vertical"`. Will be removed in the next breaking release.
+ * @deprecated Use {@link BoxPlotProps} with `orientation="vertical"`. Will be removed in 0.4.0.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type BoxPlotVBinnedProps<TData = any> = BoxPlotVerticalBinnedProps<TData>;
@@ -31,8 +31,8 @@ export type BoxPlotVBinnedProps<TData = any> = BoxPlotVerticalBinnedProps<TData>
  * Selection guidance (use when, avoid when, examples, alternatives) is on
  * {@link BoxPlot}.
  *
- * @deprecated Use `<BoxPlot orientation="vertical">`. Will be removed in the
- * next breaking release.
+ * @deprecated Use `<BoxPlot orientation="vertical">`. Will be removed in
+ * 0.4.0.
  *
  * @see BoxPlot
  */

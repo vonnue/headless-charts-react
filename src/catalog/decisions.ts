@@ -21,12 +21,8 @@ export const decisionTree: DecisionBranch[] = [
         when: 'Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis',
       },
       {
-        name: 'LollipopVChart',
-        when: 'Values matter more than magnitude-as-area, and bars would look heavy; vertical orientation',
-      },
-      {
-        name: 'LollipopHChart',
-        when: 'Same as LollipopVChart but with long category labels',
+        name: 'LollipopChart',
+        when: 'Values matter more than magnitude-as-area, and bars would look heavy. Set orientation="horizontal" for long category labels',
       },
       {
         name: 'SpineChart',

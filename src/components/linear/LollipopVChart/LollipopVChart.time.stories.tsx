@@ -1,10 +1,11 @@
 import preview from '../../../../.storybook/preview';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
 import LollipopVChart from '.';
 
 const meta = preview.meta({
   title: 'Linear/LollipopVChart/Time Scaling',
   component: LollipopVChart,
-  tags: ['autodocs'],
+  ...deprecatedWrapperStoryMeta('LollipopChart'),
 });
 
 const weeklyData = [

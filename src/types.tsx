@@ -60,13 +60,13 @@ export interface AxisConfig<TData = any> {
      * calendar days or UTC midnights with `utc: false` logs a one-time hint.
      *
      * Read by AreaChart, LineChart, SparklineChart, ColumnChart,
-     * ColumnChartStacked, LollipopVChart, BoxPlotV and CandlestickChart.
+     * ColumnChartStacked, LollipopChart, BoxPlot and CandlestickChart.
      */
     utc?: boolean;
     /**
      * Format specifier for the date in the default tooltip. Falls back to
      * `format`, then `%Y-%m-%d`. Read by ColumnChart, ColumnChartStacked and
-     * BoxPlotV (LollipopVChart has no tooltip).
+     * BoxPlot and LollipopChart.
      */
     tooltipFormat?: string;
     /**
@@ -75,7 +75,7 @@ export interface AxisConfig<TData = any> {
      * one date slot so neighbouring marks never overlap (a development
      * warning says when a width was capped). Values that are not
      * finite or not > 0 are ignored (with a development warning). Read by
-     * ColumnChart, ColumnChartStacked and BoxPlotV; LollipopVChart has no
+     * ColumnChart, ColumnChartStacked and BoxPlot; LollipopChart has no
      * width to size and ignores it.
      */
     barWidth?: number;

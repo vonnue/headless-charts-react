@@ -1,11 +1,12 @@
 import preview from '../../../../.storybook/preview';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
 import LollipopVChart from '.';
 import data from './sample.json';
 
 const meta = preview.meta({
   title: 'Linear/LollipopVChart',
   component: LollipopVChart,
-  tags: ['autodocs'],
+  ...deprecatedWrapperStoryMeta('LollipopChart'),
 });
 
 export const Default = meta.story({
@@ -33,7 +34,9 @@ export const WithCustomShape = Default.extend({
 
 export const WithCustomStyles = WithCustomShape.extend({
   args: {
-    classNameLines: 'fill-red-500 stroke-red-500',
-    classNameSymbols: 'fill-blue-500 stroke-blue-500',
+    classNames: {
+      lines: 'fill-red-500 stroke-red-500',
+      symbols: 'fill-blue-500 stroke-blue-500',
+    },
   },
 });

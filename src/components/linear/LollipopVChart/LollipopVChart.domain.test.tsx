@@ -105,7 +105,8 @@ describe('LollipopVChart y start/end domain (F4)', () => {
       />
     );
     const ticks = yTicks(container);
-    expect(ticks.get('10')).toBeCloseTo(BOTTOM, 2);
+    // Zero baseline (#77): unpinned all-positive data is [0, max], not [min, max].
+    expect(ticks.get('0')).toBeCloseTo(BOTTOM, 2);
     expect(ticks.get('30')).toBeCloseTo(TOP, 2);
   });
 
@@ -124,7 +125,8 @@ describe('LollipopVChart y start/end domain (F4)', () => {
       />
     );
     const ticks = yTicks(container);
-    expect(ticks.get('10')).toBeCloseTo(BOTTOM, 2);
+    // Zero baseline (#77): unpinned all-positive data is [0, max], not [min, max].
+    expect(ticks.get('0')).toBeCloseTo(BOTTOM, 2);
     expect(ticks.get('30')).toBeCloseTo(TOP, 2);
     expect(warn).not.toHaveBeenCalled();
   });

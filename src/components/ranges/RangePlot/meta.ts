@@ -35,13 +35,13 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Direction of movement matters — use CometPlot, whose tapered tail shows which way the value moved',
     'The interval is a statistical summary with quartiles — use BoxPlot',
-    'Only one value per category exists — use LollipopHChart',
+    'Only one value per category exists — use LollipopChart',
     'The endpoints are times rather than numbers — use TimeLineChart',
   ],
   alternatives: [
     { name: 'CometPlot', when: 'the direction of movement between the two values matters' },
     { name: 'BoxPlot', when: 'the interval is a quartile summary' },
-    { name: 'LollipopHChart', when: 'there is a single value per category' },
+    { name: 'LollipopChart', when: 'there is a single value per category' },
   ],
   requiredProps: ['id', 'data', 'x', 'y', 'shape'],
   example: `<RangePlot

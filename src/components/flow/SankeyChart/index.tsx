@@ -275,7 +275,7 @@ const pathLength = (node: Element | null): number => {
  * @see Network — topology without volumes, or flows with cycles
  * @see TreemapChart — a hierarchical part-to-whole with no flow between
  *   parts
- * @see PieChart — a flat part-to-whole with no flow between them
+ * @see PieChart — a flat part-to-whole with no flow between its parts
  */
 /* catalog:end */
 const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

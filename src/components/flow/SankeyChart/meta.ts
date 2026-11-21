@@ -67,7 +67,7 @@ const meta: ChartMeta = {
     { name: 'FunnelChart', when: 'one ordered path with drop-off' },
     { name: 'Network', when: 'topology without volumes, or flows with cycles' },
     { name: 'TreemapChart', when: 'a hierarchical part-to-whole with no flow between parts' },
-    { name: 'PieChart', when: 'a flat part-to-whole with no flow between them' },
+    { name: 'PieChart', when: 'a flat part-to-whole with no flow between its parts' },
   ],
   requiredProps: ['id', 'links'],
   example: `<SankeyChart

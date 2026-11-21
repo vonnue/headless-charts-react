@@ -2802,4 +2802,4 @@ Weighted flows between nodes arranged in layered columns; node size and link wid
 - [`FunnelChart`](#funnelchart) — one ordered path with drop-off
 - [`Network`](#network) — topology without volumes, or flows with cycles
 - [`TreemapChart`](#treemapchart) — a hierarchical part-to-whole with no flow between parts
-- [`PieChart`](#piechart) — a flat part-to-whole with no flow between them
+- [`PieChart`](#piechart) — a flat part-to-whole with no flow between its parts

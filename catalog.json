@@ -3623,7 +3623,7 @@
         },
         {
           "name": "PieChart",
-          "when": "a flat part-to-whole with no flow between them"
+          "when": "a flat part-to-whole with no flow between its parts"
         }
       ],
       "requiredProps": [

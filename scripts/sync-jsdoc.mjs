@@ -115,7 +115,7 @@ const buildBlock = (chart) => {
       bits.push(
         `${depListed} ${
           deprecated.length === 1 ? 'is' : 'are'
-        } deprecated and will be removed in the next breaking release.`,
+        } deprecated and will be removed in 0.4.0.`,
       );
       if (stable.length) {
         const names = stable.map((w) => `\`${w.name}\``);
@@ -180,7 +180,7 @@ const buildWrapperBlock = (chart, wrapper) => {
     ).forEach((line) => push(line));
     push('');
     wrap(
-      `@deprecated ${wrapper.deprecated}. Will be removed in the next breaking release.`,
+      `@deprecated ${wrapper.deprecated}. Will be removed in 0.4.0.`,
     ).forEach((line) => push(line));
   } else {
     wrap(

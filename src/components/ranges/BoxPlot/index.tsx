@@ -116,7 +116,7 @@ export type BoxPlotProps<TData = any> =
 
 /**
  * Wrapper props: identical to today's, plus `orientation` limited to the wrapper's own value.
- * @deprecated Use {@link BoxPlotProps} with `orientation="vertical"`. Will be removed in the next breaking release.
+ * @deprecated Use {@link BoxPlotProps} with `orientation="vertical"`. Will be removed in 0.4.0.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type BoxPlotVProps<TData = any> =
@@ -124,7 +124,7 @@ export type BoxPlotVProps<TData = any> =
   | BoxPlotVerticalBinnedProps<TData>;
 /**
  * Wrapper props: identical to today's, plus `orientation` limited to the wrapper's own value.
- * @deprecated Use {@link BoxPlotProps} with `orientation="horizontal"`. Will be removed in the next breaking release.
+ * @deprecated Use {@link BoxPlotProps} with `orientation="horizontal"`. Will be removed in 0.4.0.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type BoxPlotHProps<TData = any> =
@@ -744,7 +744,7 @@ export const BoxPlotRenderer = <TData,>(
  * Wrapper components: `BoxPlotH` (`orientation="horizontal"`, deprecated),
  * `BoxPlotV` (`orientation="vertical"`, deprecated). Prefer `<BoxPlot>` with
  * the prop set in new code. `BoxPlotH` and `BoxPlotV` are deprecated and will
- * be removed in the next breaking release.
+ * be removed in 0.4.0.
  *
  * Answers: distribution, range. Required props: `id`, `data`, `x`, `y`.
  *

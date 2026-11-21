@@ -1,10 +1,11 @@
 import preview from '../../../../.storybook/preview';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
 import BoxPlotV from '.';
 
 const meta = preview.meta({
   title: 'Ranges/BoxPlotV/Binning',
   component: BoxPlotV,
-  tags: ['autodocs'],
+  ...deprecatedWrapperStoryMeta('BoxPlot'),
 });
 
 // Raw data: age and salary for many individuals

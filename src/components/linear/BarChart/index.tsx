@@ -19,6 +19,7 @@ import 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
 import { drawAxis } from '@/hooks/useAxis';
+import useChartSize from '@/hooks/useChartSize';
 import useTooltip, { type UseTooltipResult } from '@/hooks/useTooltip';
 import type {
   AxisConfig,
@@ -30,7 +31,6 @@ import { defaultChartClassNames, bin1D } from '@/utils';
 import { clampToDomain, isFiniteNumber, pinnedEnd, pinnedStart } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
-import measureSvg from '@/utils/measureSvg';
 import {
   orientationMessages,
   resolveOrientation,
@@ -323,6 +323,12 @@ export const BarRenderer = <TData,>(
   } = props;
   const data = (dataProp ?? EMPTY_DATA) as TData[];
   const svgRef = useRef<SVGSVGElement>(null);
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
 
   const evidence = barEvidence(props.x, props.y);
   const resolution = resolveOrientation({
@@ -516,7 +522,6 @@ export const BarRenderer = <TData,>(
     svg.selectAll('*').remove();
     if (mismatch) return;
 
-    const { width, height } = measureSvg(svgNode);
     const m = {
       top: margin.top ?? 0,
       right: margin.right ?? 0,
@@ -1027,29 +1032,45 @@ export const BarRenderer = <TData,>(
       };
     }
 
-    const xScale = isVertical ? categoryScale : valueScale;
-    const yScale = isVertical ? valueScale : categoryScale;
     const xConfig = isVertical ? categoryAxisConfig : valueAxisConfig;
     const yConfig = isVertical ? valueAxisConfig : categoryAxisConfig;
 
-    const xAxis = drawAxis({
+    // Narrow the band/time union so each drawAxis call gets one domain type.
+    const xAxisOptions = {
       g,
-      scale: xScale,
       config: xConfig,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'horizontal',
-    });
-    const yAxis = drawAxis({
+      orientation: 'horizontal' as const,
+    };
+    const yAxisOptions = {
       g,
-      scale: yScale,
       config: yConfig,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'vertical',
-    });
+      orientation: 'vertical' as const,
+    };
+    // The value axis is always linear; assign it inside each branch so
+    // tickFormat/tickValues do not see a band/time union. The category axis
+    // is band or time.
+    let valueDrawn;
+    if (isVertical) {
+      if ('bandwidth' in categoryScale) {
+        drawAxis({ ...xAxisOptions, scale: categoryScale });
+      } else {
+        drawAxis({ ...xAxisOptions, scale: categoryScale });
+      }
+      valueDrawn = drawAxis({ ...yAxisOptions, scale: valueScale });
+    } else {
+      valueDrawn = drawAxis({ ...xAxisOptions, scale: valueScale });
+      if ('bandwidth' in categoryScale) {
+        drawAxis({ ...yAxisOptions, scale: categoryScale });
+      } else {
+        drawAxis({ ...yAxisOptions, scale: categoryScale });
+      }
+    }
     const percentAxis = layout === '100%' || (layout === 'diverging' && diverging.percent);
     if (tickFormat || percentAxis) {
       const base = tickFormat ? d3format(tickFormat) : PERCENT;
@@ -1057,13 +1078,11 @@ export const BarRenderer = <TData,>(
       const formatted = layout === 'diverging' && diverging.percent
         ? (v: number) => base(Math.abs(v))
         : base;
-      const valueDrawn = isVertical ? yAxis : xAxis;
       valueDrawn.axisG.call(
         valueDrawn.axis.tickFormat(formatted as (v: unknown) => string),
       );
     }
     if (placeholderDomain) {
-      const valueDrawn = isVertical ? yAxis : xAxis;
       valueDrawn.axisG.call(valueDrawn.axis.tickValues([]));
     }
   }, [
@@ -1098,15 +1117,19 @@ export const BarRenderer = <TData,>(
     toDateTime,
     valueAxis,
     wholeNumbers,
+    width,
+    height,
   ]);
 
   useEffect(() => {
+    if (!measured) return;
     refreshChart();
+    // A style/className size change reaches refreshChart through useChartSize.
     const node = svgRef.current;
     return () => {
       interruptTransitions(node);
     };
-  }, [refreshChart, style?.width, style?.height]);
+  }, [refreshChart, measured]);
 
   return (
     <svg

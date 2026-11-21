@@ -96,11 +96,13 @@ const meta: ChartMeta = {
       pins: 'orientation="horizontal"',
       variant: 'Horizontal box plot',
       note: 'Accepts the props it always has, and draws in over 1 s unless `drawing` is given.',
+      deprecated: 'Use `<BoxPlot orientation="horizontal">`',
     },
     {
       name: 'BoxPlotV',
       pins: 'orientation="vertical"',
       note: 'Accepts the props it always has, and draws in over 1 s unless `drawing` is given.',
+      deprecated: 'Use `<BoxPlot orientation="vertical">`',
     },
   ],
   variants: [
@@ -110,7 +112,7 @@ const meta: ChartMeta = {
       aliases: ['box plot (horizontal)', 'horizontal box and whisker plot'],
       summary:
         'The same box plot with groups running down the y axis and statistics along x, so long group labels fit.',
-      how: 'Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` renders this form.',
+      how: 'Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form.',
       useWhen: [
         'Group labels are long',
         'There are more than ~15 groups',

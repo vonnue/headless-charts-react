@@ -114,11 +114,18 @@ export type BoxPlotProps<TData = any> =
   | BoxPlotHorizontalSummaryProps<TData>
   | BoxPlotHorizontalBinnedProps<TData>;
 
-/** Wrapper props: identical to today's, plus `orientation` limited to the wrapper's own value. */
+/**
+ * Wrapper props: identical to today's, plus `orientation` limited to the wrapper's own value.
+ * @deprecated Use {@link BoxPlotProps} with `orientation="vertical"`. Will be removed in the next breaking release.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type BoxPlotVProps<TData = any> =
   | BoxPlotVerticalSummaryProps<TData>
   | BoxPlotVerticalBinnedProps<TData>;
+/**
+ * Wrapper props: identical to today's, plus `orientation` limited to the wrapper's own value.
+ * @deprecated Use {@link BoxPlotProps} with `orientation="horizontal"`. Will be removed in the next breaking release.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type BoxPlotHProps<TData = any> =
   | BoxPlotHorizontalSummaryProps<TData>
@@ -693,7 +700,7 @@ export const BoxPlotRenderer = <TData,>(
  *
  * **Specialised types**
  * - Horizontal box plot — Set `orientation="horizontal"`; groups go on `y`
- *   and statistics on `x`. `BoxPlotH` renders this form.
+ *   and statistics on `x`. `BoxPlotH` is a deprecated alias for this form.
  * - Binned box plot — Set `bin` on the category-axis config (`x` in
  *   vertical, `y` in horizontal) and pass `valueKey` naming the field to
  *   summarise. Both are needed: the statistic keys on the value axis are
@@ -718,9 +725,10 @@ export const BoxPlotRenderer = <TData,>(
  *
  * Also called: box plot, box and whisker plot, box and whisker chart, box chart, quartile plot, vertical box plot.
  *
- * Wrapper components: `BoxPlotH` (`orientation="horizontal"`), `BoxPlotV`
- * (`orientation="vertical"`). Prefer `<BoxPlot>` with the prop set in new
- * code; the wrappers remain a stable public API.
+ * Wrapper components: `BoxPlotH` (`orientation="horizontal"`, deprecated),
+ * `BoxPlotV` (`orientation="vertical"`, deprecated). Prefer `<BoxPlot>` with
+ * the prop set in new code. `BoxPlotH` and `BoxPlotV` are deprecated and will
+ * be removed in the next breaking release.
  *
  * Answers: distribution, range. Required props: `id`, `data`, `x`, `y`.
  *

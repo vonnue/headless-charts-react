@@ -93,11 +93,41 @@ const buildBlock = (chart) => {
 
   if (chart.wrappers?.length) {
     const list = chart.wrappers
-      .map((w) => `\`${w.name}\` (\`${w.pins}\`)`)
+      .map((w) =>
+        w.deprecated
+          ? `\`${w.name}\` (\`${w.pins}\`, deprecated)`
+          : `\`${w.name}\` (\`${w.pins}\`)`,
+      )
       .join(', ');
-    wrap(
-      `Wrapper components: ${list}. Prefer \`<${chart.name}>\` with the prop set in new code; the wrappers remain a stable public API.`,
-    ).forEach((line) => push(line));
+    const deprecated = chart.wrappers.filter((w) => w.deprecated);
+    const stable = chart.wrappers.filter((w) => !w.deprecated);
+    let guidance;
+    if (!deprecated.length) {
+      guidance =
+        `Prefer \`<${chart.name}>\` with the prop set in new code; the wrappers remain a stable public API.`;
+    } else {
+      const bits = [`Prefer \`<${chart.name}>\` with the prop set in new code.`];
+      const depNames = deprecated.map((w) => `\`${w.name}\``);
+      const depListed =
+        depNames.length <= 2
+          ? depNames.join(' and ')
+          : `${depNames.slice(0, -1).join(', ')}, and ${depNames[depNames.length - 1]}`;
+      bits.push(
+        `${depListed} ${
+          deprecated.length === 1 ? 'is' : 'are'
+        } deprecated and will be removed in the next breaking release.`,
+      );
+      if (stable.length) {
+        const names = stable.map((w) => `\`${w.name}\``);
+        const listed =
+          names.length <= 2
+            ? names.join(' and ')
+            : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+        bits.push(`${listed} remain a stable public API.`);
+      }
+      guidance = bits.join(' ');
+    }
+    wrap(`Wrapper components: ${list}. ${guidance}`).forEach((line) => push(line));
     push('');
   }
 
@@ -144,9 +174,19 @@ const buildWrapperBlock = (chart, wrapper) => {
     }.${wrapper.note ? ` ${wrapper.note}` : ''}`,
   ).forEach((line) => push(line));
   push('');
-  wrap(
-    `A stable public API. Prefer \`<${chart.name} ${wrapper.pins}>\` in new code. Selection guidance (use when, avoid when, examples, alternatives) is on {@link ${chart.name}}.`,
-  ).forEach((line) => push(line));
+  if (wrapper.deprecated) {
+    wrap(
+      `@deprecated ${wrapper.deprecated}. Will be removed in the next breaking release.`,
+    ).forEach((line) => push(line));
+    push('');
+    wrap(
+      `Selection guidance (use when, avoid when, examples, alternatives) is on {@link ${chart.name}}.`,
+    ).forEach((line) => push(line));
+  } else {
+    wrap(
+      `A stable public API. Prefer \`<${chart.name} ${wrapper.pins}>\` in new code. Selection guidance (use when, avoid when, examples, alternatives) is on {@link ${chart.name}}.`,
+    ).forEach((line) => push(line));
+  }
   push('');
   push(`@see ${chart.name}`);
   out.push(' */');

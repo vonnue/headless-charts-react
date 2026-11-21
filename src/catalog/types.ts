@@ -162,6 +162,13 @@ export interface ChartWrapper {
    * wrapper file's JSDoc.
    */
   note?: string;
+  /**
+   * If set, the wrapper is deprecated. The string is the `@deprecated` JSDoc
+   * message, typically `Use \`<Chart orientation="...">\``. Generated into
+   * JSDoc and AGENTS.md. The wrapper will be removed in the next breaking
+   * release.
+   */
+  deprecated?: string;
 }
 
 export interface ChartMeta {

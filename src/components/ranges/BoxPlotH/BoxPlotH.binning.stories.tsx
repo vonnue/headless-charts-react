@@ -1,6 +1,10 @@
 import preview from '../../../../.storybook/preview';
 import BoxPlotH from '.';
 
+/**
+ * @deprecated Use `<BoxPlot orientation="horizontal">`. Will be removed in the
+ * next breaking release.
+ */
 const meta = preview.meta({
   title: 'Ranges/BoxPlotH/Binning',
   component: BoxPlotH,

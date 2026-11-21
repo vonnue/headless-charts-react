@@ -1,10 +1,45 @@
 import { ChartMeta, ChartWrapper, DecisionBranch, isNamedChartType } from './types';
 
 /** How a wrapper component maps onto its chart, e.g. `<BoxPlot orientation="horizontal">`. */
-const wrapperConfig = (chart: ChartMeta, wrapper: ChartWrapper): string =>
-  `Wrapper component: same as \`<${chart.name} ${wrapper.pins}>\`${
+const WRAPPER_REMOVAL = 'Will be removed in the next breaking release.';
+
+const listWrapperNames = (names: string[]): string => {
+  const ticks = names.map((name) => `\`${name}\``);
+  if (ticks.length <= 2) return ticks.join(' and ');
+  return `${ticks.slice(0, -1).join(', ')}, and ${ticks[ticks.length - 1]}`;
+};
+
+const wrapperConfig = (chart: ChartMeta, wrapper: ChartWrapper): string => {
+  if (wrapper.deprecated) {
+    return `Deprecated. ${wrapper.deprecated}. ${WRAPPER_REMOVAL}`;
+  }
+  return `Wrapper component: same as \`<${chart.name} ${wrapper.pins}>\`${
     wrapper.variant ? ` (${wrapper.variant})` : ''
   }`;
+};
+
+/** Prefer-the-unified-chart line, plus deprecation or stability guidance. */
+const wrapperGuidance = (chart: ChartMeta, wrappers: ChartWrapper[]): string => {
+  const deprecated = wrappers.filter((wrapper) => wrapper.deprecated);
+  const stable = wrappers.filter((wrapper) => !wrapper.deprecated);
+  // Keep the historical wording when nothing is deprecated, so generated
+  // AGENTS.md and JSDoc stay unchanged for charts whose wrappers are stable.
+  if (!deprecated.length) {
+    return `Prefer \`<${chart.name}>\` with the prop set in new code; the wrappers remain a stable public API.`;
+  }
+  const parts = [`Prefer \`<${chart.name}>\` with the prop set in new code.`];
+  parts.push(
+    `${listWrapperNames(deprecated.map((wrapper) => wrapper.name))} ${
+      deprecated.length === 1 ? 'is' : 'are'
+    } deprecated and will be removed in the next breaking release.`,
+  );
+  if (stable.length) {
+    parts.push(
+      `${listWrapperNames(stable.map((wrapper) => wrapper.name))} remain a stable public API.`,
+    );
+  }
+  return parts.join(' ');
+};
 
 /**
  * Projects the catalog into the two generated artefacts: `AGENTS.md` at the repo
@@ -131,17 +166,21 @@ export const renderAgentsMarkdown = (
     if (chart.wrappers?.length) {
       lines.push('**Wrapper components** (exported; same chart with props pinned)');
       lines.push('');
-      chart.wrappers.forEach((wrapper) =>
+      chart.wrappers.forEach((wrapper) => {
+        const deprecated = wrapper.deprecated
+          ? ` — **deprecated.** ${wrapper.deprecated}. ${WRAPPER_REMOVAL}`
+          : '';
+        const note = wrapper.note
+          ? `${deprecated ? ' ' : '. '}${wrapper.note}`
+          : '';
         lines.push(
           `- \`${wrapper.name}\` — \`<${chart.name} ${wrapper.pins}>\`${
             wrapper.variant ? ` (${wrapper.variant})` : ''
-          }${wrapper.note ? `. ${wrapper.note}` : ''}`,
-        ),
-      );
+          }${deprecated}${note}`,
+        );
+      });
       lines.push('');
-      lines.push(
-        `Prefer \`<${chart.name}>\` with the prop set in new code; the wrappers remain a stable public API.`,
-      );
+      lines.push(wrapperGuidance(chart, chart.wrappers));
       lines.push('');
     }
 

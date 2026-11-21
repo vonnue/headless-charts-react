@@ -6,7 +6,8 @@ import data from '../sample.json';
  * Box-and-whisker marks summarising the spread of a measure per group: min,
  * quartiles, median and max. Vertical by default; set
  * `orientation="horizontal"` for long group labels. `BoxPlotV` and
- * `BoxPlotH` are the same chart with the orientation pinned.
+ * `BoxPlotH` are deprecated aliases for the same chart with the orientation
+ * pinned, and will be removed in the next breaking release.
  */
 const meta = preview.meta({
   title: 'Ranges/BoxPlot/Intro',

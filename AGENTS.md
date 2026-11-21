@@ -29,8 +29,8 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Binned 2D histogram, binned heatmap, two-dimensional histogram | [`WaffleChart`](#wafflechart) | Set `bin` on `x` and/or `y`; each cell then shows the count for that (xBin, yBin) pair rather than a value from the data. |
 | Binned box plot, box plot from raw data, grouped distribution plot, binned box plot (vertical), vertical box plot from raw data, distribution by band | [`BoxPlot`](#boxplot) | Set `bin` on the category-axis config (`x` in vertical, `y` in horizontal) and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on the value axis are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and the value axis still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges. |
 | BoxPlot, box plot, box and whisker plot, box and whisker chart, box chart, quartile plot, vertical box plot | [`BoxPlot`](#boxplot) | Base component, no extra configuration |
-| BoxPlotH | [`BoxPlot`](#boxplot) | Wrapper component: same as `<BoxPlot orientation="horizontal">` (Horizontal box plot) |
-| BoxPlotV | [`BoxPlot`](#boxplot) | Wrapper component: same as `<BoxPlot orientation="vertical">` |
+| BoxPlotH | [`BoxPlot`](#boxplot) | Deprecated. Use `<BoxPlot orientation="horizontal">`. Will be removed in the next breaking release. |
+| BoxPlotV | [`BoxPlot`](#boxplot) | Deprecated. Use `<BoxPlot orientation="vertical">`. Will be removed in the next breaking release. |
 | Bubble chart, bubble plot, proportional symbol chart | [`ScatterPlot`](#scatterplot) | Add `size={{ key: "population", min: 2, max: 20 }}`. Radius is scaled between `min` and `max` pixels. |
 | BulletChart, bullet graph, kpi bar, target vs actual chart | [`BulletChart`](#bulletchart) | Base component, no extra configuration |
 | Bump chart, rank chart, ranking chart, bump plot, rank over time | [`LineChart`](#linechart) | Convert values to ranks with `utils.convertToRanks(data, y, x)` — it takes the same `y` array and `x` object you pass to the chart — then set `curve: "bumpX"` and `label: { show: true }` on each series, and `reverse` so rank 1 sits at the top. |
@@ -48,7 +48,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | FunnelChart, funnel, funnel chart, conversion funnel | [`FunnelChart`](#funnelchart) | Base component, no extra configuration |
 | Gantt chart, gantt, schedule chart, project timeline, swimlane chart | [`TimeLineChart`](#timelinechart) | Pass both `events.startKey` and `events.endKey` with `events.isTime: true`, and set `y` to the lane key. Spans render as rects; overlapping work in a lane is visible as stacked bars. |
 | Histogram, frequency distribution, binned column chart, frequency chart | [`ColumnChart`](#columnchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
-| Horizontal box plot, box plot (horizontal), horizontal box and whisker plot | [`BoxPlot`](#boxplot) | Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` renders this form. |
+| Horizontal box plot, box plot (horizontal), horizontal box and whisker plot | [`BoxPlot`](#boxplot) | Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form. |
 | Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically. |
 | Horizontal waterfall chart, horizontal bridge chart, horizontal cascade chart | [`BarChartStacked`](#barchartstacked) | Set `waterfall` on a BarChartStacked. Each `x` series becomes a step rather than a segment stacked from the baseline. |
 | LinearGauge, progress bar chart, linear progress gauge, meter | [`LinearGauge`](#lineargauge) | Base component, no extra configuration |
@@ -1962,10 +1962,10 @@ Box-and-whisker marks summarising the spread of a measure per group — min, qua
 
 **Wrapper components** (exported; same chart with props pinned)
 
-- `BoxPlotH` — `<BoxPlot orientation="horizontal">` (Horizontal box plot). Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
-- `BoxPlotV` — `<BoxPlot orientation="vertical">`. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `BoxPlotH` — `<BoxPlot orientation="horizontal">` (Horizontal box plot) — **deprecated.** Use `<BoxPlot orientation="horizontal">`. Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `BoxPlotV` — `<BoxPlot orientation="vertical">` — **deprecated.** Use `<BoxPlot orientation="vertical">`. Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
 
-Prefer `<BoxPlot>` with the prop set in new code; the wrappers remain a stable public API.
+Prefer `<BoxPlot>` with the prop set in new code. `BoxPlotH` and `BoxPlotV` are deprecated and will be removed in the next breaking release.
 
 **Use when**
 
@@ -2019,7 +2019,7 @@ The same box plot with groups running down the y axis and statistics along x, so
 
 **Also called:** box plot (horizontal), horizontal box and whisker plot
 
-**Configuration:** Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` renders this form.
+**Configuration:** Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form.
 
 **Use when**
 

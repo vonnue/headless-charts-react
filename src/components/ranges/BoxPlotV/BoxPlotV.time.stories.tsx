@@ -1,6 +1,10 @@
 import preview from '../../../../.storybook/preview';
 import BoxPlotV from '.';
 
+/**
+ * @deprecated Use `<BoxPlot orientation="vertical">`. Will be removed in the
+ * next breaking release.
+ */
 const meta = preview.meta({
   title: 'Ranges/BoxPlotV/Time Scaling',
   component: BoxPlotV,

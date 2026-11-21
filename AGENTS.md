@@ -50,13 +50,13 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Histogram, frequency distribution, binned column chart, frequency chart | [`ColumnChart`](#columnchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
 | Horizontal box plot, box plot (horizontal), horizontal box and whisker plot | [`BoxPlot`](#boxplot) | Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form. |
 | Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically. |
-| Horizontal lollipop chart, lollipop chart (horizontal), horizontal stem plot, ranked lollipop chart | [`LollipopChart`](#lollipopchart) | Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` renders this form. |
+| Horizontal lollipop chart, lollipop chart (horizontal), horizontal stem plot, ranked lollipop chart | [`LollipopChart`](#lollipopchart) | Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` is a deprecated alias for this form. |
 | Horizontal waterfall chart, horizontal bridge chart, horizontal cascade chart | [`BarChartStacked`](#barchartstacked) | Set `waterfall` on a BarChartStacked. Each `x` series becomes a step rather than a segment stacked from the baseline. |
 | LinearGauge, progress bar chart, linear progress gauge, meter | [`LinearGauge`](#lineargauge) | Base component, no extra configuration |
 | LineChart, line graph, multi-line chart, trend line chart | [`LineChart`](#linechart) | Base component, no extra configuration |
 | LollipopChart, lollipop chart, lollipop, lollipop plot, stem plot, stem and dot chart, vertical lollipop chart | [`LollipopChart`](#lollipopchart) | Base component, no extra configuration |
-| LollipopHChart | [`LollipopChart`](#lollipopchart) | Wrapper component: same as `<LollipopChart orientation="horizontal">` (Horizontal lollipop chart) |
-| LollipopVChart | [`LollipopChart`](#lollipopchart) | Wrapper component: same as `<LollipopChart orientation="vertical">` |
+| LollipopHChart | [`LollipopChart`](#lollipopchart) | Deprecated. Use `<LollipopChart orientation="horizontal">`. Will be removed in the next breaking release. |
+| LollipopVChart | [`LollipopChart`](#lollipopchart) | Deprecated. Use `<LollipopChart orientation="vertical">`. Will be removed in the next breaking release. |
 | Network, network graph, node-link diagram, force-directed graph, graph chart, relationship map | [`Network`](#network) | Base component, no extra configuration |
 | OHLC chart, ohlc, ohlc bar chart, open-high-low-close chart | [`CandlestickChart`](#candlestickchart) | Set `shape: 'ohlc'`. |
 | ParallelCoordinatesChart, parallel coordinates, parallel coordinates plot, parallel coordinates chart, parallel coordinate plot, parallel plot, parallel axes | [`ParallelCoordinatesChart`](#parallelcoordinateschart) | Base component, no extra configuration |
@@ -1018,10 +1018,10 @@ Vertical stems ending in a symbol, marking one value per category with far less 
 
 **Wrapper components** (exported; same chart with props pinned)
 
-- `LollipopHChart` — `<LollipopChart orientation="horizontal">` (Horizontal lollipop chart). Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
-- `LollipopVChart` — `<LollipopChart orientation="vertical">`. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `LollipopHChart` — `<LollipopChart orientation="horizontal">` (Horizontal lollipop chart) — **deprecated.** Use `<LollipopChart orientation="horizontal">`. Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `LollipopVChart` — `<LollipopChart orientation="vertical">` — **deprecated.** Use `<LollipopChart orientation="vertical">`. Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
 
-Prefer `<LollipopChart>` with the prop set in new code; the wrappers remain a stable public API.
+Prefer `<LollipopChart>` with the prop set in new code. `LollipopHChart` and `LollipopVChart` are deprecated and will be removed in the next breaking release.
 
 **Use when**
 
@@ -1067,7 +1067,7 @@ The same lollipop chart with categories running down the y axis and values along
 
 **Also called:** lollipop chart (horizontal), horizontal stem plot, ranked lollipop chart
 
-**Configuration:** Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` renders this form.
+**Configuration:** Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` is a deprecated alias for this form.
 
 **Use when**
 

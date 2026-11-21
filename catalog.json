@@ -1198,12 +1198,14 @@
           "name": "LollipopHChart",
           "pins": "orientation=\"horizontal\"",
           "variant": "Horizontal lollipop chart",
-          "note": "Accepts the props it always has, and draws in over 1 s unless `drawing` is given."
+          "note": "Accepts the props it always has, and draws in over 1 s unless `drawing` is given.",
+          "deprecated": "Use `<LollipopChart orientation=\"horizontal\">`"
         },
         {
           "name": "LollipopVChart",
           "pins": "orientation=\"vertical\"",
-          "note": "Accepts the props it always has, and draws in over 1 s unless `drawing` is given."
+          "note": "Accepts the props it always has, and draws in over 1 s unless `drawing` is given.",
+          "deprecated": "Use `<LollipopChart orientation=\"vertical\">`"
         }
       ],
       "variants": [
@@ -1216,7 +1218,7 @@
             "ranked lollipop chart"
           ],
           "summary": "The same lollipop chart with categories running down the y axis and values along x, so long category labels fit.",
-          "how": "Set `orientation=\"horizontal\"`; categories go on `y` and values on `x`. `LollipopHChart` renders this form.",
+          "how": "Set `orientation=\"horizontal\"`; categories go on `y` and values on `x`. `LollipopHChart` is a deprecated alias for this form.",
           "useWhen": [
             "Category labels are long",
             "There are many categories",

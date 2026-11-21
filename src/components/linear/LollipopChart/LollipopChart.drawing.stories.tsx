@@ -6,8 +6,8 @@ import data from './sample.json';
  * With `drawing`, stems grow from the zero baseline and symbols travel with
  * them. Rows are staggered by `drawing.delay`. Remount a story (switch away
  * and back) to replay the animation. LollipopChart defaults to
- * `{ duration: 0 }`; LollipopHChart / LollipopVChart default to a 1 s
- * draw-in.
+ * `{ duration: 0 }`; the deprecated LollipopHChart / LollipopVChart
+ * wrappers still default to a 1 s draw-in.
  */
 const meta = preview.meta({
   title: 'Linear/LollipopChart/Drawing',

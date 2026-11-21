@@ -84,9 +84,15 @@ export interface LollipopChartProps<TData = any> extends ChartProps<TData> {
   tooltip?: TooltipConfig;
 }
 
+/**
+ * @deprecated Use {@link LollipopChartProps} with `orientation="vertical"`. Will be removed in the next breaking release.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type LollipopVChartProps<TData = any> =
   Omit<LollipopChartProps<TData>, 'orientation'> & { orientation?: 'vertical' };
+/**
+ * @deprecated Use {@link LollipopChartProps} with `orientation="horizontal"`. Will be removed in the next breaking release.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type LollipopHChartProps<TData = any> =
   Omit<LollipopChartProps<TData>, 'orientation'> & { orientation?: 'horizontal' };
@@ -618,7 +624,8 @@ export const LollipopRenderer = <TData,>(
  *
  * **Specialised types**
  * - Horizontal lollipop chart — Set `orientation="horizontal"`; categories
- *   go on `y` and values on `x`. `LollipopHChart` renders this form.
+ *   go on `y` and values on `x`. `LollipopHChart` is a deprecated alias for
+ *   this form.
  * - Time-scaled lollipop chart — Set `x.scalingFunction: "time"` with
  *   `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar
  *   width to derive — `x.time.barWidth` is not used by this chart. ISO dates
@@ -629,9 +636,11 @@ export const LollipopRenderer = <TData,>(
  *
  * Also called: lollipop chart, lollipop, lollipop plot, stem plot, stem and dot chart, vertical lollipop chart.
  *
- * Wrapper components: `LollipopHChart` (`orientation="horizontal"`),
- * `LollipopVChart` (`orientation="vertical"`). Prefer `<LollipopChart>` with
- * the prop set in new code; the wrappers remain a stable public API.
+ * Wrapper components: `LollipopHChart` (`orientation="horizontal"`,
+ * deprecated), `LollipopVChart` (`orientation="vertical"`, deprecated). Prefer
+ * `<LollipopChart>` with the prop set in new code. `LollipopHChart` and
+ * `LollipopVChart` are deprecated and will be removed in the next breaking
+ * release.
  *
  * Answers: comparison, ranking. Required props: `id`, `data`, `x`, `y`.
  *

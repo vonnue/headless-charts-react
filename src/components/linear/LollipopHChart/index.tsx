@@ -14,9 +14,11 @@ export type { LollipopChartClassNames, LollipopHChartProps, LollipopShape } from
  * pinned, rendering the Horizontal lollipop chart. Accepts the props it always
  * has, and draws in over 1 s unless `drawing` is given.
  *
- * A stable public API. Prefer `<LollipopChart orientation="horizontal">` in
- * new code. Selection guidance (use when, avoid when, examples, alternatives)
- * is on {@link LollipopChart}.
+ * @deprecated Use `<LollipopChart orientation="horizontal">`. Will be removed
+ * in the next breaking release.
+ *
+ * Selection guidance (use when, avoid when, examples, alternatives) is on
+ * {@link LollipopChart}.
  *
  * @see LollipopChart
  */

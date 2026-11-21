@@ -498,7 +498,8 @@
       "wrappers": [
         {
           "name": "ColumnChart",
-          "pins": "orientation=\"vertical\""
+          "pins": "orientation=\"vertical\"",
+          "deprecated": "Use `<BarChart orientation=\"vertical\">`"
         },
         {
           "name": "BarChartStacked",

@@ -82,7 +82,11 @@ const meta: ChartMeta = {
 />`,
   storybook: 'Linear/BarChart/Intro',
   wrappers: [
-    { name: 'ColumnChart', pins: 'orientation="vertical"' },
+    {
+      name: 'ColumnChart',
+      pins: 'orientation="vertical"',
+      deprecated: 'Use `<BarChart orientation="vertical">`',
+    },
     { name: 'BarChartStacked', pins: 'orientation="horizontal" stacking={{ type: "normal" }}', variant: 'Horizontal stacked bar chart' },
     { name: 'ColumnChartStacked', pins: 'orientation="vertical" stacking={{ type: "normal" }}', variant: 'Stacked bar chart' },
   ],

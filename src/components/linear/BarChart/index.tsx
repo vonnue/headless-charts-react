@@ -1201,11 +1201,13 @@ export const BarRenderer = <TData,>(
  *
  * Also called: bar chart, bar graph, column chart, column graph, vertical bar chart, grouped bar chart, grouped column chart, clustered column chart, clustered bar chart.
  *
- * Wrapper components: `ColumnChart` (`orientation="vertical"`),
+ * Wrapper components: `ColumnChart` (`orientation="vertical"`, deprecated),
  * `BarChartStacked` (`orientation="horizontal" stacking={{ type: "normal"
  * }}`), `ColumnChartStacked` (`orientation="vertical" stacking={{ type:
- * "normal" }}`). Prefer `<BarChart>` with the prop set in new code; the
- * wrappers remain a stable public API.
+ * "normal" }}`). Prefer `<BarChart>` with the prop set in new code.
+ * `ColumnChart` is deprecated and will be removed in the next breaking
+ * release. `BarChartStacked` and `ColumnChartStacked` remain a stable public
+ * API.
  *
  * Answers: comparison, composition, distribution, ranking. Required props: `id`, `data`, `x`, `y`.
  *

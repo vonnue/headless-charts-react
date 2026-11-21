@@ -6,7 +6,10 @@ import data from './sample.json';
  * Vertical or horizontal bars comparing one or more measures across
  * categories. The default is vertical; set `orientation="horizontal"`
  * (or pass the series array on `x`) for long category labels.
- * `ColumnChart` is the same chart with `orientation="vertical"` pinned.
+ * `ColumnChart` is a deprecated alias for the same chart with
+ * `orientation="vertical"` pinned, and will be removed in the next
+ * breaking release. `BarChartStacked` and `ColumnChartStacked` remain
+ * supported wrappers.
  */
 const meta = preview.meta({
   title: 'Linear/BarChart/Intro',

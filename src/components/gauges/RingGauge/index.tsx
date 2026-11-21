@@ -10,6 +10,7 @@ import { scaleLinear } from 'd3-scale';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 import useTooltip, { UseTooltipResult } from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 
 type TooltipHandlers = Pick<
   UseTooltipResult,
@@ -128,6 +129,14 @@ const RingGauge = <TData = any,>({
     tooltipHandlers.current = { onMouseOver, onMouseMove, onMouseLeave };
   });
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
@@ -142,8 +151,6 @@ const RingGauge = <TData = any,>({
 
     const g = svg.append('g');
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
 
     const getInnerRadius = (index: number) =>
         minRadius + (numArcs - (index + 1)) * (arcWidth + (padding.arc || 0)),
@@ -245,6 +252,8 @@ const RingGauge = <TData = any,>({
         )
         .text((d: any) => d[labelKey]);
   }, [
+    width,
+    height,
     PI,
     classNameGaugeBg,
     data,
@@ -268,6 +277,8 @@ const RingGauge = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -275,9 +286,10 @@ const RingGauge = <TData = any,>({
     return () => {
       svg.selectAll('*').interrupt();
     };
-  }, [refreshChart, id]);
+  }, [refreshChart, id, measured]);
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className || '')}

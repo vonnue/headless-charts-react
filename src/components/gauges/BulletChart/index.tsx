@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import useChartSize from '@/hooks/useChartSize';
 
 import { axisBottom } from 'd3-axis';
 import { defaultChartClassNames } from '@/utils';
@@ -107,12 +108,18 @@ const BulletChart = <TData = any,>({
 }: BulletChartProps<TData>) => {
   const mergedClassNames = { ...defaultClassNames, ...classNames };
   const previousData = useRef(0);
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0];
 
     const xFn = scaleLinear()
       .domain([min, max])
@@ -190,6 +197,7 @@ const BulletChart = <TData = any,>({
 
     previousData.current = data;
   }, [
+    width,
     axisHeight,
     base,
     className,
@@ -207,6 +215,8 @@ const BulletChart = <TData = any,>({
     threshold,
   ]);
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -214,10 +224,11 @@ const BulletChart = <TData = any,>({
     return () => {
       interruptTransitions(svg);
     };
-  }, [data, refreshChart, id]);
+  }, [data, refreshChart, id, measured]);
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, `h-12`, className)}

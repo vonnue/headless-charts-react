@@ -9,6 +9,7 @@ import { GaugeProps } from '@/types';
 import { max } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
 import useTooltip from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 
 interface Region {
   limit: number;
@@ -103,6 +104,14 @@ const SpeedometerChart = <TData = any,>({
     defaultHtml: () => `Value: ${dataValue}`,
   });
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const setup = useCallback(() => {
     const svg = select<SVGSVGElement, unknown>(`#${id}`);
 
@@ -110,8 +119,6 @@ const SpeedometerChart = <TData = any,>({
 
     const g = svg.append('g');
 
-    const width = +svg.style('width').split('px')[0];
-    const height = +svg.style('height').split('px')[0];
 
     g.attr('transform', `translate(${width / 2},${(margin.top ?? 0) + width / 2})`);
 
@@ -231,7 +238,7 @@ const SpeedometerChart = <TData = any,>({
       );
 
     g.call(xAxis);
-  }, [id, margin, needleRadius, onMouseOver, onMouseMove, onMouseLeave, dataValue]);
+  }, [width, height, id, margin, needleRadius, onMouseOver, onMouseMove, onMouseLeave, dataValue]);
 
   const currentAngle = ((dataValue / maxValue) * (MAX_ANGLE - MIN_ANGLE) * 180) / PI;
   const previousAngle =
@@ -249,18 +256,23 @@ const SpeedometerChart = <TData = any,>({
   }, [currentAngle, previousAngle, data, dataValue]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     setup();
-  }, [setup]);
+  }, [setup, measured]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     return () => {
       if (dataGroupRef.current) select(dataGroupRef.current).interrupt();
     };
-  }, [data, max, refreshChart, id]);
+  }, [data, max, refreshChart, id, measured, width, height]);
   /* eslint-enable */
   return (
     <svg
+      ref={svgRef}
       data-testid='speedometer'
       id={id}
       style={style}

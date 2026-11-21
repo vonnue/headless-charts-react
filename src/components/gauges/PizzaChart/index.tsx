@@ -2,8 +2,9 @@
 
 import { arc, interpolateNumber, pie, scaleLinear, transition } from 'd3';
 import { select } from 'd3-selection';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import useTooltip from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 
 import { GaugeProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
@@ -94,13 +95,19 @@ const PizzaChart = <TData = any,>({
         (data as any)[metrics[d.index].key]
       }</div>`,
   });
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0];
-    const height = +svg.style('height').split('px')[0];
 
     const chartArea = [
       width - (margin.left ?? 0) - (margin.right ?? 0),
@@ -195,6 +202,8 @@ const PizzaChart = <TData = any,>({
         });
     }
   }, [
+    width,
+    height,
     cornerRadius,
     data,
     id,
@@ -210,6 +219,8 @@ const PizzaChart = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -217,10 +228,11 @@ const PizzaChart = <TData = any,>({
     return () => {
       interruptTransitions(svg);
     };
-  }, [refreshChart, id]);
+  }, [refreshChart, id, measured]);
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(className, defaultChartClassNames)}

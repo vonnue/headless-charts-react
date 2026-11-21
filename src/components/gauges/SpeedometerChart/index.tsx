@@ -119,7 +119,6 @@ const SpeedometerChart = <TData = any,>({
 
     const g = svg.append('g');
 
-
     g.attr('transform', `translate(${width / 2},${(margin.top ?? 0) + width / 2})`);
 
     const innerWidth = width - (margin.left ?? 0) - (margin.right ?? 0);

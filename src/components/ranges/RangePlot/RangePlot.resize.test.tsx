@@ -8,7 +8,7 @@ import data from './sample.json';
 // #53: range redraws when its svg's layout box changes, not only when
 // style.width/height do.
 describe('range resize (useChartSize)', () => {
-  const args = { data, y: { key: 'label' }, x: { minKey: 'minTemp', maxKey: 'maxTemp' } };
+  const args = { data, shape: 'circle' as const, y: { key: 'label' }, x: { minKey: 'minTemp', maxKey: 'maxTemp' } };
   let mocks: ReturnType<typeof installResizeMocks>;
 
   beforeEach(() => {

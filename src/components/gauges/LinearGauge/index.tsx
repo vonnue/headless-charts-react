@@ -132,7 +132,6 @@ const LinearGauge = <TData = any,>({
     svg.selectAll('*').interrupt();
     svg.selectAll('*').remove();
 
-
     const xFn = xScale();
 
     const g = svg.append('g');

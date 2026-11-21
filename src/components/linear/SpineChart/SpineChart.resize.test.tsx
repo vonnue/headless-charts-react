@@ -9,8 +9,11 @@ import { installResizeMocks } from '@/test-utils/resizeObserver';
 describe('spine resize (useChartSize)', () => {
   const args = {
     data: [{ name: 'wearables', value2: 6, value3: 7 }, { name: 'services', value2: 4, value3: 6 }],
-    y: { key: 'name', axis: { location: 'middle' } },
-    x: [{ key: 'value2', direction: 'left' }, { key: 'value3', direction: 'right' }],
+    y: { key: 'name', axis: { location: 'middle' as const } },
+    x: [
+      { key: 'value2', direction: 'left' as const },
+      { key: 'value3', direction: 'right' as const },
+    ],
   };
   let mocks: ReturnType<typeof installResizeMocks>;
 

@@ -137,7 +137,6 @@ const TimeLineChart = <TData = any,>({
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
 
-
     const xFn = events?.isTime ? scaleTime() : scaleLinear();
 
     const minVal = min(data, (d: any) => d[events.startKey]);

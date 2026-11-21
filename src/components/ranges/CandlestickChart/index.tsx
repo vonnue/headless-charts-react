@@ -380,17 +380,19 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     const axesG = root.append('g').attr('class', 'axes');
     const dims = { width, height };
     const xTicks = isFiniteNumber(x.axis?.ticks) && x.axis.ticks > 0 ? x.axis.ticks : DEFAULT_X_TICKS;
-    const xAxis = drawAxis({
+    // Narrow the band/time union so each drawAxis call gets one domain type.
+    const xAxisOptions = {
       g: axesG,
-      scale: timeScale ?? bandFn,
       config: { axis: { label: x.axis?.label, ticks: xTicks } },
       dimensions: dims,
       margin: m,
       padding: p,
-      orientation: 'horizontal',
+      orientation: 'horizontal' as const,
       className: twMerge('axis axis--x', x.className),
-    });
-    if (!isTime) {
+    };
+    const xFn = timeScale ?? bandFn;
+    if ('bandwidth' in xFn) {
+      const xAxis = drawAxis({ ...xAxisOptions, scale: xFn });
       const k = Math.max(1, Math.ceil(candles.length / xTicks));
       const fmt = (isUtcTime(xr) ? utcFormat : timeFormat)(x.time?.format || DEFAULT_TIME_FORMAT);
       const byKey = new Map(candles.map((c) => [c.key, c.datum.date]));
@@ -402,6 +404,8 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
             return date ? fmt(date) : '';
           })
       );
+    } else {
+      drawAxis({ ...xAxisOptions, scale: xFn });
     }
     const yLocation = y?.axis?.location === 'right' ? 'right' : 'left';
     const priceAxis = drawAxis({
@@ -414,7 +418,9 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       orientation: 'vertical',
       className: twMerge('axis axis--y axis--price', y?.className),
     });
-    priceAxis.axisG.call(priceAxis.axis.tickFormat(y?.format ?? defaultPriceFormat));
+    priceAxis.axisG.call(
+      priceAxis.axis.tickFormat((v) => (y?.format ?? defaultPriceFormat)(+v))
+    );
 
     // --- price marks, clipped to the plot (pins may be narrower than data)
     const clipId = `${id}-price-clip`;

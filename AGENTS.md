@@ -37,7 +37,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Bump chart, rank chart, ranking chart, bump plot, rank over time | [`LineChart`](#linechart) | Convert values to ranks with `utils.convertToRanks(data, y, x)` — it takes the same `y` array and `x` object you pass to the chart — then set `curve: "bumpX"` and `label: { show: true }` on each series, and `reverse` so rank 1 sits at the top. |
 | Calendar heatmap, month-year heatmap, seasonality chart, activity heatmap | [`WaffleChart`](#wafflechart) | Map the finer time unit to `y` and the coarser to `x`, then colour by the measure. Use a diverging scale such as `interpolateRdYlGn` for values with a meaningful middle. |
 | CandlestickChart, candlestick, candlestick chart, japanese candlestick chart, stock chart, financial chart | [`CandlestickChart`](#candlestickchart) | Base component, no extra configuration |
-| ColumnChart | [`BarChart`](#barchart) | Deprecated. Use `<BarChart orientation="vertical">`. Will be removed in the next breaking release. |
+| ColumnChart | [`BarChart`](#barchart) | Deprecated. Use `<BarChart orientation="vertical">`. Will be removed in 0.4.0. |
 | ColumnChartStacked | [`BarChart`](#barchart) | Wrapper component: same as `<BarChart orientation="vertical" stacking={{ type: "normal" }}>` (Stacked bar chart) |
 | CometPlot, comet chart, change plot, movement plot, slope chart | [`CometPlot`](#cometplot) | Base component, no extra configuration |
 | Connected scatterplot, connected scatter, path plot, trajectory plot | [`ScatterPlot`](#scatterplot) | Set `connect={{ enabled: true, className: "stroke-gray-400" }}`. Points join in the order the data is given, so sort it first. |
@@ -381,11 +381,11 @@ Vertical or horizontal bars comparing one or more measures across categories, gr
 
 **Wrapper components** (exported; same chart with props pinned)
 
-- `ColumnChart` — `<BarChart orientation="vertical">` — **deprecated.** Will be removed in the next breaking release.
+- `ColumnChart` — `<BarChart orientation="vertical">` — **deprecated.** Will be removed in 0.4.0.
 - `BarChartStacked` — `<BarChart orientation="horizontal" stacking={{ type: "normal" }}>` (Horizontal stacked bar chart)
 - `ColumnChartStacked` — `<BarChart orientation="vertical" stacking={{ type: "normal" }}>` (Stacked bar chart)
 
-Prefer `<BarChart>` with the prop set in new code. `ColumnChart` is deprecated and will be removed in the next breaking release. `BarChartStacked` and `ColumnChartStacked` remain a stable public API.
+Prefer `<BarChart>` with the prop set in new code. `ColumnChart` is deprecated and will be removed in 0.4.0. `BarChartStacked` and `ColumnChartStacked` remain a stable public API.
 
 **Use when**
 

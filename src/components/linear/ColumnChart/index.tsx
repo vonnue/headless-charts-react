@@ -16,8 +16,8 @@ export type {
  * Selection guidance (use when, avoid when, examples, alternatives) is on
  * {@link BarChart}.
  *
- * @deprecated Use `<BarChart orientation="vertical">`. Will be removed in the
- * next breaking release.
+ * @deprecated Use `<BarChart orientation="vertical">`. Will be removed in
+ * 0.4.0.
  *
  * @see BarChart
  */

@@ -7,8 +7,7 @@ import data from './sample.json';
  * categories. The default is vertical; set `orientation="horizontal"`
  * (or pass the series array on `x`) for long category labels.
  * `ColumnChart` is a deprecated alias for the same chart with
- * `orientation="vertical"` pinned, and will be removed in the next
- * breaking release. `BarChartStacked` and `ColumnChartStacked` remain
+ * `orientation="vertical"` pinned, and will be removed in 0.4.0. `BarChartStacked` and `ColumnChartStacked` remain
  * supported wrappers.
  */
 const meta = preview.meta({

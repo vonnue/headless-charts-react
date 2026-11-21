@@ -122,10 +122,10 @@ export type BarChartProps<TData = any> =
   | BarChartHorizontalProps<TData>;
 
 /**
- * @deprecated Use {@link BarChartVerticalProps}. Will be removed in the next breaking release.
+ * @deprecated Use {@link BarChartVerticalProps}. Will be removed in 0.4.0.
  */
 export type ColumnChartProps<TData = any> = BarChartVerticalProps<TData>;
-/** @deprecated Use {@link BarChartVerticalProps}. Will be removed in the next breaking release. */
+/** @deprecated Use {@link BarChartVerticalProps}. Will be removed in 0.4.0. */
 export type ColumnChartGroupedProps<TData = any> = ColumnChartProps<TData>;
 
 /** Wrapper props: `stacking` defaults to `{ type: 'normal' }`. */
@@ -1231,9 +1231,8 @@ export const BarRenderer = <TData,>(
  * `BarChartStacked` (`orientation="horizontal" stacking={{ type: "normal"
  * }}`), `ColumnChartStacked` (`orientation="vertical" stacking={{ type:
  * "normal" }}`). Prefer `<BarChart>` with the prop set in new code.
- * `ColumnChart` is deprecated and will be removed in the next breaking
- * release. `BarChartStacked` and `ColumnChartStacked` remain a stable public
- * API.
+ * `ColumnChart` is deprecated and will be removed in 0.4.0. `BarChartStacked`
+ * and `ColumnChartStacked` remain a stable public API.
  *
  * Answers: comparison, composition, distribution, ranking. Required props: `id`, `data`, `x`, `y`.
  *

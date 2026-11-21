@@ -121,8 +121,11 @@ export type BarChartProps<TData = any> =
   | BarChartVerticalProps<TData>
   | BarChartHorizontalProps<TData>;
 
+/**
+ * @deprecated Use {@link BarChartVerticalProps}. Will be removed in the next breaking release.
+ */
 export type ColumnChartProps<TData = any> = BarChartVerticalProps<TData>;
-/** @deprecated Use {@link ColumnChartProps}. */
+/** @deprecated Use {@link BarChartVerticalProps}. Will be removed in the next breaking release. */
 export type ColumnChartGroupedProps<TData = any> = ColumnChartProps<TData>;
 
 /** Wrapper props: `stacking` defaults to `{ type: 'normal' }`. */

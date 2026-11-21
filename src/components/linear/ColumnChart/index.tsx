@@ -13,11 +13,11 @@ export type {
 /**
  * Wrapper component: {@link BarChart} with `orientation="vertical"` pinned.
  *
- * @deprecated Use `<BarChart orientation="vertical">`. Will be removed in the
- * next breaking release.
- *
  * Selection guidance (use when, avoid when, examples, alternatives) is on
  * {@link BarChart}.
+ *
+ * @deprecated Use `<BarChart orientation="vertical">`. Will be removed in the
+ * next breaking release.
  *
  * @see BarChart
  */

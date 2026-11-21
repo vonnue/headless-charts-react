@@ -381,7 +381,7 @@ Vertical or horizontal bars comparing one or more measures across categories, gr
 
 **Wrapper components** (exported; same chart with props pinned)
 
-- `ColumnChart` — `<BarChart orientation="vertical">` — **deprecated.** Use `<BarChart orientation="vertical">`. Will be removed in the next breaking release.
+- `ColumnChart` — `<BarChart orientation="vertical">` — **deprecated.** Will be removed in the next breaking release.
 - `BarChartStacked` — `<BarChart orientation="horizontal" stacking={{ type: "normal" }}>` (Horizontal stacked bar chart)
 - `ColumnChartStacked` — `<BarChart orientation="vertical" stacking={{ type: "normal" }}>` (Stacked bar chart)
 

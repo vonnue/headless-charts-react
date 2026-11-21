@@ -533,24 +533,38 @@ export const LollipopRenderer = <TData,>(
     });
 
     // x then y, as both legacy components drew them.
-    drawAxis({
+    // Narrow the band/time union so each drawAxis call gets one domain type.
+    const xAxisOptions = {
       g,
-      scale: isVertical ? categoryScale : valueScale,
       config: x,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'horizontal',
-    });
-    drawAxis({
+      orientation: 'horizontal' as const,
+    };
+    const yAxisOptions = {
       g,
-      scale: isVertical ? valueScale : categoryScale,
       config: y,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'vertical',
-    });
+      orientation: 'vertical' as const,
+    };
+    if (isVertical) {
+      if ('bandwidth' in categoryScale) {
+        drawAxis({ ...xAxisOptions, scale: categoryScale });
+      } else {
+        drawAxis({ ...xAxisOptions, scale: categoryScale });
+      }
+      drawAxis({ ...yAxisOptions, scale: valueScale });
+    } else {
+      drawAxis({ ...xAxisOptions, scale: valueScale });
+      if ('bandwidth' in categoryScale) {
+        drawAxis({ ...yAxisOptions, scale: categoryScale });
+      } else {
+        drawAxis({ ...yAxisOptions, scale: categoryScale });
+      }
+    }
   }, [
     chartName,
     id,

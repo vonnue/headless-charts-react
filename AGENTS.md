@@ -1018,8 +1018,8 @@ Vertical stems ending in a symbol, marking one value per category with far less 
 
 **Wrapper components** (exported; same chart with props pinned)
 
-- `LollipopHChart` — `<LollipopChart orientation="horizontal">` (Horizontal lollipop chart) — **deprecated.** Use `<LollipopChart orientation="horizontal">`. Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
-- `LollipopVChart` — `<LollipopChart orientation="vertical">` — **deprecated.** Use `<LollipopChart orientation="vertical">`. Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `LollipopHChart` — `<LollipopChart orientation="horizontal">` (Horizontal lollipop chart) — **deprecated.** Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `LollipopVChart` — `<LollipopChart orientation="vertical">` — **deprecated.** Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
 
 Prefer `<LollipopChart>` with the prop set in new code. `LollipopHChart` and `LollipopVChart` are deprecated and will be removed in the next breaking release.
 

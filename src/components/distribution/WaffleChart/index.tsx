@@ -123,7 +123,7 @@ const DEFAULT_MARGIN = { left: 40, right: 40, top: 40, bottom: 40 };
  * ```
  *
  * @see ScatterPlot — axes are continuous measures rather than categories
- * @see ColumnChart — only one categorical dimension is involved
+ * @see BarChart — only one categorical dimension is involved
  * @see PieChart — showing part-to-whole for a single set of categories
  */
 /* catalog:end */

@@ -41,7 +41,7 @@ describe('ColumnChartStacked', () => {
     render(<ColumnChartStacked {...defaultArgs} />);
 
     const svg = document.getElementById('column-stacked');
-    const rects = svg?.querySelectorAll('rect');
+    const rects = svg?.querySelectorAll('.marks rect');
     // Stacked bars: at least data.length * y.length rects
     expect(rects?.length).toBeGreaterThanOrEqual(data.length);
   });
@@ -60,7 +60,7 @@ describe('ColumnChartStacked', () => {
     // full band width — bars sit on top of each other, reading as one column.
     render(<ColumnChartStacked {...defaultArgs} id='column-stacked-normal' />);
     const normalRects = Array.from(
-      document.querySelectorAll('#column-stacked-normal rect')
+      document.querySelectorAll('#column-stacked-normal .marks rect')
     );
     const normalWidths = new Set(normalRects.map((r) => r.getAttribute('width')));
     const normalXsForFirstCategory = new Set(
@@ -74,7 +74,7 @@ describe('ColumnChartStacked', () => {
     // (band width / series count) offset side by side instead of stacked.
     render(<ColumnChartStacked {...defaultArgs} id='column-waterfall-scale' waterfall />);
     const waterfallRects = Array.from(
-      document.querySelectorAll('#column-waterfall-scale rect')
+      document.querySelectorAll('#column-waterfall-scale .marks rect')
     );
     const waterfallWidth = Number(waterfallRects[0]?.getAttribute('width'));
     const waterfallXsForFirstCategory = [0, 1, 2].map((i) =>
@@ -246,7 +246,7 @@ describe('ColumnChartStacked', () => {
       );
 
       const svg = document.getElementById('time-stacked-rects');
-      const rects = svg?.querySelectorAll('rect');
+      const rects = svg?.querySelectorAll('.marks rect');
       expect(rects?.length).toBeGreaterThanOrEqual(evenlySpacedTimeData.length);
     });
 
@@ -263,7 +263,7 @@ describe('ColumnChartStacked', () => {
 
       const svg = document.getElementById('non-time-stacked-default');
       expect(svg).toBeTruthy();
-      expect(svg?.querySelectorAll('rect').length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll('.marks rect').length).toBeGreaterThan(0);
     });
 
     it('maintains non-time mode behavior when scalingFunction is "linear"', () => {
@@ -278,7 +278,7 @@ describe('ColumnChartStacked', () => {
 
       const svg = document.getElementById('non-time-stacked-linear');
       expect(svg).toBeTruthy();
-      expect(svg?.querySelectorAll('rect').length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll('.marks rect').length).toBeGreaterThan(0);
     });
 
     it('positions bars proportionally to elapsed time with evenly-spaced dates', () => {
@@ -293,7 +293,7 @@ describe('ColumnChartStacked', () => {
       );
 
       const svg = document.getElementById('time-evenly-spaced');
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         evenlySpacedTimeData.length * timeSeriesArgs.y.length
       );
@@ -341,7 +341,7 @@ describe('ColumnChartStacked', () => {
       );
 
       const svg = document.getElementById('time-uneven-gaps');
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
 
       // Same series-major DOM order as above: first series' rects are the
       // first `data.length` rects, in data order.
@@ -410,7 +410,7 @@ describe('ColumnChartStacked', () => {
       );
 
       const svg = document.getElementById('time-median-width');
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         skewedCadenceData.length * timeSeriesArgs.y.length
       );
@@ -447,7 +447,7 @@ describe('ColumnChartStacked', () => {
       );
 
       const svg = document.getElementById('time-explicit-width');
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         evenlySpacedTimeData.length * timeSeriesArgs.y.length
       );
@@ -481,7 +481,7 @@ describe('ColumnChartStacked', () => {
       const svg = document.getElementById('time-single-point');
       expect(svg).toBeTruthy();
 
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(timeSeriesArgs.y.length);
 
       // No cadence to infer, so the algorithm falls back to an even split of
@@ -508,7 +508,7 @@ describe('ColumnChartStacked', () => {
       const svg = document.getElementById('time-identical-dates');
       expect(svg).toBeTruthy();
 
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         identicalTimestampsData.length * timeSeriesArgs.y.length
       );
@@ -546,7 +546,7 @@ describe('ColumnChartStacked', () => {
 
       // A failed parse would leave every position NaN while still emitting
       // the same number of rects, so assert the geometry, not just the count.
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       const domainSpan = spanMs(evenlySpacedTimeData);
       const cadence = domainSpan / (evenlySpacedTimeData.length - 1);
       for (const rect of rects) {
@@ -584,7 +584,7 @@ describe('ColumnChartStacked', () => {
 
       // Same reasoning as the ISO case: an unparsed date yields NaN
       // positions, which a bare "rects exist" assertion would not catch.
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(customFormatData.length * timeSeriesArgs.y.length);
       const firstSeries = rects.slice(0, customFormatData.length);
       const xs = firstSeries.map((r) => Number(r.getAttribute('x')));
@@ -622,7 +622,7 @@ describe('ColumnChartStacked', () => {
       const svg = document.getElementById('time-custom-domain');
       expect(svg).toBeTruthy();
 
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         evenlySpacedTimeData.length * timeSeriesArgs.y.length
       );
@@ -659,7 +659,7 @@ describe('ColumnChartStacked', () => {
 
       const svg = document.getElementById('time-waterfall');
       expect(svg).toBeTruthy();
-      expect(svg?.querySelectorAll('rect').length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll('.marks rect').length).toBeGreaterThan(0);
     });
 
     it('staggers and narrows bars in waterfall + time mode interaction', () => {
@@ -673,7 +673,7 @@ describe('ColumnChartStacked', () => {
         />
       );
       const normalRects = Array.from(
-        document.querySelectorAll('#time-normal-stacking rect')
+        document.querySelectorAll('#time-normal-stacking .marks rect')
       );
       const normalWidths = new Set(normalRects.map((r) => r.getAttribute('width')));
       // Without waterfall every series shares one x and the full bar width.
@@ -696,7 +696,7 @@ describe('ColumnChartStacked', () => {
         />
       );
       const waterfallRects = Array.from(
-        document.querySelectorAll('#time-waterfall-staggered rect')
+        document.querySelectorAll('#time-waterfall-staggered .marks rect')
       );
       const waterfallWidths = new Set(waterfallRects.map((r) => r.getAttribute('width')));
 
@@ -737,7 +737,7 @@ describe('ColumnChartStacked', () => {
       );
 
       const svg = document.getElementById('time-waterfall-explicit-width');
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         evenlySpacedTimeData.length * timeSeriesArgs.y.length
       );
@@ -769,7 +769,7 @@ describe('ColumnChartStacked', () => {
       const svg = document.getElementById('waterfall-non-time');
       expect(svg).toBeTruthy();
 
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         evenlySpacedTimeData.length * timeSeriesArgs.y.length
       );
@@ -809,7 +809,7 @@ describe('ColumnChartStacked', () => {
 
       // paddingBar thins the inferred width; it is the only thing that
       // changes, so assert the narrowed width rather than mere presence.
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         evenlySpacedTimeData.length * timeSeriesArgs.y.length
       );
@@ -846,7 +846,7 @@ describe('ColumnChartStacked', () => {
           Number(/translate\(([-\d.]+)/.exec(t.getAttribute('transform') || '')![1]) - 0.5,
         ])
       );
-      const rects = Array.from(svg.querySelectorAll('rect')).slice(0, utcDaily.length);
+      const rects = Array.from(svg.querySelectorAll('.marks rect')).slice(0, utcDaily.length);
       let matched = 0;
       utcDaily.forEach((row, i) => {
         const tickX = ticks.get(Date.parse(row.date));
@@ -877,7 +877,7 @@ describe('ColumnChartStacked', () => {
         // Years are 365 or 366 days, so the slot is the plot over (steps + 1)
         // with steps = span / median gap — about n, not exactly.
         const first = Array.from(
-          document.getElementById(`time-stacked-overlap-${n}`)!.querySelectorAll('rect')
+          document.getElementById(`time-stacked-overlap-${n}`)!.querySelectorAll('.marks rect')
         ).slice(0, n);
         const lefts = first.map((r) => Number(r.getAttribute('x')));
         const widths = first.map((r) => Number(r.getAttribute('width')));
@@ -904,7 +904,7 @@ describe('ColumnChartStacked', () => {
 
       // 4 yearly dates -> 4 slots of 130px.
       document
-        .querySelectorAll('#time-stacked-wide rect')
+        .querySelectorAll('#time-stacked-wide .marks rect')
         .forEach((r) => expect(Number(r.getAttribute('width'))).toBeCloseTo(130, 6));
     });
 
@@ -922,7 +922,7 @@ describe('ColumnChartStacked', () => {
       rerender(<ColumnChartStacked {...props} data={[...evenlySpacedTimeData]} />);
 
       const widths = Array.from(
-        document.querySelectorAll('#time-stacked-waterfall-clamp rect')
+        document.querySelectorAll('#time-stacked-waterfall-clamp .marks rect')
       ).map((r) => Number(r.getAttribute('width')));
       expect(widths.length).toBeGreaterThan(0);
       widths.forEach((w) => expect(w).toBe(0));
@@ -970,7 +970,7 @@ describe('ColumnChartStacked', () => {
         />
       );
 
-      const rects = Array.from(document.querySelectorAll('#time-stacked-dropped rect'));
+      const rects = Array.from(document.querySelectorAll('#time-stacked-dropped .marks rect'));
       expect(rects).toHaveLength(evenlySpacedTimeData.length * timeSeriesArgs.y.length);
       rects.forEach((r) => expect(Number.isFinite(Number(r.getAttribute('x')))).toBe(true));
       expect(
@@ -998,7 +998,7 @@ describe('ColumnChartStacked', () => {
       );
 
       const svg = document.getElementById('time-bar-width-priority');
-      const rects = Array.from(svg?.querySelectorAll('rect') ?? []);
+      const rects = Array.from(svg?.querySelectorAll('.marks rect') ?? []);
       expect(rects.length).toBe(
         evenlySpacedTimeData.length * timeSeriesArgs.y.length
       );
@@ -1041,7 +1041,7 @@ describe('ColumnChartStacked time mode keeps edge marks inside the plot (#16)', 
   it('every bar lies within the x range while the axis still spans it fully', () => {
     const { container } = render(<ColumnChartStacked id='edge-stacked' style={CHART_SIZE} data={edgeData} x={{ key: 'date', scalingFunction: 'time' }} y={[{ key: 'a' }, { key: 'b' }]} />);
 
-    const rects = Array.from(container.querySelectorAll('rect'));
+    const rects = Array.from(container.querySelectorAll('.marks rect'));
     expect(rects.length).toBeGreaterThan(0);
     const lefts = rects.map((r) => Number(r.getAttribute('x')));
     const rights = rects.map(
@@ -1087,7 +1087,7 @@ describe('ColumnChartStacked time mode with x.start / x.end pinned (review-2 N2)
     const last = PINNED_DAYS[PINNED_DAYS.length - 1];
     expectPinnedHalfStepOutside(
       pinnedChart('stacked-pinned-pad', first - DAY_MS / 2, last + DAY_MS / 2),
-      'rect',
+      '.marks rect',
       RANGE
     );
   });
@@ -1095,6 +1095,6 @@ describe('ColumnChartStacked time mode with x.start / x.end pinned (review-2 N2)
   it('pinned at the first/last date: width follows the real tick spacing', () => {
     const first = PINNED_DAYS[0];
     const last = PINNED_DAYS[PINNED_DAYS.length - 1];
-    expectPinnedOnDataEnds(pinnedChart('stacked-pinned-ends', first, last), 'rect', RANGE);
+    expectPinnedOnDataEnds(pinnedChart('stacked-pinned-ends', first, last), '.marks rect', RANGE);
   });
 });

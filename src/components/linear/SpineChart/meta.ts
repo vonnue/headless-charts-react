@@ -36,11 +36,11 @@ const meta: ChartMeta = {
   avoidWhen: [
     'There is no natural opposition between the measures — the mirrored layout implies one; use BarChart',
     'More than a few measures per side are needed — the spine gets crowded; use BarChart grouped',
-    'The measures are parts of one whole rather than two sides — use BarChartStacked',
+    'The measures are parts of one whole rather than two sides — use BarChart with `stacking`',
   ],
   alternatives: [
     { name: 'BarChart', when: 'the measures are not naturally opposed' },
-    { name: 'BarChartStacked', when: 'the measures are parts of one whole' },
+    { name: 'BarChart', when: 'the measures are parts of one whole (`stacking`)' },
     { name: 'CometPlot', when: 'showing movement between two states rather than two independent measures' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],

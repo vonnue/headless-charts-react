@@ -42,7 +42,7 @@ const meta: ChartMeta = {
   ],
   alternatives: [
     { name: 'AreaChart', when: 'volume under the curve or composition of a total matters' },
-    { name: 'ColumnChart', when: 'few discrete periods, individual values matter more than the trend' },
+    { name: 'BarChart', when: 'few discrete periods, individual values matter more than the trend' },
     { name: 'TimeLineChart', when: 'plotting events and durations rather than a continuous measure' },
     { name: 'ScatterPlot', when: 'the x axis is a measure rather than time, and points should not be joined' },
     { name: 'SparklineChart', when: 'more than ~8 series would overplot; one comparable row per series' },

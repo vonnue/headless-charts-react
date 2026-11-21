@@ -23,9 +23,10 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Asked for | Render | Configuration |
 | --- | --- | --- |
 | 100% stacked area chart, percentage area chart, normalised area chart, share of total area chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "100%" }}`. The y axis becomes 0–100% of the period total. |
+| 100% stacked bar chart, percentage bar chart, percentage column chart, 100% stacked column chart | [`BarChart`](#barchart) | Set `stacking={{ type: '100%' }}`. The axis is [0, 1] with `.0%` ticks (`tickFormat` overrides it); negative values count as 0; pinned `start`/`end` are ignored. Tooltips and labels show the share. |
 | AreaChart, area graph, stacked area chart, mountain chart | [`AreaChart`](#areachart) | Base component, no extra configuration |
-| BarChart, horizontal bar chart, grouped bar chart, ranked bar chart | [`BarChart`](#barchart) | Base component, no extra configuration |
-| BarChartStacked, stacked bar chart, horizontal stacked bar chart | [`BarChartStacked`](#barchartstacked) | Base component, no extra configuration |
+| BarChart, bar chart, bar graph, column chart, column graph, vertical bar chart, grouped bar chart, grouped column chart, clustered column chart, clustered bar chart | [`BarChart`](#barchart) | Base component, no extra configuration |
+| BarChartStacked | [`BarChart`](#barchart) | Wrapper component: same as `<BarChart orientation="horizontal" stacking={{ type: "normal" }}>` (Horizontal stacked bar chart) |
 | Binned 2D histogram, binned heatmap, two-dimensional histogram | [`WaffleChart`](#wafflechart) | Set `bin` on `x` and/or `y`; each cell then shows the count for that (xBin, yBin) pair rather than a value from the data. |
 | Binned box plot, box plot from raw data, grouped distribution plot, binned box plot (vertical), vertical box plot from raw data, distribution by band | [`BoxPlot`](#boxplot) | Set `bin` on the category-axis config (`x` in vertical, `y` in horizontal) and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on the value axis are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and the value axis still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges. |
 | BoxPlot, box plot, box and whisker plot, box and whisker chart, box chart, quartile plot, vertical box plot | [`BoxPlot`](#boxplot) | Base component, no extra configuration |
@@ -36,22 +37,25 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Bump chart, rank chart, ranking chart, bump plot, rank over time | [`LineChart`](#linechart) | Convert values to ranks with `utils.convertToRanks(data, y, x)` — it takes the same `y` array and `x` object you pass to the chart — then set `curve: "bumpX"` and `label: { show: true }` on each series, and `reverse` so rank 1 sits at the top. |
 | Calendar heatmap, month-year heatmap, seasonality chart, activity heatmap | [`WaffleChart`](#wafflechart) | Map the finer time unit to `y` and the coarser to `x`, then colour by the measure. Use a diverging scale such as `interpolateRdYlGn` for values with a meaningful middle. |
 | CandlestickChart, candlestick, candlestick chart, japanese candlestick chart, stock chart, financial chart | [`CandlestickChart`](#candlestickchart) | Base component, no extra configuration |
-| ColumnChart, vertical bar chart, grouped column chart, clustered column chart | [`ColumnChart`](#columnchart) | Base component, no extra configuration |
-| ColumnChartStacked, stacked column chart, stacked bar chart (vertical) | [`ColumnChartStacked`](#columnchartstacked) | Base component, no extra configuration |
+| ColumnChart | [`BarChart`](#barchart) | Deprecated. Use `<BarChart orientation="vertical">`. Will be removed in 0.4.0. |
+| ColumnChartStacked | [`BarChart`](#barchart) | Wrapper component: same as `<BarChart orientation="vertical" stacking={{ type: "normal" }}>` (Stacked bar chart) |
 | CometPlot, comet chart, change plot, movement plot, slope chart | [`CometPlot`](#cometplot) | Base component, no extra configuration |
 | Connected scatterplot, connected scatter, path plot, trajectory plot | [`ScatterPlot`](#scatterplot) | Set `connect={{ enabled: true, className: "stroke-gray-400" }}`. Points join in the order the data is given, so sort it first. |
 | Density heatmap, 2d histogram, binned scatter plot, density plot | [`ScatterPlot`](#scatterplot) | Set `x.bin` and/or `y.bin`. Cells show counts, coloured via `binColor.scale` over `binColor.domain` (default `[0, maxCount]`). An axis without `bin` is grouped too: numeric values into d3's default bin count, other values one band per distinct value in sorted order. Without a `margin` prop, the left and bottom margins grow to fit the bin labels, and x labels wider than their bands are rotated. |
 | Diverging area chart, diverging stacked area chart, bidirectional area chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "diverging" }}`. Series order is reversed so positive and negative stacks mirror each other. |
-| Diverging bar chart, tornado chart, bidirectional bar chart, deviation chart | [`BarChart`](#barchart) | Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. |
+| Diverging bar chart, tornado chart, bidirectional bar chart, deviation chart | [`BarChart`](#barchart) | Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. The example is horizontal. |
+| Diverging stacked bar chart, likert chart, likert scale chart, diverging stacked column chart | [`BarChart`](#barchart) | Set `stacking={{ type: 'diverging', negative: ['strongly_disagree', 'disagree'], neutral: 'neutral' }}`. List series in scale order; the last `negative` key and the first positive key touch 0; `neutral` is split across 0; `percent: true` normalises each row to 100%. The example is horizontal. Use a diverging palette (RdBu, BrBG) with grey for neutral. |
 | Donut chart, doughnut chart, ring chart | [`PieChart`](#piechart) | Set `innerRadius` above 0. Values are a fraction of `outerRadius`, so `innerRadius={0.5}` hollows half the radius. |
 | Dual-axis line chart, two axis chart, secondary axis chart, combo chart | [`LineChart`](#linechart) | Give the second series `axis: { location: "right" }` and widen `margin.right`. Label the scales with `yLeftLabel` and `yRightLabel`. |
 | FunnelChart, funnel, funnel chart, conversion funnel | [`FunnelChart`](#funnelchart) | Base component, no extra configuration |
 | Gantt chart, gantt, schedule chart, project timeline, swimlane chart | [`TimeLineChart`](#timelinechart) | Pass both `events.startKey` and `events.endKey` with `events.isTime: true`, and set `y` to the lane key. Spans render as rects; overlapping work in a lane is visible as stacked bars. |
-| Histogram, frequency distribution, binned column chart, frequency chart | [`ColumnChart`](#columnchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
+| Histogram, frequency distribution, binned column chart, frequency chart | [`BarChart`](#barchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
+| Horizontal bar chart, bar chart (horizontal), ranked bar chart, horizontal grouped bar chart | [`BarChart`](#barchart) | Set `orientation="horizontal"`; categories go on `y` and the series array on `x`. |
 | Horizontal box plot, box plot (horizontal), horizontal box and whisker plot | [`BoxPlot`](#boxplot) | Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form. |
-| Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically. |
+| Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `orientation="horizontal"`, `y={{ key, bin }}` and `x={[{ key: "count" }]}`. Legacy `x[0].bin` is still read; if both are set, `y.bin` wins. |
 | Horizontal lollipop chart, lollipop chart (horizontal), horizontal stem plot, ranked lollipop chart | [`LollipopChart`](#lollipopchart) | Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` is a deprecated alias for this form. |
-| Horizontal waterfall chart, horizontal bridge chart, horizontal cascade chart | [`BarChartStacked`](#barchartstacked) | Set `waterfall` on a BarChartStacked. Each `x` series becomes a step rather than a segment stacked from the baseline. |
+| Horizontal stacked bar chart, stacked bar chart (horizontal) | [`BarChart`](#barchart) | Set `orientation="horizontal"` and `stacking={{ type: 'normal' }}`; categories go on `y`, the series array on `x`. `BarChartStacked` is this form as a wrapper. |
+| Horizontal waterfall chart, horizontal bridge chart, horizontal cascade chart | [`BarChart`](#barchart) | Set `orientation="horizontal"` and `waterfall`; categories go on `y`, the series array on `x`. |
 | LinearGauge, progress bar chart, linear progress gauge, meter | [`LinearGauge`](#lineargauge) | Base component, no extra configuration |
 | LineChart, line graph, multi-line chart, trend line chart | [`LineChart`](#linechart) | Base component, no extra configuration |
 | LollipopChart, lollipop chart, lollipop, lollipop plot, stem plot, stem and dot chart, vertical lollipop chart | [`LollipopChart`](#lollipopchart) | Base component, no extra configuration |
@@ -72,20 +76,21 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | SparklineChart, sparkline, sparklines, sparkline chart, tufte sparkline, word-sized line chart | [`SparklineChart`](#sparklinechart) | Base component, no extra configuration |
 | SpeedometerChart, gauge chart, dial chart, speedometer, needle gauge | [`SpeedometerChart`](#speedometerchart) | Base component, no extra configuration |
 | SpineChart, population pyramid, age-sex pyramid, butterfly chart, back-to-back bar chart | [`SpineChart`](#spinechart) | Base component, no extra configuration |
+| Stacked bar chart, stacked column chart, stacked bar chart (vertical) | [`BarChart`](#barchart) | Set `stacking={{ type: 'normal' }}`. Segments stack from 0 in series order; negative values stack below 0. `ColumnChartStacked` is this form as a wrapper. |
 | Step chart, step line chart, staircase chart | [`LineChart`](#linechart) | Set `curve: "step"` on each series. |
 | Streamgraph, stream graph, theme river, stream chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "streamgraph" }}`. Bands are ordered inside-out and offset by wiggle. |
 | SunburstChart, sunburst, sunburst chart, sunburst diagram, radial treemap, multi-level pie chart | [`SunburstChart`](#sunburstchart) | Base component, no extra configuration |
 | Time-scaled area chart, time series area chart | [`AreaChart`](#areachart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled box plot, time series box plot, time-scaled box plot (vertical) | [`BoxPlot`](#boxplot) | Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). With `orientation="horizontal"`, `y.scalingFunction: "time"` is ignored with a dev warning. |
-| Time-scaled column chart, time series column chart | [`ColumnChart`](#columnchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
+| Time-scaled column chart, time series column chart, time-scaled bar chart | [`BarChart`](#barchart) | Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
 | Time-scaled line chart, time series chart, time series line chart | [`LineChart`](#linechart) | Set `x.scalingFunction: "time"` and `x.time.format` (or `x.time.isISO`) to parse date strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled lollipop chart, time series lollipop chart | [`LollipopChart`](#lollipopchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
-| Time-scaled stacked column chart, time series stacked column chart | [`ColumnChartStacked`](#columnchartstacked) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
+| Time-scaled stacked column chart, time series stacked column chart | [`BarChart`](#barchart) | Vertical only. Set `stacking={{ type: 'normal' }}` and `x.scalingFunction: "time"` with `x.time.format` or `x.time.isISO`; bar width follows the median gap between dates, as for the time-scaled column chart. |
 | TimeLineChart, timeline, event plot, activity timeline | [`TimeLineChart`](#timelinechart) | Base component, no extra configuration |
 | TreemapChart, treemap, squarified treemap, rectangular tree map | [`TreemapChart`](#treemapchart) | Base component, no extra configuration |
 | ViolinChart, violin, violin plot, violin chart | [`ViolinChart`](#violinchart) | Base component, no extra configuration |
 | WaffleChart, heatmap, categorical heatmap, matrix chart, grid chart, tile chart | [`WaffleChart`](#wafflechart) | Base component, no extra configuration |
-| Waterfall chart, waterfall, bridge chart, cascade chart, flying bricks chart | [`ColumnChartStacked`](#columnchartstacked) | Set `waterfall` on a ColumnChartStacked. Each `y` series becomes a step in the sequence rather than a segment stacked from the baseline. |
+| Waterfall chart, waterfall, bridge chart, cascade chart, flying bricks chart | [`BarChart`](#barchart) | Set `waterfall` (or `waterfall={{ padding: 4 }}` to narrow the steps). Each series becomes its own step within the category, starting where the previous one ended. `waterfall` wins over `stacking`. |
 
 ## Decision table
 
@@ -95,8 +100,7 @@ Find the question being asked, then pick among the candidates.
 
 | Chart | Choose it when |
 | --- | --- |
-| [`ColumnChart`](#columnchart) | Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed |
-| [`BarChart`](#barchart) | Long category labels, or more than ~12 categories — horizontal bars give labels room. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis |
+| [`BarChart`](#barchart) | Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed. Set `orientation="horizontal"` for long category labels or more than ~12 categories. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis |
 | [`LollipopChart`](#lollipopchart) | Values matter more than magnitude-as-area, and bars would look heavy. Set orientation="horizontal" for long category labels |
 | [`SpineChart`](#spinechart) | Two opposing measures per category read outward from a shared centre axis, e.g. male/female |
 | [`RadarChart`](#radarchart) | Five or more metrics compared across a handful of entities on one shared 0–max scale |
@@ -106,8 +110,7 @@ Find the question being asked, then pick among the candidates.
 | Chart | Choose it when |
 | --- | --- |
 | [`PieChart`](#piechart) | One whole split into ~6 or fewer slices at a single point in time |
-| [`ColumnChartStacked`](#columnchartstacked) | Composition compared across several categories or periods, vertical |
-| [`BarChartStacked`](#barchartstacked) | Same as ColumnChartStacked but with long category labels; also does waterfall |
+| [`BarChart`](#barchart) | Composition compared across several categories or periods: set `stacking` (normal, 100% or diverging), or `waterfall` for a running total; `orientation="horizontal"` for long labels |
 | [`AreaChart`](#areachart) | Composition changing over a continuous axis; supports 100% and streamgraph stacking |
 | [`PizzaChart`](#pizzachart) | Several metrics as radial segments of one entity, each against its own max |
 | [`FunnelChart`](#funnelchart) | Ordered conversion / drop-off through fixed stages (visit → signup → paid); length encodes count, colour must not |
@@ -120,7 +123,7 @@ Find the question being asked, then pick among the candidates.
 | --- | --- |
 | [`LineChart`](#linechart) | Trend of one or more series; the default choice for time on x |
 | [`AreaChart`](#areachart) | Trend where the volume under the line or the split of a total matters |
-| [`ColumnChart`](#columnchart) | Few discrete periods where individual values matter more than the trend line |
+| [`BarChart`](#barchart) | Few discrete periods where individual values matter more than the trend line |
 | [`TimeLineChart`](#timelinechart) | Discrete events or durations on a date axis rather than a continuous measure |
 | [`SparklineChart`](#sparklinechart) | Many series (beyond ~8) whose trends should be compared without overplotting; one axis-free row per series on a shared scale |
 
@@ -135,8 +138,7 @@ Find the question being asked, then pick among the candidates.
 
 | Chart | Choose it when |
 | --- | --- |
-| [`ColumnChart`](#columnchart) | Histogram of raw continuous values — set `x.bin` and bar heights become counts |
-| [`BarChart`](#barchart) | Same histogram horizontally — set `x[0].bin`; better for many bins |
+| [`BarChart`](#barchart) | Histogram of raw continuous values — set `x.bin` (or `orientation="horizontal"` and `y.bin`) and bar lengths become counts |
 | [`BoxPlot`](#boxplot) | Compare the spread, median and quartiles of several groups — set `orientation="horizontal"` for long group labels |
 | [`ViolinChart`](#violinchart) | Compare the full shape (peaks, skew, multimodality) of a raw measure across groups — not just the five-number summary |
 | [`ScatterPlot`](#scatterplot) | Two-dimensional density — set `x.bin` or `y.bin` for a binned heatmap |
@@ -210,7 +212,7 @@ Plots series as filled bands over a shared axis, showing a trend and the composi
 
 - Series need to be compared precisely against each other — stacked bands make all but the bottom one hard to read; use LineChart
 - Series can be negative and would overlap confusingly — use LineChart, or `stacking.type: "diverging"`
-- The x axis is categorical rather than continuous — use ColumnChartStacked
+- The x axis is categorical rather than continuous — use BarChart with `stacking`
 - There is a single series and no notion of a total — use LineChart
 
 **Data**
@@ -366,256 +368,58 @@ An area chart whose x axis parses real dates rather than treating the key as a p
 **Consider instead**
 
 - [`LineChart`](#linechart) — series must be compared precisely, or there is no meaningful total
-- [`ColumnChartStacked`](#columnchartstacked) — the x axis is categorical rather than continuous
+- [`BarChart`](#barchart) — the x axis is categorical rather than continuous (`stacking`)
 - [`PieChart`](#piechart) — showing composition at one point in time only
 
 ### BarChart
 
-Horizontal bars comparing one or more measures across categories, with room for long category labels.
+Vertical or horizontal bars comparing one or more measures across categories, grouped side by side when several measures are passed. Set `orientation="horizontal"` for long category labels.
 
-**Category:** `linear` · **Answers:** `comparison`, `distribution`, `ranking` · **Storybook:** Linear/BarChart/Intro
+**Category:** `linear` · **Answers:** `comparison`, `composition`, `distribution`, `ranking` · **Storybook:** Linear/BarChart/Intro
 
-**Also called:** horizontal bar chart, grouped bar chart, ranked bar chart
+**Also called:** bar chart, bar graph, column chart, column graph, vertical bar chart, grouped bar chart, grouped column chart, clustered column chart, clustered bar chart
 
-**Use when**
+**Wrapper components** (exported; same chart with props pinned)
 
-- Category labels are long enough that vertical bars would truncate or rotate them
-- There are more categories than vertical bars can hold (roughly 12 or more)
-- Presenting a ranked list, sorted by value
-- Showing a histogram horizontally — set `bin` on the first `x` entry and bar lengths become counts
-- Bars should grow leftward from the right edge — set `direction: "left"`
+- `ColumnChart` — `<BarChart orientation="vertical">` — **deprecated.** Will be removed in 0.4.0.
+- `BarChartStacked` — `<BarChart orientation="horizontal" stacking={{ type: "normal" }}>` (Horizontal stacked bar chart)
+- `ColumnChartStacked` — `<BarChart orientation="vertical" stacking={{ type: "normal" }}>` (Stacked bar chart)
 
-**Do not use when**
-
-- The x axis is time — a horizontal bar per period breaks the reading order; use LineChart or ColumnChart
-- Measures are parts of a whole — use BarChartStacked so the total is readable
-- Labels are short and there are few categories — ColumnChart is the more conventional read
-- Two measures should read outward from a shared centre — use SpineChart
-
-**Data**
-
-- `data` shape: records
-- Series: ideal 1–4, min 1, max 6
-- Rows: ideal 2–25, max 40 — Past ~40 rows the chart needs scrolling — bin the values instead.
-
-| Prop | Role | Required | Notes |
-| --- | --- | --- | --- |
-| `y` | category | yes | Single key holding the category label for each row; becomes the vertical axis. |
-| `x` | series | yes | Array of numeric keys; one bar per key per category. Each entry also takes `rx` for rounded ends. |
-
-**Required props:** `id`, `data`, `x`, `y`
-
-```tsx
-<BarChart
-  id="sales-by-region"
-  className="w-full h-64"
-  data={data}
-  y={{ key: 'region' }}
-  x={[{ key: 'revenue', className: 'fill-blue-500' }]}
-/>
-```
-
-#### Horizontal histogram (BarChart)
-
-Bins raw continuous values and draws the count per bin as horizontal bars, with bin ranges as labels down the y axis.
-
-**Also called:** binned bar chart, horizontal frequency distribution
-
-**Configuration:** Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically.
-
-**Use when**
-
-- A distribution has many bins, which fit better stacked vertically than squeezed across
-- Bin range labels are long, e.g. "10,000–20,000"
-
-**Do not use when**
-
-- The conventional histogram orientation is expected — use ColumnChart with `x.bin`
-- The x values are already categorical rather than continuous
-
-```tsx
-<BarChart
-  id="score-histogram"
-  className="w-full h-64"
-  data={rawRows}
-  x={[{ key: 'score', bin: { count: 8 }, className: 'fill-blue-500' }]}
-  y={{ key: 'count' }}
-/>
-```
-
-#### Diverging bar chart (BarChart)
-
-Bars growing left and right of a zero baseline, with negative values styled separately to show direction of change.
-
-**Also called:** tornado chart, bidirectional bar chart, deviation chart
-
-**Configuration:** Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`.
-
-**Use when**
-
-- Values are changes against a baseline and the sign is the message, e.g. year-on-year delta
-- Gains and losses should be distinguishable at a glance by colour and direction
-
-**Do not use when**
-
-- All values share a sign — nothing diverges, so use a plain BarChart
-- The two directions are separate measures rather than one signed measure — use SpineChart
-
-```tsx
-<BarChart
-  id="yoy-change"
-  className="w-full h-64"
-  data={data}
-  x={[{
-    key: 'delta',
-    className: 'text-green-500',
-    classNameNegative: 'text-red-500',
-    start: -10,
-    end: 10,
-    axis: { location: 'top' },
-  }]}
-  y={{ key: 'year', padding: 10 }}
-/>
-```
-
-**Options**
-
-- **Data labels** — Pass `dataLabel={{ className: "fill-white text-xs" }}` to print values on the bars.
-- **Right-to-left** — Set `direction="left"` to anchor bars at the right edge.
-
-**Consider instead**
-
-- [`ColumnChart`](#columnchart) — few categories with short labels
-- [`BarChartStacked`](#barchartstacked) — measures are parts of a whole
-- [`LollipopChart`](#lollipopchart) — bars look heavy and the value point is the focus
-- [`SpineChart`](#spinechart) — two opposing measures per category
-
-### BarChartStacked
-
-Horizontal bars where measures stack end to end, showing the total per category and its breakdown.
-
-**Category:** `linear` · **Answers:** `composition`, `comparison` · **Storybook:** Linear/BarChartStacked/Intro
-
-**Also called:** stacked bar chart, horizontal stacked bar chart
-
-**Use when**
-
-- Composition needs comparing across categories whose labels are long
-- Both the total and the proportions within each bar matter
-- Showing a waterfall of running gains and losses — set `waterfall`
-
-**Do not use when**
-
-- Segments need precise comparison across categories — only the first segment shares a baseline; use BarChart grouped
-- Labels are short and few — ColumnChartStacked reads more conventionally
-- There is one category only — use PieChart
-
-**Data**
-
-- `data` shape: records
-- Series: ideal 2–6, min 2, max 8
-- Rows: ideal 2–25, max 40
-
-| Prop | Role | Required | Notes |
-| --- | --- | --- | --- |
-| `y` | category | yes | Single key holding the category label for each row. |
-| `x` | series | yes | Array of numeric keys, stacked left to right in the order given. |
-
-**Required props:** `id`, `data`, `x`, `y`
-
-```tsx
-<BarChartStacked
-  id="revenue-by-region"
-  className="w-full h-64"
-  data={data}
-  y={{ key: 'year' }}
-  x={[
-    { key: 'macbook', className: 'fill-purple-800' },
-    { key: 'iphone', className: 'fill-purple-600' },
-  ]}
-/>
-```
-
-#### Horizontal waterfall chart (BarChartStacked)
-
-Floating horizontal bars where each segment continues from the previous total, showing how a figure is built up step by step.
-
-**Also called:** horizontal bridge chart, horizontal cascade chart
-
-**Configuration:** Set `waterfall` on a BarChartStacked. Each `x` series becomes a step rather than a segment stacked from the baseline.
-
-**Use when**
-
-- Explaining a running total through successive gains and losses, where step labels are long
-- The sequence reads better vertically down the page than across it
-
-**Do not use when**
-
-- The series are independent categories with no running total — use a plain BarChart
-- Labels are short, in which case ColumnChartStacked in waterfall mode is the conventional read
-
-```tsx
-<BarChartStacked
-  id="profit-walk"
-  className="w-full h-64"
-  data={data}
-  waterfall
-  y={{ key: 'year' }}
-  x={[
-    { key: 'macbook', className: 'fill-green-600' },
-    { key: 'iphone', className: 'fill-red-500' },
-  ]}
-/>
-```
-
-**Options**
-
-- **Reference lines** — Pass `referenceLines` to mark targets across the value axis.
-- **Data labels** — Pass `dataLabel` to print segment values inside the bars.
-
-**Consider instead**
-
-- [`BarChart`](#barchart) — segments must be compared precisely rather than summed
-- [`ColumnChartStacked`](#columnchartstacked) — short labels and few categories
-- [`PieChart`](#piechart) — a single whole at one point in time
-
-### ColumnChart
-
-Vertical bars comparing one or more measures across categories; grouped side by side when several measures are passed.
-
-**Category:** `linear` · **Answers:** `comparison`, `distribution` · **Storybook:** Linear/ColumnChartGrouped
-
-**Also called:** vertical bar chart, grouped column chart, clustered column chart
+Prefer `<BarChart>` with the prop set in new code. `ColumnChart` is deprecated and will be removed in 0.4.0. `BarChartStacked` and `ColumnChartStacked` remain a stable public API.
 
 **Use when**
 
 - Comparing a numeric measure across a modest number of categories with short labels
 - Several measures need comparing within each category, side by side
 - The categories are periods (years, quarters) and individual values matter more than the trend line
-- Showing a histogram of raw continuous values — set `x.bin` and pass `y={[{ key: "count" }]}`
+- Category labels are long or there are more than ~12 categories — set `orientation="horizontal"`
+- Presenting a ranked list, sorted by value — set `orientation="horizontal"`
+- Showing a histogram of raw continuous values — set `bin` on the category config (`x.bin` in vertical, `y.bin` in horizontal)
+- Bars should grow leftward from the right edge — set `orientation="horizontal"` and `direction: "left"`
 
 **Do not use when**
 
-- Category labels are long or there are more than ~20 categories — use BarChart, where horizontal bars give labels room
-- The measures are parts of one whole — use ColumnChartStacked so the total is readable
+- The measures are parts of one whole and the grouped default is used — set `stacking` so the total is readable
 - The x axis is continuous time with many points — use LineChart
 - The bars would be nearly equal in height, making differences invisible — use LollipopChart or a dot-based chart
+- Two measures should read outward from a shared centre — use SpineChart
 
 **Data**
 
 - `data` shape: records
-- Series: ideal 1–4, min 1, max 6 — Groups wider than ~4 bars get hard to scan.
-- Rows: ideal 2–12, max 20 — Past ~20 categories the labels collide — switch to BarChart.
+- Series: ideal 1–4, min 1, max 6 — Stacked layouts take 2–8.
+- Rows: ideal 2–12, max 20 — Horizontal (orientation="horizontal") holds ~25 ideal, 40 max, with long labels.
 
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
-| `x` | category | yes | Single key holding the category label for each row. |
-| `y` | series | yes | Array of numeric keys; one bar per key per category, drawn as a group. |
+| `x` | category | yes | Vertical (default): the category axis — key holding the category label, one group per row; set `bin` here for a histogram, or `scalingFunction: "time"` for dates. Horizontal: the series array — one bar per key per category. Each series entry also takes `rx` for rounded corners. |
+| `y` | value | yes | Vertical (default): the series array (see `x` in horizontal). Horizontal: the category axis — key holding the category label; set `bin` here for a horizontal histogram (`x[0].bin` is still read, and `y.bin` wins). |
+| `orientation` | shape | no | `"vertical"` (default: categories on `x`, series on `y`) or `"horizontal"` (categories on `y`, series on `x`). When omitted it is inferred from which of `x` or `y` is the series array, so existing `<BarChart x={[…]} y={{…}}>` still renders horizontally. |
 
 **Required props:** `id`, `data`, `x`, `y`
 
 ```tsx
-<ColumnChart
+<BarChart
   id="sales-by-year"
   className="w-full h-64"
   data={data}
@@ -627,7 +431,37 @@ Vertical bars comparing one or more measures across categories; grouped side by 
 />
 ```
 
-#### Histogram (ColumnChart)
+#### Horizontal bar chart (BarChart)
+
+The same bar chart with categories running down the y axis and values along x, so long category labels fit.
+
+**Also called:** bar chart (horizontal), ranked bar chart, horizontal grouped bar chart
+
+**Configuration:** Set `orientation="horizontal"`; categories go on `y` and the series array on `x`.
+
+**Use when**
+
+- Category labels are long enough that vertical bars would truncate or rotate them
+- There are more categories than vertical bars can hold (roughly 12 or more)
+- Presenting a ranked list, sorted by value
+
+**Do not use when**
+
+- The x axis is time — a horizontal bar per period breaks the reading order; keep the default orientation or use LineChart
+- Labels are short and there are few categories — the vertical default is the more conventional read
+
+```tsx
+<BarChart
+  id="sales-by-region"
+  className="w-full h-64"
+  orientation="horizontal"
+  data={data}
+  y={{ key: 'region' }}
+  x={[{ key: 'revenue', className: 'fill-blue-500' }]}
+/>
+```
+
+#### Histogram (BarChart)
 
 Bins raw continuous values into ranges and plots how many records fall into each, showing the shape of a distribution.
 
@@ -643,12 +477,12 @@ Bins raw continuous values into ranges and plots how many records fall into each
 
 **Do not use when**
 
-- The x values are already categories — a histogram bins continuous data; use a plain ColumnChart
+- The x values are already categories — a histogram bins continuous data; use a plain BarChart
 - Groups need comparing by their summary statistics rather than their full shape — use BoxPlot
 - There are too few records for bin heights to mean anything
 
 ```tsx
-<ColumnChart
+<BarChart
   id="score-histogram"
   className="w-full h-64"
   data={rawRows}
@@ -657,13 +491,78 @@ Bins raw continuous values into ranges and plots how many records fall into each
 />
 ```
 
-#### Time-scaled column chart (ColumnChart)
+#### Horizontal histogram (BarChart)
+
+Bins raw continuous values and draws the count per bin as horizontal bars, with bin ranges as labels down the y axis.
+
+**Also called:** binned bar chart, horizontal frequency distribution
+
+**Configuration:** Set `orientation="horizontal"`, `y={{ key, bin }}` and `x={[{ key: "count" }]}`. Legacy `x[0].bin` is still read; if both are set, `y.bin` wins.
+
+**Use when**
+
+- A distribution has many bins, which fit better stacked vertically than squeezed across
+- Bin range labels are long, e.g. "10,000–20,000"
+
+**Do not use when**
+
+- The conventional histogram orientation is expected — use `x.bin` on the vertical default
+- The x values are already categorical rather than continuous
+
+```tsx
+<BarChart
+  id="score-histogram"
+  className="w-full h-64"
+  orientation="horizontal"
+  data={rawRows}
+  y={{ key: 'score', bin: { count: 8 } }}
+  x={[{ key: 'count', className: 'fill-blue-500' }]}
+/>
+```
+
+#### Diverging bar chart (BarChart)
+
+Bars growing left and right of a zero baseline, with negative values styled separately to show direction of change.
+
+**Also called:** tornado chart, bidirectional bar chart, deviation chart
+
+**Configuration:** Supply negative values in the data, set `start`/`end` on the series to pin a symmetric axis, and style with `className` plus `classNameNegative`. The example is horizontal.
+
+**Use when**
+
+- Values are changes against a baseline and the sign is the message, e.g. year-on-year delta
+- Gains and losses should be distinguishable at a glance by colour and direction
+
+**Do not use when**
+
+- All values share a sign — nothing diverges, so use a plain BarChart
+- The two directions are separate measures rather than one signed measure — use SpineChart
+
+```tsx
+<BarChart
+  id="yoy-change"
+  className="w-full h-64"
+  orientation="horizontal"
+  data={data}
+  x={[{
+    key: 'delta',
+    className: 'text-green-500',
+    classNameNegative: 'text-red-500',
+    start: -10,
+    end: 10,
+    axis: { location: 'top' },
+  }]}
+  y={{ key: 'year', padding: 10 }}
+/>
+```
+
+#### Time-scaled column chart (BarChart)
 
 A grouped column chart whose x axis parses real dates and spaces bars proportionally to elapsed time, rather than treating each category as an equal-width slot.
 
-**Also called:** time series column chart
+**Also called:** time series column chart, time-scaled bar chart
 
-**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).
+**Configuration:** Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).
 
 **Use when**
 
@@ -674,10 +573,11 @@ A grouped column chart whose x axis parses real dates and spaces bars proportion
 **Do not use when**
 
 - Cadence is highly irregular (e.g. mixed daily and monthly points) — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use LineChart instead
-- The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain ColumnChart
+- The categories are ordinal labels rather than true dates, e.g. "Q1"/"Q2" — use a plain BarChart
+- A horizontal time axis — `y.scalingFunction: "time"` is ignored; time scaling is vertical only
 
 ```tsx
-<ColumnChart
+<BarChart
   id="daily-signups"
   className="w-full h-64"
   data={data}
@@ -686,125 +586,193 @@ A grouped column chart whose x axis parses real dates and spaces bars proportion
 />
 ```
 
-**Options**
+#### Stacked bar chart (BarChart)
 
-- **Reference lines** — Pass `referenceLines={[{ y: 50, className: "stroke-red-500" }]}`.
-- **Whole numbers** — Set `wholeNumbers` to force integer ticks on the value axis.
-
-**Consider instead**
-
-- [`BarChart`](#barchart) — long labels or many categories
-- [`ColumnChartStacked`](#columnchartstacked) — measures are parts of a whole
-- [`LollipopChart`](#lollipopchart) — bars look heavy and values are the focus
-- [`LineChart`](#linechart) — the axis is continuous time with many points
-
-### ColumnChartStacked
-
-Vertical bars where each measure stacks on the previous one, showing both the total per category and its composition.
-
-**Category:** `linear` · **Answers:** `composition`, `comparison` · **Storybook:** Linear/ColumnChartStacked
+Vertical bars where each measure stacks on the previous one, showing the total per category and its composition.
 
 **Also called:** stacked column chart, stacked bar chart (vertical)
+
+**Configuration:** Set `stacking={{ type: 'normal' }}`. Segments stack from 0 in series order; negative values stack below 0. `ColumnChartStacked` is this form as a wrapper.
 
 **Use when**
 
 - The total per category matters as much as its breakdown
 - Segments are genuinely parts of one whole, not independent measures
-- Showing a waterfall of running gains and losses — set `waterfall`
 
 **Do not use when**
 
-- Individual segments need precise comparison across categories — only the bottom segment shares a baseline; use ColumnChart grouped
-- Category labels are long or numerous — use BarChartStacked
-- There is one category only — use PieChart
-- The axis is dense continuous time and the flow matters more than each period's total — use AreaChart; for a modest number of dated periods use the time-scaled variant (`x.scalingFunction: "time"`)
-
-**Data**
-
-- `data` shape: records
-- Series: ideal 2–6, min 2, max 8
-- Rows: ideal 2–12, max 20
-
-| Prop | Role | Required | Notes |
-| --- | --- | --- | --- |
-| `x` | category | yes | Single key holding the category label for each row. |
-| `y` | series | yes | Array of numeric keys, stacked bottom-up in the order given. |
-
-**Required props:** `id`, `data`, `x`, `y`
+- Individual segments need precise comparison across categories — only the first segment shares a baseline; use the grouped default
 
 ```tsx
-<ColumnChartStacked
+<BarChart
   id="revenue-split"
   className="w-full h-64"
   data={data}
+  stacking={{ type: 'normal' }}
   x={{ key: 'year' }}
   y={[
     { key: 'macbook', className: 'fill-purple-800' },
     { key: 'iphone', className: 'fill-purple-600' },
-    { key: 'ipad', className: 'fill-purple-400' },
   ]}
 />
 ```
 
-#### Waterfall chart (ColumnChartStacked)
+#### Horizontal stacked bar chart (BarChart)
 
-Floating columns where each segment starts where the previous one ended, showing how a running total is built up from successive gains and losses.
+Horizontal bars where measures stack end to end, for long category labels.
 
-**Also called:** waterfall, bridge chart, cascade chart, flying bricks chart
+**Also called:** stacked bar chart (horizontal)
 
-**Configuration:** Set `waterfall` on a ColumnChartStacked. Each `y` series becomes a step in the sequence rather than a segment stacked from the baseline.
+**Configuration:** Set `orientation="horizontal"` and `stacking={{ type: 'normal' }}`; categories go on `y`, the series array on `x`. `BarChartStacked` is this form as a wrapper.
 
 **Use when**
 
-- Explaining how a starting figure becomes an ending figure through a sequence of contributions
-- Each step is a gain or a loss against a running total, e.g. revenue bridge or profit walk
-- The order of the steps carries meaning and should be read left to right
+- Composition needs comparing across categories whose labels are long
+
+```tsx
+<BarChart
+  id="revenue-by-region"
+  className="w-full h-64"
+  data={data}
+  orientation="horizontal"
+  stacking={{ type: 'normal' }}
+  y={{ key: 'year' }}
+  x={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>
+```
+
+#### 100% stacked bar chart (BarChart)
+
+Every bar fills the axis and each segment shows its share of the row total.
+
+**Also called:** percentage bar chart, percentage column chart, 100% stacked column chart
+
+**Configuration:** Set `stacking={{ type: '100%' }}`. The axis is [0, 1] with `.0%` ticks (`tickFormat` overrides it); negative values count as 0; pinned `start`/`end` are ignored. Tooltips and labels show the share.
+
+**Use when**
+
+- Composition (shares) is compared across categories and totals do not matter
 
 **Do not use when**
 
-- The series are independent categories with no running total — use a plain grouped ColumnChart
-- The order of steps is arbitrary, which makes the bridge metaphor meaningless
-- Category labels are long — use BarChartStacked in waterfall mode instead
+- Absolute totals matter — use `stacking={{ type: 'normal' }}` or show the total separately
 
 ```tsx
-<ColumnChartStacked
+<BarChart
+  id="share-split"
+  className="w-full h-64"
+  data={data}
+  stacking={{ type: '100%' }}
+  x={{ key: 'year' }}
+  y={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>
+```
+
+#### Diverging stacked bar chart (BarChart)
+
+Survey or sentiment responses split around 0: the negative answers extend one way and the positive answers the other.
+
+**Also called:** likert chart, likert scale chart, diverging stacked column chart
+
+**Configuration:** Set `stacking={{ type: 'diverging', negative: ['strongly_disagree', 'disagree'], neutral: 'neutral' }}`. List series in scale order; the last `negative` key and the first positive key touch 0; `neutral` is split across 0; `percent: true` normalises each row to 100%. The example is horizontal. Use a diverging palette (RdBu, BrBG) with grey for neutral.
+
+**Use when**
+
+- Showing agreement scales (Likert) or positive versus negative sentiment per category
+
+```tsx
+<BarChart
+  id="survey"
+  className="w-full h-64"
+  data={data}
+  orientation="horizontal"
+  stacking={{ type: 'diverging', negative: ['disagree'], neutral: 'neutral', percent: true }}
+  y={{ key: 'question' }}
+  x={[
+    { key: 'disagree', className: 'fill-red-600' },
+    { key: 'neutral', className: 'fill-gray-400' },
+    { key: 'agree', className: 'fill-blue-600' },
+  ]}
+/>
+```
+
+#### Waterfall chart (BarChart)
+
+Each series is a step of a running total, so gains and losses read as floating bars.
+
+**Also called:** waterfall, bridge chart, cascade chart, flying bricks chart
+
+**Configuration:** Set `waterfall` (or `waterfall={{ padding: 4 }}` to narrow the steps). Each series becomes its own step within the category, starting where the previous one ended. `waterfall` wins over `stacking`.
+
+**Use when**
+
+- Showing a walk of running gains and losses to a total
+
+```tsx
+<BarChart
   id="revenue-bridge"
   className="w-full h-64"
   data={data}
   waterfall
   x={{ key: 'year' }}
   y={[
-    { key: 'macbook', className: 'fill-green-600' },
-    { key: 'iphone', className: 'fill-green-500' },
-    { key: 'ipad', className: 'fill-red-500' },
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
   ]}
 />
 ```
 
-#### Time-scaled stacked column chart (ColumnChartStacked)
+#### Horizontal waterfall chart (BarChart)
 
-A stacked column chart whose x axis parses real dates and spaces bars proportionally to elapsed time.
+A waterfall with the steps running left to right, for long category labels.
 
-**Also called:** time series stacked column chart
+**Also called:** horizontal bridge chart, horizontal cascade chart
 
-**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).
+**Configuration:** Set `orientation="horizontal"` and `waterfall`; categories go on `y`, the series array on `x`.
 
 **Use when**
 
-- The total per period matters and periods are real, possibly unevenly spaced dates
-- Some periods are missing and the gap should read as whitespace
-- Axis ticks should fall on real date boundaries
-
-**Do not use when**
-
-- Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping bars; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow bars) or use AreaChart instead
-- Combined with `waterfall` — a running total's step order rarely aligns cleanly with calendar spacing; prefer a plain categorical waterfall
+- A waterfall whose category labels are long
 
 ```tsx
-<ColumnChartStacked
+<BarChart
+  id="profit-walk"
+  className="w-full h-64"
+  data={data}
+  orientation="horizontal"
+  waterfall
+  y={{ key: 'year' }}
+  x={[
+    { key: 'macbook', className: 'fill-purple-800' },
+    { key: 'iphone', className: 'fill-purple-600' },
+  ]}
+/>
+```
+
+#### Time-scaled stacked column chart (BarChart)
+
+Stacked columns on a real date axis, spaced by elapsed time.
+
+**Also called:** time series stacked column chart
+
+**Configuration:** Vertical only. Set `stacking={{ type: 'normal' }}` and `x.scalingFunction: "time"` with `x.time.format` or `x.time.isISO`; bar width follows the median gap between dates, as for the time-scaled column chart.
+
+**Use when**
+
+- Composition per dated period, where gaps between periods should show
+
+```tsx
+<BarChart
   id="daily-revenue-split"
   className="w-full h-64"
   data={data}
+  stacking={{ type: 'normal' }}
   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}
   y={[
     { key: 'macbook', className: 'fill-purple-800' },
@@ -815,14 +783,18 @@ A stacked column chart whose x axis parses real dates and spaces bars proportion
 
 **Options**
 
-- **Reference lines** — Pass `referenceLines={[{ y: 100, className: "stroke-red-500" }]}`.
+- **Data labels** — Pass `dataLabel={{ className: "fill-white text-xs" }}` to print values on the bars, or `dataLabel.text` to override the text.
+- **Right-to-left** — Set `orientation="horizontal"` and `direction="left"` to anchor bars at the right edge.
+- **Reference lines** — Pass `referenceLines={[{ y: 50, className: "stroke-red-500" }]}` in vertical, or `{ x: 50 }` in horizontal. A line at 0 is drawn.
+- **Whole numbers** — Set `wholeNumbers` to force integer ticks on the value axis.
+- **Rounded corners** — Set `rx` on a series, e.g. `y={[{ key: "revenue", rx: 3 }]}`.
+- **Tick format** — Pass `tickFormat` as a d3-format specifier for value-axis ticks.
 
 **Consider instead**
 
-- [`ColumnChart`](#columnchart) — segments must be compared precisely across categories
-- [`BarChartStacked`](#barchartstacked) — long category labels
-- [`AreaChart`](#areachart) — the axis is dense continuous time and the flow matters more than per-period totals
-- [`PieChart`](#piechart) — a single whole at one point in time
+- [`LollipopChart`](#lollipopchart) — bars look heavy and the value point is the focus
+- [`SpineChart`](#spinechart) — two opposing measures per category
+- [`LineChart`](#linechart) — the axis is continuous time with many points
 
 ### LineChart
 
@@ -1003,7 +975,7 @@ A line chart whose x axis parses real dates rather than treating the key as a pl
 **Consider instead**
 
 - [`AreaChart`](#areachart) — volume under the curve or composition of a total matters
-- [`ColumnChart`](#columnchart) — few discrete periods, individual values matter more than the trend
+- [`BarChart`](#barchart) — few discrete periods, individual values matter more than the trend
 - [`TimeLineChart`](#timelinechart) — plotting events and durations rather than a continuous measure
 - [`ScatterPlot`](#scatterplot) — the x axis is a measure rather than time, and points should not be joined
 - [`SparklineChart`](#sparklinechart) — more than ~8 series would overplot; one comparable row per series
@@ -1210,7 +1182,7 @@ Bars growing outward in both directions from a shared centre axis, comparing opp
 
 - There is no natural opposition between the measures — the mirrored layout implies one; use BarChart
 - More than a few measures per side are needed — the spine gets crowded; use BarChart grouped
-- The measures are parts of one whole rather than two sides — use BarChartStacked
+- The measures are parts of one whole rather than two sides — use BarChart with `stacking`
 
 **Data**
 
@@ -1247,7 +1219,7 @@ Bars growing outward in both directions from a shared centre axis, comparing opp
 **Consider instead**
 
 - [`BarChart`](#barchart) — the measures are not naturally opposed
-- [`BarChartStacked`](#barchartstacked) — the measures are parts of one whole
+- [`BarChart`](#barchart) — the measures are parts of one whole (`stacking`)
 - [`CometPlot`](#cometplot) — showing movement between two states rather than two independent measures
 
 ### TimeLineChart
@@ -1343,7 +1315,7 @@ Draws each row’s work as a horizontal bar spanning its start and end dates, on
 **Consider instead**
 
 - [`LineChart`](#linechart) — tracking a measured value over time rather than discrete events
-- [`ColumnChart`](#columnchart) — event counts per period are enough
+- [`BarChart`](#barchart) — event counts per period are enough
 - [`RangePlot`](#rangeplot) — intervals are numeric ranges rather than moments in time
 
 ### ParallelCoordinatesChart
@@ -1438,7 +1410,7 @@ Divides a circle into slices sized by value, showing how much each category cont
 
 - Slices need precise comparison — angles are read far less accurately than lengths; use BarChart or ColumnChart
 - The values do not sum to a meaningful whole, e.g. independent metrics or averages
-- Composition must be compared across categories or over time — use ColumnChartStacked or AreaChart
+- Composition must be compared across categories or over time — use BarChart with `stacking` or AreaChart
 - Any value is negative — a slice cannot represent it
 
 **Data**
@@ -1532,7 +1504,7 @@ A pie swept through 180° rather than 360°, echoing a parliamentary seating pla
 
 **Consider instead**
 
-- [`ColumnChartStacked`](#columnchartstacked) — composition compared across several categories or periods
+- [`BarChart`](#barchart) — composition compared across several categories or periods (`stacking`)
 - [`BarChart`](#barchart) — slices need precise comparison
 - [`WaffleChart`](#wafflechart) — part-to-whole shown as countable cells rather than angles
 
@@ -1769,7 +1741,7 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 - A flat whole with about 6 or fewer parts — use PieChart
 - Individual units should be countable cells — use WaffleChart
 - A flat ranked comparison of leaves with no nesting — use BarChart
-- Composition changes over time — use AreaChart or ColumnChartStacked
+- Composition changes over time — use AreaChart or BarChart with `stacking`
 - Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only
 - Volume moves between categories rather than a static nested split — use SankeyChart
 - A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role
@@ -1928,7 +1900,7 @@ Groups raw continuous values into ranges on both axes and colours each cell by h
 **Consider instead**
 
 - [`ScatterPlot`](#scatterplot) — axes are continuous measures rather than categories
-- [`ColumnChart`](#columnchart) — only one categorical dimension is involved
+- [`BarChart`](#barchart) — only one categorical dimension is involved
 - [`PieChart`](#piechart) — showing part-to-whole for a single set of categories
 
 ### BoxPlot
@@ -2101,7 +2073,7 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
 
 - [`RangePlot`](#rangeplot) — showing a plain min–max interval rather than quartiles
 - [`ScatterPlot`](#scatterplot) — individual records should stay visible
-- [`ColumnChart`](#columnchart) — a histogram of one group is enough — set `x.bin`
+- [`BarChart`](#barchart) — a histogram of one group is enough — set `x.bin`
 
 ### CandlestickChart
 
@@ -2396,7 +2368,7 @@ A half violin with the raw samples jittered on the empty side, showing density a
 **Consider instead**
 
 - [`BoxPlot`](#boxplot) — only the five-number summary matters
-- [`ColumnChart`](#columnchart) — one group's distribution as a histogram — set `x.bin`
+- [`BarChart`](#barchart) — one group's distribution as a histogram — set `x.bin`
 - [`ScatterPlot`](#scatterplot) — very small samples per group, or every point should stay visible
 
 ### BulletChart
@@ -2637,7 +2609,7 @@ Plots several metrics on spokes radiating from a centre and joins them into a po
 **Consider instead**
 
 - [`PizzaChart`](#pizzachart) — profiling a single entity
-- [`ColumnChart`](#columnchart) — metrics have different units, or values must be read precisely
+- [`BarChart`](#barchart) — metrics have different units, or values must be read precisely
 - [`RingGauge`](#ringgauge) — each metric has its own target rather than a shared scale
 - [`ParallelCoordinatesChart`](#parallelcoordinateschart) — many records, or more than about eight dimensions, especially with different units
 
@@ -2771,7 +2743,7 @@ Ordered conversion stages drawn as centred bars or connected trapezoids whose le
 
 - The parts are an unordered split of one whole — use PieChart
 - It is a ranked snapshot with no stage-to-stage drop-off story — use BarChart
-- The steps are additive bridge steps to a total — use ColumnChartStacked with `waterfall`
+- The steps are additive bridge steps to a total — use BarChart with `waterfall`
 - Colour is used to encode magnitude (darker = larger) — length already encodes value; keep `classNameMap` / `value.className` as stage identity only
 - Flows that branch or merge between stages, or volume between arbitrary nodes rather than one ordered path — use SankeyChart
 
@@ -2812,7 +2784,7 @@ Ordered conversion stages drawn as centred bars or connected trapezoids whose le
 **Consider instead**
 
 - [`BarChart`](#barchart) — a ranked snapshot with no stage-to-stage drop-off
-- [`ColumnChartStacked`](#columnchartstacked) — additive steps to a total (waterfall)
+- [`BarChart`](#barchart) — additive steps to a total (`waterfall`)
 - [`PieChart`](#piechart) — an unordered part-to-whole split
 - [`SankeyChart`](#sankeychart) — flows that branch or merge between stages, or volume between arbitrary nodes
 

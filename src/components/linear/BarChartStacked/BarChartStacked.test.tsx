@@ -27,7 +27,7 @@ describe('BarChartStacked', () => {
     render(<BarChartStacked {...defaultArgs} />);
 
     const svg = document.getElementById('bar-stacked');
-    const rects = svg?.querySelectorAll('rect');
+    const rects = svg?.querySelectorAll('.marks rect');
     expect(rects?.length).toBeGreaterThanOrEqual(data.length);
   });
 
@@ -54,7 +54,7 @@ describe('BarChartStacked', () => {
     // full band height — segments sit end to end on one row.
     render(<BarChartStacked {...defaultArgs} id='bar-stacked-normal' />);
     const normalRects = Array.from(
-      document.querySelectorAll('#bar-stacked-normal rect')
+      document.querySelectorAll('#bar-stacked-normal .marks rect')
     );
     const normalHeights = new Set(normalRects.map((r) => r.getAttribute('height')));
     const normalYsForFirstCategory = new Set(
@@ -68,7 +68,7 @@ describe('BarChartStacked', () => {
     // (band height / series count) stacked into sub-rows instead of one row.
     render(<BarChartStacked {...defaultArgs} id='bar-stacked-waterfall-scale' waterfall />);
     const waterfallRects = Array.from(
-      document.querySelectorAll('#bar-stacked-waterfall-scale rect')
+      document.querySelectorAll('#bar-stacked-waterfall-scale .marks rect')
     );
     const waterfallHeight = Number(waterfallRects[0]?.getAttribute('height'));
     const waterfallYsForFirstCategory = [0, 1].map((i) =>

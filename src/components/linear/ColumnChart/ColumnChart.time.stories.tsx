@@ -1,11 +1,12 @@
 import preview from '../../../../.storybook/preview';
-import ColumnChartGrouped from '.';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
+import ColumnChart from '.';
 import data from './sample.json';
 
 const meta = preview.meta({
   title: 'Linear/ColumnChartGrouped/Time Scaling',
-  component: ColumnChartGrouped,
-  tags: ['autodocs'],
+  component: ColumnChart,
+  ...deprecatedWrapperStoryMeta('BarChart'),
 });
 
 // One true UTC instant per year (Dec 31, 00:00Z), read on a UTC axis so the

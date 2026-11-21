@@ -8,6 +8,21 @@ export { default as LineChart } from '@/components/linear/LineChart';
 export { default as ColumnChart } from '@/components/linear/ColumnChart';
 export { default as ColumnChartStacked } from '@/components/linear/ColumnChartStacked';
 export { default as BarChart } from '@/components/linear/BarChart';
+export type {
+  BarAxisConfig,
+  BarCategoryConfig,
+  BarChartHorizontalProps,
+  BarChartProps,
+  BarChartVerticalProps,
+  BarDataLabel,
+  BarReferenceLine,
+  BarSeriesConfig,
+  BarStacking,
+  BarChartStackedProps,
+  ColumnChartGroupedProps,
+  ColumnChartProps,
+  ColumnChartStackedProps,
+} from '@/components/linear/BarChart';
 export { default as BarChartStacked } from '@/components/linear/BarChartStacked';
 export { default as LollipopChart } from '@/components/linear/LollipopChart';
 export type {

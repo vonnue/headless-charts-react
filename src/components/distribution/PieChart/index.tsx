@@ -102,7 +102,7 @@ const DEFAULT_SUBTITLE = {
  * - The values do not sum to a meaningful whole, e.g. independent metrics or
  *   averages
  * - Composition must be compared across categories or over time — use
- *   ColumnChartStacked or AreaChart
+ *   BarChart with `stacking` or AreaChart
  * - Any value is negative — a slice cannot represent it
  *
  * **Specialised types**
@@ -154,8 +154,8 @@ const DEFAULT_SUBTITLE = {
  * />
  * ```
  *
- * @see ColumnChartStacked — composition compared across several
- *   categories or periods
+ * @see BarChart — composition compared across several categories or
+ *   periods (`stacking`)
  * @see BarChart — slices need precise comparison
  * @see WaffleChart — part-to-whole shown as countable cells rather than
  *   angles

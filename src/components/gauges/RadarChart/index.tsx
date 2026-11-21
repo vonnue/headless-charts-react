@@ -74,7 +74,7 @@ const DEFAULT_MARGIN = { top: 20, bottom: 20, left: 20, right: 20 };
  * ```
  *
  * @see PizzaChart — profiling a single entity
- * @see ColumnChart — metrics have different units, or values must be read
+ * @see BarChart — metrics have different units, or values must be read
  *   precisely
  * @see RingGauge — each metric has its own target rather than a shared
  *   scale

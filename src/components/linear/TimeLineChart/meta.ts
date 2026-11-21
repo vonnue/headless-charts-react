@@ -50,7 +50,7 @@ const meta: ChartMeta = {
   ],
   alternatives: [
     { name: 'LineChart', when: 'tracking a measured value over time rather than discrete events' },
-    { name: 'ColumnChart', when: 'event counts per period are enough' },
+    { name: 'BarChart', when: 'event counts per period are enough' },
     { name: 'RangePlot', when: 'intervals are numeric ranges rather than moments in time' },
   ],
   requiredProps: ['id', 'data', 'events'],

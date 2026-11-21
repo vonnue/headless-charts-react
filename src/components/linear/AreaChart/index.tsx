@@ -26,6 +26,7 @@ import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 import * as d3 from 'd3';
 import { drawAxis } from '@/hooks/useAxis';
+import useChartSize from '@/hooks/useChartSize';
 
 /**
  * Props for AreaChart.
@@ -245,14 +246,20 @@ const AreaChart = <TData = any,>({
     tooltipHandlers.current = { onMouseOver, onMouseLeave };
   });
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     // Clear svg; zoom listeners live on the svg and survive the remove().
     svg.on('.zoom', null);
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
 
     const g = svg.append('g');
 
@@ -465,14 +472,17 @@ const AreaChart = <TData = any,>({
       }
       svg.call(zoomFunc);
     }
-  }, [id, data, x, y, stacking, padding, margin, zooming, parseDate]);
+  }, [width, height, id, data, x, y, stacking, padding, margin, zooming, parseDate]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
-  }, [refreshChart, id]);
+  }, [refreshChart, id, measured]);
 
   return (
     <svg
+      ref={svgRef}
       data-testid={id}
       id={id}
       style={style}

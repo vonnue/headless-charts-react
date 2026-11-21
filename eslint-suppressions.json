@@ -259,7 +259,7 @@
       "count": 17
     },
     "react-hooks/exhaustive-deps": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/ranges/BoxPlotH/BoxPlotH.stories.tsx": {

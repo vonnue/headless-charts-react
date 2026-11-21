@@ -5,8 +5,9 @@ import { twMerge } from 'tailwind-merge';
 import { max, sum } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 import { scaleBand, scaleLinear } from 'd3-scale';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { transition } from 'd3-transition';
@@ -119,12 +120,18 @@ const SpineChart = <TData = any,>({
       `${d[y.key]} <br/> ${x.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`,
   });
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
 
     const g = svg.append('g');
 
@@ -333,9 +340,11 @@ const SpineChart = <TData = any,>({
         yAxisLocation === 'left' ? -20 : yAxisLocation === 'right' ? 20 : -20
       )
       .attr('y', xAxis === 'top' ? margin.top ?? 0 : height - (margin.bottom ?? 0));
-  }, [data, x, padding, margin, paddingBar, y, onMouseOver, onMouseMove, onMouseLeave]);
+  }, [width, height, data, x, padding, margin, paddingBar, y, onMouseOver, onMouseMove, onMouseLeave]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -343,12 +352,13 @@ const SpineChart = <TData = any,>({
     return () => {
       interruptTransitions(svg);
     };
-  }, [data, refreshChart, id]);
+  }, [data, refreshChart, id, measured]);
 
   /* eslint-enable */
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}

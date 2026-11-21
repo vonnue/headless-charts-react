@@ -16,7 +16,7 @@ import {
 import { max, min, minIndex } from 'd3-array';
 import { pointer, select, selectAll } from 'd3-selection';
 import { scaleLinear } from 'd3';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useMemo } from 'react';
 
 import { createTimeScale, makeDateParser } from '@/utils/timeScale';
 import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types';
@@ -26,6 +26,7 @@ import { easeLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 import { drawAxis } from '@/hooks/useAxis';
+import useChartSize from '@/hooks/useChartSize';
 
 /**
  * Props for LineChart.
@@ -225,6 +226,14 @@ const LineChart = <TData = any,>({
     [xTimeFormat, xTimeIsISO, xTimeUtc]
   );
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const shapeMapping = {
       circle: symbolCircle,
@@ -286,8 +295,6 @@ const LineChart = <TData = any,>({
     svg.on('.zoom', null).on('mouseover mousemove mouseleave', null);
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
 
     // scaleUtc when x.time.utc is on (the default for isISO, #25): UTC ticks
     // and tick labels.
@@ -886,6 +893,8 @@ const LineChart = <TData = any,>({
       svg.call(zoomFunc);
     }
   }, [
+    width,
+    height,
     id,
     data,
     x,
@@ -904,6 +913,8 @@ const LineChart = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -912,10 +923,11 @@ const LineChart = <TData = any,>({
       svg.selectAll('*').interrupt();
       selectAll(`#tooltip-${id}`).remove();
     };
-  }, [refreshChart, id]);
+  }, [refreshChart, id, measured]);
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}

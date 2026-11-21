@@ -8,11 +8,11 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 import useTooltip from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 import type { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
-import measureSvg from '@/utils/measureSvg';
 import {
   createTimeScale,
   makeDateFormatter,
@@ -213,6 +213,14 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
 
   useTimeAxisWarnings('SparklineChart', id, data ?? [], x, { checkBarWidth: false });
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const plotNode = plotRef.current;
     if (!plotNode) return;
@@ -222,7 +230,6 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
 
     const m = { ...DEFAULT_MARGIN, ...margin };
     root.attr('transform', `translate(${m.left},${m.top})`);
-    const { width, height } = measureSvg(plotNode.ownerSVGElement);
     const innerWidth = Math.max(0, width - m.left - m.right);
     const innerHeight = Math.max(0, height - m.top - m.bottom);
 
@@ -509,23 +516,25 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
         .on('mousemove', show)
         .on('mouseleave', () => tooltipHandlers.current?.onMouseLeave());
     });
-  }, [data, id, x, y, domain, markers, labels, padding, margin, drawing]);
+  }, [width, height, data, id, x, y, domain, markers, labels, padding, margin, drawing]);
 
   useEffect(() => {
+    if (!measured) return;
     refreshChart();
     // Hold the node: cleanup runs after the svg has left the document.
     const plot = plotRef.current;
     return () => {
       interruptTransitions(plot);
     };
-    // style is not read by refreshChart, but it sets the size refreshChart measures.
-  }, [refreshChart, style?.width, style?.height]);
+    // A style/className size change reaches refreshChart through useChartSize.
+  }, [refreshChart, measured]);
 
   const titleId = title ? `${id}-title` : undefined;
   const descId = description ? `${id}-desc` : undefined;
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}

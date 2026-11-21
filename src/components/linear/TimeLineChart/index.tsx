@@ -1,7 +1,8 @@
 import { axisBottom, scaleBand, scaleLinear, scaleTime } from 'd3';
 import { max, min } from 'd3-array';
 import { select, selectAll } from 'd3-selection';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import useChartSize from '@/hooks/useChartSize';
 
 import { AxisConfig, ChartProps } from '@/types';
 import { defaultChartClassNames } from '@/utils';
@@ -122,14 +123,20 @@ const TimeLineChart = <TData = any,>({
   y,
   style = {},
 }: TimeLineChartProps<TData>) => {
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     if (!data || data.length === 0) return;
 
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
 
     const xFn = events?.isTime ? scaleTime() : scaleLinear();
 
@@ -277,17 +284,20 @@ const TimeLineChart = <TData = any,>({
     g.append('g')
       .attr('transform', `translate(0, ${height - (margin.bottom ?? 0)})`)
       .call(xAxis);
-  }, []);
+  }, [width, height]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     return () => {
       selectAll(`#tooltip-${id}`).remove();
     };
-  }, [data, id, className]);
+  }, [data, id, className, measured, refreshChart]);
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}></svg>

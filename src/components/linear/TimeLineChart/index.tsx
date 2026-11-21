@@ -283,7 +283,16 @@ const TimeLineChart = <TData = any,>({
     g.append('g')
       .attr('transform', `translate(0, ${height - (margin.bottom ?? 0)})`)
       .call(xAxis);
-  }, [width, height]);
+  }, [
+    width,
+    height,
+    data,
+    id,
+    events,
+    padding,
+    margin,
+    y,
+  ]);
 
   useEffect(() => {
     if (!measured) return;

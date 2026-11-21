@@ -835,9 +835,14 @@ describe('22: classNames', () => {
         expect(stem.split(/\s+/)).not.toContain('stroke-2');
       }
       expect(stem.split(/\s+/)).not.toContain('s-cls');
-      expect(marker.split(/\s+/)).toEqual(
-        expect.arrayContaining(['symbols', 'fill-current', 'p-cls', 's-cls']),
-      );
+      if (orientation === 'vertical') {
+        expect(marker.split(/\s+/)).toEqual(
+          expect.arrayContaining(['symbols', 'fill-current', 'p-cls', 's-cls']),
+        );
+      } else {
+        expect(marker.split(/\s+/)).toEqual(expect.arrayContaining(['symbols', 'p-cls', 's-cls']));
+        expect(marker.split(/\s+/)).not.toContain('fill-current');
+      }
       expect(marker.split(/\s+/)).not.toContain('l-cls');
     },
   );

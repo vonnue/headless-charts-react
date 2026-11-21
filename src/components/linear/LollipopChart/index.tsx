@@ -446,7 +446,7 @@ export const LollipopRenderer = <TData,>(
         classNames?.lines,
       );
       const symbolClass = twMerge(
-        'symbols fill-current',
+        isVertical ? 'symbols fill-current' : 'symbols',
         classNames?.points,
         classNames?.symbols,
       );

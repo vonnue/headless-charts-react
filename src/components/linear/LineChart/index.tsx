@@ -192,6 +192,8 @@ const DEFAULT_STYLE = {};
  *   continuous measure
  * @see ScatterPlot — the x axis is a measure rather than time, and points
  *   should not be joined
+ * @see SparklineChart — more than ~8 series would overplot; one
+ *   comparable row per series
  */
 /* catalog:end */
 const LineChart = <TData = any,>({

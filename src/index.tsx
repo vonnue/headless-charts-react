@@ -13,6 +13,12 @@ export { default as LollipopHChart } from '@/components/linear/LollipopHChart';
 export { default as LollipopVChart } from '@/components/linear/LollipopVChart';
 export { default as SpineChart } from '@/components/linear/SpineChart';
 export { default as TimeLineChart } from '@/components/linear/TimeLineChart';
+export { default as SparklineChart } from '@/components/linear/SparklineChart';
+export type {
+  SparklineChartProps,
+  SparklineSeries,
+  SparklineDatum,
+} from '@/components/linear/SparklineChart';
 
 // Hooks
 export { default as useAxis, drawAxis } from '@/hooks/useAxis';

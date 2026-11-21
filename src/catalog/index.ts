@@ -29,6 +29,7 @@ import RangePlot from '@/components/ranges/RangePlot/meta';
 import RingGauge from '@/components/gauges/RingGauge/meta';
 import ScatterPlot from '@/components/distribution/ScatterPlot/meta';
 import SpeedometerChart from '@/components/gauges/SpeedometerChart/meta';
+import SparklineChart from '@/components/linear/SparklineChart/meta';
 import SpineChart from '@/components/linear/SpineChart/meta';
 import TimeLineChart from '@/components/linear/TimeLineChart/meta';
 import TreemapChart from '@/components/distribution/TreemapChart/meta';
@@ -54,6 +55,7 @@ export const chartCatalog: ChartMeta[] = [
   LineChart,
   LollipopHChart,
   LollipopVChart,
+  SparklineChart,
   SpineChart,
   TimeLineChart,
   // distribution

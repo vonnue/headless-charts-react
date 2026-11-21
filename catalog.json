@@ -1887,6 +1887,7 @@
         "A flat ranked comparison of leaves with no nesting — use BarChart",
         "Composition changes over time — use AreaChart or ColumnChartStacked",
         "Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only",
+        "Volume moves between categories rather than a static nested split — use SankeyChart",
         "A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role"
       ],
       "alternatives": [
@@ -1901,6 +1902,10 @@
         {
           "name": "BarChart",
           "when": "a flat ranked comparison of the leaves with no nesting"
+        },
+        {
+          "name": "SankeyChart",
+          "when": "volume moves between categories rather than a static nested split"
         }
       ],
       "requiredProps": [
@@ -3366,7 +3371,7 @@
         "It is a ranked snapshot with no stage-to-stage drop-off story — use BarChart",
         "The steps are additive bridge steps to a total — use ColumnChartStacked with `waterfall`",
         "Colour is used to encode magnitude (darker = larger) — length already encodes value; keep `classNameMap` / `value.className` as stage identity only",
-        "The flow is volume between arbitrary nodes rather than one ordered path — Network only shows topology; a Sankey fits once available"
+        "Flows that branch or merge between stages, or volume between arbitrary nodes rather than one ordered path — use SankeyChart"
       ],
       "alternatives": [
         {
@@ -3380,6 +3385,10 @@
         {
           "name": "PieChart",
           "when": "an unordered part-to-whole split"
+        },
+        {
+          "name": "SankeyChart",
+          "when": "flows that branch or merge between stages, or volume between arbitrary nodes"
         }
       ],
       "requiredProps": [
@@ -3601,12 +3610,20 @@
       ],
       "alternatives": [
         {
+          "name": "FunnelChart",
+          "when": "one ordered path with drop-off"
+        },
+        {
           "name": "Network",
           "when": "topology without volumes, or flows with cycles"
         },
         {
+          "name": "TreemapChart",
+          "when": "a hierarchical part-to-whole with no flow between parts"
+        },
+        {
           "name": "PieChart",
-          "when": "parts of one whole with no flow between them"
+          "when": "a flat part-to-whole with no flow between its parts"
         }
       ],
       "requiredProps": [

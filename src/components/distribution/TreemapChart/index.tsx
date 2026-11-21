@@ -120,6 +120,8 @@ const tileFn = (type: TreemapTileType | undefined, ratio: number | undefined) =>
  * - Composition changes over time — use AreaChart or ColumnChartStacked
  * - Colour is used to encode magnitude — area already encodes value; keep
  *   `classNameMap` as group identity only
+ * - Volume moves between categories rather than a static nested split — use
+ *   SankeyChart
  * - A radial hierarchy is preferred — wait for SunburstChart; do not stretch
  *   PizzaChart (`sunburst-style profile`) into that role
  *
@@ -143,6 +145,8 @@ const tileFn = (type: TreemapTileType | undefined, ratio: number | undefined) =>
  * @see PieChart — a flat part-to-whole with few slices
  * @see WaffleChart — cells should be countable units
  * @see BarChart — a flat ranked comparison of the leaves with no nesting
+ * @see SankeyChart — volume moves between categories rather than a static
+ *   nested split
  */
 /* catalog:end */
 const TreemapChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

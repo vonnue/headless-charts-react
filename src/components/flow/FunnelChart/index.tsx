@@ -194,8 +194,8 @@ const defaultTooltipHtml =
  * - Colour is used to encode magnitude (darker = larger) — length already
  *   encodes value; keep `classNameMap` / `value.className` as stage identity
  *   only
- * - The flow is volume between arbitrary nodes rather than one ordered path
- *   — Network only shows topology; a Sankey fits once available
+ * - Flows that branch or merge between stages, or volume between arbitrary
+ *   nodes rather than one ordered path — use SankeyChart
  *
  * Also called: funnel, funnel chart, conversion funnel.
  *
@@ -219,6 +219,8 @@ const defaultTooltipHtml =
  * @see BarChart — a ranked snapshot with no stage-to-stage drop-off
  * @see ColumnChartStacked — additive steps to a total (waterfall)
  * @see PieChart — an unordered part-to-whole split
+ * @see SankeyChart — flows that branch or merge between stages, or volume
+ *   between arbitrary nodes
  */
 /* catalog:end */
 const FunnelChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

@@ -61,12 +61,14 @@ const meta: ChartMeta = {
     'A flat ranked comparison of leaves with no nesting — use BarChart',
     'Composition changes over time — use AreaChart or ColumnChartStacked',
     'Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only',
+    'Volume moves between categories rather than a static nested split — use SankeyChart',
     'A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role',
   ],
   alternatives: [
     { name: 'PieChart', when: 'a flat part-to-whole with few slices' },
     { name: 'WaffleChart', when: 'cells should be countable units' },
     { name: 'BarChart', when: 'a flat ranked comparison of the leaves with no nesting' },
+    { name: 'SankeyChart', when: 'volume moves between categories rather than a static nested split' },
   ],
   requiredProps: ['id', 'data', 'value'],
   example: `<TreemapChart

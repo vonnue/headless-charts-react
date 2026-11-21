@@ -271,8 +271,11 @@ const pathLength = (node: Element | null): number => {
  * />
  * ```
  *
+ * @see FunnelChart — one ordered path with drop-off
  * @see Network — topology without volumes, or flows with cycles
- * @see PieChart — parts of one whole with no flow between them
+ * @see TreemapChart — a hierarchical part-to-whole with no flow between
+ *   parts
+ * @see PieChart — a flat part-to-whole with no flow between them
  */
 /* catalog:end */
 const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

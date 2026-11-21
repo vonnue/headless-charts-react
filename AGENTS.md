@@ -1584,6 +1584,7 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 - A flat ranked comparison of leaves with no nesting — use BarChart
 - Composition changes over time — use AreaChart or ColumnChartStacked
 - Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only
+- Volume moves between categories rather than a static nested split — use SankeyChart
 - A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role
 
 **Data**
@@ -1624,6 +1625,7 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 - [`PieChart`](#piechart) — a flat part-to-whole with few slices
 - [`WaffleChart`](#wafflechart) — cells should be countable units
 - [`BarChart`](#barchart) — a flat ranked comparison of the leaves with no nesting
+- [`SankeyChart`](#sankeychart) — volume moves between categories rather than a static nested split
 
 ### WaffleChart
 
@@ -2629,7 +2631,7 @@ Ordered conversion stages drawn as centred bars or connected trapezoids whose le
 - It is a ranked snapshot with no stage-to-stage drop-off story — use BarChart
 - The steps are additive bridge steps to a total — use ColumnChartStacked with `waterfall`
 - Colour is used to encode magnitude (darker = larger) — length already encodes value; keep `classNameMap` / `value.className` as stage identity only
-- The flow is volume between arbitrary nodes rather than one ordered path — Network only shows topology; a Sankey fits once available
+- Flows that branch or merge between stages, or volume between arbitrary nodes rather than one ordered path — use SankeyChart
 
 **Data**
 
@@ -2670,6 +2672,7 @@ Ordered conversion stages drawn as centred bars or connected trapezoids whose le
 - [`BarChart`](#barchart) — a ranked snapshot with no stage-to-stage drop-off
 - [`ColumnChartStacked`](#columnchartstacked) — additive steps to a total (waterfall)
 - [`PieChart`](#piechart) — an unordered part-to-whole split
+- [`SankeyChart`](#sankeychart) — flows that branch or merge between stages, or volume between arbitrary nodes
 
 ### Network
 
@@ -2796,5 +2799,7 @@ Weighted flows between nodes arranged in layered columns; node size and link wid
 
 **Consider instead**
 
+- [`FunnelChart`](#funnelchart) — one ordered path with drop-off
 - [`Network`](#network) — topology without volumes, or flows with cycles
-- [`PieChart`](#piechart) — parts of one whole with no flow between them
+- [`TreemapChart`](#treemapchart) — a hierarchical part-to-whole with no flow between parts
+- [`PieChart`](#piechart) — a flat part-to-whole with no flow between them

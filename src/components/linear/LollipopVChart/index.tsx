@@ -18,7 +18,7 @@ export type { LollipopChartClassNames, LollipopShape, LollipopVChartProps } from
  * {@link LollipopChart}.
  *
  * @deprecated Use `<LollipopChart orientation="vertical">`. Will be removed in
- * the next breaking release.
+ * 0.4.0.
  *
  * @see LollipopChart
  */

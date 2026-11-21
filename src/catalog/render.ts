@@ -1,6 +1,6 @@
 import { ChartMeta, ChartWrapper, DecisionBranch, isNamedChartType } from './types';
 
-const WRAPPER_REMOVAL = 'Will be removed in the next breaking release.';
+const WRAPPER_REMOVAL = 'Will be removed in 0.4.0.';
 
 const listWrapperNames = (names: string[]): string => {
   const ticks = names.map((name) => `\`${name}\``);
@@ -31,7 +31,7 @@ const wrapperGuidance = (chart: ChartMeta, wrappers: ChartWrapper[]): string => 
   parts.push(
     `${listWrapperNames(deprecated.map((wrapper) => wrapper.name))} ${
       deprecated.length === 1 ? 'is' : 'are'
-    } deprecated and will be removed in the next breaking release.`,
+    } deprecated and will be removed in 0.4.0.`,
   );
   if (stable.length) {
     parts.push(

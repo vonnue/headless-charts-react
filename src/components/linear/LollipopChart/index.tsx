@@ -85,13 +85,13 @@ export interface LollipopChartProps<TData = any> extends ChartProps<TData> {
 }
 
 /**
- * @deprecated Use {@link LollipopChartProps} with `orientation="vertical"`. Will be removed in the next breaking release.
+ * @deprecated Use {@link LollipopChartProps} with `orientation="vertical"`. Will be removed in 0.4.0.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type LollipopVChartProps<TData = any> =
   Omit<LollipopChartProps<TData>, 'orientation'> & { orientation?: 'vertical' };
 /**
- * @deprecated Use {@link LollipopChartProps} with `orientation="horizontal"`. Will be removed in the next breaking release.
+ * @deprecated Use {@link LollipopChartProps} with `orientation="horizontal"`. Will be removed in 0.4.0.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>
 export type LollipopHChartProps<TData = any> =
@@ -653,8 +653,7 @@ export const LollipopRenderer = <TData,>(
  * Wrapper components: `LollipopHChart` (`orientation="horizontal"`,
  * deprecated), `LollipopVChart` (`orientation="vertical"`, deprecated). Prefer
  * `<LollipopChart>` with the prop set in new code. `LollipopHChart` and
- * `LollipopVChart` are deprecated and will be removed in the next breaking
- * release.
+ * `LollipopVChart` are deprecated and will be removed in 0.4.0.
  *
  * Answers: comparison, ranking. Required props: `id`, `data`, `x`, `y`.
  *

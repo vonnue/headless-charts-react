@@ -6,8 +6,7 @@ import data from './sample.json';
  * Stems ending in a symbol, marking one value per category. Vertical by
  * default; set `orientation="horizontal"` for long category labels.
  * `LollipopVChart` and `LollipopHChart` are deprecated aliases for the same
- * chart with the orientation pinned, and will be removed in the next
- * breaking release.
+ * chart with the orientation pinned, and will be removed in 0.4.0.
  */
 const meta = preview.meta({
   title: 'Linear/LollipopChart/Intro',

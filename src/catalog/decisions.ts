@@ -129,12 +129,8 @@ export const decisionTree: DecisionBranch[] = [
         when: 'Same histogram horizontally — set `x[0].bin`; better for many bins',
       },
       {
-        name: 'BoxPlotV',
-        when: 'Compare the spread, median and quartiles of several groups, vertically',
-      },
-      {
-        name: 'BoxPlotH',
-        when: 'Same as BoxPlotV with long group labels',
+        name: 'BoxPlot',
+        when: 'Compare the spread, median and quartiles of several groups — set `orientation="horizontal"` for long group labels',
       },
       {
         name: 'ViolinChart',
@@ -159,7 +155,7 @@ export const decisionTree: DecisionBranch[] = [
         when: 'Movement from one value to another per category, with direction shown by a tapered tail',
       },
       {
-        name: 'BoxPlotH',
+        name: 'BoxPlot',
         when: 'The interval is a statistical summary (quartiles and median), not a plain min–max',
       },
       {

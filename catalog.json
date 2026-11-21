@@ -132,12 +132,8 @@
           "when": "Same histogram horizontally — set `x[0].bin`; better for many bins"
         },
         {
-          "name": "BoxPlotV",
-          "when": "Compare the spread, median and quartiles of several groups, vertically"
-        },
-        {
-          "name": "BoxPlotH",
-          "when": "Same as BoxPlotV with long group labels"
+          "name": "BoxPlot",
+          "when": "Compare the spread, median and quartiles of several groups — set `orientation=\"horizontal\"` for long group labels"
         },
         {
           "name": "ViolinChart",
@@ -162,7 +158,7 @@
           "when": "Movement from one value to another per category, with direction shown by a tapered tail"
         },
         {
-          "name": "BoxPlotH",
+          "name": "BoxPlot",
           "when": "The interval is a statistical summary (quartiles and median), not a plain min–max"
         },
         {
@@ -766,7 +762,7 @@
           ],
           "avoidWhen": [
             "The x values are already categories — a histogram bins continuous data; use a plain ColumnChart",
-            "Groups need comparing by their summary statistics rather than their full shape — use BoxPlotV",
+            "Groups need comparing by their summary statistics rather than their full shape — use BoxPlot",
             "There are too few records for bin heights to mean anything"
           ],
           "example": "<ColumnChart\n  id=\"score-histogram\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  x={{ key: 'score', bin: { count: 8 }, axis: { label: 'Score' } }}\n  y={[{ key: 'count', className: 'text-blue-500' }]}\n/>"
@@ -1713,7 +1709,7 @@
       "avoidWhen": [
         "A few entities on one shared scale — use RadarChart",
         "Only two measures — use ScatterPlot",
-        "One measure's distribution per group — use BoxPlotV (or ViolinChart once exported)",
+        "One measure's distribution per group — use BoxPlot (or ViolinChart once exported)",
         "Colour is wanted to encode a value — the axes already encode values; colour names categories only",
         "The audience needs exact values — use a table"
       ],
@@ -1727,7 +1723,7 @@
           "when": "only two measures are being related"
         },
         {
-          "name": "BoxPlotV",
+          "name": "BoxPlot",
           "when": "one measure's distribution per group"
         }
       ],
@@ -1986,7 +1982,7 @@
           "when": "x is time and the sequence matters"
         },
         {
-          "name": "BoxPlotV",
+          "name": "BoxPlot",
           "when": "comparing the spread of a measure across groups rather than two measures"
         },
         {
@@ -2460,14 +2456,17 @@
       ]
     },
     {
-      "name": "BoxPlotH",
+      "name": "BoxPlot",
       "aliases": [
-        "horizontal box plot",
+        "box plot",
         "box and whisker plot",
-        "quartile plot"
+        "box and whisker chart",
+        "box chart",
+        "quartile plot",
+        "vertical box plot"
       ],
       "category": "ranges",
-      "summary": "Horizontal box-and-whisker marks summarising the spread of a measure per group: min, quartiles, median and max.",
+      "summary": "Box-and-whisker marks summarising the spread of a measure per group — min, quartiles, median and max — drawn vertically by default or horizontally with `orientation=\"horizontal\"`.",
       "intents": [
         "distribution",
         "range"
@@ -2476,57 +2475,60 @@
         "form": "records",
         "encodings": [
           {
-            "prop": "y",
+            "prop": "x",
             "role": "category",
             "required": true,
-            "description": "Key holding the group label; one box per group. Set `bin` here to group a continuous field into bands instead."
+            "description": "Vertical (default): the category axis — key holding the group label, one box per group; set `bin` here to group a continuous field into bands, or `scalingFunction: \"time\"` for dates. Horizontal: the value axis — config naming the statistic keys (see `y`)."
           },
           {
-            "prop": "x",
+            "prop": "y",
             "role": "value",
             "required": true,
-            "description": "Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. No `key` is needed — positions come from the statistic keys. When `y.bin` and `valueKey` are both set the statistics are computed internally and these keys can be omitted; `y.bin` without `valueKey` is ignored and all five are still required."
+            "description": "Vertical (default): the value axis — config naming the statistic keys `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`; no `key` is needed. `start`/`end` pin the domain (`min`/`max` are deprecated aliases). When the category axis has `bin` and `valueKey` is set the statistics are computed and these keys can be omitted. Horizontal: the category axis (see `x`)."
+          },
+          {
+            "prop": "orientation",
+            "role": "shape",
+            "required": false,
+            "description": "`\"vertical\"` (default: groups on `x`, statistics on `y`) or `\"horizontal\"` (groups on `y`, statistics on `x`). When omitted it is inferred from where the statistic keys or `bin` sit."
           },
           {
             "prop": "valueKey",
             "role": "quantitative",
             "required": false,
-            "description": "Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `y.bin` is ignored."
+            "description": "Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `bin` on the category axis is ignored."
           }
         ],
         "rowCount": {
           "ideal": [
             2,
-            20
+            15
           ],
-          "max": 30
+          "max": 25,
+          "note": "Horizontal (orientation=\"horizontal\") holds up to ~30 groups with long labels."
         }
       },
       "useWhen": [
         "The spread of a measure needs comparing across groups, not just its average",
-        "Median and quartiles matter — an average alone would hide skew",
-        "Group labels are long enough to need horizontal orientation",
-        "Statistics should be derived from raw rows — set `y.bin` with `valueKey` and they are computed automatically"
+        "Median and quartiles matter — skew and outliers would make a mean alone mislead",
+        "Groups are ordered periods and the change in spread over them is the message",
+        "Group labels are long or there are many groups — set `orientation=\"horizontal\"`",
+        "Statistics should be derived from raw rows — set `bin` on the category axis with `valueKey`"
       ],
       "avoidWhen": [
         "Every underlying point should be visible — use ScatterPlot",
-        "The full distribution shape matters, e.g. multimodality — use ViolinChart",
         "The interval is a plain min–max rather than a statistical summary — use RangePlot",
         "The audience will not read quartiles; a histogram via ColumnChart with `x.bin` is more intuitive",
-        "A vertical layout fits better — use BoxPlotV"
+        "Only the central value matters — use ColumnChart"
       ],
       "alternatives": [
         {
-          "name": "BoxPlotV",
-          "when": "a vertical layout fits the space better"
-        },
-        {
-          "name": "ViolinChart",
-          "when": "the full distribution shape matters, e.g. multimodality"
-        },
-        {
           "name": "RangePlot",
           "when": "showing a plain min–max interval rather than quartiles"
+        },
+        {
+          "name": "ScatterPlot",
+          "when": "individual records should stay visible"
         },
         {
           "name": "ColumnChart",
@@ -2539,151 +2541,74 @@
         "x",
         "y"
       ],
-      "example": "<BoxPlotH\n  id=\"scores-by-team\"\n  className=\"w-full h-64\"\n  data={data}\n  y={{ key: 'name' }}\n  x={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    min: 0,\n  }}\n/>",
-      "storybook": "Ranges/BoxPlotH",
+      "example": "<BoxPlot\n  id=\"salary-by-band\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'name' }}\n  y={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    start: 0,\n  }}\n/>",
+      "storybook": "Ranges/BoxPlot/Intro",
+      "wrappers": [
+        {
+          "name": "BoxPlotH",
+          "pins": "orientation=\"horizontal\"",
+          "variant": "Horizontal box plot",
+          "note": "Accepts the props it always has, and draws in over 1 s unless `drawing` is given.",
+          "deprecated": "Use `<BoxPlot orientation=\"horizontal\">`"
+        },
+        {
+          "name": "BoxPlotV",
+          "pins": "orientation=\"vertical\"",
+          "note": "Accepts the props it always has, and draws in over 1 s unless `drawing` is given.",
+          "deprecated": "Use `<BoxPlot orientation=\"vertical\">`"
+        }
+      ],
       "variants": [
+        {
+          "kind": "chart-type",
+          "name": "Horizontal box plot",
+          "aliases": [
+            "box plot (horizontal)",
+            "horizontal box and whisker plot"
+          ],
+          "summary": "The same box plot with groups running down the y axis and statistics along x, so long group labels fit.",
+          "how": "Set `orientation=\"horizontal\"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form.",
+          "useWhen": [
+            "Group labels are long",
+            "There are more than ~15 groups"
+          ],
+          "avoidWhen": [
+            "Groups are dates — time scaling is vertical only; keep the default orientation"
+          ],
+          "example": "<BoxPlot\n  id=\"scores-by-team\"\n  className=\"w-full h-64\"\n  orientation=\"horizontal\"\n  data={data}\n  y={{ key: 'name' }}\n  x={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    start: 0,\n  }}\n/>"
+        },
         {
           "kind": "chart-type",
           "name": "Binned box plot",
           "aliases": [
             "box plot from raw data",
-            "grouped distribution plot"
+            "grouped distribution plot",
+            "binned box plot (vertical)",
+            "vertical box plot from raw data",
+            "distribution by band"
           ],
           "summary": "Bins a continuous field into groups and computes each group’s min, quartiles and median from the raw rows, rather than taking pre-aggregated statistics.",
-          "how": "Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `x` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `x` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`.",
+          "how": "Set `bin` on the category-axis config (`x` in vertical, `y` in horizontal) and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on the value axis are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and the value axis still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges.",
           "useWhen": [
             "The data is raw observations and the statistics have not been computed upstream",
             "The grouping field is continuous, e.g. distribution of salary by age band",
             "Bin boundaries need tuning to see how the distribution shifts across groups"
           ],
           "avoidWhen": [
-            "Groups are already categorical — pass them directly with a plain `y` key instead of binning",
+            "Groups are already categorical — pass them directly with a plain category key instead of binning",
             "The statistics are already computed, in which case name the keys directly"
           ],
-          "example": "<BoxPlotH\n  id=\"salary-by-age\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  valueKey=\"salary\"\n  y={{ key: 'age', bin: { count: 5 } }}\n  x={{ min: 0 }}\n/>"
-        },
-        {
-          "kind": "option",
-          "name": "Per-row colours",
-          "how": "Put a `className` field on each row to colour boxes individually."
-        }
-      ]
-    },
-    {
-      "name": "BoxPlotV",
-      "aliases": [
-        "vertical box plot",
-        "box and whisker chart",
-        "box chart"
-      ],
-      "category": "ranges",
-      "summary": "Vertical box-and-whisker marks summarising the spread of a measure per group: min, quartiles, median and max.",
-      "intents": [
-        "distribution",
-        "range"
-      ],
-      "data": {
-        "form": "records",
-        "encodings": [
-          {
-            "prop": "x",
-            "role": "category",
-            "required": true,
-            "description": "Key holding the group label; one box per group. Set `bin` here to group a continuous field into bands instead."
-          },
-          {
-            "prop": "y",
-            "role": "value",
-            "required": true,
-            "description": "Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. No `key` is needed — positions come from the statistic keys. When `x.bin` and `valueKey` are both set the statistics are computed internally and these keys can be omitted; `x.bin` without `valueKey` is ignored and all five are still required."
-          },
-          {
-            "prop": "valueKey",
-            "role": "quantitative",
-            "required": false,
-            "description": "Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `x.bin` is ignored."
-          }
-        ],
-        "rowCount": {
-          "ideal": [
-            2,
-            15
-          ],
-          "max": 25
-        }
-      },
-      "useWhen": [
-        "The spread of a measure needs comparing across a few groups with short labels",
-        "Skew and outliers matter, so a mean alone would mislead",
-        "Groups are ordered periods and the change in spread over them is the message",
-        "Statistics should be derived from raw rows — set `x.bin` with `valueKey`"
-      ],
-      "avoidWhen": [
-        "Every underlying point should be visible — use ScatterPlot",
-        "The full distribution shape matters, e.g. multimodality — use ViolinChart",
-        "The interval is a plain min–max — use RangePlot",
-        "Group labels are long — use BoxPlotH",
-        "Only the central value matters — use ColumnChart"
-      ],
-      "alternatives": [
-        {
-          "name": "BoxPlotH",
-          "when": "group labels are long"
-        },
-        {
-          "name": "ViolinChart",
-          "when": "the full distribution shape matters, e.g. multimodality"
-        },
-        {
-          "name": "RangePlot",
-          "when": "showing a plain min–max interval rather than quartiles"
-        },
-        {
-          "name": "ScatterPlot",
-          "when": "individual records should stay visible"
-        }
-      ],
-      "requiredProps": [
-        "id",
-        "data",
-        "x",
-        "y"
-      ],
-      "example": "<BoxPlotV\n  id=\"salary-by-band\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'name' }}\n  y={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    min: 0,\n  }}\n/>",
-      "storybook": "Ranges/BoxPlotV",
-      "variants": [
-        {
-          "kind": "chart-type",
-          "name": "Binned box plot (vertical)",
-          "aliases": [
-            "vertical box plot from raw data",
-            "distribution by band"
-          ],
-          "summary": "Bins a continuous field into groups along the x axis and computes each group’s quartiles from the raw rows.",
-          "how": "Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `y` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `y` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges.",
-          "useWhen": [
-            "The data is raw observations and no statistics have been computed upstream",
-            "The grouping field is continuous, e.g. salary distribution by age band"
-          ],
-          "avoidWhen": [
-            "Groups are already categorical — pass them directly rather than binning",
-            "The statistics are already computed, in which case name the keys directly"
-          ],
-          "example": "<BoxPlotV\n  id=\"salary-by-age\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  valueKey=\"salary\"\n  x={{ key: 'age', bin: { count: 5 }, axis: { label: 'Age Group' } }}\n  y={{ min: 0, axis: { label: 'Salary' } }}\n/>"
-        },
-        {
-          "kind": "option",
-          "name": "Per-row colours",
-          "how": "Put a `className` field on each row to colour boxes individually."
+          "example": "<BoxPlot\n  id=\"salary-by-age\"\n  className=\"w-full h-64\"\n  data={rawRows}\n  valueKey=\"salary\"\n  x={{ key: 'age', bin: { count: 5 }, axis: { label: 'Age Group' } }}\n  y={{ start: 0, axis: { label: 'Salary' } }}\n/>"
         },
         {
           "kind": "chart-type",
-          "name": "Time-scaled box plot (vertical)",
+          "name": "Time-scaled box plot",
           "aliases": [
-            "time series box plot"
+            "time series box plot",
+            "time-scaled box plot (vertical)"
           ],
           "summary": "A vertical box plot whose x axis parses real dates and spaces boxes proportionally to elapsed time.",
-          "how": "Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).",
+          "how": "Vertical only. Set `x.scalingFunction: \"time\"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). With `orientation=\"horizontal\"`, `y.scalingFunction: \"time\"` is ignored with a dev warning.",
           "useWhen": [
             "Groups are periods (weeks, months) with real dates and spacing should reflect elapsed time",
             "Some periods have no data and that gap should be visible rather than silently skipped"
@@ -2692,7 +2617,17 @@
             "Cadence is highly irregular — width comes from the median gap, so dates closer together than that get overlapping boxes; set a smaller `x.time.barWidth` (capped at one slot, so it can only narrow boxes)",
             "Raw rows need binning — `x.bin` and `valueKey` are ignored on a time axis (with a dev warning) and summary mode is used, so `y` must name all five stat keys; pre-compute per-period statistics or drop `scalingFunction: \"time\"`"
           ],
-          "example": "<BoxPlotV\n  id=\"weekly-latency-spread\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    min: 0,\n  }}\n/>"
+          "example": "<BoxPlot\n  id=\"weekly-latency-spread\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'weekStart', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{\n    minKey: 'min',\n    maxKey: 'max',\n    midKey: 'mid',\n    boxStart: 'firstQuartile',\n    boxEnd: 'lastQuartile',\n    start: 0,\n  }}\n/>"
+        },
+        {
+          "kind": "option",
+          "name": "Per-row colours",
+          "how": "Put a `className` field on each row to colour its box."
+        },
+        {
+          "kind": "option",
+          "name": "Per-group colours",
+          "how": "Set `classNameMap` on the value-axis config, keyed by category, to colour every mark of that group (through `currentColor`)."
         }
       ]
     },
@@ -2767,7 +2702,7 @@
       "avoidWhen": [
         "Only the closing value matters — use LineChart",
         "Each category has a plain min–max interval — use RangePlot",
-        "The data is a distribution summary — use BoxPlotV",
+        "The data is a distribution summary — use BoxPlot",
         "Colour would be the only cue for direction — use `shape: 'ohlc'` or hollow up bodies (`fill-transparent`)"
       ],
       "alternatives": [
@@ -2780,7 +2715,7 @@
           "when": "a plain min–max interval per category"
         },
         {
-          "name": "BoxPlotV",
+          "name": "BoxPlot",
           "when": "a distribution summary per period"
         }
       ],
@@ -2883,7 +2818,7 @@
       ],
       "avoidWhen": [
         "The two values are an unordered interval with no direction — use RangePlot",
-        "The interval is a quartile summary — use BoxPlotH",
+        "The interval is a quartile summary — use BoxPlot",
         "More than two states are involved — use LineChart with one line per category"
       ],
       "alternatives": [
@@ -2969,7 +2904,7 @@
       ],
       "avoidWhen": [
         "Direction of movement matters — use CometPlot, whose tapered tail shows which way the value moved",
-        "The interval is a statistical summary with quartiles — use BoxPlotH",
+        "The interval is a statistical summary with quartiles — use BoxPlot",
         "Only one value per category exists — use LollipopHChart",
         "The endpoints are times rather than numbers — use TimeLineChart"
       ],
@@ -2979,7 +2914,7 @@
           "when": "the direction of movement between the two values matters"
         },
         {
-          "name": "BoxPlotH",
+          "name": "BoxPlot",
           "when": "the interval is a quartile summary"
         },
         {
@@ -3058,21 +2993,17 @@
         "Each group has enough raw samples (about 20 or more) for a stable density"
       ],
       "avoidWhen": [
-        "Only the median and quartiles matter, or the audience will not read densities — use BoxPlotV or BoxPlotH",
-        "The five-number summary is already computed and there are no raw samples — use BoxPlotV or BoxPlotH",
-        "Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlotV / BoxPlotH if a summary is enough",
+        "Only the median and quartiles matter, or the audience will not read densities — use BoxPlot",
+        "The five-number summary is already computed and there are no raw samples — use BoxPlot",
+        "Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlot if a summary is enough",
         "Only one group's distribution is shown — use ColumnChart with `x.bin`",
         "Densities are already precomputed — use AreaChart; ViolinChart always estimates from raw rows",
         "Colour would encode magnitude — colour names the group; density is width only"
       ],
       "alternatives": [
         {
-          "name": "BoxPlotV",
+          "name": "BoxPlot",
           "when": "only the five-number summary matters"
-        },
-        {
-          "name": "BoxPlotH",
-          "when": "the five-number summary with long category labels"
         },
         {
           "name": "ColumnChart",

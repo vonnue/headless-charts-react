@@ -33,7 +33,7 @@ const meta: ChartMeta = {
   ],
   avoidWhen: [
     'The two values are an unordered interval with no direction — use RangePlot',
-    'The interval is a quartile summary — use BoxPlotH',
+    'The interval is a quartile summary — use BoxPlot',
     'More than two states are involved — use LineChart with one line per category',
   ],
   alternatives: [

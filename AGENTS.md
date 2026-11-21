@@ -27,10 +27,10 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | BarChart, horizontal bar chart, grouped bar chart, ranked bar chart | [`BarChart`](#barchart) | Base component, no extra configuration |
 | BarChartStacked, stacked bar chart, horizontal stacked bar chart | [`BarChartStacked`](#barchartstacked) | Base component, no extra configuration |
 | Binned 2D histogram, binned heatmap, two-dimensional histogram | [`WaffleChart`](#wafflechart) | Set `bin` on `x` and/or `y`; each cell then shows the count for that (xBin, yBin) pair rather than a value from the data. |
-| Binned box plot (vertical), vertical box plot from raw data, distribution by band | [`BoxPlotV`](#boxplotv) | Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `y` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `y` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges. |
-| Binned box plot, box plot from raw data, grouped distribution plot | [`BoxPlotH`](#boxploth) | Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `x` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `x` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. |
-| BoxPlotH, horizontal box plot, box and whisker plot, quartile plot | [`BoxPlotH`](#boxploth) | Base component, no extra configuration |
-| BoxPlotV, vertical box plot, box and whisker chart, box chart | [`BoxPlotV`](#boxplotv) | Base component, no extra configuration |
+| Binned box plot, box plot from raw data, grouped distribution plot, binned box plot (vertical), vertical box plot from raw data, distribution by band | [`BoxPlot`](#boxplot) | Set `bin` on the category-axis config (`x` in vertical, `y` in horizontal) and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on the value axis are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and the value axis still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges. |
+| BoxPlot, box plot, box and whisker plot, box and whisker chart, box chart, quartile plot, vertical box plot | [`BoxPlot`](#boxplot) | Base component, no extra configuration |
+| BoxPlotH | [`BoxPlot`](#boxplot) | Deprecated. Use `<BoxPlot orientation="horizontal">`. Will be removed in the next breaking release. |
+| BoxPlotV | [`BoxPlot`](#boxplot) | Deprecated. Use `<BoxPlot orientation="vertical">`. Will be removed in the next breaking release. |
 | Bubble chart, bubble plot, proportional symbol chart | [`ScatterPlot`](#scatterplot) | Add `size={{ key: "population", min: 2, max: 20 }}`. Radius is scaled between `min` and `max` pixels. |
 | BulletChart, bullet graph, kpi bar, target vs actual chart | [`BulletChart`](#bulletchart) | Base component, no extra configuration |
 | Bump chart, rank chart, ranking chart, bump plot, rank over time | [`LineChart`](#linechart) | Convert values to ranks with `utils.convertToRanks(data, y, x)` — it takes the same `y` array and `x` object you pass to the chart — then set `curve: "bumpX"` and `label: { show: true }` on each series, and `reverse` so rank 1 sits at the top. |
@@ -48,6 +48,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | FunnelChart, funnel, funnel chart, conversion funnel | [`FunnelChart`](#funnelchart) | Base component, no extra configuration |
 | Gantt chart, gantt, schedule chart, project timeline, swimlane chart | [`TimeLineChart`](#timelinechart) | Pass both `events.startKey` and `events.endKey` with `events.isTime: true`, and set `y` to the lane key. Spans render as rects; overlapping work in a lane is visible as stacked bars. |
 | Histogram, frequency distribution, binned column chart, frequency chart | [`ColumnChart`](#columnchart) | Set `x={{ key: "score", bin: { count: 8 } }}` and `y={[{ key: "count" }]}`. Pass the raw rows as `data` — binning and counting happen internally. Use `bin.thresholds` for explicit edges. |
+| Horizontal box plot, box plot (horizontal), horizontal box and whisker plot | [`BoxPlot`](#boxplot) | Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form. |
 | Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `bin` on the first `x` entry: `x={[{ key: "score", bin: { count: 8 } }]}`. Bin labels move to the y axis automatically. |
 | Horizontal waterfall chart, horizontal bridge chart, horizontal cascade chart | [`BarChartStacked`](#barchartstacked) | Set `waterfall` on a BarChartStacked. Each `x` series becomes a step rather than a segment stacked from the baseline. |
 | LinearGauge, progress bar chart, linear progress gauge, meter | [`LinearGauge`](#lineargauge) | Base component, no extra configuration |
@@ -73,7 +74,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Streamgraph, stream graph, theme river, stream chart | [`AreaChart`](#areachart) | Set `stacking={{ type: "streamgraph" }}`. Bands are ordered inside-out and offset by wiggle. |
 | SunburstChart, sunburst, sunburst chart, sunburst diagram, radial treemap, multi-level pie chart | [`SunburstChart`](#sunburstchart) | Base component, no extra configuration |
 | Time-scaled area chart, time series area chart | [`AreaChart`](#areachart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
-| Time-scaled box plot (vertical), time series box plot | [`BoxPlotV`](#boxplotv) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
+| Time-scaled box plot, time series box plot, time-scaled box plot (vertical) | [`BoxPlot`](#boxplot) | Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). With `orientation="horizontal"`, `y.scalingFunction: "time"` is ignored with a dev warning. |
 | Time-scaled column chart, time series column chart | [`ColumnChart`](#columnchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Bar width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow bars but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a bar dated exactly on a pinned end is centred on the plot edge and overhangs it by half a bar; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). |
 | Time-scaled line chart, time series chart, time series line chart | [`LineChart`](#linechart) | Set `x.scalingFunction: "time"` and `x.time.format` (or `x.time.isISO`) to parse date strings. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
 | Time-scaled lollipop chart, time series lollipop chart | [`LollipopVChart`](#lollipopvchart) | Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. There is no bar width to derive — `x.time.barWidth` is not used by this chart. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. |
@@ -135,8 +136,7 @@ Find the question being asked, then pick among the candidates.
 | --- | --- |
 | [`ColumnChart`](#columnchart) | Histogram of raw continuous values — set `x.bin` and bar heights become counts |
 | [`BarChart`](#barchart) | Same histogram horizontally — set `x[0].bin`; better for many bins |
-| [`BoxPlotV`](#boxplotv) | Compare the spread, median and quartiles of several groups, vertically |
-| [`BoxPlotH`](#boxploth) | Same as BoxPlotV with long group labels |
+| [`BoxPlot`](#boxplot) | Compare the spread, median and quartiles of several groups — set `orientation="horizontal"` for long group labels |
 | [`ViolinChart`](#violinchart) | Compare the full shape (peaks, skew, multimodality) of a raw measure across groups — not just the five-number summary |
 | [`ScatterPlot`](#scatterplot) | Two-dimensional density — set `x.bin` or `y.bin` for a binned heatmap |
 
@@ -146,7 +146,7 @@ Find the question being asked, then pick among the candidates.
 | --- | --- |
 | [`RangePlot`](#rangeplot) | A static min–max interval per category, drawn as a dumbbell |
 | [`CometPlot`](#cometplot) | Movement from one value to another per category, with direction shown by a tapered tail |
-| [`BoxPlotH`](#boxploth) | The interval is a statistical summary (quartiles and median), not a plain min–max |
+| [`BoxPlot`](#boxplot) | The interval is a statistical summary (quartiles and median), not a plain min–max |
 | [`CandlestickChart`](#candlestickchart) | Each period has open, high, low and close, and both the direction and the intraperiod range matter — not a close-only series or a plain min–max interval |
 
 ### How does a single value stand against its target?
@@ -643,7 +643,7 @@ Bins raw continuous values into ranges and plots how many records fall into each
 **Do not use when**
 
 - The x values are already categories — a histogram bins continuous data; use a plain ColumnChart
-- Groups need comparing by their summary statistics rather than their full shape — use BoxPlotV
+- Groups need comparing by their summary statistics rather than their full shape — use BoxPlot
 - There are too few records for bin heights to mean anything
 
 ```tsx
@@ -1385,7 +1385,7 @@ One axis per measure, each with its own scale, and one line per record across th
 
 - A few entities on one shared scale — use RadarChart
 - Only two measures — use ScatterPlot
-- One measure's distribution per group — use BoxPlotV (or ViolinChart once exported)
+- One measure's distribution per group — use BoxPlot (or ViolinChart once exported)
 - Colour is wanted to encode a value — the axes already encode values; colour names categories only
 - The audience needs exact values — use a table
 
@@ -1438,7 +1438,7 @@ const [selected, setSelected] = React.useState<number[]>([]);
 
 - [`RadarChart`](#radarchart) — a few entities compared on one shared scale
 - [`ScatterPlot`](#scatterplot) — only two measures are being related
-- [`BoxPlotV`](#boxplotv) — one measure's distribution per group
+- [`BoxPlot`](#boxplot) — one measure's distribution per group
 
 ### PieChart
 
@@ -1704,7 +1704,7 @@ Bins points into a grid and colours each cell by how many fell into it, revealin
 
 - [`WaffleChart`](#wafflechart) — both axes are categorical or binned and density is the message
 - [`LineChart`](#linechart) — x is time and the sequence matters
-- [`BoxPlotV`](#boxplotv) — comparing the spread of a measure across groups rather than two measures
+- [`BoxPlot`](#boxplot) — comparing the spread of a measure across groups rather than two measures
 - [`ParallelCoordinatesChart`](#parallelcoordinateschart) — more than two or three numeric dimensions need comparing at once
 
 ### SunburstChart
@@ -1952,138 +1952,52 @@ Groups raw continuous values into ranges on both axes and colours each cell by h
 - [`ColumnChart`](#columnchart) — only one categorical dimension is involved
 - [`PieChart`](#piechart) — showing part-to-whole for a single set of categories
 
-### BoxPlotH
+### BoxPlot
 
-Horizontal box-and-whisker marks summarising the spread of a measure per group: min, quartiles, median and max.
+Box-and-whisker marks summarising the spread of a measure per group — min, quartiles, median and max — drawn vertically by default or horizontally with `orientation="horizontal"`.
 
-**Category:** `ranges` · **Answers:** `distribution`, `range` · **Storybook:** Ranges/BoxPlotH
+**Category:** `ranges` · **Answers:** `distribution`, `range` · **Storybook:** Ranges/BoxPlot/Intro
 
-**Also called:** horizontal box plot, box and whisker plot, quartile plot
+**Also called:** box plot, box and whisker plot, box and whisker chart, box chart, quartile plot, vertical box plot
+
+**Wrapper components** (exported; same chart with props pinned)
+
+- `BoxPlotH` — `<BoxPlot orientation="horizontal">` (Horizontal box plot) — **deprecated.** Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `BoxPlotV` — `<BoxPlot orientation="vertical">` — **deprecated.** Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+
+Prefer `<BoxPlot>` with the prop set in new code. `BoxPlotH` and `BoxPlotV` are deprecated and will be removed in the next breaking release.
 
 **Use when**
 
 - The spread of a measure needs comparing across groups, not just its average
-- Median and quartiles matter — an average alone would hide skew
-- Group labels are long enough to need horizontal orientation
-- Statistics should be derived from raw rows — set `y.bin` with `valueKey` and they are computed automatically
+- Median and quartiles matter — skew and outliers would make a mean alone mislead
+- Groups are ordered periods and the change in spread over them is the message
+- Group labels are long or there are many groups — set `orientation="horizontal"`
+- Statistics should be derived from raw rows — set `bin` on the category axis with `valueKey`
 
 **Do not use when**
 
 - Every underlying point should be visible — use ScatterPlot
-- The full distribution shape matters, e.g. multimodality — use ViolinChart
 - The interval is a plain min–max rather than a statistical summary — use RangePlot
 - The audience will not read quartiles; a histogram via ColumnChart with `x.bin` is more intuitive
-- A vertical layout fits better — use BoxPlotV
-
-**Data**
-
-- `data` shape: records
-- Rows: ideal 2–20, max 30
-
-| Prop | Role | Required | Notes |
-| --- | --- | --- | --- |
-| `y` | category | yes | Key holding the group label; one box per group. Set `bin` here to group a continuous field into bands instead. |
-| `x` | value | yes | Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. No `key` is needed — positions come from the statistic keys. When `y.bin` and `valueKey` are both set the statistics are computed internally and these keys can be omitted; `y.bin` without `valueKey` is ignored and all five are still required. |
-| `valueKey` | quantitative | no | Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `y.bin` is ignored. |
-
-**Required props:** `id`, `data`, `x`, `y`
-
-```tsx
-<BoxPlotH
-  id="scores-by-team"
-  className="w-full h-64"
-  data={data}
-  y={{ key: 'name' }}
-  x={{
-    minKey: 'min',
-    maxKey: 'max',
-    midKey: 'mid',
-    boxStart: 'firstQuartile',
-    boxEnd: 'lastQuartile',
-    min: 0,
-  }}
-/>
-```
-
-#### Binned box plot (BoxPlotH)
-
-Bins a continuous field into groups and computes each group’s min, quartiles and median from the raw rows, rather than taking pre-aggregated statistics.
-
-**Also called:** box plot from raw data, grouped distribution plot
-
-**Configuration:** Set `bin` on the `y` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `x` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `x` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`.
-
-**Use when**
-
-- The data is raw observations and the statistics have not been computed upstream
-- The grouping field is continuous, e.g. distribution of salary by age band
-- Bin boundaries need tuning to see how the distribution shifts across groups
-
-**Do not use when**
-
-- Groups are already categorical — pass them directly with a plain `y` key instead of binning
-- The statistics are already computed, in which case name the keys directly
-
-```tsx
-<BoxPlotH
-  id="salary-by-age"
-  className="w-full h-64"
-  data={rawRows}
-  valueKey="salary"
-  y={{ key: 'age', bin: { count: 5 } }}
-  x={{ min: 0 }}
-/>
-```
-
-**Options**
-
-- **Per-row colours** — Put a `className` field on each row to colour boxes individually.
-
-**Consider instead**
-
-- [`BoxPlotV`](#boxplotv) — a vertical layout fits the space better
-- [`ViolinChart`](#violinchart) — the full distribution shape matters, e.g. multimodality
-- [`RangePlot`](#rangeplot) — showing a plain min–max interval rather than quartiles
-- [`ColumnChart`](#columnchart) — a histogram of one group is enough — set `x.bin`
-
-### BoxPlotV
-
-Vertical box-and-whisker marks summarising the spread of a measure per group: min, quartiles, median and max.
-
-**Category:** `ranges` · **Answers:** `distribution`, `range` · **Storybook:** Ranges/BoxPlotV
-
-**Also called:** vertical box plot, box and whisker chart, box chart
-
-**Use when**
-
-- The spread of a measure needs comparing across a few groups with short labels
-- Skew and outliers matter, so a mean alone would mislead
-- Groups are ordered periods and the change in spread over them is the message
-- Statistics should be derived from raw rows — set `x.bin` with `valueKey`
-
-**Do not use when**
-
-- Every underlying point should be visible — use ScatterPlot
-- The full distribution shape matters, e.g. multimodality — use ViolinChart
-- The interval is a plain min–max — use RangePlot
-- Group labels are long — use BoxPlotH
 - Only the central value matters — use ColumnChart
 
 **Data**
 
 - `data` shape: records
-- Rows: ideal 2–15, max 25
+- Rows: ideal 2–15, max 25 — Horizontal (orientation="horizontal") holds up to ~30 groups with long labels.
 
 | Prop | Role | Required | Notes |
 | --- | --- | --- | --- |
-| `x` | category | yes | Key holding the group label; one box per group. Set `bin` here to group a continuous field into bands instead. |
-| `y` | value | yes | Config naming the statistic keys: `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`. No `key` is needed — positions come from the statistic keys. When `x.bin` and `valueKey` are both set the statistics are computed internally and these keys can be omitted; `x.bin` without `valueKey` is ignored and all five are still required. |
-| `valueKey` | quantitative | no | Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `x.bin` is ignored. |
+| `x` | category | yes | Vertical (default): the category axis — key holding the group label, one box per group; set `bin` here to group a continuous field into bands, or `scalingFunction: "time"` for dates. Horizontal: the value axis — config naming the statistic keys (see `y`). |
+| `y` | value | yes | Vertical (default): the value axis — config naming the statistic keys `minKey`, `maxKey`, `midKey`, `boxStart` and `boxEnd`; no `key` is needed. `start`/`end` pin the domain (`min`/`max` are deprecated aliases). When the category axis has `bin` and `valueKey` is set the statistics are computed and these keys can be omitted. Horizontal: the category axis (see `x`). |
+| `orientation` | shape | no | `"vertical"` (default: groups on `x`, statistics on `y`) or `"horizontal"` (groups on `y`, statistics on `x`). When omitted it is inferred from where the statistic keys or `bin` sit. |
+| `valueKey` | quantitative | no | Names the raw continuous field the box statistics are computed from. Required for binned mode — without it `bin` on the category axis is ignored. |
 
 **Required props:** `id`, `data`, `x`, `y`
 
 ```tsx
-<BoxPlotV
+<BoxPlot
   id="salary-by-band"
   className="w-full h-64"
   data={data}
@@ -2094,47 +2008,83 @@ Vertical box-and-whisker marks summarising the spread of a measure per group: mi
     midKey: 'mid',
     boxStart: 'firstQuartile',
     boxEnd: 'lastQuartile',
-    min: 0,
+    start: 0,
   }}
 />
 ```
 
-#### Binned box plot (vertical) (BoxPlotV)
+#### Horizontal box plot (BoxPlot)
 
-Bins a continuous field into groups along the x axis and computes each group’s quartiles from the raw rows.
+The same box plot with groups running down the y axis and statistics along x, so long group labels fit.
 
-**Also called:** vertical box plot from raw data, distribution by band
+**Also called:** box plot (horizontal), horizontal box and whisker plot
 
-**Configuration:** Set `bin` on the `x` (category) config and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on `y` are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and `y` still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges.
+**Configuration:** Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form.
 
 **Use when**
 
-- The data is raw observations and no statistics have been computed upstream
-- The grouping field is continuous, e.g. salary distribution by age band
+- Group labels are long
+- There are more than ~15 groups
 
 **Do not use when**
 
-- Groups are already categorical — pass them directly rather than binning
+- Groups are dates — time scaling is vertical only; keep the default orientation
+
+```tsx
+<BoxPlot
+  id="scores-by-team"
+  className="w-full h-64"
+  orientation="horizontal"
+  data={data}
+  y={{ key: 'name' }}
+  x={{
+    minKey: 'min',
+    maxKey: 'max',
+    midKey: 'mid',
+    boxStart: 'firstQuartile',
+    boxEnd: 'lastQuartile',
+    start: 0,
+  }}
+/>
+```
+
+#### Binned box plot (BoxPlot)
+
+Bins a continuous field into groups and computes each group’s min, quartiles and median from the raw rows, rather than taking pre-aggregated statistics.
+
+**Also called:** box plot from raw data, grouped distribution plot, binned box plot (vertical), vertical box plot from raw data, distribution by band
+
+**Configuration:** Set `bin` on the category-axis config (`x` in vertical, `y` in horizontal) and pass `valueKey` naming the field to summarise. Both are needed: the statistic keys on the value axis are then computed internally and can be omitted (any given are ignored). `bin` without `valueKey` is ignored, and the value axis still needs `minKey`, `maxKey`, `boxStart`, `boxEnd` and `midKey`. Use `bin.thresholds` for explicit band edges.
+
+**Use when**
+
+- The data is raw observations and the statistics have not been computed upstream
+- The grouping field is continuous, e.g. distribution of salary by age band
+- Bin boundaries need tuning to see how the distribution shifts across groups
+
+**Do not use when**
+
+- Groups are already categorical — pass them directly with a plain category key instead of binning
 - The statistics are already computed, in which case name the keys directly
 
 ```tsx
-<BoxPlotV
+<BoxPlot
   id="salary-by-age"
   className="w-full h-64"
   data={rawRows}
   valueKey="salary"
   x={{ key: 'age', bin: { count: 5 }, axis: { label: 'Age Group' } }}
-  y={{ min: 0, axis: { label: 'Salary' } }}
+  y={{ start: 0, axis: { label: 'Salary' } }}
 />
 ```
 
-#### Time-scaled box plot (vertical) (BoxPlotV)
+#### Time-scaled box plot (BoxPlot)
 
 A vertical box plot whose x axis parses real dates and spaces boxes proportionally to elapsed time.
 
-**Also called:** time series box plot
+**Also called:** time series box plot, time-scaled box plot (vertical)
 
-**Configuration:** Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025).
+**Configuration:** Vertical only. Set `x.scalingFunction: "time"` with `x.time.format`, or `x.time.isISO` for ISO strings. Box width comes from the median gap between dates (one slot per step); `x.time.barWidth` (positive pixels) overrides it but is capped at one slot, so it can narrow boxes but never widen them past their slot. ISO dates are read, placed and labelled in UTC by default, so calendar days (`2025-01-31`) land on the right day in every time zone; set `x.time.utc: false` for the viewer's local time, or `x.time.utc: true` to read `x.time.format` strings in UTC. Pinned `x.start`/`x.end` (epoch ms) get no edge padding, so a box dated exactly on a pinned end is centred on the plot edge and overhangs it by half a box; to keep edge marks inside, pin half a step outside the data (e.g. `start: Date.UTC(2025, 0, 1) - 12 * 3600_000` for daily data starting 1 Jan 2025). With `orientation="horizontal"`, `y.scalingFunction: "time"` is ignored with a dev warning.
 
 **Use when**
 
@@ -2147,7 +2097,7 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
 - Raw rows need binning — `x.bin` and `valueKey` are ignored on a time axis (with a dev warning) and summary mode is used, so `y` must name all five stat keys; pre-compute per-period statistics or drop `scalingFunction: "time"`
 
 ```tsx
-<BoxPlotV
+<BoxPlot
   id="weekly-latency-spread"
   className="w-full h-64"
   data={data}
@@ -2158,21 +2108,21 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
     midKey: 'mid',
     boxStart: 'firstQuartile',
     boxEnd: 'lastQuartile',
-    min: 0,
+    start: 0,
   }}
 />
 ```
 
 **Options**
 
-- **Per-row colours** — Put a `className` field on each row to colour boxes individually.
+- **Per-row colours** — Put a `className` field on each row to colour its box.
+- **Per-group colours** — Set `classNameMap` on the value-axis config, keyed by category, to colour every mark of that group (through `currentColor`).
 
 **Consider instead**
 
-- [`BoxPlotH`](#boxploth) — group labels are long
-- [`ViolinChart`](#violinchart) — the full distribution shape matters, e.g. multimodality
 - [`RangePlot`](#rangeplot) — showing a plain min–max interval rather than quartiles
 - [`ScatterPlot`](#scatterplot) — individual records should stay visible
+- [`ColumnChart`](#columnchart) — a histogram of one group is enough — set `x.bin`
 
 ### CandlestickChart
 
@@ -2191,7 +2141,7 @@ Draws each period's open, high, low and close as a wick and a body, coloured by 
 
 - Only the closing value matters — use LineChart
 - Each category has a plain min–max interval — use RangePlot
-- The data is a distribution summary — use BoxPlotV
+- The data is a distribution summary — use BoxPlot
 - Colour would be the only cue for direction — use `shape: 'ohlc'` or hollow up bodies (`fill-transparent`)
 
 **Data**
@@ -2267,7 +2217,7 @@ Draws each period as a high–low stem with a left tick at the open and a right 
 
 - [`LineChart`](#linechart) — only the closing value over time matters
 - [`RangePlot`](#rangeplot) — a plain min–max interval per category
-- [`BoxPlotV`](#boxplotv) — a distribution summary per period
+- [`BoxPlot`](#boxplot) — a distribution summary per period
 
 ### CometPlot
 
@@ -2286,7 +2236,7 @@ A tapered mark per category running from one value to another, where the widenin
 **Do not use when**
 
 - The two values are an unordered interval with no direction — use RangePlot
-- The interval is a quartile summary — use BoxPlotH
+- The interval is a quartile summary — use BoxPlot
 - More than two states are involved — use LineChart with one line per category
 
 **Data**
@@ -2340,7 +2290,7 @@ A dumbbell per category: two endpoints joined by a bar, showing the interval bet
 **Do not use when**
 
 - Direction of movement matters — use CometPlot, whose tapered tail shows which way the value moved
-- The interval is a statistical summary with quartiles — use BoxPlotH
+- The interval is a statistical summary with quartiles — use BoxPlot
 - Only one value per category exists — use LollipopHChart
 - The endpoints are times rather than numbers — use TimeLineChart
 
@@ -2375,7 +2325,7 @@ A dumbbell per category: two endpoints joined by a bar, showing the interval bet
 **Consider instead**
 
 - [`CometPlot`](#cometplot) — the direction of movement between the two values matters
-- [`BoxPlotH`](#boxploth) — the interval is a quartile summary
+- [`BoxPlot`](#boxplot) — the interval is a quartile summary
 - [`LollipopHChart`](#lollipophchart) — there is a single value per category
 
 ### ViolinChart
@@ -2393,9 +2343,9 @@ Mirrored kernel-density shapes, one per group, showing the full distribution of 
 
 **Do not use when**
 
-- Only the median and quartiles matter, or the audience will not read densities — use BoxPlotV or BoxPlotH
-- The five-number summary is already computed and there are no raw samples — use BoxPlotV or BoxPlotH
-- Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlotV / BoxPlotH if a summary is enough
+- Only the median and quartiles matter, or the audience will not read densities — use BoxPlot
+- The five-number summary is already computed and there are no raw samples — use BoxPlot
+- Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlot if a summary is enough
 - Only one group's distribution is shown — use ColumnChart with `x.bin`
 - Densities are already precomputed — use AreaChart; ViolinChart always estimates from raw rows
 - Colour would encode magnitude — colour names the group; density is width only
@@ -2466,8 +2416,7 @@ A half violin with the raw samples jittered on the empty side, showing density a
 
 **Consider instead**
 
-- [`BoxPlotV`](#boxplotv) — only the five-number summary matters
-- [`BoxPlotH`](#boxploth) — the five-number summary with long category labels
+- [`BoxPlot`](#boxplot) — only the five-number summary matters
 - [`ColumnChart`](#columnchart) — one group's distribution as a histogram — set `x.bin`
 - [`ScatterPlot`](#scatterplot) — very small samples per group, or every point should stay visible
 

@@ -192,7 +192,7 @@ const sortedBands = (labels: string[]) =>
  * @see WaffleChart — both axes are categorical or binned and density is
  *   the message
  * @see LineChart — x is time and the sequence matters
- * @see BoxPlotV — comparing the spread of a measure across groups rather
+ * @see BoxPlot — comparing the spread of a measure across groups rather
  *   than two measures
  * @see ParallelCoordinatesChart — more than two or three numeric
  *   dimensions need comparing at once

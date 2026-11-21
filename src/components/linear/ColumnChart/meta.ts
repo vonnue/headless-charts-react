@@ -72,7 +72,7 @@ const meta: ChartMeta = {
       ],
       avoidWhen: [
         'The x values are already categories — a histogram bins continuous data; use a plain ColumnChart',
-        'Groups need comparing by their summary statistics rather than their full shape — use BoxPlotV',
+        'Groups need comparing by their summary statistics rather than their full shape — use BoxPlot',
         'There are too few records for bin heights to mean anything',
       ],
       example: `<ColumnChart

@@ -267,19 +267,9 @@
       "count": 2
     }
   },
-  "src/components/ranges/BoxPlotH/index.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 36
-    }
-  },
   "src/components/ranges/BoxPlotV/BoxPlotV.stories.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "src/components/ranges/BoxPlotV/index.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 23
     }
   },
   "src/components/ranges/CometPlot/CometPlot.stories.tsx": {

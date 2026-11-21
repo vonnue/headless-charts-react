@@ -161,7 +161,7 @@ const makeDefaultHtml =
  * **Avoid when**
  * - Only the closing value matters — use LineChart
  * - Each category has a plain min–max interval — use RangePlot
- * - The data is a distribution summary — use BoxPlotV
+ * - The data is a distribution summary — use BoxPlot
  * - Colour would be the only cue for direction — use `shape: 'ohlc'` or
  *   hollow up bodies (`fill-transparent`)
  *
@@ -204,7 +204,7 @@ const makeDefaultHtml =
  *
  * @see LineChart — only the closing value over time matters
  * @see RangePlot — a plain min–max interval per category
- * @see BoxPlotV — a distribution summary per period
+ * @see BoxPlot — a distribution summary per period
  */
 /* catalog:end */
 const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

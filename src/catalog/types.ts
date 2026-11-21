@@ -148,6 +148,29 @@ export const isNamedChartType = (
   variant: ChartVariant,
 ): variant is NamedChartType => variant.kind === 'chart-type';
 
+/** An exported component that renders this chart with some props pinned. */
+export interface ChartWrapper {
+  /** Exported component name, e.g. 'BoxPlotH'. */
+  name: string;
+  /** The props it pins, as JSX attributes, e.g. 'orientation="horizontal"'. */
+  pins: string;
+  /** Name of the chart-type variant it renders; omitted when it renders the default form. */
+  variant?: string;
+  /**
+   * One sentence on how the wrapper differs from the unified component beyond
+   * its pins, e.g. a different default. Generated into the docs and into the
+   * wrapper file's JSDoc.
+   */
+  note?: string;
+  /**
+   * If set, the wrapper is deprecated. The string is the `@deprecated` JSDoc
+   * message, typically `Use \`<Chart orientation="...">\``. Generated into
+   * JSDoc and AGENTS.md. The wrapper will be removed in the next breaking
+   * release.
+   */
+  deprecated?: string;
+}
+
 export interface ChartMeta {
   /** Exported component name, exactly as importable from the package root. */
   name: string;
@@ -179,6 +202,12 @@ export interface ChartMeta {
   /** Storybook path for the introductory story. */
   storybook: string;
   variants?: ChartVariant[];
+  /**
+   * Exported components that render this chart with some props pinned (e.g.
+   * BoxPlotH is BoxPlot with `orientation="horizontal"`). They have no meta
+   * of their own; lookups by their name resolve to this chart.
+   */
+  wrappers?: ChartWrapper[];
 }
 
 /** A routing question in the decision tree, mapping an intent to candidates. */

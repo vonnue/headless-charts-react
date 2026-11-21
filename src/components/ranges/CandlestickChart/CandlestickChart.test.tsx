@@ -1075,7 +1075,7 @@ describe('CandlestickChart', () => {
 
     const reserved: Record<string, string> = {
       'range plot': 'RangePlot',
-      'box plot': 'BoxPlotV',
+      'box plot': 'BoxPlot',
       'time series': 'LineChart',
       heatmap: 'WaffleChart',
       'slope chart': 'CometPlot',

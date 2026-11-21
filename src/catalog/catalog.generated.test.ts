@@ -5,6 +5,7 @@ import indexSource from '../index.tsx?raw';
 import {
   chartCatalog,
   chartTypeIndex,
+  chartWrapperIndex,
   decisionTree,
   globalRules,
   resolveChartRequest,
@@ -21,11 +22,14 @@ const exportedComponents = (): string[] =>
   ].map((match) => match[1]);
 
 const catalogNames = chartCatalog.map((chart) => chart.name);
+/** Exported components that render a catalog chart with props pinned. */
+const wrapperNames = chartWrapperIndex.map((entry) => entry.wrapper.name);
 
 describe('catalog integrity', () => {
   it('covers every chart exported from the package', () => {
+    // Wrapper names count as covered exports.
     const missing = exportedComponents().filter(
-      (name) => !catalogNames.includes(name),
+      (name) => !catalogNames.includes(name) && !wrapperNames.includes(name),
     );
     expect(
       missing,
@@ -44,6 +48,28 @@ describe('catalog integrity', () => {
 
   it('has no duplicate entries', () => {
     expect(new Set(catalogNames).size).toBe(catalogNames.length);
+  });
+
+  it('exports every wrapper from the package root', () => {
+    const exported = exportedComponents();
+    const unexported = wrapperNames.filter((name) => !exported.includes(name));
+    expect(
+      unexported,
+      `Wrappers not exported from src/index.tsx: ${unexported.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  it('points every wrapper variant at a chart-type variant on the same meta', () => {
+    const broken = chartWrapperIndex
+      .filter(
+        ({ wrapper, chart }) =>
+          wrapper.variant !== undefined &&
+          !(chart.variants ?? []).some(
+            (v) => isNamedChartType(v) && v.name === wrapper.variant,
+          ),
+      )
+      .map(({ wrapper, chart }) => `${chart.name} -> ${wrapper.name} -> ${wrapper.variant}`);
+    expect(broken, `Unresolvable wrapper variants: ${broken.join(', ')}`).toEqual([]);
   });
 
   it('only recommends alternatives that exist', () => {
@@ -130,6 +156,8 @@ describe('named chart types', () => {
       entry.variant.name,
       ...entry.variant.aliases,
     ]),
+    // Wrapper names join the set: a wrapper name may not be claimed twice.
+    ...wrapperNames,
   ].map((name) => name.toLowerCase());
 
   it('has no name or alias claimed twice', () => {
@@ -158,6 +186,15 @@ describe('named chart types', () => {
         )
         .map((alias) => `${chart.name} -> ${alias}`),
     );
+    expect(collisions).toEqual([]);
+  });
+
+  it('never uses a wrapper name as an alias', () => {
+    const wrappers = new Set(wrapperNames.map((name) => name.toLowerCase()));
+    const collisions = [
+      ...chartCatalog.flatMap((chart) => chart.aliases),
+      ...chartTypeIndex.flatMap((entry) => entry.variant.aliases),
+    ].filter((alias) => wrappers.has(alias.toLowerCase()));
     expect(collisions).toEqual([]);
   });
 

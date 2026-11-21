@@ -181,11 +181,11 @@ interface Group {
  *
  * **Avoid when**
  * - Only the median and quartiles matter, or the audience will not read
- *   densities — use BoxPlotV or BoxPlotH
+ *   densities — use BoxPlot
  * - The five-number summary is already computed and there are no raw samples
- *   — use BoxPlotV or BoxPlotH
+ *   — use BoxPlot
  * - Groups have very few samples (well under 20) — use ScatterPlot, or
- *   BoxPlotV / BoxPlotH if a summary is enough
+ *   BoxPlot if a summary is enough
  * - Only one group's distribution is shown — use ColumnChart with `x.bin`
  * - Densities are already precomputed — use AreaChart; ViolinChart always
  *   estimates from raw rows
@@ -226,8 +226,7 @@ interface Group {
  * />
  * ```
  *
- * @see BoxPlotV — only the five-number summary matters
- * @see BoxPlotH — the five-number summary with long category labels
+ * @see BoxPlot — only the five-number summary matters
  * @see ColumnChart — one group's distribution as a histogram — set
  *   `x.bin`
  * @see ScatterPlot — very small samples per group, or every point should

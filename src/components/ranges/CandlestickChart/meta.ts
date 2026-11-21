@@ -44,13 +44,13 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Only the closing value matters — use LineChart',
     'Each category has a plain min–max interval — use RangePlot',
-    'The data is a distribution summary — use BoxPlotV',
+    'The data is a distribution summary — use BoxPlot',
     "Colour would be the only cue for direction — use `shape: 'ohlc'` or hollow up bodies (`fill-transparent`)",
   ],
   alternatives: [
     { name: 'LineChart', when: 'only the closing value over time matters' },
     { name: 'RangePlot', when: 'a plain min–max interval per category' },
-    { name: 'BoxPlotV', when: 'a distribution summary per period' },
+    { name: 'BoxPlot', when: 'a distribution summary per period' },
   ],
   requiredProps: ['id', 'data', 'x', 'open', 'high', 'low', 'close'],
   example: `<CandlestickChart

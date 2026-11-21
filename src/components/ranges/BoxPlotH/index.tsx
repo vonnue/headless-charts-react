@@ -28,11 +28,11 @@ export type BoxPlotHBinnedProps<TData = any> = BoxPlotHorizontalBinnedProps<TDat
  * rendering the Horizontal box plot. Accepts the props it always has, and
  * draws in over 1 s unless `drawing` is given.
  *
- * @deprecated Use `<BoxPlot orientation="horizontal">`. Will be removed in the
- * next breaking release.
- *
  * Selection guidance (use when, avoid when, examples, alternatives) is on
  * {@link BoxPlot}.
+ *
+ * @deprecated Use `<BoxPlot orientation="horizontal">`. Will be removed in the
+ * next breaking release.
  *
  * @see BoxPlot
  */

@@ -1,6 +1,5 @@
 import { ChartMeta, ChartWrapper, DecisionBranch, isNamedChartType } from './types';
 
-/** How a wrapper component maps onto its chart, e.g. `<BoxPlot orientation="horizontal">`. */
 const WRAPPER_REMOVAL = 'Will be removed in the next breaking release.';
 
 const listWrapperNames = (names: string[]): string => {
@@ -9,6 +8,7 @@ const listWrapperNames = (names: string[]): string => {
   return `${ticks.slice(0, -1).join(', ')}, and ${ticks[ticks.length - 1]}`;
 };
 
+/** How a wrapper component maps onto its chart, e.g. `<BoxPlot orientation="horizontal">`. */
 const wrapperConfig = (chart: ChartMeta, wrapper: ChartWrapper): string => {
   if (wrapper.deprecated) {
     return `Deprecated. ${wrapper.deprecated}. ${WRAPPER_REMOVAL}`;
@@ -168,7 +168,7 @@ export const renderAgentsMarkdown = (
       lines.push('');
       chart.wrappers.forEach((wrapper) => {
         const deprecated = wrapper.deprecated
-          ? ` — **deprecated.** ${wrapper.deprecated}. ${WRAPPER_REMOVAL}`
+          ? ` — **deprecated.** ${WRAPPER_REMOVAL}`
           : '';
         const note = wrapper.note
           ? `${deprecated ? ' ' : '. '}${wrapper.note}`

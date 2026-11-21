@@ -28,11 +28,11 @@ export type BoxPlotVBinnedProps<TData = any> = BoxPlotVerticalBinnedProps<TData>
  * Accepts the props it always has, and draws in over 1 s unless `drawing` is
  * given.
  *
- * @deprecated Use `<BoxPlot orientation="vertical">`. Will be removed in the
- * next breaking release.
- *
  * Selection guidance (use when, avoid when, examples, alternatives) is on
  * {@link BoxPlot}.
+ *
+ * @deprecated Use `<BoxPlot orientation="vertical">`. Will be removed in the
+ * next breaking release.
  *
  * @see BoxPlot
  */

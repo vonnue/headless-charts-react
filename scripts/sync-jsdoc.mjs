@@ -176,11 +176,11 @@ const buildWrapperBlock = (chart, wrapper) => {
   push('');
   if (wrapper.deprecated) {
     wrap(
-      `@deprecated ${wrapper.deprecated}. Will be removed in the next breaking release.`,
+      `Selection guidance (use when, avoid when, examples, alternatives) is on {@link ${chart.name}}.`,
     ).forEach((line) => push(line));
     push('');
     wrap(
-      `Selection guidance (use when, avoid when, examples, alternatives) is on {@link ${chart.name}}.`,
+      `@deprecated ${wrapper.deprecated}. Will be removed in the next breaking release.`,
     ).forEach((line) => push(line));
   } else {
     wrap(

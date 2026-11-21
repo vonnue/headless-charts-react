@@ -1962,8 +1962,8 @@ Box-and-whisker marks summarising the spread of a measure per group — min, qua
 
 **Wrapper components** (exported; same chart with props pinned)
 
-- `BoxPlotH` — `<BoxPlot orientation="horizontal">` (Horizontal box plot) — **deprecated.** Use `<BoxPlot orientation="horizontal">`. Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
-- `BoxPlotV` — `<BoxPlot orientation="vertical">` — **deprecated.** Use `<BoxPlot orientation="vertical">`. Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `BoxPlotH` — `<BoxPlot orientation="horizontal">` (Horizontal box plot) — **deprecated.** Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
+- `BoxPlotV` — `<BoxPlot orientation="vertical">` — **deprecated.** Will be removed in the next breaking release. Accepts the props it always has, and draws in over 1 s unless `drawing` is given.
 
 Prefer `<BoxPlot>` with the prop set in new code. `BoxPlotH` and `BoxPlotV` are deprecated and will be removed in the next breaking release.
 

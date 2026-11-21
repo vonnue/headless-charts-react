@@ -53,6 +53,7 @@ Requests usually name a chart type ("a waterfall chart", "a streamgraph") rather
 | Horizontal bar chart, bar chart (horizontal), ranked bar chart, horizontal grouped bar chart | [`BarChart`](#barchart) | Set `orientation="horizontal"`; categories go on `y` and the series array on `x`. |
 | Horizontal box plot, box plot (horizontal), horizontal box and whisker plot | [`BoxPlot`](#boxplot) | Set `orientation="horizontal"`; groups go on `y` and statistics on `x`. `BoxPlotH` is a deprecated alias for this form. |
 | Horizontal histogram, binned bar chart, horizontal frequency distribution | [`BarChart`](#barchart) | Set `orientation="horizontal"`, `y={{ key, bin }}` and `x={[{ key: "count" }]}`. Legacy `x[0].bin` is still read; if both are set, `y.bin` wins. |
+| Horizontal lollipop chart, lollipop chart (horizontal), horizontal stem plot, ranked lollipop chart | [`LollipopChart`](#lollipopchart) | Set `orientation="horizontal"`; categories go on `y` and values on `x`. `LollipopHChart` is a deprecated alias for this form. |
 | Horizontal stacked bar chart, stacked bar chart (horizontal) | [`BarChart`](#barchart) | Set `orientation="horizontal"` and `stacking={{ type: 'normal' }}`; categories go on `y`, the series array on `x`. `BarChartStacked` is this form as a wrapper. |
 | Horizontal waterfall chart, horizontal bridge chart, horizontal cascade chart | [`BarChart`](#barchart) | Set `orientation="horizontal"` and `waterfall`; categories go on `y`, the series array on `x`. |
 | LinearGauge, progress bar chart, linear progress gauge, meter | [`LinearGauge`](#lineargauge) | Base component, no extra configuration |
@@ -100,8 +101,7 @@ Find the question being asked, then pick among the candidates.
 | Chart | Choose it when |
 | --- | --- |
 | [`BarChart`](#barchart) | Up to ~12 categories with short labels — vertical bars, grouped when several measures are passed. Set `orientation="horizontal"` for long category labels or more than ~12 categories. Also the diverging/tornado variant (gains vs losses per category, sign is the message): set `start`/`end` on the series to pin a symmetric zero axis |
-| [`LollipopVChart`](#lollipopvchart) | Values matter more than magnitude-as-area, and bars would look heavy; vertical orientation |
-| [`LollipopHChart`](#lollipophchart) | Same as LollipopVChart but with long category labels |
+| [`LollipopChart`](#lollipopchart) | Values matter more than magnitude-as-area, and bars would look heavy. Set orientation="horizontal" for long category labels |
 | [`SpineChart`](#spinechart) | Two opposing measures per category read outward from a shared centre axis, e.g. male/female |
 | [`RadarChart`](#radarchart) | Five or more metrics compared across a handful of entities on one shared 0–max scale |
 

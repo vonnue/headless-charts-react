@@ -1709,7 +1709,7 @@
       "avoidWhen": [
         "A few entities on one shared scale — use RadarChart",
         "Only two measures — use ScatterPlot",
-        "One measure's distribution per group — use BoxPlotV (or ViolinChart once exported)",
+        "One measure's distribution per group — use BoxPlot (or ViolinChart once exported)",
         "Colour is wanted to encode a value — the axes already encode values; colour names categories only",
         "The audience needs exact values — use a table"
       ],
@@ -1723,7 +1723,7 @@
           "when": "only two measures are being related"
         },
         {
-          "name": "BoxPlotV",
+          "name": "BoxPlot",
           "when": "one measure's distribution per group"
         }
       ],

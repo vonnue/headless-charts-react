@@ -1385,7 +1385,7 @@ One axis per measure, each with its own scale, and one line per record across th
 
 - A few entities on one shared scale — use RadarChart
 - Only two measures — use ScatterPlot
-- One measure's distribution per group — use BoxPlotV (or ViolinChart once exported)
+- One measure's distribution per group — use BoxPlot (or ViolinChart once exported)
 - Colour is wanted to encode a value — the axes already encode values; colour names categories only
 - The audience needs exact values — use a table
 
@@ -1438,7 +1438,7 @@ const [selected, setSelected] = React.useState<number[]>([]);
 
 - [`RadarChart`](#radarchart) — a few entities compared on one shared scale
 - [`ScatterPlot`](#scatterplot) — only two measures are being related
-- [`BoxPlotV`](#boxplotv) — one measure's distribution per group
+- [`BoxPlot`](#boxplot) — one measure's distribution per group
 
 ### PieChart
 

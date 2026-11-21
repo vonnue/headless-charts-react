@@ -574,29 +574,45 @@ export const BoxPlotRenderer = <TData,>(
     )((name, value) => hits.attr(name, value));
 
     // Axes: y first, then x, as both legacy components drew them.
-    const yAxis = drawAxis({
+    // Narrow the band/time union so each drawAxis call gets one domain type.
+    const yAxisOptions = {
       g,
-      scale: isVertical ? valueScale : categoryScale,
       config: y,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'vertical',
+      orientation: 'vertical' as const,
       className: 'yAxis axis',
-    });
-    const xAxis = drawAxis({
+    };
+    const xAxisOptions = {
       g,
-      scale: isVertical ? categoryScale : valueScale,
       config: x,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'horizontal',
+      orientation: 'horizontal' as const,
       className: 'axis--x axis',
-    });
+    };
+    // The value axis is always linear; the category axis is band or time.
+    // Assign valueAxis inside each branch so zoom does not see a union.
+    let valueAxis;
+    if (isVertical) {
+      valueAxis = drawAxis({ ...yAxisOptions, scale: valueScale });
+      if ('bandwidth' in categoryScale) {
+        drawAxis({ ...xAxisOptions, scale: categoryScale });
+      } else {
+        drawAxis({ ...xAxisOptions, scale: categoryScale });
+      }
+    } else {
+      if ('bandwidth' in categoryScale) {
+        drawAxis({ ...yAxisOptions, scale: categoryScale });
+      } else {
+        drawAxis({ ...yAxisOptions, scale: categoryScale });
+      }
+      valueAxis = drawAxis({ ...xAxisOptions, scale: valueScale });
+    }
 
     if (zooming?.enabled) {
-      const valueAxis = isVertical ? yAxis : xAxis;
       // Zoom scales along the value axis only.
       const zoomed = ({ transform }: { transform: ZoomTransform }) => {
         const t = isVertical

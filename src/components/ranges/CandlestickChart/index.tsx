@@ -8,10 +8,10 @@ import { twMerge } from 'tailwind-merge';
 
 import { drawAxis } from '@/hooks/useAxis';
 import useTooltip from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
-import measureSvg from '@/utils/measureSvg';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import {
   DEFAULT_TIME_FORMAT,
@@ -255,6 +255,14 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     tooltipHandlers.current = { onMouseOver, onMouseMove, onMouseLeave };
   });
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     if (!plotRef.current) return;
     const svgNode = plotRef.current.ownerSVGElement;
@@ -330,7 +338,6 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     // --- plot rect
     const m = { ...DEFAULT_MARGIN, ...margin };
     const p = { top: 0, right: 0, bottom: 0, left: 0, ...padding };
-    const { width, height } = measureSvg(svgNode);
     const plotLeft = m.left + p.left,
       plotRight = Math.max(plotLeft, width - m.right - p.right),
       plotTop = m.top + p.top,
@@ -630,6 +637,8 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
         tooltipHandlers.current?.onMouseLeave();
       });
   }, [
+    width,
+    height,
     data,
     id,
     x,
@@ -649,6 +658,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
   ]);
 
   useEffect(() => {
+    if (!measured) return;
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so interrupt through this reference, not a lookup by id.
@@ -661,14 +671,15 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
           .interrupt('wick-reveal-expand')
           .interrupt('wick-reveal-shrink');
     };
-    // style is not read by refreshChart, but it sets the size refreshChart measures.
-  }, [refreshChart, style?.width, style?.height]);
+    // A style/className size change reaches refreshChart through useChartSize.
+  }, [refreshChart, measured]);
 
   const titleId = title ? `${id}-title` : undefined;
   const descId = description ? `${id}-desc` : undefined;
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}

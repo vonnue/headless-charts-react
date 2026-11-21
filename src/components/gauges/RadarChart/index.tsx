@@ -1,4 +1,5 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import useChartSize from '@/hooks/useChartSize';
 import { line, scaleLinear } from 'd3';
 import { select, selectAll } from 'd3-selection';
 
@@ -16,6 +17,13 @@ export interface RadarChartProps<TData = any> extends ChartProps<TData> {
   min?: number;
   max?: number;
 }
+
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const DEFAULT_METRICS: RadarChartProps['metrics'] = [];
+const DEFAULT_LABEL = { key: 'name' };
+const DEFAULT_CLASS_NAME_MAP = {};
+const DEFAULT_MARGIN = { top: 20, bottom: 20, left: 20, right: 20 };
 
 /* catalog:start */
 /**
@@ -78,24 +86,28 @@ const RadarChart = <TData = any,>({
   id,
   data,
   className,
-  metrics = [],
-  label = {
-    key: 'name',
-  },
-  classNameMap = {},
+  metrics = DEFAULT_METRICS,
+  label = DEFAULT_LABEL,
+  classNameMap = DEFAULT_CLASS_NAME_MAP,
   min = 0,
   max = 1,
-  margin = { top: 20, bottom: 20, left: 20, right: 20 },
+  margin = DEFAULT_MARGIN,
   drawing = undefined,
   style = {},
 }: RadarChartProps<TData>) => {
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg = select(`#${id}`);
 
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0];
-    const height = +svg.style('height').split('px')[0];
 
     const radius =
       Math.min(
@@ -200,9 +212,11 @@ const RadarChart = <TData = any,>({
         .attr('d', (d: any) => {
           return radarLine(getPathCoordinates(d));
         });
-  }, [classNameMap, data, id, label, margin, max, metrics, min, drawing]);
+  }, [width, height, classNameMap, data, id, label, margin, max, metrics, min, drawing]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -211,10 +225,11 @@ const RadarChart = <TData = any,>({
       interruptTransitions(svg);
       selectAll(`#tooltip-${id}`).remove();
     };
-  }, [data, refreshChart]);
+  }, [data, refreshChart, measured]);
 
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(className, defaultChartClassNames)}

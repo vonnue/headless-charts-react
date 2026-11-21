@@ -25,6 +25,7 @@ import {
   symbolWye,
 } from 'd3-shape';
 import useTooltip from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 
 import { ChartProps, TooltipConfig } from '@/types';
 import { D3DragEvent, drag } from 'd3';
@@ -565,13 +566,19 @@ const Network = <TData = any,>({
 
   // Redraws from scratch whenever a drawing input changes, and returns the
   // simulation so the effect can stop it before the next draw and on unmount.
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const svg: SvgSelection = select<SVGSVGElement, unknown>(`#${id}`);
     svg.selectAll('*').remove();
     const g: RootSelection = svg.append('g');
 
-    const width = +svg.style('width').split('px')[0],
-      height = +svg.style('height').split('px')[0];
 
     // d3-force adds x/y/vx/vy to the caller's node objects, as it always has;
     // TData is unconstrained, so the nodes are viewed as simulation nodes.
@@ -614,17 +621,20 @@ const Network = <TData = any,>({
     }
 
     return simulation;
-  }, [id, nodes, edges, nodeDef, edgeDef, padding, margin, dragging, zooming]);
+  }, [width, height, id, nodes, edges, nodeDef, edgeDef, padding, margin, dragging, zooming]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     const simulation = refreshChart();
     return () => {
       simulation.stop();
     };
-  }, [refreshChart]);
+  }, [refreshChart, measured]);
 
   return (
     <svg
+      ref={svgRef}
       className={twMerge(defaultChartClassNames, className)}
       id={id}
       {...props}

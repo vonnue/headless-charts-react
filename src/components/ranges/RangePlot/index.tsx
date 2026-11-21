@@ -11,9 +11,10 @@ import {
   symbolTriangle,
   symbolWye,
 } from 'd3-shape';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
+import useChartSize from '@/hooks/useChartSize';
 
 import {
   AxisConfig,
@@ -41,6 +42,13 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
   x: RangePlotXConfig<TData>;
   tooltip?: TooltipConfig;
 }
+
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const EMPTY_DATA: unknown[] = [];
+const DEFAULT_Y = { key: 'label', axis: { location: 'left' as const } };
+const DEFAULT_MARGIN = { top: 40, bottom: 40, left: 40, right: 20 };
+const DEFAULT_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
 
 /* catalog:start */
 /**
@@ -88,22 +96,12 @@ export interface RangePlotProps<TData = any> extends ChartProps<TData> {
 const RangePlot = <TData = any,>({
   id,
   className,
-  data = [],
+  data = EMPTY_DATA as TData[],
   classNameData,
-  y = { key: 'label', axis: { location: 'left' } },
+  y = DEFAULT_Y,
   x,
-  margin = {
-    top: 40,
-    bottom: 40,
-    left: 40,
-    right: 20,
-  },
-  padding = {
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
+  margin = DEFAULT_MARGIN,
+  padding = DEFAULT_PADDING,
   shape = 'circle',
   tooltip = {},
   zooming,
@@ -115,6 +113,14 @@ const RangePlot = <TData = any,>({
     defaultHtml: (d: any) => `${d[y.key]}: ${d[x.minKey]} to ${d[x.maxKey]}`,
   });
   const { drawAxis } = useAxis();
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     const shapeMapping = {
       circle: symbolCircle,
@@ -130,8 +136,6 @@ const RangePlot = <TData = any,>({
 
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0];
-    const height = +svg.style('height').split('px')[0];
 
     const g = svg.append('g');
 
@@ -317,6 +321,8 @@ const RangePlot = <TData = any,>({
       svg.call(zoomFunc);
     }
   }, [
+    width,
+    height,
     classNameData,
     data,
     id,
@@ -333,6 +339,8 @@ const RangePlot = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -340,9 +348,10 @@ const RangePlot = <TData = any,>({
     return () => {
       interruptTransitions(svg);
     };
-  }, [data, refreshChart, id]);
+  }, [data, refreshChart, id, measured]);
   return (
     <svg
+      ref={svgRef}
       id={id}
       style={style}
       className={twMerge(defaultChartClassNames, className)}

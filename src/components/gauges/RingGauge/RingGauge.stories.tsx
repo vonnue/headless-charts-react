@@ -1,4 +1,5 @@
 import preview from '../../../../.storybook/preview';
+import { ResizableBox } from '../../../../.storybook/ResizableContainer';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useCallback, useEffect, useState } from 'react';
 
@@ -68,4 +69,22 @@ export const UpdatingData = meta.story(() => {
       />
     </div>
   );
+});
+
+/**
+ * Charts follow the size of their container, not only `style.width`/`style.height`.
+ * Drag the bottom-right corner of the box to resize it: the chart is sized with
+ * `width: 100%; height: 100%` and redraws at the new size, once per animation frame.
+ */
+export const ResizableContainer = meta.story({
+  args: {
+    ...Styled.input.args,
+    id: 'ring-gauge-resizable',
+    style: { width: '100%', height: '100%' },
+  },
+  render: (args) => (
+    <ResizableBox>
+      <RingGauge {...args} />
+    </ResizableBox>
+  ),
 });

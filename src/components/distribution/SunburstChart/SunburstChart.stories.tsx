@@ -1,4 +1,5 @@
 import preview from '../../../../.storybook/preview';
+import { ResizableBox } from '../../../../.storybook/ResizableContainer';
 import { buildHierarchy, nameOf } from '../../../utils/hierarchy';
 import SunburstChart from '.';
 import data from './sample.json';
@@ -159,4 +160,22 @@ export const SiblingShades = meta.story({
     colorBy: 'name',
     classNameMap: shadeClassNameMap(data, 'size'),
   },
+});
+
+/**
+ * Charts follow the size of their container, not only `style.width`/`style.height`.
+ * Drag the bottom-right corner of the box to resize it: the chart is sized with
+ * `width: 100%; height: 100%` and redraws at the new size, once per animation frame.
+ */
+export const ResizableContainer = meta.story({
+  args: {
+    ...Default.input.args,
+    id: 'sunburst-chart-resizable',
+    style: { width: '100%', height: '100%' },
+  },
+  render: (args) => (
+    <ResizableBox>
+      <SunburstChart {...args} />
+    </ResizableBox>
+  ),
 });

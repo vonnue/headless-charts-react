@@ -1,4 +1,5 @@
 import preview from '../../../../.storybook/preview';
+import { ResizableBox } from '../../../../.storybook/ResizableContainer';
 
 import AreaChart from '.';
 import data from './data.json';
@@ -187,4 +188,22 @@ export const DivergingArea = meta.story({
       type: 'diverging',
     },
   },
+});
+
+/**
+ * Charts follow the size of their container, not only `style.width`/`style.height`.
+ * Drag the bottom-right corner of the box to resize it: the chart is sized with
+ * `width: 100%; height: 100%` and redraws at the new size, once per animation frame.
+ */
+export const ResizableContainer = meta.story({
+  args: {
+    ...Styled.input.args,
+    id: 'area-chart-resizable',
+    style: { width: '100%', height: '100%' },
+  },
+  render: (args) => (
+    <ResizableBox>
+      <AreaChart {...args} />
+    </ResizableBox>
+  ),
 });

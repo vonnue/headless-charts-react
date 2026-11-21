@@ -239,9 +239,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 17
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 2
     }
   },
   "src/components/ranges/BoxPlotH/BoxPlotH.stories.tsx": {

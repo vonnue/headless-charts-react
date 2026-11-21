@@ -1,6 +1,7 @@
 import { select } from 'd3-selection';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import useTooltip from '@/hooks/useTooltip';
+import useChartSize from '@/hooks/useChartSize';
 import { scaleSequential } from 'd3-scale';
 import { min as d3min, max as d3max } from 'd3-array';
 
@@ -44,6 +45,11 @@ interface CellDatum {
   col: number;
   data: any;
 }
+
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const DEFAULT_PADDING = { left: 0, top: 0, right: 0, bottom: 0 };
+const DEFAULT_MARGIN = { left: 40, right: 40, top: 40, bottom: 40 };
 
 /* catalog:start */
 /**
@@ -126,18 +132,8 @@ const WaffleChart = <TData = any,>({
   id,
   className = '',
   classNameCell = '',
-  padding = {
-    left: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
-  },
-  margin = {
-    left: 40,
-    right: 40,
-    top: 40,
-    bottom: 40,
-  },
+  padding = DEFAULT_PADDING,
+  margin = DEFAULT_MARGIN,
   x,
   y,
   color,
@@ -162,14 +158,20 @@ const WaffleChart = <TData = any,>({
     },
   });
 
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const svgRef = useRef<SVGSVGElement>(null);
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+
   const refreshChart = useCallback(() => {
     if (!data || data.length === 0) return;
 
     const svg = select(`#${id}`);
     svg.selectAll('*').remove();
 
-    const width = +svg.style('width').split('px')[0];
-    const height = +svg.style('height').split('px')[0];
 
     const chartWidth =
       width - (margin.left ?? 0) - (margin.right ?? 0);
@@ -397,6 +399,8 @@ const WaffleChart = <TData = any,>({
       .attr('width', cellSize)
       .attr('height', cellSize);
   }, [
+    width,
+    height,
     id,
     data,
     margin,
@@ -414,6 +418,8 @@ const WaffleChart = <TData = any,>({
   ]);
 
   useEffect(() => {
+    if (!measured) return;
+    // A style/className size change reaches refreshChart through useChartSize.
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so a lookup by id would find nothing to interrupt.
@@ -421,10 +427,11 @@ const WaffleChart = <TData = any,>({
     return () => {
       interruptTransitions(svg);
     };
-  }, [data, refreshChart, id]);
+  }, [data, refreshChart, id, measured]);
 
   return (
     <svg
+      ref={svgRef}
       data-testid={id}
       style={style}
       id={id}

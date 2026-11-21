@@ -28,6 +28,12 @@ export interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
   };
 }
 
+// Stable defaults: fresh literals each render would change refreshChart's
+// identity and redraw the chart on every render.
+const DEFAULT_EVENTS: TimeLineChartProps['events'] = { startKey: 'start' };
+const DEFAULT_PADDING = { top: 0, right: 0, bottom: 0, left: 0, bar: 0.1 };
+const DEFAULT_MARGIN = { top: 20, right: 20, bottom: 20, left: 20 };
+
 /* catalog:start */
 /**
  * Places discrete events and durations on a shared time axis, one lane per
@@ -104,22 +110,9 @@ const TimeLineChart = <TData = any,>({
   id,
   data,
   className,
-  events = {
-    startKey: 'start',
-  },
-  padding = {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    bar: 0.1,
-  },
-  margin = {
-    top: 20,
-    right: 20,
-    bottom: 20,
-    left: 20,
-  },
+  events = DEFAULT_EVENTS,
+  padding = DEFAULT_PADDING,
+  margin = DEFAULT_MARGIN,
   y,
   style = {},
 }: TimeLineChartProps<TData>) => {

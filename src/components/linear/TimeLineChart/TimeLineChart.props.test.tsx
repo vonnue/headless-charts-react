@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import Chart from '.';
+import Chart, { TimeLineChartProps } from '.';
 import { installResizeMocks } from '@/test-utils/resizeObserver';
 
 // #96: TimeLineChart must redraw when data (or other props) change at a
@@ -67,5 +67,23 @@ describe('TimeLineChart prop changes (#96)', () => {
     const after = document.getElementById('timeline-fixed-data')?.innerHTML;
     expect(after).not.toBe(before);
     expect(after).not.toContain('NaN');
+  });
+
+  it('keeps the same plot group when rerendered with the same props and default margin, padding and events', () => {
+    // events is required on the public type but defaulted in the component.
+    // Omit margin, padding and events so the hoisted module defaults are used.
+    const props = {
+      id: 'timeline-stable-defaults',
+      data: first,
+      y,
+      style,
+    } as TimeLineChartProps<(typeof first)[number]>;
+    const { rerender } = render(<Chart {...props} />);
+    const g = document.querySelector('#timeline-stable-defaults g');
+    expect(g).not.toBeNull();
+
+    rerender(<Chart {...props} />);
+
+    expect(document.querySelector('#timeline-stable-defaults g')).toBe(g);
   });
 });

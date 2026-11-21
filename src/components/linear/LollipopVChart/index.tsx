@@ -216,15 +216,20 @@ const LollipopVChart = <TData = any,>({
     const g = svg.append('g');
 
     // Draw x-axis using shared utility
-    drawAxis({
+    // Narrow the band/time union so each drawAxis call gets one domain type.
+    const xAxisOptions = {
       g,
-      scale: xFn,
       config: x,
       dimensions: { width, height },
       margin,
       padding,
-      orientation: 'horizontal',
-    });
+      orientation: 'horizontal' as const,
+    };
+    if ('bandwidth' in xFn) {
+      drawAxis({ ...xAxisOptions, scale: xFn });
+    } else {
+      drawAxis({ ...xAxisOptions, scale: xFn });
+    }
 
     // Draw y-axis using shared utility
     drawAxis({

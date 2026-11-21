@@ -1,11 +1,12 @@
 import preview from '../../../../.storybook/preview';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
 import BoxPlotV from '.';
 import data from '../sample.json';
 
 const meta = preview.meta({
   title: 'Ranges/BoxPlotV',
   component: BoxPlotV,
-  tags: ['autodocs'],
+  ...deprecatedWrapperStoryMeta('BoxPlot'),
 });
 
 /** Default BoxPlot (Grouped). */

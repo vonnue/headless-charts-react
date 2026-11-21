@@ -1,10 +1,11 @@
 import preview from '../../../../.storybook/preview';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
 import BoxPlotH from '.';
 
 const meta = preview.meta({
   title: 'Ranges/BoxPlotH/Binning',
   component: BoxPlotH,
-  tags: ['autodocs'],
+  ...deprecatedWrapperStoryMeta('BoxPlot'),
 });
 
 // Raw data: height and weight for many individuals

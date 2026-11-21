@@ -1,10 +1,11 @@
 import preview from '../../../../.storybook/preview';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
 import BoxPlotV from '.';
 
 const meta = preview.meta({
   title: 'Ranges/BoxPlotV/Time Scaling',
   component: BoxPlotV,
-  tags: ['autodocs'],
+  ...deprecatedWrapperStoryMeta('BoxPlot'),
 });
 
 const weeklyStats = [

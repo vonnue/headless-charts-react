@@ -95,8 +95,19 @@ yarn install
 # Start development server
 yarn start
 
-# Run tests
+# Run jsdom unit tests (watch + UI)
 yarn test
+
+# Run jsdom unit tests once (same as CI)
+yarn test:unit
+
+# Run Storybook stories as component tests in Chromium
+# (requires `yarn playwright install chromium` once)
+yarn test:storybook
+
+# Optional Playwright visual / structural render audit (not in CI;
+# this is separate from yarn test:storybook and is kept as-is)
+yarn test:storybook-render
 
 # Start Storybook
 yarn storybook

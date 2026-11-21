@@ -1,3 +1,4 @@
+import { expect, userEvent, waitFor } from 'storybook/test';
 import preview from '../../../../.storybook/preview';
 
 import PieChart from '.';
@@ -33,6 +34,22 @@ const meta = preview.meta({
 export const Tooltip = meta.story({
   args: {
     id: 'pie-tooltip',
+  },
+  // First-batch interaction test: hover a slice in Chromium and assert the tooltip.
+  play: async ({ canvasElement }) => {
+    const chartId = 'pie-tooltip';
+    const slice = await waitFor(() => {
+      const el = canvasElement.querySelector(`#${chartId} path[data-testid="macbook"]`);
+      if (!el) throw new Error(`no macbook slice in #${chartId}`);
+      return el;
+    });
+    await userEvent.hover(slice);
+    await waitFor(() => {
+      const tip = document.getElementById(`tooltip-${chartId}`);
+      expect(tip).toBeTruthy();
+      expect(tip?.className).toContain('opacity-100');
+      expect(tip?.innerHTML.length).toBeGreaterThan(0);
+    });
   },
 });
 

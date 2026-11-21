@@ -82,7 +82,13 @@ review and update the catalog; they never commit or push.
    for what it updates and regenerates.
 6. Before committing or opening a PR, the main session runs the same checks
    as CI, and all must pass:
-   `yarn tsc --noEmit && yarn lint && yarn test:hooks && yarn vitest run && yarn docs:check && yarn vite build`
+   `yarn tsc --noEmit && yarn lint && yarn test:hooks && yarn test:unit && yarn docs:check && yarn vite build`
+
+   Use `yarn test:unit` (or `vitest run --project unit`) for jsdom unit tests.
+   For targeted runs, pass paths to it: `yarn test:unit src/components/<path>`.
+   A bare `yarn vitest run` (even with a path filter) also starts the Playwright
+   `storybook` project and fails if Chromium isn't installed; run that project
+   explicitly with `yarn test:storybook`.
 
 Existing lint debt lives in `eslint-suppressions.json`. If you fix suppressed
 violations, run `yarn lint:prune` and commit the smaller file. Never run
@@ -90,12 +96,25 @@ violations, run `yarn lint:prune` and commit the smaller file. Never run
 fix it. Any diff that *increases* counts in `eslint-suppressions.json` must be
 called out for review.
 
+**Storybook Vitest tests (`yarn test:storybook`).** `@storybook/addon-vitest`
+runs every story as a smoke test in Playwright Chromium, plus `play` functions
+where they exist (a first batch covers tooltip hover on BarChart, PieChart,
+and ScatterPlot). CI runs this in a separate `storybook` job. It is not part
+of the local pre-PR command list above — browser tests are slower than jsdom
+and need Playwright's Chromium (`yarn playwright install chromium`). Whether
+it should be required locally before every PR is a point to settle.
+
+This is not the same as the visual render audit. `yarn test:storybook` is the
+Vitest addon (render/smoke and interactions). `yarn test:storybook-render` is
+unchanged and stays out of CI.
+
 **Optional real-browser render audit.** `/storybook-render-audit` (the
 `storybook-render-auditor` agent, `yarn test:storybook-render`) renders stories
 in Playwright's Chromium and checks structural invariants plus visual
 regression against committed baselines, which jsdom unit tests can't see. It is
 not yet a required pipeline stage; scope it to the stories you touched with
-`STORYBOOK_AUDIT_FILTER`.
+`STORYBOOK_AUDIT_FILTER`. It complements `yarn test:storybook` rather than
+replacing it: the audit owns visual baselines, which the Vitest addon does not.
 
 **Safety hook requirements.** The PreToolUse Bash hook
 (`.claude/hooks/subagent-block-risky-actions.sh`) needs Claude Code >= 2.1.295,

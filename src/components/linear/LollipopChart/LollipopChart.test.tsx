@@ -829,6 +829,11 @@ describe('22: classNames', () => {
       const stem = stemsOf(id)[0].getAttribute('class') ?? '';
       const marker = symbolsOf(id)[0].getAttribute('class') ?? '';
       expect(stem.split(/\s+/)).toEqual(expect.arrayContaining(['line', 'stroke-current', 'p-cls', 'l-cls']));
+      if (orientation === 'horizontal') {
+        expect(stem.split(/\s+/)).toContain('stroke-2');
+      } else {
+        expect(stem.split(/\s+/)).not.toContain('stroke-2');
+      }
       expect(stem.split(/\s+/)).not.toContain('s-cls');
       expect(marker.split(/\s+/)).toEqual(
         expect.arrayContaining(['symbols', 'fill-current', 'p-cls', 's-cls']),

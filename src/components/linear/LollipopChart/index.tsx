@@ -441,7 +441,7 @@ export const LollipopRenderer = <TData,>(
       const endAt = valueEnd(d);
       const symbolAt = inverted ? baseline : valueScale(value);
       const lineClass = twMerge(
-        'line stroke-current',
+        isVertical ? 'line stroke-current' : 'line stroke-2 stroke-current',
         classNames?.points,
         classNames?.lines,
       );

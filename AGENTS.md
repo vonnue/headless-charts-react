@@ -2343,9 +2343,9 @@ Mirrored kernel-density shapes, one per group, showing the full distribution of 
 
 **Do not use when**
 
-- Only the median and quartiles matter, or the audience will not read densities — use BoxPlotV or BoxPlotH
-- The five-number summary is already computed and there are no raw samples — use BoxPlotV or BoxPlotH
-- Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlotV / BoxPlotH if a summary is enough
+- Only the median and quartiles matter, or the audience will not read densities — use BoxPlot
+- The five-number summary is already computed and there are no raw samples — use BoxPlot
+- Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlot if a summary is enough
 - Only one group's distribution is shown — use ColumnChart with `x.bin`
 - Densities are already precomputed — use AreaChart; ViolinChart always estimates from raw rows
 - Colour would encode magnitude — colour names the group; density is width only

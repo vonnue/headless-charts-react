@@ -1,0 +1,194 @@
+[
+  {
+    "area": "src",
+    "folder": "components",
+    "file": "charts",
+    "size": 420
+  },
+  {
+    "area": "src",
+    "folder": "components",
+    "file": "gauges",
+    "size": 160
+  },
+  {
+    "area": "src",
+    "folder": "components",
+    "file": "forms",
+    "size": 90
+  },
+  {
+    "area": "src",
+    "folder": "components",
+    "file": "layout",
+    "size": 70
+  },
+  {
+    "area": "src",
+    "folder": "components",
+    "file": "typography",
+    "size": 40
+  },
+  {
+    "area": "src",
+    "folder": "hooks",
+    "file": "useAxis",
+    "size": 60
+  },
+  {
+    "area": "src",
+    "folder": "hooks",
+    "file": "useTooltip",
+    "size": 80
+  },
+  {
+    "area": "src",
+    "folder": "hooks",
+    "file": "useScale",
+    "size": 45
+  },
+  {
+    "area": "src",
+    "folder": "hooks",
+    "file": "useColor",
+    "size": 35
+  },
+  {
+    "area": "src",
+    "folder": "utils",
+    "file": "hierarchy",
+    "size": 55
+  },
+  {
+    "area": "src",
+    "folder": "utils",
+    "file": "color",
+    "size": 40
+  },
+  {
+    "area": "src",
+    "folder": "utils",
+    "file": "measure",
+    "size": 30
+  },
+  {
+    "area": "src",
+    "folder": "utils",
+    "file": "time",
+    "size": 22
+  },
+  {
+    "area": "docs",
+    "folder": "guides",
+    "file": "getting-started",
+    "size": 80
+  },
+  {
+    "area": "docs",
+    "folder": "guides",
+    "file": "theming",
+    "size": 60
+  },
+  {
+    "area": "docs",
+    "folder": "guides",
+    "file": "accessibility",
+    "size": 35
+  },
+  {
+    "area": "docs",
+    "folder": "api",
+    "file": "charts",
+    "size": 95
+  },
+  {
+    "area": "docs",
+    "folder": "api",
+    "file": "hooks",
+    "size": 40
+  },
+  {
+    "area": "docs",
+    "folder": "api",
+    "file": "catalog",
+    "size": 28
+  },
+  {
+    "area": "docs",
+    "folder": null,
+    "file": "CHANGELOG",
+    "size": 12
+  },
+  {
+    "area": "test",
+    "folder": "unit",
+    "file": "charts",
+    "size": 120
+  },
+  {
+    "area": "test",
+    "folder": "unit",
+    "file": "hooks",
+    "size": 60
+  },
+  {
+    "area": "test",
+    "folder": "unit",
+    "file": "utils",
+    "size": 40
+  },
+  {
+    "area": "test",
+    "folder": "e2e",
+    "file": "smoke",
+    "size": 40
+  },
+  {
+    "area": "test",
+    "folder": "e2e",
+    "file": "visual",
+    "size": 35
+  },
+  {
+    "area": "test",
+    "folder": "e2e",
+    "file": "a11y",
+    "size": 25
+  },
+  {
+    "area": "scripts",
+    "folder": "build",
+    "file": "bundle",
+    "size": 50
+  },
+  {
+    "area": "scripts",
+    "folder": "build",
+    "file": "types",
+    "size": 20
+  },
+  {
+    "area": "scripts",
+    "folder": "lint",
+    "file": "eslint",
+    "size": 15
+  },
+  {
+    "area": "scripts",
+    "folder": "lint",
+    "file": "prettier",
+    "size": 10
+  },
+  {
+    "area": "scripts",
+    "folder": "docs",
+    "file": "catalog",
+    "size": 18
+  },
+  {
+    "area": "scripts",
+    "folder": "docs",
+    "file": "jsdoc",
+    "size": 12
+  }
+]

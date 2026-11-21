@@ -1,0 +1,188 @@
+[
+  {
+    "department": "Ops",
+    "team": "People",
+    "item": "Salaries",
+    "amount": 280
+  },
+  {
+    "department": "Ops",
+    "team": "People",
+    "item": "Benefits",
+    "amount": 140
+  },
+  {
+    "department": "Ops",
+    "team": "People",
+    "item": "Recruiting",
+    "amount": 45
+  },
+  {
+    "department": "Ops",
+    "team": "Facilities",
+    "item": "Rent",
+    "amount": 90
+  },
+  {
+    "department": "Ops",
+    "team": "Facilities",
+    "item": "Utilities",
+    "amount": 40
+  },
+  {
+    "department": "Ops",
+    "team": "Facilities",
+    "item": "Maintenance",
+    "amount": 30
+  },
+  {
+    "department": "Ops",
+    "team": "IT",
+    "item": "Licences",
+    "amount": 70
+  },
+  {
+    "department": "Ops",
+    "team": "IT",
+    "item": "Hardware",
+    "amount": 50
+  },
+  {
+    "department": "Ops",
+    "team": "IT",
+    "item": "Support",
+    "amount": 28
+  },
+  {
+    "department": "Ops",
+    "team": null,
+    "item": "Contingency",
+    "amount": 22
+  },
+  {
+    "department": "Growth",
+    "team": "Ads",
+    "item": "Search",
+    "amount": 160
+  },
+  {
+    "department": "Growth",
+    "team": "Ads",
+    "item": "Social",
+    "amount": 100
+  },
+  {
+    "department": "Growth",
+    "team": "Ads",
+    "item": "Display",
+    "amount": 55
+  },
+  {
+    "department": "Growth",
+    "team": "Events",
+    "item": "Conferences",
+    "amount": 60
+  },
+  {
+    "department": "Growth",
+    "team": "Events",
+    "item": "Webinars",
+    "amount": 30
+  },
+  {
+    "department": "Growth",
+    "team": "Content",
+    "item": "Video",
+    "amount": 45
+  },
+  {
+    "department": "Growth",
+    "team": "Content",
+    "item": "Blog",
+    "amount": 25
+  },
+  {
+    "department": "Growth",
+    "team": "Content",
+    "item": "Design",
+    "amount": 20
+  },
+  {
+    "department": "Growth",
+    "team": "Partnerships",
+    "item": "Sponsorships",
+    "amount": 35
+  },
+  {
+    "department": "Growth",
+    "team": "Partnerships",
+    "item": "Affiliates",
+    "amount": 15
+  },
+  {
+    "department": "R&D",
+    "team": "Platform",
+    "item": "Backend",
+    "amount": 200
+  },
+  {
+    "department": "R&D",
+    "team": "Platform",
+    "item": "Frontend",
+    "amount": 110
+  },
+  {
+    "department": "R&D",
+    "team": "Platform",
+    "item": "Mobile",
+    "amount": 80
+  },
+  {
+    "department": "R&D",
+    "team": "Research",
+    "item": "Prototypes",
+    "amount": 90
+  },
+  {
+    "department": "R&D",
+    "team": "Research",
+    "item": "Papers",
+    "amount": 50
+  },
+  {
+    "department": "R&D",
+    "team": "Tooling",
+    "item": "CI",
+    "amount": 30
+  },
+  {
+    "department": "R&D",
+    "team": "Tooling",
+    "item": "Design system",
+    "amount": 15
+  },
+  {
+    "department": "G&A",
+    "team": "Finance",
+    "item": "Audit",
+    "amount": 40
+  },
+  {
+    "department": "G&A",
+    "team": "Finance",
+    "item": "Accounting",
+    "amount": 25
+  },
+  {
+    "department": "G&A",
+    "team": "Exec",
+    "item": "Travel",
+    "amount": 35
+  },
+  {
+    "department": "G&A",
+    "team": "Exec",
+    "item": "Board",
+    "amount": 18
+  }
+]

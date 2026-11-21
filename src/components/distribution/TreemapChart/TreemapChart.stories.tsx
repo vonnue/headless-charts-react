@@ -1,6 +1,7 @@
 import preview from '../../../../.storybook/preview';
 import TreemapChart from '.';
 import data from './sample.json';
+import flatData from './sample-flat.json';
 
 /**
  * Treemaps show a hierarchical part-to-whole as nested rectangles: each
@@ -65,5 +66,26 @@ export const Empty = meta.story({
     ...Default.input.args,
     id: 'treemap-empty',
     data: [],
+  },
+});
+
+const flatClassNameMap = {
+  Ops: 'fill-sky-300 stroke-white stroke-1',
+  Growth: 'fill-amber-300 stroke-white stroke-1',
+  'R&D': 'fill-emerald-300 stroke-white stroke-1',
+  'G&A': 'fill-rose-300 stroke-white stroke-1',
+};
+
+/** Flat rows: `levels` groups category columns from outer to inner. */
+export const FlatRows = meta.story({
+  args: {
+    id: 'treemap-flat-rows',
+    className: 'w-full h-96',
+    data: flatData,
+    levels: ['department', 'team', 'item'],
+    value: { key: 'amount', className: 'fill-slate-300 stroke-white stroke-1' },
+    classNameMap: flatClassNameMap,
+    labels: { name: true, value: true },
+    tooltip: { className: 'bg-white text-xs p-2 shadow' },
   },
 });

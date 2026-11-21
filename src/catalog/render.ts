@@ -128,7 +128,10 @@ export const renderAgentsMarkdown = (
 
     lines.push('**Data**');
     lines.push('');
-    lines.push(`- \`data\` shape: ${chart.data.form}`);
+    const form = Array.isArray(chart.data.form)
+      ? chart.data.form.join(', ')
+      : chart.data.form;
+    lines.push(`- \`data\` shape: ${form}`);
     if (chart.data.seriesCount) {
       lines.push(`- Series: ${cardinality(chart.data.seriesCount)}`);
     }

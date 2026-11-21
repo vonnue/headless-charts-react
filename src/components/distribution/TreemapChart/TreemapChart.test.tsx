@@ -898,7 +898,7 @@ describe('TreemapChart', () => {
 
     const meta = resolveChartRequest('TreemapChart')?.chart;
     expect(meta?.category).toBe('distribution');
-    expect(meta?.data.form).toBe('hierarchy');
+    expect(meta?.data.form).toEqual(['hierarchy', 'records']);
     expect(meta?.intents[0]).toBe('composition');
 
     expect(resolveChartRequest('heatmap')?.chart.name).not.toBe('TreemapChart');
@@ -917,5 +917,75 @@ describe('TreemapChart', () => {
     expect(composition?.options.some((o) => o.name === 'TreemapChart')).toBe(
       true
     );
+  });
+
+
+  it('17: tooltip on a flat leaf shows the path and summed value, never NaN', () => {
+    const rows = [
+      { region: 'EU', country: 'France', city: 'Paris', revenue: 10 },
+      { region: 'EU', country: 'France', city: 'Paris', revenue: 30 },
+      { region: 'EU', country: 'France', city: 'Lyon', revenue: 20 },
+      { region: 'US', country: 'USA', city: 'Austin', revenue: 15 },
+    ];
+    render(
+      <TreemapChart
+        id='t-flat-tip'
+        data={rows}
+        levels={['region', 'country', 'city']}
+        value={{ key: 'revenue' }}
+        tooltip={{}}
+        style={STYLE}
+      />
+    );
+    const paris = cellByName('Paris');
+    const hit = hitsOf().find(
+      (h) => h.getAttribute('data-index') === paris.getAttribute('data-index')
+    )!;
+    fireEvent.mouseEnter(hit, { clientX: 20, clientY: 20 });
+    const html = tooltipOf('t-flat-tip')?.innerHTML ?? '';
+    expect(html).toContain('EU › France › Paris');
+    expect(html).toContain('40');
+    expect(html).not.toMatch(/NaN|Infinity/);
+  });
+
+  it('18: 3-level flat fixture renders the expected leaf count and total', () => {
+    const rows = [
+      { region: 'EU', country: 'France', city: 'Paris', revenue: 40 },
+      { region: 'EU', country: 'France', city: 'Lyon', revenue: 20 },
+      { region: 'EU', country: 'Germany', city: 'Berlin', revenue: 30 },
+      { region: 'US', country: 'USA', city: 'New York', revenue: 50 },
+      { region: 'US', country: 'USA', city: 'Austin', revenue: 15 },
+    ];
+    render(
+      <TreemapChart
+        id='t-flat-smoke'
+        data={rows}
+        levels={['region', 'country', 'city']}
+        value={{ key: 'revenue' }}
+        tile={{ paddingInner: 0, paddingOuter: 0, paddingTop: 0 }}
+        leavesOnly
+        style={STYLE}
+      />
+    );
+    const leafCells = leaves();
+    expect(leafCells).toHaveLength(5);
+    const totalValue = leafCells.reduce(
+      (s, c) => s + Number(c.getAttribute('data-value')),
+      0
+    );
+    expect(totalValue).toBe(155);
+    const names = leafCells.map((c) => c.getAttribute('data-name')).sort();
+    expect(names).toEqual(['Austin', 'Berlin', 'Lyon', 'New York', 'Paris']);
+  });
+
+  it('19: catalog lists the records form and the levels prop; no-flat-mode wording is gone', () => {
+    const meta = resolveChartRequest('TreemapChart')?.chart;
+    expect(meta?.data.form).toEqual(['hierarchy', 'records']);
+    const levels = meta?.data.encodings.find((e) => e.prop === 'levels');
+    expect(levels?.description).toMatch(/\(missing\)/);
+    expect(JSON.stringify(meta)).not.toMatch(/no flat id\/parent/i);
+    expect(JSON.stringify(meta)).not.toMatch(/there is no flat/i);
+    expect(meta?.useWhen.some((w) => /flat table/i.test(w))).toBe(true);
+    expect(meta?.variants?.some((v) => v.name.includes('levels'))).toBe(true);
   });
 });

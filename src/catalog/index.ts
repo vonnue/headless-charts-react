@@ -32,6 +32,7 @@ import ScatterPlot from '@/components/distribution/ScatterPlot/meta';
 import SpeedometerChart from '@/components/gauges/SpeedometerChart/meta';
 import SparklineChart from '@/components/linear/SparklineChart/meta';
 import SpineChart from '@/components/linear/SpineChart/meta';
+import SunburstChart from '@/components/distribution/SunburstChart/meta';
 import TimeLineChart from '@/components/linear/TimeLineChart/meta';
 import TreemapChart from '@/components/distribution/TreemapChart/meta';
 import ViolinChart from '@/components/ranges/ViolinChart/meta';
@@ -63,6 +64,7 @@ export const chartCatalog: ChartMeta[] = [
   ParallelCoordinatesChart,
   PieChart,
   ScatterPlot,
+  SunburstChart,
   TreemapChart,
   WaffleChart,
   // ranges

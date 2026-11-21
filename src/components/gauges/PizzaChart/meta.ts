@@ -33,6 +33,7 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Several entities need comparing — a pizza shows one; use RadarChart, which overlays many',
     'The metrics are parts of one whole — use PieChart, where angle encodes share',
+    'A true hierarchical sunburst is needed — PizzaChart is a flat profile; use SunburstChart',
     'Precise values matter — radius is read poorly; use ColumnChart',
     'Each metric has its own target rather than a shared max — use RingGauge',
   ],
@@ -40,6 +41,7 @@ const meta: ChartMeta = {
     { name: 'RadarChart', when: 'several entities must be compared across the same metrics' },
     { name: 'RingGauge', when: 'each metric has its own target' },
     { name: 'PieChart', when: 'the values are parts of one whole' },
+    { name: 'SunburstChart', when: 'a hierarchical part-to-whole, not a single-entity profile' },
   ],
   requiredProps: ['id', 'data', 'metrics'],
   example: `<PizzaChart

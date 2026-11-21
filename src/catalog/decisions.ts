@@ -70,6 +70,10 @@ export const decisionTree: DecisionBranch[] = [
         name: 'TreemapChart',
         when: 'A hierarchical whole where nested group totals and their parts both matter; area encodes value (too many parts for a pie)',
       },
+      {
+        name: 'SunburstChart',
+        when: 'A nested part-to-whole as concentric rings, read from the centre outward, with optional drill-down',
+      },
     ],
   },
   {

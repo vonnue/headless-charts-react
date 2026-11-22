@@ -1,6 +1,6 @@
 import preview from '../../../../.storybook/preview';
 import { ResizableBox } from '../../../../.storybook/ResizableContainer';
-import { buildHierarchy, nameOf } from '../../../utils/hierarchy';
+import { buildHierarchy, nameOf } from '@/utils/hierarchy';
 import SunburstChart from '.';
 import data from './sample.json';
 import flatData from './sample-flat.json';

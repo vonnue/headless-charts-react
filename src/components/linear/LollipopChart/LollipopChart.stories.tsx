@@ -1,4 +1,5 @@
 import preview from '../../../../.storybook/preview';
+import { ResizableBox } from '../../../../.storybook/ResizableContainer';
 import LollipopChart from '.';
 import data from './sample.json';
 
@@ -83,4 +84,22 @@ export const Empty = meta.story({
     x: { key: 'name' },
     y: { key: 'value', start: 0 },
   },
+});
+
+/**
+ * Charts follow the size of their container, not only `style.width`/`style.height`.
+ * Drag the bottom-right corner of the box to resize it: the chart is sized with
+ * `width: 100%; height: 100%` and redraws at the new size, once per animation frame.
+ */
+export const ResizableContainer = meta.story({
+  args: {
+    ...Vertical.input.args,
+    id: 'lollipop-chart-resizable',
+    style: { width: '100%', height: '100%' },
+  },
+  render: (args) => (
+    <ResizableBox>
+      <LollipopChart {...args} />
+    </ResizableBox>
+  ),
 });

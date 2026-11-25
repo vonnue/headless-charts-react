@@ -35,7 +35,7 @@ import { defaultChartClassNames } from '@/utils';
 import { clampToDomain, isFiniteNumber, resolveBound } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
-import measureSvg from '@/utils/measureSvg';
+import useChartSize from '@/hooks/useChartSize';
 import {
   orientationMessages,
   resolveOrientation,
@@ -205,6 +205,12 @@ export const LollipopRenderer = <TData,>(
     orientation: givenOrientation,
   } = props;
   const svgRef = useRef<SVGSVGElement>(null);
+  // Redraws when the svg's rendered size changes, including container-driven
+  // resizes (#53). null until measured, so the first draw is at the real size.
+  const size = useChartSize(svgRef);
+  const measured = size !== null;
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
 
   const resolution = resolveOrientation({
     pinned,
@@ -291,7 +297,6 @@ export const LollipopRenderer = <TData,>(
     interruptTransitions(svgNode);
     svg.selectAll('*').remove();
 
-    const { width, height } = measureSvg(svgNode);
     const rawRows = isTime
       ? // rows without a readable date are not drawn (dev warning from
         // useTimeAxisWarnings)
@@ -585,9 +590,12 @@ export const LollipopRenderer = <TData,>(
     shape,
     valueConfig.start,
     valueConfig.end,
+    width,
+    height,
   ]);
 
   useEffect(() => {
+    if (!measured) return;
     refreshChart();
     // Hold the node: on unmount the cleanup runs after the svg has left the
     // document, so interrupt through this reference, not a lookup by id.
@@ -595,8 +603,8 @@ export const LollipopRenderer = <TData,>(
     return () => {
       interruptTransitions(node);
     };
-    // style is not read by refreshChart, but it sets the size it measures.
-  }, [refreshChart, style?.width, style?.height]);
+    // A style/className size change reaches refreshChart through useChartSize.
+  }, [refreshChart, measured]);
 
   return (
     <svg

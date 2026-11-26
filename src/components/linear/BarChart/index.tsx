@@ -1063,6 +1063,18 @@ export const BarRenderer = <TData,>(
         drawAxis({ ...xAxisOptions, scale: categoryScale });
       }
       valueDrawn = drawAxis({ ...yAxisOptions, scale: valueScale });
+      // #99: the left/right y-axis group is translated to the margin, so a
+      // middle-anchored title at x=0 is centred on the axis line and clips
+      // past the SVG edge. Sit the title at the plot's horizontal centre,
+      // matching the x-axis title placement used in the horizontal orientation.
+      if (layout === 'diverging') {
+        const axisX = valueLocation === 'right' ? width - m.right : m.left;
+        const title = valueDrawn.axisG.node()?.querySelector(':scope > text');
+        if (title) {
+          title.setAttribute('x', String(width / 2 - axisX));
+          title.setAttribute('text-anchor', 'middle');
+        }
+      }
     } else {
       valueDrawn = drawAxis({ ...xAxisOptions, scale: valueScale });
       if ('bandwidth' in categoryScale) {

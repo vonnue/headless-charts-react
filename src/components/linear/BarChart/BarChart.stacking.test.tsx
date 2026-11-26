@@ -323,3 +323,61 @@ describe('catalog (#41 tests 10 and 21)', () => {
     expect(resolveChartRequest('ColumnChartStacked')?.variant?.name).toBe('Stacked bar chart');
   });
 });
+
+describe('diverging axis title (#99)', () => {
+  const likert = [
+    { key: 'sd', axis: { label: 'Strongly disagree' } },
+    { key: 'd', axis: { label: 'Disagree' } },
+    { key: 'n', axis: { label: 'Neutral' } },
+    { key: 'a', axis: { label: 'Agree' } },
+    { key: 'sa', axis: { label: 'Strongly agree' } },
+  ];
+  const survey = [{ name: 'a', sd: 5, d: 10, n: 20, a: 40, sa: 25 }];
+  const stacking = { type: 'diverging' as const, negative: ['sd', 'd'], neutral: 'n' };
+  const titleText = 'Strongly disagree, Disagree, Neutral, Agree, Strongly agree';
+  const axisTitle = (id: string, axis: 'x-axis' | 'y-axis') =>
+    document.querySelector(`#${id} [data-testid="${axis}"] > text`);
+
+  it('places the vertical value-axis title at the plot centre so it stays inside the svg', () => {
+    render(
+      <BarChart
+        id='div-title-v'
+        {...chartProps('vertical', { stacking, data: survey }, likert)}
+      />,
+    );
+    const title = axisTitle('div-title-v', 'y-axis');
+    expect(title?.textContent).toBe(titleText);
+    expect(title?.getAttribute('text-anchor')).toBe('middle');
+    // Axis group is at translate(margin.left, 0); svg width is 600.
+    expect(Number(title?.getAttribute('x'))).toBe(600 / 2 - margin.left);
+    expect(document.querySelectorAll('#div-title-v [data-testid="y-axis"] .tick text').length).toBeGreaterThan(0);
+    expect(title?.parentElement?.getAttribute('data-testid')).toBe('y-axis');
+  });
+
+  it('keeps the horizontal value-axis title centred on the x-axis', () => {
+    render(
+      <BarChart
+        id='div-title-h'
+        {...chartProps('horizontal', { stacking, data: survey }, likert)}
+      />,
+    );
+    const title = axisTitle('div-title-h', 'x-axis');
+    expect(title?.textContent).toBe(titleText);
+    expect(title?.getAttribute('text-anchor')).toBe('middle');
+    expect(Number(title?.getAttribute('x'))).toBe(600 / 2);
+  });
+
+  it('does not move the title on a non-diverging vertical stack', () => {
+    render(
+      <BarChart
+        id='stack-title-v'
+        {...chartProps('vertical', { stacking: { type: 'normal' }, data: survey }, likert)}
+      />,
+    );
+    const title = axisTitle('stack-title-v', 'y-axis');
+    expect(title?.textContent).toBe(titleText);
+    expect(title?.getAttribute('text-anchor')).toBe('middle');
+    expect(Number(title?.getAttribute('x'))).toBe(0);
+  });
+});
+

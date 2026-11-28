@@ -4,7 +4,7 @@ import { line, scaleLinear } from 'd3';
 import { select, selectAll } from 'd3-selection';
 
 import { ChartProps } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
@@ -232,7 +232,7 @@ const RadarChart = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(className, defaultChartClassNames)}
+      className={chartClassName(className)}
     />
   );
 };

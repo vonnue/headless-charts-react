@@ -7,7 +7,7 @@ import useChartSize from '@/hooks/useChartSize';
 
 import { ChartProps, TooltipConfig } from '@/types';
 import { deepValue } from '@/utils';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { interpolate } from 'd3-interpolate';
 import { min } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
@@ -401,7 +401,7 @@ const PieChart = <TData = any,>({
       data-testid={id}
       style={style}
       id={id}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
     />
   );
 };

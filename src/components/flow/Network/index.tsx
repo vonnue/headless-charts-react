@@ -1,5 +1,5 @@
 import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 import { extent, max, min } from 'd3-array';
 import {
@@ -636,7 +636,7 @@ const Network = <TData = any,>({
   return (
     <svg
       ref={svgRef}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
       id={id}
       {...props}
     />

@@ -11,7 +11,7 @@ import { twMerge } from 'tailwind-merge';
 import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { ChartProps, TooltipConfig } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
@@ -978,7 +978,7 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
       role='img'
       aria-labelledby={titleId}
       aria-describedby={descId}

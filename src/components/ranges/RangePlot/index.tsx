@@ -22,11 +22,10 @@ import {
   TooltipConfig,
   ValueAxisConfig,
 } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
-import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 
 /** `key` is not read for the range axis — positions come from the range keys */
@@ -356,7 +355,7 @@ const RangePlot = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
     />
   );
 };

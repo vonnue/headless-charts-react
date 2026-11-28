@@ -22,7 +22,7 @@ import type {
   ChartProps,
   TooltipConfig,
 } from '@/types';
-import { defaultChartClassNames, binDataStats } from '@/utils';
+import { chartClassName, binDataStats } from '@/utils';
 import { resolveBound } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import {
@@ -690,7 +690,7 @@ export const BoxPlotRenderer = <TData,>(
       id={id}
       data-testid='box-plot'
       style={style}
-      className={twMerge(defaultChartClassNames, className || '')}
+      className={chartClassName(className)}
     />
   );
 };

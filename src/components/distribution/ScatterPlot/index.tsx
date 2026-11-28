@@ -17,7 +17,7 @@ import useAxis from '@/hooks/useAxis';
 import useChartSize from '@/hooks/useChartSize';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { defaultChartClassNames, binData, deepValue } from '@/utils';
+import { chartClassName, binData, deepValue } from '@/utils';
 import { resolveBound } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { scaleLinear, scaleBand, scaleSequential } from 'd3-scale';
@@ -611,7 +611,7 @@ const ScatterPlot = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className || '')}
+      className={chartClassName(className)}
     />
   );
 };

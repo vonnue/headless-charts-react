@@ -7,7 +7,7 @@ import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 
 import { GaugeProps } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { twMerge } from 'tailwind-merge';
 
@@ -242,7 +242,7 @@ const PizzaChart = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(className, defaultChartClassNames)}
+      className={chartClassName(className)}
     />
   );
 };

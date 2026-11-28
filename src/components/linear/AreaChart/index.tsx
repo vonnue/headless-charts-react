@@ -22,7 +22,7 @@ import { isFiniteNumber } from '@/utils/domain';
 import { createTimeScale, isUtcTime, makeDateParser } from '@/utils/timeScale';
 import useTooltip from '@/hooks/useTooltip';
 import { area } from 'd3-shape';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 import * as d3 from 'd3';
@@ -487,7 +487,7 @@ const AreaChart = <TData = any,>({
       data-testid={id}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
     />
   );
 };

@@ -1,7 +1,6 @@
 import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
-import { twMerge } from 'tailwind-merge';
 import { max, sum } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
@@ -361,7 +360,7 @@ const SpineChart = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
     />
   );
 };

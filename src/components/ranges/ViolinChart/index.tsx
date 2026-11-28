@@ -11,7 +11,7 @@ import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { ChartProps, TooltipConfig } from '@/types';
 import { chartClassName } from '@/utils';
-import { isFiniteNumber, resolveBound } from '@/utils/domain';
+import { isFiniteNumber, niceDomain, resolveBound } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { resolveDrawing } from '@/utils/drawing';
@@ -361,7 +361,6 @@ const ViolinChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
       lo -= 1;
       hi += 1;
     }
-    const niced = scaleLinear().domain([lo, hi]).nice().domain();
     let start = resolveBound(value.start, undefined);
     let end = resolveBound(value.end, undefined);
     if (start !== undefined && end !== undefined && start > end) {
@@ -371,7 +370,7 @@ const ViolinChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
       );
       start = end = undefined;
     }
-    const domain: [number, number] = [start ?? niced[0], end ?? niced[1]];
+    const domain = niceDomain(lo, hi, { start, end });
 
     // --- plot rect and scales
     const vertical = orientation === 'vertical';

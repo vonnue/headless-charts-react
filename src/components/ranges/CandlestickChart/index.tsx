@@ -11,7 +11,7 @@ import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { chartClassName } from '@/utils';
-import { isFiniteNumber } from '@/utils/domain';
+import { isFiniteNumber, niceDomain } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import {
   DEFAULT_TIME_FORMAT,
@@ -321,21 +321,15 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
     if (candles.length === 0) return;
 
     // --- price domain: niced low..high (drawn extent), no forced zero.
-    let lo = Math.min(...candles.map((c) => c.drawLow));
-    let hi = Math.max(...candles.map((c) => c.drawHigh));
-    let niced: number[];
-    if (lo === hi) {
-      lo -= 1;
-      hi += 1;
-      niced = [lo, hi];
-    } else niced = scaleLinear().domain([lo, hi]).nice().domain();
+    const lo = Math.min(...candles.map((c) => c.drawLow));
+    const hi = Math.max(...candles.map((c) => c.drawHigh));
     let yStart = isFiniteNumber(y?.start) ? y?.start : undefined;
     let yEnd = isFiniteNumber(y?.end) ? y?.end : undefined;
     if (yStart !== undefined && yEnd !== undefined && yStart > yEnd) {
       warn('y-domain', `y.start (${yStart}) > y.end (${yEnd}); both pins are ignored.`);
       yStart = yEnd = undefined;
     }
-    const yDomain: [number, number] = [yStart ?? niced[0], yEnd ?? niced[1]];
+    const yDomain = niceDomain(lo, hi, { start: yStart, end: yEnd });
 
     // --- plot rect
     const m = { ...DEFAULT_MARGIN, ...margin };

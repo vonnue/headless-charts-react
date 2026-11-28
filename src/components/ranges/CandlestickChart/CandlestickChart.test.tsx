@@ -1463,3 +1463,78 @@ describe('CandlestickChart', () => {
     }
   });
 });
+
+describe('CandlestickChart flat y domain (#115)', () => {
+  let warn: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    resetDevWarnings();
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    warn.mockRestore();
+    document.querySelectorAll('[id^="tooltip"]').forEach((el) => el.remove());
+  });
+
+  const yTicks = () =>
+    axisTicks('y-axis').map((t) => t.value).filter(Number.isFinite);
+  const spans = (lo: number, hi: number) => {
+    const ticks = yTicks();
+    expect(ticks.length).toBeGreaterThan(1);
+    expect(Math.min(...ticks)).toBeGreaterThanOrEqual(lo);
+    expect(Math.max(...ticks)).toBeLessThanOrEqual(hi);
+    expect(Math.max(...ticks)).toBeGreaterThan(Math.min(...ticks));
+  };
+  const around: Row[] = [
+    { date: '2025-01-06', o: 108, h: 120, l: 100, c: 115 },
+    { date: '2025-01-07', o: 115, h: 118, l: 105, c: 110 },
+  ];
+
+  it('flat data (unchanged): [v - 1, v + 1], not niced', () => {
+    const flat: Row[] = [{ date: '2025-01-06', o: 100, h: 100, l: 100, c: 100 }];
+    render(<CandlestickChart id='nd-flat' data={flat} x={X} {...KEYS} style={STYLE} />);
+    spans(99, 101);
+  });
+
+  it('equal y.start / y.end pins are padded to [v - 1, v + 1] (changed: was zero-width)', () => {
+    render(
+      <CandlestickChart
+        id='nd-eq'
+        data={around}
+        x={X}
+        {...KEYS}
+        y={{ start: 110, end: 110 }}
+        style={STYLE}
+      />
+    );
+    spans(109, 111);
+  });
+
+  it('a pin that collides with the other niced end is padded (changed)', () => {
+    // data 100..120 nices to [100, 120]; start: 120 would leave [120, 120].
+    render(
+      <CandlestickChart
+        id='nd-collide'
+        data={around}
+        x={X}
+        {...KEYS}
+        y={{ start: 120 }}
+        style={STYLE}
+      />
+    );
+    spans(119, 121);
+  });
+
+  it('distinct pins and unpinned axes are unchanged', () => {
+    render(
+      <CandlestickChart
+        id='nd-same'
+        data={around}
+        x={X}
+        {...KEYS}
+        y={{ start: 90, end: 130 }}
+        style={STYLE}
+      />
+    );
+    spans(90, 130);
+  });
+});

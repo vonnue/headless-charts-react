@@ -12,7 +12,7 @@ import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { ChartProps, TooltipConfig } from '@/types';
 import { chartClassName } from '@/utils';
-import { isFiniteNumber, resolveBound } from '@/utils/domain';
+import { isFiniteNumber, niceDomain, resolveBound, zeroSpread } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { resolveDrawing } from '@/utils/drawing';
@@ -464,13 +464,12 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
 
       const present = nums.filter((v): v is number => v !== null);
       const make = () => (isLog ? scaleLog() : scaleLinear());
-      const zeroSpread = (v: number): [number, number] =>
-        isLog ? [v / 10, v * 10] : [v - 1, v + 1];
+      const scaleType = isLog ? 'log' : 'linear';
       let domain: [number, number];
       let empty = false;
       if (present.length === 0) {
         if (start !== undefined && end !== undefined)
-          domain = start === end ? zeroSpread(start) : [start, end];
+          domain = start === end ? zeroSpread(start, scaleType) : [start, end];
         else {
           empty = true;
           domain = isLog ? [1, 10] : [0, 1];
@@ -478,17 +477,12 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
       } else {
         const lo = Math.min(...present);
         const hi = Math.max(...present);
-        const niced = (
-          lo === hi ? zeroSpread(lo) : (make().domain([lo, hi]).nice().domain() as [number, number])
-        );
-        let dLo = start ?? niced[0];
-        let dHi = end ?? niced[1];
-        if (dLo > dHi) {
+        domain = niceDomain(lo, hi, { start, end, scale: scaleType });
+        if (domain[0] > domain[1]) {
           // A single pin beyond the data's other end: fall back to the data.
           warn(`pins:${key}`, `dimension "${key}" has a pin beyond the data extent; the pin is ignored.`);
-          [dLo, dHi] = niced;
-        } else if (dLo === dHi) [dLo, dHi] = zeroSpread(dLo);
-        domain = [dLo, dHi];
+          domain = niceDomain(lo, hi, { scale: scaleType });
+        }
       }
 
       // Out of a pinned domain → missing (clamping would draw a false value).

@@ -450,8 +450,8 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
         elements.set(f, disc.node()!);
       }
 
-      const { duration: drawDuration, delay } = resolveDrawing(drawing);
-      const duration = initial ? drawDuration : 0;
+      const resolved = resolveDrawing(drawing);
+      const duration = initial ? resolved.duration : 0;
       const arcs = marksG
         .selectAll('path')
         .data(ringNodes)
@@ -470,7 +470,7 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
         arcs
           .transition()
           .duration(duration)
-          .delay(delay)
+          .delay(resolved.delay)
           .attrTween('d', (n) => (t: number) => markPath(n, view, t));
 
       // --- zoom wiring (keyboard on the focusable marks; clicks on hit areas)

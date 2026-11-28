@@ -489,10 +489,10 @@ export const BoxPlotRenderer = <TData,>(
       statKeys.every((k) => Number.isFinite(num(d, k))),
     );
 
-    const { duration, delay: stagger } = resolveDrawing(drawing);
-    const animate = Number.isFinite(duration) && duration > 0;
+    const { duration, delay } = resolveDrawing(drawing);
+    const animate = duration > 0;
     const rowIndex = new Map(rows.map((d, i) => [d, i]));
-    const delayOf = (d: Row) => (rowIndex.get(d) ?? 0) * stagger;
+    const delayOf = (d: Row) => (rowIndex.get(d) ?? 0) * delay;
 
     const draw = (
       el: Selection<SVGElement, Row, SVGGElement, unknown>,

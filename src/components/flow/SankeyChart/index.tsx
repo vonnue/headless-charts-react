@@ -442,8 +442,7 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
     };
 
     const { duration, delay } = resolveDrawing(drawing);
-    const animate = Number.isFinite(duration) && duration > 0;
-    const startDelay = Number.isFinite(delay) && delay > 0 ? delay : 0;
+    const animate = duration > 0;
     // Split duration into 2L−1 equal steps: nodes 0, links from 0, nodes 1,
     // …, nodes L−1. A link from layer s to t starts after s's nodes and
     // ends when t's nodes start, so a skip-layer link lasts 2(t−s)−1 steps.
@@ -451,11 +450,11 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
     const steps = Math.max(1, 2 * layers - 1);
     const step = animate ? duration / steps : 0;
     const nodeDraw = (layer: number) => ({
-      delay: startDelay + 2 * layer * step,
+      delay: delay + 2 * layer * step,
       duration: step,
     });
     const linkDraw = (sourceLayer: number, targetLayer: number) => ({
-      delay: startDelay + (2 * sourceLayer + 1) * step,
+      delay: delay + (2 * sourceLayer + 1) * step,
       duration: Math.max(0, 2 * (targetLayer - sourceLayer) - 1) * step,
     });
 

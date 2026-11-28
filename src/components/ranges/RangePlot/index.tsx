@@ -23,7 +23,7 @@ import {
   ValueAxisConfig,
 } from '@/types';
 import { chartClassName } from '@/utils';
-import { isFiniteNumber } from '@/utils/domain';
+import { resolveBound } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
 import { zoom } from 'd3-zoom';
@@ -144,9 +144,9 @@ const RangePlot = <TData = any,>({
       /* eslint-disable */
       .domain([
         // @ts-ignore
-        isFiniteNumber(x.start) ? x.start : min(data.map((d) => d[x.minKey])),
+        resolveBound(x.start, min(data.map((d) => d[x.minKey]))),
         // @ts-ignore
-        isFiniteNumber(x.end) ? x.end : max(data.map((d) => d[x.maxKey])),
+        resolveBound(x.end, max(data.map((d) => d[x.maxKey]))),
       ])
       // @ts-ignore
       .range([(margin.left ?? 0), width - (padding.right ?? 0) - (margin.right ?? 0)]);

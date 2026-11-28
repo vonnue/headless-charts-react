@@ -12,7 +12,7 @@ import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { ChartProps, TooltipConfig } from '@/types';
 import { chartClassName } from '@/utils';
-import { isFiniteNumber } from '@/utils/domain';
+import { isFiniteNumber, resolveBound } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 
@@ -449,8 +449,8 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
       if (nonPositive)
         warn(`log:${key}`, `log axis "${key}" has values ≤ 0; they are treated as missing.`);
 
-      let start: number | undefined = isFiniteNumber(cfg.start) ? cfg.start : undefined;
-      let end: number | undefined = isFiniteNumber(cfg.end) ? cfg.end : undefined;
+      let start: number | undefined = resolveBound(cfg.start, undefined);
+      let end: number | undefined = resolveBound(cfg.end, undefined);
       if (isLog) {
         if (start !== undefined && start <= 0) start = undefined;
         if (end !== undefined && end <= 0) end = undefined;

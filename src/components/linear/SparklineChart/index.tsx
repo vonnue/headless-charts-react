@@ -10,7 +10,7 @@ import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import type { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { chartClassName } from '@/utils';
-import { isFiniteNumber } from '@/utils/domain';
+import { isFiniteNumber, resolveBound } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import {
@@ -272,8 +272,8 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
     let xPos: (v: Date | number | string) => number;
     if (isTime || isNumeric) {
       const nums = rows.map((r) => +r.x);
-      const lo = isFiniteNumber(x.start) ? x.start : Math.min(...nums);
-      const hi = isFiniteNumber(x.end) ? x.end : Math.max(...nums);
+      const lo = resolveBound(x.start, Math.min(...nums));
+      const hi = resolveBound(x.end, Math.max(...nums));
       const scale = isTime
         ? createTimeScale(x).domain([lo, hi]).range([0, innerWidth])
         : scaleLinear().domain([lo, hi]).range([0, innerWidth]);
@@ -295,8 +295,8 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
 
     // Shared y domain: exact min..max, pins honoured, flat → v ± 1.
     const all = pointsBySeries.flat().map((p) => p.value);
-    let pinStart = isFiniteNumber(domain?.start) ? domain!.start : undefined;
-    let pinEnd = isFiniteNumber(domain?.end) ? domain!.end : undefined;
+    let pinStart = resolveBound(domain?.start, undefined);
+    let pinEnd = resolveBound(domain?.end, undefined);
     if (pinStart !== undefined && pinEnd !== undefined && pinStart > pinEnd) {
       warnOnceInDev(
         `SparklineChart#${id}:domain:${pinStart}:${pinEnd}`,

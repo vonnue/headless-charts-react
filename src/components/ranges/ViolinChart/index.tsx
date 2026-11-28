@@ -14,6 +14,7 @@ import { chartClassName } from '@/utils';
 import { isFiniteNumber, resolveBound } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
+import { resolveDrawing } from '@/utils/drawing';
 import {
   BandwidthRule,
   DensityPoint,
@@ -477,8 +478,7 @@ const ViolinChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
     const pointOpt = points === true ? {} : points || null;
     // Jitter is seeded by each row's index in `data`, so it is stable.
     const rowIndex = new Map<Row, number>(rowsIn.map((row, i) => [row, i]));
-    const duration = drawing?.duration ?? 0;
-    const delay = drawing?.delay ?? 0;
+    const { duration, delay } = resolveDrawing(drawing);
 
     const violinPath = (g: Group, grow: number) => {
       const c = mid(g);

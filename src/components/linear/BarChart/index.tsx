@@ -46,6 +46,7 @@ import {
   useTimeAxisWarnings,
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
+import { resolveDrawing } from '@/utils/drawing';
 
 /** A value series: one bar (or segment) per row. */
 export interface BarSeriesConfig<TData = any> extends AxisConfig<TData> {
@@ -739,8 +740,7 @@ export const BarRenderer = <TData,>(
     }
     const thickness = Math.max(0, rawThickness);
 
-    const duration = drawing.duration ?? 0;
-    const delay = drawing.delay ?? 0;
+    const { duration, delay } = resolveDrawing(drawing);
 
     const handlers = {
       over: (event: MouseEvent, d: Row) =>

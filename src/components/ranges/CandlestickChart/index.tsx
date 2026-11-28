@@ -21,6 +21,7 @@ import {
   useTimeAxisWarnings,
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
+import { resolveDrawing } from '@/utils/drawing';
 import {
   Candle,
   CandleDatum,
@@ -445,8 +446,7 @@ const CandlestickChart = <TData = any,>({ // eslint-disable-line @typescript-esl
       .attr('data-testid', 'candles')
       .attr('clip-path', `url(#${clipId})`);
 
-    const duration = isFiniteNumber(drawing?.duration) ? drawing.duration : 0;
-    const delay = isFiniteNumber(drawing?.delay) && drawing.delay > 0 ? drawing.delay : 0;
+    const { duration, delay } = resolveDrawing(drawing);
     const animate = duration > 0;
     // Motion is resolved once per refresh. Omitted, unknown or invalid → 'grow'.
     const rawMotion: unknown = drawing?.motion;

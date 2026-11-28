@@ -20,6 +20,7 @@ import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { chartClassName, binData, deepValue } from '@/utils';
 import { resolveBound } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
+import { resolveDrawing } from '@/utils/drawing';
 import { scaleLinear, scaleBand, scaleSequential } from 'd3-scale';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
@@ -469,6 +470,7 @@ const ScatterPlot = <TData = any,>({
         ])
         .range([size.min, size.max]);
 
+    const { delay } = resolveDrawing(drawing);
     const shapeMapping: any = {
       circle: symbolCircle,
       diamond: symbolDiamond,
@@ -496,7 +498,7 @@ const ScatterPlot = <TData = any,>({
         )
       )
       .attr('d', (d: any) => {
-        return drawing?.delay
+        return delay
           ? ``
           : symbol(
               shape?.shapeMap
@@ -516,10 +518,10 @@ const ScatterPlot = <TData = any,>({
         onClick && onClick(event, d);
       });
 
-    drawing?.delay &&
+    delay &&
       points
         .transition()
-        .delay((_, i) => i * (drawing.delay || 0))
+        .delay((_, i) => i * delay)
 
         .attr('d', (d: any) =>
           symbol(
@@ -543,13 +545,13 @@ const ScatterPlot = <TData = any,>({
         .attr('clip-path', `url(#${id}-plot-clip)`)
         .attr('d', newLine);
 
-      if (drawing && drawing.delay) {
+      if (delay) {
         const l = pointsPath?.node()?.getTotalLength();
 
         pointsPath
           .attr('stroke-dasharray', `0,${l}`)
           .transition()
-          .duration(drawing.delay * data.length)
+          .duration(delay * data.length)
           .attr('stroke-dasharray', `${l},${l}`);
       }
     }

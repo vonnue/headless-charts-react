@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { select } from 'd3-selection';
 
 import { chartClassName } from '@/utils';
+import { resolveDrawing } from '@/utils/drawing';
 import { GaugeProps } from '@/types';
 import { interpolateNumber } from 'd3-interpolate';
 import { min } from 'd3-array';
@@ -163,6 +164,10 @@ const RingGauge = <TData = any,>({
     const innerWidth = width - (margin.left || 0) - (margin.right || 0),
       innerHeight = height - (margin.top || 0) - (margin.bottom || 0),
       chartRadius = Math.min(innerHeight, innerWidth) / 2;
+    const { duration, delay } = resolveDrawing(
+      { duration: drawing?.duration, delay: drawing?.delay },
+      { duration: 1000 }
+    );
 
     const scale = scaleLinear()
       .domain([0, 1])
@@ -218,8 +223,8 @@ const RingGauge = <TData = any,>({
       .on('mousemove', (e, d) => tooltipHandlers.current?.onMouseMove(e, d))
       .on('mouseleave', () => tooltipHandlers.current?.onMouseLeave())
       .transition()
-      .duration(drawing?.duration || 1000)
-      .delay(drawing?.delay || 0)
+      .duration(duration)
+      .delay(delay)
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       .attrTween('d', (d: any, i: number) => {

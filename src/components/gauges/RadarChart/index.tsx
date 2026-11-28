@@ -6,6 +6,7 @@ import { select, selectAll } from 'd3-selection';
 import { ChartProps } from '@/types';
 import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
+import { resolveDrawing } from '@/utils/drawing';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
 
@@ -204,14 +205,16 @@ const RadarChart = <TData = any,>({
         return radarLine(getPathCoordinates(d));
       });
 
-    if (drawing)
+    if (drawing) {
+      const { duration, delay } = resolveDrawing(drawing, { duration: 1000 });
       radarArcs
         .transition()
-        .duration(drawing?.duration || 1000)
-        .delay(drawing.delay || 0)
+        .duration(duration)
+        .delay(delay)
         .attr('d', (d: any) => {
           return radarLine(getPathCoordinates(d));
         });
+    }
   }, [width, height, classNameMap, data, id, label, margin, max, metrics, min, drawing]);
 
   useEffect(() => {

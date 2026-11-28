@@ -21,6 +21,7 @@ import { useCallback, useEffect, useRef, useMemo } from 'react';
 import { createTimeScale, makeDateParser } from '@/utils/timeScale';
 import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types';
 import { chartClassName } from '@/utils';
+import { resolveDrawing } from '@/utils/drawing';
 import { isFiniteNumber, pinnedEnd, pinnedStart, resolveBound } from '@/utils/domain';
 import { easeLinear } from 'd3';
 import { zoom } from 'd3-zoom';
@@ -308,6 +309,8 @@ const LineChart = <TData = any,>({
 
     const g = svg.append('g');
 
+    const { duration } = resolveDrawing(drawing);
+
     const minLeftYs = resolveBound(
         pinnedStart(allLeftY.map((column) => column.start)),
         min(allLeftY.map((column) => min(data.map((d: any) => d[column.key]))))
@@ -508,7 +511,7 @@ const LineChart = <TData = any,>({
               yLeftFn(seriesData[seriesData.length - 1][column.key])
             );
 
-        if (drawing && drawing.duration) {
+        if (duration) {
           // @ts-ignore
           const l = seriesPath.node().getTotalLength();
 
@@ -516,7 +519,7 @@ const LineChart = <TData = any,>({
             .attr('stroke-dasharray', `0,${l}`)
             .transition()
             .ease(easeLinear)
-            .duration(drawing.duration)
+            .duration(duration)
             .attr('stroke-dasharray', `${l},${l}`);
         }
 
@@ -608,14 +611,14 @@ const LineChart = <TData = any,>({
               yRightFn(seriesData[seriesData.length - 1][column.key])
             );
 
-        if (drawing && drawing.duration) {
+        if (duration) {
           // @ts-ignore
           const l = seriesPath.node().getTotalLength();
 
           seriesPath
             .attr('stroke-dasharray', `0,${l}`)
             .transition()
-            .duration(drawing.duration)
+            .duration(duration)
             .attr('stroke-dasharray', `${l},${l}`);
         }
 

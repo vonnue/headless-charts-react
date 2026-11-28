@@ -9,6 +9,7 @@ import useChartSize from '@/hooks/useChartSize';
 import { GaugeProps } from '@/types';
 import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
+import { resolveDrawing } from '@/utils/drawing';
 import { twMerge } from 'tailwind-merge';
 
 export interface PizzaChartProps<TData = any> extends Omit<GaugeProps<TData>, 'data'> {
@@ -137,6 +138,7 @@ const PizzaChart = <TData = any,>({
       );
 
     const radiusScale = scaleLinear().domain([min, max]).range([0, maxRadius]);
+    const { duration, delay } = resolveDrawing(drawing);
 
     const pieFn = pie();
 
@@ -172,7 +174,7 @@ const PizzaChart = <TData = any,>({
         arc()
           .innerRadius(0)
           .outerRadius((metric: any) =>
-            drawing?.duration
+            duration
               ? 0
               : radiusScale((data as any)[metrics[metric.index].key])
           )
@@ -188,11 +190,11 @@ const PizzaChart = <TData = any,>({
 
     transition();
 
-    if (drawing?.duration) {
+    if (duration) {
       arcs
         .transition()
-        .duration(drawing.duration)
-        .delay((_, i: number) => i * (drawing?.delay || 0))
+        .duration(duration)
+        .delay((_, i: number) => i * delay)
         // @ts-ignore
         .attrTween('d', (d: any) => {
           const interpolationFn = interpolateNumber(

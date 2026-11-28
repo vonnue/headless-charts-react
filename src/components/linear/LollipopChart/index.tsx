@@ -50,6 +50,7 @@ import {
   timePosition,
   useTimeAxisWarnings,
 } from '@/utils/timeScale';
+import { resolveDrawing } from '@/utils/drawing';
 
 export type LollipopShape =
   | 'circle'
@@ -482,8 +483,7 @@ export const LollipopRenderer = <TData,>(
         ? `translate(${pos},${symbolAt})`
         : `translate(${symbolAt},${pos})`;
 
-      const duration = drawing.duration ?? 0;
-      const delayMs = drawing.delay ?? 0;
+      const { duration, delay } = resolveDrawing(drawing);
       if (!duration) {
         applyStemEnd();
         marker.attr('transform', endTransform);
@@ -493,7 +493,7 @@ export const LollipopRenderer = <TData,>(
         line
           .transition()
           .duration(duration)
-          .delay(rowIndex * delayMs)
+          .delay(rowIndex * delay)
           .call((t) => {
             if (isVertical) t.attr('y1', endAt).attr('y2', baseline);
             else t.attr('x1', baseline).attr('x2', endAt);
@@ -501,7 +501,7 @@ export const LollipopRenderer = <TData,>(
         marker
           .transition()
           .duration(duration)
-          .delay(rowIndex * delayMs)
+          .delay(rowIndex * delay)
           .attr('transform', endTransform);
       }
     });

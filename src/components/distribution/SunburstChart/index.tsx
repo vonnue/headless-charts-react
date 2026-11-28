@@ -41,6 +41,7 @@ export type {
   NestedHierarchyDatum,
   NestedHierarchyFields,
 } from '@/utils/hierarchy';
+import { resolveDrawing } from '@/utils/drawing';
 
 /** Treemap's minWidth/minHeight are rectangular; Sunburst swaps them for arc gates. */
 type SunburstLabels<
@@ -449,7 +450,8 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
         elements.set(f, disc.node()!);
       }
 
-      const duration = initial ? drawing?.duration ?? 0 : 0;
+      const resolved = resolveDrawing(drawing);
+      const duration = initial ? resolved.duration : 0;
       const arcs = marksG
         .selectAll('path')
         .data(ringNodes)
@@ -468,7 +470,7 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
         arcs
           .transition()
           .duration(duration)
-          .delay(drawing?.delay ?? 0)
+          .delay(resolved.delay)
           .attrTween('d', (n) => (t: number) => markPath(n, view, t));
 
       // --- zoom wiring (keyboard on the focusable marks; clicks on hit areas)

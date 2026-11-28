@@ -10,7 +10,7 @@ import {
   symbolTriangle,
   symbolWye,
 } from 'd3-shape';
-import { max, min, thresholdSturges } from 'd3-array';
+import { extent, max, thresholdSturges } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
 import useAxis from '@/hooks/useAxis';
@@ -416,35 +416,14 @@ const ScatterPlot = <TData = any,>({
     // A finite start/end pins that end of the axis; anything else (undefined,
     // null, NaN, ±Infinity) falls back to the data extent.
     const setDefaultDomain = (xFn: any, yFn: any) => {
-      xFn.domain([
-        resolveBound(
-          x.start,
-          min(
-            data.map((d: any) => (x.convert ? x.convert(d[x.key]) : d[x.key]))
-          )
-        ),
-        resolveBound(
-          x.end,
-          max(
-            data.map((d: any) => (x.convert ? x.convert(d[x.key]) : d[x.key]))
-          )
-        ),
-      ]);
-
-      yFn.domain([
-        resolveBound(
-          y.start,
-          min(
-            data.map((d: any) => (y.convert ? y.convert(d[y.key]) : d[y.key]))
-          )
-        ),
-        resolveBound(
-          y.end,
-          max(
-            data.map((d: any) => (y.convert ? y.convert(d[y.key]) : d[y.key]))
-          )
-        ),
-      ]);
+      const [xMin, xMax] = extent(
+        data.map((d: any) => (x.convert ? x.convert(d[x.key]) : d[x.key]))
+      );
+      const [yMin, yMax] = extent(
+        data.map((d: any) => (y.convert ? y.convert(d[y.key]) : d[y.key]))
+      );
+      xFn.domain([resolveBound(x.start, xMin), resolveBound(x.end, xMax)]);
+      yFn.domain([resolveBound(y.start, yMin), resolveBound(y.end, yMax)]);
     };
 
     const yFn = scaleLinear().range([
@@ -484,10 +463,12 @@ const ScatterPlot = <TData = any,>({
       size.min &&
       size.max &&
       scaleLinear()
-        .domain([
-          min(data, (d: any) => (size.key ? d[size.key] : 1)),
-          max(data, (d: any) => (size.key ? d[size.key] : 1)),
-        ])
+        .domain(
+          extent(data, (d: any) => (size.key ? d[size.key] : 1)) as [
+            number,
+            number,
+          ]
+        )
         .range([size.min, size.max]);
 
     const { delay } = resolveDrawing(drawing);

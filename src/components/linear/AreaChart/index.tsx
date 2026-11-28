@@ -1,4 +1,4 @@
-import { max, min } from 'd3-array';
+import { extent as d3Extent, max, min } from 'd3-array';
 import { scaleLinear } from 'd3';
 import { select } from 'd3-selection';
 import {
@@ -287,29 +287,17 @@ const AreaChart = <TData = any,>({
       x.scalingFunction === 'time' ? createTimeScale(x) : scaleLinear();
 
     const setDefaultXDomain = (xFunction: any) => {
-      x.scalingFunction === 'time'
-        ? xFunction.domain([
-            isFiniteNumber(x.start)
-              ? x.start
-              : min(data.map((d) => toDateTime(d))),
-            isFiniteNumber(x.end)
-              ? x.end
-              : max(data.map((d) => toDateTime(d))),
-          ])
-        : xFunction.domain([
-            isFiniteNumber(x.start)
-              ? x.start
-              : !x.convert
-              ? min(data.map((d: any) => d[x.key]))
-              : // @ts-ignore
-                min(data.map((d: any) => x.convert(d))),
-            isFiniteNumber(x.end)
-              ? x.end
-              : x.convert
-              ? // @ts-ignore
-                max(data.map((d) => x.convert(d)))
-              : max(data.map((d: any) => d[x.key])),
-          ]);
+      const [dataStart, dataEnd] =
+        x.scalingFunction === 'time'
+          ? d3Extent(data, (d) => toDateTime(d))
+          : d3Extent(data, (d: any) =>
+              // @ts-ignore
+              x.convert ? x.convert(d) : d[x.key]
+            );
+      xFunction.domain([
+        isFiniteNumber(x.start) ? x.start : dataStart,
+        isFiniteNumber(x.end) ? x.end : dataEnd,
+      ]);
     };
 
     setDefaultXDomain(xFn);

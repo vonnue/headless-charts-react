@@ -1,4 +1,4 @@
-import { bisector } from 'd3-array';
+import { bisector, extent } from 'd3-array';
 import { format as d3Format } from 'd3-format';
 import { scaleBand, scaleLinear, scalePoint } from 'd3-scale';
 import { pointer, select, type Selection } from 'd3-selection';
@@ -277,8 +277,9 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
     let xPos: (v: Date | number | string) => number;
     if (isTime || isNumeric) {
       const nums = rows.map((r) => +r.x);
-      const lo = resolveBound(x.start, Math.min(...nums));
-      const hi = resolveBound(x.end, Math.max(...nums));
+      const [dataLo = NaN, dataHi = NaN] = extent(nums);
+      const lo = resolveBound(x.start, dataLo);
+      const hi = resolveBound(x.end, dataHi);
       const scale = isTime
         ? createTimeScale(x).domain([lo, hi]).range([0, innerWidth])
         : scaleLinear().domain([lo, hi]).range([0, innerWidth]);
@@ -309,8 +310,9 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
       );
       pinStart = pinEnd = undefined;
     }
-    let yLo = pinStart ?? (all.length ? Math.min(...all) : NaN);
-    let yHi = pinEnd ?? (all.length ? Math.max(...all) : NaN);
+    const [dataYLo, dataYHi] = extent(all);
+    let yLo = pinStart ?? (all.length ? dataYLo! : NaN);
+    let yHi = pinEnd ?? (all.length ? dataYHi! : NaN);
     if (yLo === yHi) {
       yLo -= 1;
       yHi += 1;

@@ -1,3 +1,4 @@
+import { extent } from 'd3-array';
 import { axisBottom, axisLeft, AxisScale } from 'd3-axis';
 import { BrushBehavior, brushX, brushY, D3BrushEvent } from 'd3-brush';
 import { format as d3Format } from 'd3-format';
@@ -846,7 +847,8 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
       if (px.length === 0) return undefined;
       const scale = d.axisScale as unknown as { step: () => number };
       const pad = Math.max(1, scale.step() / 4);
-      return [Math.min(...px) - pad, Math.max(...px) + pad];
+      const [lo, hi] = extent(px) as [number, number];
+      return [lo - pad, hi + pad];
     };
 
     const brushLayer = root.append('g').attr('class', 'pc-brushes');

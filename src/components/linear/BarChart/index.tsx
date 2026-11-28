@@ -6,7 +6,7 @@ import {
   useRef,
   type CSSProperties,
 } from 'react';
-import { max, min } from 'd3-array';
+import { extent, max, min } from 'd3-array';
 import { format as d3format } from 'd3-format';
 import {
   scaleBand,
@@ -651,11 +651,10 @@ export const BarRenderer = <TData,>(
     let dataMin: number | undefined;
     let dataMax: number | undefined;
     if (!stacked) {
-      dataMin = min(effectiveSeries, (column) =>
-        min(effectiveData, (d) => valueOf(d, column.key)),
-      );
-      dataMax = max(effectiveSeries, (column) =>
-        max(effectiveData, (d) => valueOf(d, column.key)),
+      [dataMin, dataMax] = extent(
+        effectiveSeries.flatMap((column) =>
+          effectiveData.map((d) => valueOf(d, column.key)),
+        ).filter((v): v is number => v !== undefined),
       );
     } else if (anyFinite) {
       if (layout === '100%') {

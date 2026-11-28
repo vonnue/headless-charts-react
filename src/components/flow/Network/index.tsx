@@ -1,7 +1,7 @@
 import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { chartClassName } from '@/utils';
 import { twMerge } from 'tailwind-merge';
-import { extent, max, min } from 'd3-array';
+import { extent } from 'd3-array';
 import {
   Simulation,
   SimulationLinkDatum,
@@ -304,13 +304,13 @@ const drawEdges = (
   edgeDef: EdgeDef
 ): LinkSelection => {
   const size = edgeDef?.size;
+  const [edgeLo = NaN, edgeHi = NaN] = size?.min && size?.max
+    ? extent(edges, (d) => (size.key ? field(d, size.key) : 1))
+    : [];
   const strokeWidthScale =
     size?.min && size?.max
       ? scaleLinear()
-          .domain([
-            min(edges, (d) => (size.key ? field(d, size.key) : 1)) ?? NaN,
-            max(edges, (d) => (size.key ? field(d, size.key) : 1)) ?? NaN,
-          ])
+          .domain([edgeLo, edgeHi])
           .range([size.min, size.max])
       : undefined;
 
@@ -370,13 +370,13 @@ const makeTicked = (
   const posY = (n: NodeDatum) => (yKey && yScale ? yScale(field(n, yKey)) : n.y);
 
   const size = nodeDef?.size;
+  const [nodeLo = NaN, nodeHi = NaN] = size && size.min && size.max
+    ? extent(nodes, (d) => (size.key ? field(d, size.key) : 1))
+    : [];
   const sizeScale =
     size && size.min && size.max
       ? scaleLinear()
-          .domain([
-            min(nodes, (d) => (size.key ? field(d, size.key) : 1)) ?? NaN,
-            max(nodes, (d) => (size.key ? field(d, size.key) : 1)) ?? NaN,
-          ])
+          .domain([nodeLo, nodeHi])
           .range([size.min, size.max])
       : undefined;
   const shape = nodeDef?.shape;

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { scaleSequential } from 'd3-scale';
-import { min as d3min, max as d3max } from 'd3-array';
+import { extent } from 'd3-array';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { deepValue, binData } from '@/utils';
@@ -238,8 +238,9 @@ const WaffleChart = <TData = any,>({
       const colorValues = effectiveData.map(
         (d) => Number(deepValue(d, effectiveColorKey)) || 0
       );
-      const domainMin = color.domain?.[0] ?? d3min(colorValues) ?? 0;
-      const domainMax = color.domain?.[1] ?? d3max(colorValues) ?? 1;
+      const [cMin, cMax] = extent(colorValues);
+      const domainMin = color.domain?.[0] ?? cMin ?? 0;
+      const domainMax = color.domain?.[1] ?? cMax ?? 1;
       const seq = scaleSequential(color.scale).domain([domainMin, domainMax]);
       colorFn = (d: any) => seq(Number(deepValue(d, effectiveColorKey)) || 0);
     }

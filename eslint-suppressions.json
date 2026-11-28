@@ -19,7 +19,7 @@
   },
   "src/components/distribution/ScatterPlot/index.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 30
+      "count": 27
     },
     "@typescript-eslint/no-unused-expressions": {
       "count": 2
@@ -141,13 +141,13 @@
   },
   "src/components/linear/AreaChart/index.tsx": {
     "@typescript-eslint/ban-ts-comment": {
-      "count": 7
+      "count": 6
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 16
+      "count": 14
     },
     "@typescript-eslint/no-unused-expressions": {
-      "count": 4
+      "count": 3
     }
   },
   "src/components/linear/BarChart/BarChart.tooltip.stories.tsx": {
@@ -180,13 +180,13 @@
   },
   "src/components/linear/LineChart/index.tsx": {
     "@typescript-eslint/ban-ts-comment": {
-      "count": 38
+      "count": 37
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 27
+      "count": 23
     },
     "@typescript-eslint/no-unused-expressions": {
-      "count": 19
+      "count": 18
     }
   },
   "src/components/linear/SpineChart/SpineChart.stories.tsx": {

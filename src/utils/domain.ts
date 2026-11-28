@@ -1,3 +1,5 @@
+import { scaleLinear, scaleLog } from 'd3-scale';
+
 /**
  * Shared rules for an axis's pinned `start` / `end` (F4):
  * - a finite number pins that end of the domain, narrowing or widening it,
@@ -44,4 +46,43 @@ export const clampToDomain = (
   const lo = Math.min(domain[0], domain[1]);
   const hi = Math.max(domain[0], domain[1]);
   return Number.isFinite(value) ? Math.min(hi, Math.max(lo, value)) : value;
+};
+
+/** Axis scale type for {@link niceDomain}. */
+export type NiceScale = 'linear' | 'log';
+
+/**
+ * Domain around a single value `v`, so an axis is never zero-width:
+ * linear `[v - 1, v + 1]`, log `[v / 10, v * 10]`.
+ */
+export const zeroSpread = (v: number, scale: NiceScale = 'linear'): [number, number] =>
+  scale === 'log' ? [v / 10, v * 10] : [v - 1, v + 1];
+
+/**
+ * The "nice the data extent, then pin" domain.
+ *
+ * 1. `lo === hi` -> {@link zeroSpread}; otherwise the extent is niced on a
+ *    linear or log scale.
+ * 2. Finite `start` / `end` pins replace that end ({@link resolveBound}).
+ * 3. If the pins leave `lo === hi`, the result gets {@link zeroSpread} too.
+ *
+ * Callers still decide what to do with conflicting pins (`start > end`); an
+ * inverted result is returned as is.
+ */
+export const niceDomain = (
+  lo: number,
+  hi: number,
+  options: { start?: unknown; end?: unknown; scale?: NiceScale } = {}
+): [number, number] => {
+  const { start, end, scale = 'linear' } = options;
+  const niced: [number, number] =
+    lo === hi
+      ? zeroSpread(lo, scale)
+      : ((scale === 'log' ? scaleLog() : scaleLinear())
+          .domain([lo, hi])
+          .nice()
+          .domain() as [number, number]);
+  const dLo = resolveBound(start, niced[0]);
+  const dHi = resolveBound(end, niced[1]);
+  return dLo === dHi ? zeroSpread(dLo, scale) : [dLo, dHi];
 };

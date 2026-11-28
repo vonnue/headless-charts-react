@@ -554,6 +554,37 @@ describe('ParallelCoordinatesChart', () => {
     });
   });
 
+  it('17b (#115, unchanged): a flat log dimension uses [v / 10, v * 10]; equal pins pad the same way; a pin beyond the data falls back to the data with a warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const data = [
+      { a: 1, b: 100 },
+      { a: 3, b: 100 },
+    ];
+    const midOf = (id: string, dims: (string | { key: string; type?: 'log'; start?: number; end?: number })[]) => {
+      const { unmount } = render(
+        <ParallelCoordinatesChart id={id} data={data} dimensions={dims} style={STYLE} />
+      );
+      const { top, bottom } = plotBox();
+      const bX = axisXs(['a', 'b'])[1];
+      const ys = q('pc-line').map(
+        (l) => pts(l.getAttribute('d')).find((p) => p[0] === bX)![1]
+      );
+      unmount();
+      return { ys, mid: (top + bottom) / 2 };
+    };
+    const flatLog = midOf('pc17b1', ['a', { key: 'b', type: 'log' }]);
+    flatLog.ys.forEach((y) => expect(y).toBeCloseTo(flatLog.mid));
+    // Equal pins on a linear axis: the pinned value sits at the middle ([4, 6]).
+    const eq = midOf('pc17b2', ['a', { key: 'b', start: 100, end: 100 }]);
+    eq.ys.forEach((y) => expect(y).toBeCloseTo(eq.mid));
+    // start 1000 is beyond the data (100): ignored, with one warning, so the
+    // flat axis falls back to its v ± 1 spread.
+    const beyond = midOf('pc17b3', ['a', { key: 'b', start: 1000 }]);
+    beyond.ys.forEach((y) => expect(y).toBeCloseTo(beyond.mid));
+    expect(warnings(warn).filter((m) => /pin beyond the data extent/.test(m))).toHaveLength(1);
+    expect(document.body.innerHTML).not.toMatch(/NaN/);
+  });
+
   it('18: an unknown dimension key still renders an axis, treats all its values as missing, and warns once naming the key; duplicate keys: the first wins, with one warning', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { unmount } = render(

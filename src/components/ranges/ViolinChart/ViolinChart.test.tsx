@@ -1333,3 +1333,84 @@ describe('ViolinChart drawing cleanup (#13)', () => {
     expect(shapes.some((s) => Reflect.has(s, '__transition'))).toBe(false);
   });
 });
+
+describe('ViolinChart flat value domain (#115)', () => {
+  let warn: MockInstance<typeof console.warn>;
+  beforeEach(() => {
+    resetDevWarnings();
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    warn.mockRestore();
+    document.querySelectorAll('[id^="tooltip"]').forEach((el) => el.remove());
+  });
+
+  const yTicks = () =>
+    axisTicks('y-axis').map((t) => t.value).filter(Number.isFinite);
+  const spans = (lo: number, hi: number) => {
+    const ticks = yTicks();
+    expect(ticks.length).toBeGreaterThan(1);
+    expect(Math.min(...ticks)).toBeGreaterThanOrEqual(lo);
+    expect(Math.max(...ticks)).toBeLessThanOrEqual(hi);
+    expect(Math.max(...ticks)).toBeGreaterThan(Math.min(...ticks));
+  };
+  const data = rows(['A', [50, 60, 70, 80, 90]]);
+
+  it('equal data values (unchanged): padded by 1, never zero-width', () => {
+    render(
+      <ViolinChart
+        id='nd-v-flat'
+        data={rows(['A', [5, 5, 5]])}
+        category={CAT}
+        value={VAL}
+        style={STYLE}
+      />
+    );
+    spans(4, 6);
+  });
+
+  it('equal value.start / value.end pins are padded to [v - 1, v + 1] (changed: was zero-width)', () => {
+    render(
+      <ViolinChart
+        id='nd-v-eq'
+        data={data}
+        category={CAT}
+        value={{ key: 'v', start: 70, end: 70 }}
+        style={STYLE}
+      />
+    );
+    spans(69, 71);
+  });
+
+  it('a single pin colliding with the other niced end is padded (changed)', () => {
+    // Pin start at the niced upper end by reading it from the unpinned chart.
+    const { unmount } = render(
+      <ViolinChart id='nd-v-base' data={data} category={CAT} value={VAL} style={STYLE} />
+    );
+    const top = Math.max(...yTicks());
+    unmount();
+    render(
+      <ViolinChart
+        id='nd-v-collide'
+        data={data}
+        category={CAT}
+        value={{ key: 'v', start: top }}
+        style={STYLE}
+      />
+    );
+    spans(top - 1, top + 1);
+  });
+
+  it('distinct pins are unchanged', () => {
+    render(
+      <ViolinChart
+        id='nd-v-same'
+        data={data}
+        category={CAT}
+        value={{ key: 'v', start: 0, end: 100 }}
+        style={STYLE}
+      />
+    );
+    spans(0, 100);
+  });
+});

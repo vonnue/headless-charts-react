@@ -101,7 +101,7 @@ const DEFAULT_MARGIN = { top: 20, right: 20, bottom: 20, left: 20 };
  *
  * @see LineChart — tracking a measured value over time rather than
  *   discrete events
- * @see ColumnChart — event counts per period are enough
+ * @see BarChart — event counts per period are enough
  * @see RangePlot — intervals are numeric ranges rather than moments in
  *   time
  */

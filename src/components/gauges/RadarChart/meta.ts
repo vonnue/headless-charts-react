@@ -36,7 +36,7 @@ const meta: ChartMeta = {
   ],
   alternatives: [
     { name: 'PizzaChart', when: 'profiling a single entity' },
-    { name: 'ColumnChart', when: 'metrics have different units, or values must be read precisely' },
+    { name: 'BarChart', when: 'metrics have different units, or values must be read precisely' },
     { name: 'RingGauge', when: 'each metric has its own target rather than a shared scale' },
     {
       name: 'ParallelCoordinatesChart',

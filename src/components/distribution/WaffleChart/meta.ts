@@ -46,7 +46,7 @@ const meta: ChartMeta = {
   ],
   alternatives: [
     { name: 'ScatterPlot', when: 'axes are continuous measures rather than categories' },
-    { name: 'ColumnChart', when: 'only one categorical dimension is involved' },
+    { name: 'BarChart', when: 'only one categorical dimension is involved' },
     { name: 'PieChart', when: 'showing part-to-whole for a single set of categories' },
   ],
   requiredProps: ['id', 'data', 'x', 'y', 'color'],

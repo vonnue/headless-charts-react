@@ -96,7 +96,7 @@ describe('ColumnChart start/end domain (F4)', () => {
     expect(ticks.get('10')).toBeCloseTo(TOP, 2);
   });
 
-  it('end = 0 on all-positive data: no negative heights, and a dev warning', () => {
+  it('end = 0 on all-positive data: zero-length bars and no inverted-axis warning', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { container } = render(
       <ColumnChart
@@ -110,15 +110,18 @@ describe('ColumnChart start/end domain (F4)', () => {
         y={[{ key: 'v', end: 0 }]}
       />
     );
-    // Start falls back to the data min (5), so the domain is [5, 0].
-    const heights = Array.from(container.querySelectorAll('rect')).map((r) =>
+    // Zero baseline plus pinned end 0 gives domain [0, 0]; bars have no length
+    // and there is no inverted-axis warning.
+    const heights = Array.from(container.querySelectorAll('g.marks rect')).map((r) =>
       Number(r.getAttribute('height'))
     );
     expect(heights.length).toBeGreaterThan(0);
-    heights.forEach((h) => expect(h).toBeGreaterThanOrEqual(0));
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0][0])).toContain(
-      'ColumnChart "column-inverted": y start (5) > end (0)'
+    heights.forEach((h) => expect(h).toBe(0));
+    expect(warn.mock.calls.map(([message]) => String(message)).join('\n')).not.toContain(
+      'inverted',
+    );
+    expect(warn.mock.calls.map(([message]) => String(message)).join('\n')).not.toContain(
+      'start (',
     );
   });
 

@@ -85,3 +85,58 @@ export const TooltipCustomHTML = meta.story({
     },
   },
 });
+
+/**
+ * Stacked tooltip: the default HTML lists every series; the datum passed to
+ * `tooltip.html` is the row (BarChartStacked used to pass a stack item).
+ */
+export const TooltipStacked = meta.story({
+  args: {
+    ...Tooltip.input.args,
+    id: 'tooltip-stacked',
+    stacking: { type: 'normal' },
+  },
+});
+
+/** Stacked custom HTML reading the row directly. */
+export const TooltipStackedCustomHTML = meta.story({
+  args: {
+    ...TooltipStacked.input.args,
+    id: 'tooltip-stacked-custom-html',
+    tooltip: {
+      className: 'bg-gray-100 rounded p-2',
+      html: (d: { year: number; macbook: number }) =>
+        `<p class="text-xl">${d.year}</p><p class="text-xs">macbooks sold $${d.macbook}B</p>`,
+    },
+  },
+});
+
+/** 100% stacking: each line adds the series' share of the row. */
+export const TooltipPercent = meta.story({
+  args: {
+    ...Tooltip.input.args,
+    id: 'tooltip-percent',
+    stacking: { type: '100%' },
+  },
+});
+
+// One UTC instant per year, so the tooltip date matches in every time zone.
+const timeData = data.map((d) => ({
+  ...d,
+  date: new Date(Date.UTC(d.year, 11, 31)).toISOString(),
+}));
+
+/** Vertical time mode: the tooltip starts with the formatted date. */
+export const TooltipTime = meta.story({
+  args: {
+    id: 'tooltip-time',
+    className: 'w-full h-80',
+    data: timeData,
+    x: { key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } },
+    y: [
+      { key: 'macbook', className: 'fill-purple-800' },
+      { key: 'iphone', className: 'fill-purple-600' },
+    ],
+    tooltip: {},
+  },
+});

@@ -826,7 +826,7 @@ export const BoxPlotRenderer = <TData,>(
  *
  * @see RangePlot — showing a plain min–max interval rather than quartiles
  * @see ScatterPlot — individual records should stay visible
- * @see ColumnChart — a histogram of one group is enough — set `x.bin`
+ * @see BarChart — a histogram of one group is enough — set `x.bin`
  */
 /* catalog:end */
 const BoxPlot = <TData = any,>(props: BoxPlotProps<TData>) => ( // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

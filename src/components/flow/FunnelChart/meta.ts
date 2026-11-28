@@ -47,13 +47,13 @@ const meta: ChartMeta = {
   avoidWhen: [
     'The parts are an unordered split of one whole — use PieChart',
     'It is a ranked snapshot with no stage-to-stage drop-off story — use BarChart',
-    'The steps are additive bridge steps to a total — use ColumnChartStacked with `waterfall`',
+    'The steps are additive bridge steps to a total — use BarChart with `waterfall`',
     'Colour is used to encode magnitude (darker = larger) — length already encodes value; keep `classNameMap` / `value.className` as stage identity only',
     'Flows that branch or merge between stages, or volume between arbitrary nodes rather than one ordered path — use SankeyChart',
   ],
   alternatives: [
     { name: 'BarChart', when: 'a ranked snapshot with no stage-to-stage drop-off' },
-    { name: 'ColumnChartStacked', when: 'additive steps to a total (waterfall)' },
+    { name: 'BarChart', when: 'additive steps to a total (`waterfall`)' },
     { name: 'PieChart', when: 'an unordered part-to-whole split' },
     { name: 'SankeyChart', when: 'flows that branch or merge between stages, or volume between arbitrary nodes' },
   ],

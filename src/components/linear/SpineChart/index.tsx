@@ -57,8 +57,8 @@ export interface SpineChartProps<TData = any> extends Omit<ChartProps<TData>, 'm
  *   layout implies one; use BarChart
  * - More than a few measures per side are needed — the spine gets crowded;
  *   use BarChart grouped
- * - The measures are parts of one whole rather than two sides — use
- *   BarChartStacked
+ * - The measures are parts of one whole rather than two sides — use BarChart
+ *   with `stacking`
  *
  * Also called: population pyramid, age-sex pyramid, butterfly chart, back-to-back bar chart.
  *
@@ -79,7 +79,7 @@ export interface SpineChartProps<TData = any> extends Omit<ChartProps<TData>, 'm
  * ```
  *
  * @see BarChart — the measures are not naturally opposed
- * @see BarChartStacked — the measures are parts of one whole
+ * @see BarChart — the measures are parts of one whole (`stacking`)
  * @see CometPlot — showing movement between two states rather than two
  *   independent measures
  */

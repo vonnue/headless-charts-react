@@ -1,10 +1,11 @@
 import preview from '../../../../.storybook/preview';
-import ColumnChartGrouped from '.';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
+import ColumnChart from '.';
 
 const meta = preview.meta({
   title: 'Linear/ColumnChartGrouped/Binning',
-  component: ColumnChartGrouped,
-  tags: ['autodocs'],
+  component: ColumnChart,
+  ...deprecatedWrapperStoryMeta('BarChart'),
 });
 
 const continuousData = [

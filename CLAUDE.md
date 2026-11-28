@@ -13,8 +13,8 @@ component names alone will pick a plausible-but-wrong chart.
 
 **If a chart type was named, look it up first.** Many recognised types are a base
 component plus a prop, not a component of their own — a streamgraph is an
-`AreaChart` with `stacking.type`, a waterfall is a `ColumnChartStacked` with
-`waterfall`, a histogram is a `ColumnChart` with `x.bin`, a donut is a `PieChart`
+`AreaChart` with `stacking.type`, a waterfall is a `BarChart` with
+`waterfall`, a histogram is a `BarChart` with `x.bin`, a donut is a `PieChart`
 with `innerRadius`. Searching the exports for `Waterfall` finds nothing; the
 "If a chart type was named" table in AGENTS.md resolves it.
 
@@ -29,7 +29,7 @@ import {
 } from '@headless-charts/react';
 
 resolveChartRequest('waterfall');
-// → { chart: ColumnChartStacked meta, variant: Waterfall chart meta }
+// → { chart: BarChart meta, variant: Waterfall chart meta }
 ```
 
 ## Repo layout
@@ -137,8 +137,8 @@ FunnelChart is the model: `Flow/FunnelChart/Intro`, `Flow/FunnelChart/Drawing`,
   `<CatalogName>.<section>.stories.tsx`, section in lowercase, e.g.
   `BarChart.tooltip.stories.tsx` (title `Linear/BarChart/Tooltips`) or
   `FunnelChart.drawing.stories.tsx`. Use the **catalog** (`meta.ts`) name as
-  the prefix when it differs from the export name: `ColumnChart.binning.stories.tsx`
-  holds `Linear/ColumnChartGrouped/Binning`.
+  the prefix when it differs from the export name: `BarChart.binning.stories.tsx`
+  holds `Linear/BarChart/Binning`.
 - **Style.** Import `preview` from `.storybook/preview`, build the meta with
   `preview.meta({ title, component, tags: ['autodocs'] })`, put a JSDoc comment
   on the meta (it becomes the docs page intro) and on every story, and give each

@@ -1,12 +1,13 @@
 import preview from '../../../../.storybook/preview';
+import { deprecatedWrapperStoryMeta } from '../../../../.storybook/deprecatedWrapper';
 
-import ColumnChartGrouped from '.';
+import ColumnChart from '.';
 import data from './sample.json';
 
 const meta = preview.meta({
   title: 'Linear/ColumnChartGrouped',
-  component: ColumnChartGrouped,
-  tags: ['autodocs'],
+  component: ColumnChart,
+  ...deprecatedWrapperStoryMeta('BarChart'),
 });
 
 export const Default = meta.story({
@@ -98,7 +99,7 @@ export const WithCustomTooltip = meta.story({
   args: {
     ...Styled.input.args,
     tooltip: {
-      html: (data: any) => {
+      html: (data: { year: number; macbook: number }) => {
         return `
           <div class="bg-gray-100 rounded p-2">
             <div class="text-sm font-semibold">${data.year}</div>

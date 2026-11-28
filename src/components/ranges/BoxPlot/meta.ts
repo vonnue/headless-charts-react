@@ -79,7 +79,7 @@ const meta: ChartMeta = {
   alternatives: [
     { name: 'RangePlot', when: 'showing a plain min–max interval rather than quartiles' },
     { name: 'ScatterPlot', when: 'individual records should stay visible' },
-    { name: 'ColumnChart', when: 'a histogram of one group is enough — set `x.bin`' },
+    { name: 'BarChart', when: 'a histogram of one group is enough — set `x.bin`' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],
   example: `<BoxPlot

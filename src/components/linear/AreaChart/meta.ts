@@ -36,12 +36,12 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Series need to be compared precisely against each other — stacked bands make all but the bottom one hard to read; use LineChart',
     'Series can be negative and would overlap confusingly — use LineChart, or `stacking.type: "diverging"`',
-    'The x axis is categorical rather than continuous — use ColumnChartStacked',
+    'The x axis is categorical rather than continuous — use BarChart with `stacking`',
     'There is a single series and no notion of a total — use LineChart',
   ],
   alternatives: [
     { name: 'LineChart', when: 'series must be compared precisely, or there is no meaningful total' },
-    { name: 'ColumnChartStacked', when: 'the x axis is categorical rather than continuous' },
+    { name: 'BarChart', when: 'the x axis is categorical rather than continuous (`stacking`)' },
     { name: 'PieChart', when: 'showing composition at one point in time only' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],

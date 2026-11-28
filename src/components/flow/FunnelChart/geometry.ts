@@ -4,7 +4,7 @@
  * so the spec's "for Jayaram to confirm" choices live in one place.
  */
 import { format } from 'd3-format';
-import { isFiniteNumber, pinnedEnd } from '@/utils/domain';
+import { isFiniteNumber, pinnedEnd, resolveBound } from '@/utils/domain';
 
 /**
  * Behaviour switches for the choices the spec flagged for confirmation. Flip a
@@ -47,7 +47,7 @@ export const valueDomain = (
 ): [number, number] => {
   const end = pinnedEnd([bounds.end]) ?? (values.length ? Math.max(...values) : 0);
   const start =
-    policy.honorValueStart && isFiniteNumber(bounds.start) ? bounds.start : 0;
+    policy.honorValueStart ? resolveBound(bounds.start, 0) : 0;
   return [start, end];
 };
 

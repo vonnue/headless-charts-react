@@ -12,6 +12,7 @@ import { HierarchyNode, hierarchy } from 'd3-hierarchy';
 import { format } from 'd3-format';
 import { TooltipConfig } from '@/types';
 import { isFiniteNumber } from '@/utils/domain';
+import { tooltipRows } from '@/utils/tooltipRows';
 
 /** Category keys used in flat mode, outer to inner. */
 export type HierarchyLevelKey<TData> = Extract<keyof TData, string> | string;
@@ -564,9 +565,12 @@ export const colorKey = (
 /** Default tooltip HTML: breadcrumb, value, then both percents. */
 export const defaultHierarchyTooltipHtml = (datum: unknown): string => {
   const d = datum as HierarchyDatum<unknown, 'either'>;
-  return `${d.path.join(' › ')}<br/>${d.value}<br/>of parent: ${formatPercent(
-    percentOf(d, 'ofParent')
-  )}<br/>of root: ${formatPercent(percentOf(d, 'ofRoot'))}`;
+  return tooltipRows([
+    d.path.join(' › '),
+    `${d.value}`,
+    ['of parent', formatPercent(percentOf(d, 'ofParent'))],
+    ['of root', formatPercent(percentOf(d, 'ofRoot'))],
+  ]);
 };
 
 /** Human-readable issue text; charts prefix it with `Chart#id: `. */

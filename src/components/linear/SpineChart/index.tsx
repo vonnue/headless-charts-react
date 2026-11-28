@@ -1,6 +1,7 @@
 import { axisBottom, axisLeft, axisRight, axisTop } from 'd3-axis';
 import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
+import { tooltipRows } from '@/utils/tooltipRows';
 import { max, sum } from 'd3-array';
 import { select } from 'd3-selection';
 import useTooltip from '@/hooks/useTooltip';
@@ -116,7 +117,7 @@ const SpineChart = <TData = any,>({
     id,
     tooltip,
     defaultHtml: (d: any) =>
-      `${d[y.key]} <br/> ${x.map((col) => `${col.key}: ${d[col.key]}`).join('<br/>')}`,
+      `${d[y.key]} <br/> ${tooltipRows(x.map((col) => [col.key, d[col.key]]))}`,
   });
 
   // Redraws when the svg's rendered size changes, including container-driven

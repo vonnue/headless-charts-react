@@ -3,6 +3,7 @@ import { ValueFn, select } from 'd3';
 
 import { GaugeProps } from '@/types';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import { scaleLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
 import useTooltip, { UseTooltipResult } from '@/hooks/useTooltip';
@@ -99,7 +100,14 @@ const LinearGauge = <TData = any,>({
   const { onMouseOver, onMouseMove, onMouseLeave } = useTooltip({
     id,
     tooltip,
-    defaultHtml: () => `Data: ${data} <br/> Error: ${error?.data || 0}`,
+    defaultHtml: () =>
+      tooltipRows(
+        [
+          ['Data', data],
+          ['Error', error?.data || 0],
+        ],
+        { join: ' <br/> ' }
+      ),
   });
 
   // The hook handlers are new each render but read the latest config, so the

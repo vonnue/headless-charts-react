@@ -21,6 +21,7 @@ import { chartClassName, binData, deepValue } from '@/utils';
 import { resolveBound } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import { scaleLinear, scaleBand, scaleSequential } from 'd3-scale';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
@@ -230,12 +231,31 @@ const ScatterPlot = <TData = any,>({
   const isBinned = x.bin != null || y.bin != null;
 
   const defaultHtml = isBinned
-    ? (d: any) => `${x.key}: ${d[x.key]}<br/>${y.key}: ${d[y.key]}<br/>count: ${d.count}`
+    ? (d: any) =>
+        tooltipRows([
+          [x.key, d[x.key]],
+          [y.key, d[y.key]],
+          ['count', d.count],
+        ])
     : (d: any) =>
-        `${x.key} ${d[x.key]}<br/>${y.key} ${d[y.key]}<br/>
-    ${color?.key ? `${color.key} ${d[color.key]}<br/>` : ''}
-    ${size?.key ? `${size.key} ${d[size.key]}<br/>` : ''}
-    ${shape?.key ? `${shape.key} ${d[shape.key]}<br/>` : ''}`;
+        // Unbinned markup puts `<br/>` then a newline and 4 spaces before
+        // each optional field, including when that field is absent.
+        tooltipRows(
+          [
+            [x.key, d[x.key]],
+            [y.key, d[y.key]],
+          ],
+          { sep: ' ' }
+        ) +
+        '<br/>\n    ' +
+        tooltipRows(
+          [
+            color?.key ? `${color.key} ${d[color.key]}<br/>` : '',
+            size?.key ? `${size.key} ${d[size.key]}<br/>` : '',
+            shape?.key ? `${shape.key} ${d[shape.key]}<br/>` : '',
+          ],
+          { join: '\n    ' }
+        );
 
   const { onMouseOver, onMouseLeave, onMouseMove } = useTooltip({
     id,

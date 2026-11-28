@@ -41,6 +41,7 @@ import {
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import {
   boxPlotEvidence,
   getBinValueKey,
@@ -288,13 +289,19 @@ export const BoxPlotRenderer = <TData,>(
       const resolved = resolveValueConfig(valueConfig, isBinned);
       if (!resolved) return '';
       const date = isTime ? toDateTime(d) : null;
-      return `${date ? `${formatDate(date)} <br/> ` : ''}min: ${formatStat(
-        d[resolved.minKey],
-      )} <br/> range: ${formatStat(d[resolved.boxStart])} to ${formatStat(
-        d[resolved.boxEnd],
-      )} <br/> mid: ${formatStat(d[resolved.midKey])} <br/> max: ${formatStat(
-        d[resolved.maxKey],
-      )}`;
+      return tooltipRows(
+        [
+          date ? formatDate(date) : undefined,
+          ['min', formatStat(d[resolved.minKey])],
+          [
+            'range',
+            `${formatStat(d[resolved.boxStart])} to ${formatStat(d[resolved.boxEnd])}`,
+          ],
+          ['mid', formatStat(d[resolved.midKey])],
+          ['max', formatStat(d[resolved.maxKey])],
+        ],
+        { join: ' <br/> ' }
+      );
     },
   });
 

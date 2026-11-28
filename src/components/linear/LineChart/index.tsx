@@ -23,6 +23,7 @@ import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types
 import { chartClassName } from '@/utils';
 import { resolveDrawing } from '@/utils/drawing';
 import { isFiniteNumber, pinnedEnd, pinnedStart, resolveBound } from '@/utils/domain';
+import { tooltipRows } from '@/utils/tooltipRows';
 import { easeLinear } from 'd3';
 import { zoom } from 'd3-zoom';
 import { drawAxis } from '@/hooks/useAxis';
@@ -849,10 +850,8 @@ const LineChart = <TData = any,>({
           : // @ts-ignore
           tooltip.keys
           ? // @ts-ignore
-            tooltip.keys.map((key) => `${key}: ${row[key] || ''}`).join('<br/>')
-          : Object.entries(row)
-              .map(([key, value]) => `${key}: ${value}`)
-              .join('<br/>')
+            tooltipRows(tooltip.keys.map((key) => [key, row[key] || '']))
+          : tooltipRows(Object.entries(row))
       );
     };
 

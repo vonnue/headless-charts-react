@@ -11,6 +11,7 @@ import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import {
   FUNNEL_POLICY,
   PercentKind,
@@ -163,11 +164,12 @@ const defaultTooltipHtml =
   (datum: unknown): string => {
     const d = (datum ?? {}) as Row & { __funnel?: FunnelDatumInfo };
     const info = d.__funnel;
-    return `${String(d?.[stageKey] ?? '')}<br/>${sanitizeValue(
-      d?.[valueKey]
-    )}<br/>of first: ${formatPercent(
-      info?.ofFirst ?? null
-    )}<br/>of previous: ${formatPercent(info?.ofPrevious ?? null)}`;
+    return tooltipRows([
+      String(d?.[stageKey] ?? ''),
+      `${sanitizeValue(d?.[valueKey])}`,
+      ['of first', formatPercent(info?.ofFirst ?? null)],
+      ['of previous', formatPercent(info?.ofPrevious ?? null)],
+    ]);
   };
 
 /* catalog:start */

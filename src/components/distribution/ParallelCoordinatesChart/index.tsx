@@ -16,6 +16,7 @@ import { isFiniteNumber, resolveBound } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows, type TooltipRow } from '@/utils/tooltipRows';
 
 // `any` default matches ChartProps<TData = any> and the other charts' props.
 export interface PCDimension<TData = any> { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -199,7 +200,7 @@ const tooltipHtml = (
   labelKey: string | undefined,
   keys?: string[]
 ) => {
-  const rows: string[] = [];
+  const rows: TooltipRow[] = [];
   const allow = (k: string) => !keys || keys.includes(k);
   if (labelKey && allow(labelKey)) {
     const v = (d.data as Row | undefined)?.[labelKey];
@@ -212,9 +213,9 @@ const tooltipHtml = (
       v === null || v === undefined
         ? 'n/a'
         : formatterOf(dim, typeof v === 'string')(v);
-    rows.push(`${escapeHtml(dim.label ?? dim.key)}: ${escapeHtml(String(text))}`);
+    rows.push([escapeHtml(dim.label ?? dim.key), escapeHtml(String(text))]);
   });
-  return rows.join('<br/>');
+  return tooltipRows(rows);
 };
 
 /* catalog:start */

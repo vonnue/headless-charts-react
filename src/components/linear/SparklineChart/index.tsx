@@ -20,6 +20,7 @@ import {
   useTimeAxisWarnings,
 } from '@/utils/timeScale';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 
 // `any` default matches ChartProps<TData = any> and the other charts' props.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -122,7 +123,10 @@ const makeDefaultHtml = (x: AxisConfig) => {
         : typeof d.x === 'number'
         ? defaultValueFormat(d.x)
         : String(d.x);
-    return `${d.seriesLabel}<br/>${xText}: ${defaultValueFormat(d.value)}`;
+    return tooltipRows([
+      d.seriesLabel,
+      [xText, defaultValueFormat(d.value)],
+    ]);
   };
 };
 

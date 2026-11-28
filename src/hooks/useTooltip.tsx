@@ -4,6 +4,7 @@ import { deepValue, mergeTailwindClasses } from '@/utils';
 import { Selection, pointer, select } from 'd3-selection';
 import { TooltipConfig } from '@/types';
 import { isDevEnvironment } from '@/utils/devEnvironment';
+import { tooltipRows } from '@/utils/tooltipRows';
 
 /** @deprecated Use TooltipConfig from '../types' instead */
 export type TooltipObjectType = TooltipConfig;
@@ -184,17 +185,15 @@ const useTooltip = ({
       config?.html // If tooltip.html exists
         ? config.html(d) // Call it
         : config?.keys // Else if keys exists
-        ? config.keys // iterate over the keys and show the data
-            .map(
-              (key: string) =>
-                `${key}: ${deepValue(d, key) || deepValue(d.data, key) || ''}`
-            )
-            .join('<br/>')
+        ? tooltipRows( // iterate over the keys and show the data
+            config.keys.map((key: string) => [
+              key,
+              deepValue(d, key) || deepValue(d.data, key) || '',
+            ])
+          )
         : fallbackHtml // else if defaultHtml is given for a chart type
         ? fallbackHtml(d) // call it
-        : Object.entries(d) // otherwise show all entries of the data object
-            .map(([key, value]) => `${key}: ${value}`)
-            .join('<br/>')
+        : tooltipRows(Object.entries(d)) // otherwise show all entries of the data object
     );
   };
 

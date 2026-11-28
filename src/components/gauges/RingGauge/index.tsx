@@ -4,6 +4,7 @@ import { select } from 'd3-selection';
 
 import { chartClassName } from '@/utils';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import { GaugeProps } from '@/types';
 import { interpolateNumber } from 'd3-interpolate';
 import { min } from 'd3-array';
@@ -122,7 +123,9 @@ const RingGauge = <TData = any,>({
     id,
     tooltip,
     defaultHtml: (d: any) =>
-      `${d[labelKey]} <br/>${d[dataKey]}/${d[targetKey]}`,
+      tooltipRows([`${d[labelKey]}`, `${d[dataKey]}/${d[targetKey]}`], {
+        join: ' <br/>',
+      }),
   });
 
   // The hook handlers are new each render but read the latest config, so the

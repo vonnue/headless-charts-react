@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { ValueFn, select } from 'd3';
 
 import { GaugeProps } from '@/types';
+import { resolveDrawing } from '@/utils/drawing';
 import { scaleLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
 import useTooltip, { UseTooltipResult } from '@/hooks/useTooltip';
@@ -198,7 +199,7 @@ const LinearGauge = <TData = any,>({
         .attr('width', 0)
         .attr('height', gaugeHeight)
         .transition()
-        .duration(drawing.duration ?? 0)
+        .duration(resolveDrawing({ duration: drawing.duration }).duration)
         .attr('x', () => xFn(max - errorData))
         .attr('width', () => xFn(max) - xFn(max - errorData));
   }, [
@@ -226,7 +227,7 @@ const LinearGauge = <TData = any,>({
     const xFn = xScale();
     select(dataRectRef.current)
       .transition()
-      .duration(drawing.duration ?? 0)
+      .duration(resolveDrawing({ duration: drawing.duration }).duration)
       .attr('width', xFn(data) - xFn(0));
     previousData.current = data;
   }, [data, drawing.duration, xScale]);

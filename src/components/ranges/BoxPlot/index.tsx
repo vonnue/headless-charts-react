@@ -40,6 +40,7 @@ import {
   useTimeAxisWarnings,
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
+import { resolveDrawing } from '@/utils/drawing';
 import {
   boxPlotEvidence,
   getBinValueKey,
@@ -488,10 +489,9 @@ export const BoxPlotRenderer = <TData,>(
       statKeys.every((k) => Number.isFinite(num(d, k))),
     );
 
-    const duration = drawing.duration ?? 0;
+    const { duration, delay: stagger } = resolveDrawing(drawing);
     const animate = Number.isFinite(duration) && duration > 0;
     const rowIndex = new Map(rows.map((d, i) => [d, i]));
-    const stagger = drawing.delay ?? 0;
     const delayOf = (d: Row) => (rowIndex.get(d) ?? 0) * stagger;
 
     const draw = (

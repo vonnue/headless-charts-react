@@ -8,6 +8,7 @@ import useChartSize from '@/hooks/useChartSize';
 import { ChartProps, TooltipConfig } from '@/types';
 import { deepValue } from '@/utils';
 import { chartClassName } from '@/utils';
+import { resolveDrawing } from '@/utils/drawing';
 import { interpolate } from 'd3-interpolate';
 import { min } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
@@ -256,6 +257,8 @@ const PieChart = <TData = any,>({
     const prev = previousArcs.current;
     previousArcs.current = arcs;
 
+    const { duration } = resolveDrawing(drawing);
+
     const pathsG = g
       .append('g')
       .attr(
@@ -286,7 +289,7 @@ const PieChart = <TData = any,>({
       .on('mousemove', (e, d) => tooltipHandlers.current?.onMouseMove(e, d))
       .on('mouseleave', () => tooltipHandlers.current?.onMouseLeave())
       .transition()
-      .duration(drawing?.duration || 0)
+      .duration(duration)
       .attrTween('d', function (d) {
         const previousArc = prev.find(
           (a) => a.data[nameKey] === d.data[nameKey]
@@ -341,7 +344,7 @@ const PieChart = <TData = any,>({
         .attr('text-anchor', 'middle')
         .attr('opacity', 0)
         .transition()
-        .duration(drawing?.duration || 0)
+        .duration(duration)
         .attr('opacity', 1)
         .text(title.text);
 
@@ -357,7 +360,7 @@ const PieChart = <TData = any,>({
         .attr('font-size', '12px')
         .attr('opacity', 0)
         .transition()
-        .duration(drawing?.duration || 0)
+        .duration(duration)
         .attr('opacity', 1)
         .text(subtitle.text);
   }, [

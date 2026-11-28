@@ -10,6 +10,7 @@ import { ChartProps, TooltipConfig } from '@/types';
 import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
+import { resolveDrawing } from '@/utils/drawing';
 import {
   FUNNEL_POLICY,
   PercentKind,
@@ -355,8 +356,7 @@ const FunnelChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
       );
 
     const marksG = root.append('g').attr('class', 'marks');
-    const duration = drawing?.duration ?? 0;
-    const delay = drawing?.delay ?? 0;
+    const { duration, delay } = resolveDrawing(drawing);
     const indices = rows.map((_, i) => i);
 
     if (shape === 'bar') {

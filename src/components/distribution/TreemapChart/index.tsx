@@ -48,6 +48,7 @@ export type {
   NestedHierarchyDatum,
   NestedHierarchyFields,
 } from '@/utils/hierarchy';
+import { resolveDrawing } from '@/utils/drawing';
 
 export type TreemapTileType =
   | 'squarify'
@@ -273,7 +274,7 @@ const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-esl
       );
     };
 
-    const duration = drawing?.duration ?? 0;
+    const { duration, delay } = resolveDrawing(drawing);
     const marks = root
       .append('g')
       .attr('class', 'cells')
@@ -297,7 +298,7 @@ const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-esl
       marks
         .transition()
         .duration(duration)
-        .delay((i) => (drawing?.delay ?? 0) + cells[i].depth * 100)
+        .delay((i) => delay + cells[i].depth * 100)
         .attr('opacity', 1);
 
     // Hit targets: one transparent rect per painted cell, in the same

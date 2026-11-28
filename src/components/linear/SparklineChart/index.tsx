@@ -19,6 +19,7 @@ import {
   makeDateParser,
   useTimeAxisWarnings,
 } from '@/utils/timeScale';
+import { resolveDrawing } from '@/utils/drawing';
 
 // `any` default matches ChartProps<TData = any> and the other charts' props.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -318,8 +319,7 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
       .padding(padding?.bar ?? DEFAULT_ROW_PADDING);
     const bh = band.bandwidth();
 
-    const duration = isFiniteNumber(drawing?.duration) && drawing.duration > 0 ? drawing.duration : 0;
-    const delayStep = isFiniteNumber(drawing?.delay) && drawing.delay > 0 ? drawing.delay : 0;
+    const { duration, delay: delayStep } = resolveDrawing(drawing);
 
     const markerOpts = {
       last: option(markers?.last),

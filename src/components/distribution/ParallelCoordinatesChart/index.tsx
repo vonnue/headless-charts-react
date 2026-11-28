@@ -15,6 +15,7 @@ import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
+import { resolveDrawing } from '@/utils/drawing';
 
 // `any` default matches ChartProps<TData = any> and the other charts' props.
 export interface PCDimension<TData = any> { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -592,8 +593,7 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
       )
     );
 
-    const duration = drawing?.duration ?? 0;
-    const delay = drawing?.delay ?? 0;
+    const { duration, delay } = resolveDrawing(drawing);
 
     // ---- Painted lines ----
     const lines = root

@@ -9,6 +9,7 @@ import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { deepValue, binData } from '@/utils';
 import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
+import { resolveDrawing } from '@/utils/drawing';
 import { twMerge } from 'tailwind-merge';
 
 interface DrawingOptions {
@@ -258,6 +259,7 @@ const WaffleChart = <TData = any,>({
     const cellHeight =
       (chartHeight - gap * (rows - 1)) / rows;
     const cellSize = Math.min(cellWidth, cellHeight);
+    const { duration } = resolveDrawing(drawing);
 
     // Center the grid
     const gridWidth = columns * cellSize + (columns - 1) * gap;
@@ -390,12 +392,8 @@ const WaffleChart = <TData = any,>({
       .on('mousemove', onMouseMove)
       .on('mouseleave', onMouseLeave)
       .transition()
-      .duration(drawing?.duration || 0)
-      .delay((_, i) =>
-        drawing?.duration
-          ? (drawing.duration * i) / cellData.length
-          : 0
-      )
+      .duration(duration)
+      .delay((_, i) => (duration ? (duration * i) / cellData.length : 0))
       .attr('width', cellSize)
       .attr('height', cellSize);
   }, [

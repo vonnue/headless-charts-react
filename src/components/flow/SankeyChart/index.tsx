@@ -12,6 +12,7 @@ import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
+import { resolveDrawing } from '@/utils/drawing';
 import {
   LayoutLink,
   LayoutNode,
@@ -440,8 +441,7 @@ const SankeyChart = <TNode = any, TLink = any,>({ // eslint-disable-line @typesc
       );
     };
 
-    const duration = drawing?.duration ?? 0;
-    const delay = drawing?.delay ?? 0;
+    const { duration, delay } = resolveDrawing(drawing);
     const animate = Number.isFinite(duration) && duration > 0;
     const startDelay = Number.isFinite(delay) && delay > 0 ? delay : 0;
     // Split duration into 2L−1 equal steps: nodes 0, links from 0, nodes 1,

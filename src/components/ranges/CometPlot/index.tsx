@@ -23,7 +23,7 @@ import {
   ValueAxisConfig,
 } from '@/types';
 import { useCallback, useEffect, useRef } from 'react';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
@@ -343,7 +343,7 @@ const RangePlot = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className || '')}
+      className={chartClassName(className)}
     />
   );
 };

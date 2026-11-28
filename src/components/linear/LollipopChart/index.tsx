@@ -31,7 +31,7 @@ import type {
   ChartProps,
   TooltipConfig,
 } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { clampToDomain, isFiniteNumber, resolveBound } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
@@ -612,7 +612,7 @@ export const LollipopRenderer = <TData,>(
       id={id}
       data-testid='lollipop-chart'
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
     />
   );
 };

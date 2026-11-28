@@ -20,10 +20,9 @@ import { useCallback, useEffect, useRef, useMemo } from 'react';
 
 import { createTimeScale, makeDateParser } from '@/utils/timeScale';
 import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { isFiniteNumber, pinnedEnd, pinnedStart, resolveBound } from '@/utils/domain';
 import { easeLinear } from 'd3';
-import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
 import { drawAxis } from '@/hooks/useAxis';
 import useChartSize from '@/hooks/useChartSize';
@@ -930,7 +929,7 @@ const LineChart = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
     />
   );
 };

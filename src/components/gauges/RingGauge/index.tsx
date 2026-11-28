@@ -2,7 +2,7 @@ import { PieArcDatum, arc } from 'd3-shape';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { select } from 'd3-selection';
 
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { GaugeProps } from '@/types';
 import { interpolateNumber } from 'd3-interpolate';
 import { min } from 'd3-array';
@@ -294,7 +294,7 @@ const RingGauge = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className || '')}
+      className={chartClassName(className)}
     />
   );
 };

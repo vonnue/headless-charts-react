@@ -5,8 +5,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import useChartSize from '@/hooks/useChartSize';
 
 import { AxisConfig, ChartProps } from '@/types';
-import { defaultChartClassNames } from '@/utils';
-import { twMerge } from 'tailwind-merge';
+import { chartClassName } from '@/utils';
 
 export interface TimeLineChartProps<TData = any> extends ChartProps<TData> {
   y?: AxisConfig<TData>;
@@ -302,7 +301,7 @@ const TimeLineChart = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}></svg>
+      className={chartClassName(className)}></svg>
   );
 };
 

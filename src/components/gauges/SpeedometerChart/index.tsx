@@ -4,7 +4,7 @@ import { select } from 'd3-selection';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { Axis } from 'd3-axis';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { GaugeProps } from '@/types';
 import { max } from 'd3-array';
 import { twMerge } from 'tailwind-merge';
@@ -276,7 +276,7 @@ const SpeedometerChart = <TData = any,>({
       data-testid='speedometer'
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
     />
   );
 };

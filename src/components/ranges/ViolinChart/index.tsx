@@ -10,7 +10,7 @@ import { drawAxis } from '@/hooks/useAxis';
 import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { ChartProps, TooltipConfig } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
@@ -694,7 +694,7 @@ const ViolinChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/n
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
       role='img'
       aria-labelledby={titleId}
       aria-describedby={descId}

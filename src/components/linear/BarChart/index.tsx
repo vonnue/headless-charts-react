@@ -27,7 +27,7 @@ import type {
   ChartProps,
   TooltipConfig,
 } from '@/types';
-import { defaultChartClassNames, bin1D } from '@/utils';
+import { chartClassName, bin1D } from '@/utils';
 import { clampToDomain, isFiniteNumber, pinnedEnd, pinnedStart } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
@@ -1148,7 +1148,7 @@ export const BarRenderer = <TData,>(
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
       data-testid='bar-chart'
     />
   );

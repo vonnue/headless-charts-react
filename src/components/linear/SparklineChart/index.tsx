@@ -5,12 +5,11 @@ import { pointer, select, type Selection } from 'd3-selection';
 import { curveCatmullRom, curveLinear, curveStep, line } from 'd3-shape';
 import 'd3-transition';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { twMerge } from 'tailwind-merge';
 
 import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import type { AxisConfig, ChartProps, TooltipConfig } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
@@ -535,7 +534,7 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
       role='img'
       aria-labelledby={titleId}
       aria-describedby={descId}

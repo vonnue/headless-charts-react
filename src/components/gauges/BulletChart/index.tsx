@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import useChartSize from '@/hooks/useChartSize';
 
 import { axisBottom } from 'd3-axis';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { scaleLinear } from 'd3-scale';
 import { select } from 'd3-selection';
@@ -232,7 +232,7 @@ const BulletChart = <TData = any,>({
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, `h-12`, className)}
+      className={chartClassName('h-12', className)}
     />
   );
 };

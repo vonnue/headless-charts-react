@@ -1,6 +1,12 @@
+import { twMerge, type ClassNameValue } from 'tailwind-merge';
+
 export { default as mergeTailwindClasses } from './mergeTailwindClasses';
 
 export const defaultChartClassNames = `w-full md:w-6/12 lg:w-4/12 dark:bg-gray-800 text-gray-900 dark:text-gray-50 chart h-64`;
+
+/** Root svg class list: defaults first, then any extra / user classes so they win. */
+export const chartClassName = (...classes: ClassNameValue[]) =>
+  twMerge(defaultChartClassNames, ...classes);
 
 export { default as convertToRanks } from './convertToRanks';
 export { default as deepValue } from './deepValue';

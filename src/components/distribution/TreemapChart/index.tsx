@@ -16,7 +16,7 @@ import { twMerge } from 'tailwind-merge';
 import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { ChartProps } from '@/types';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import {
@@ -454,7 +454,7 @@ const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-esl
       ref={svgRef}
       id={id}
       style={style}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
       role='img'
       aria-labelledby={titleId}
       aria-describedby={descId}

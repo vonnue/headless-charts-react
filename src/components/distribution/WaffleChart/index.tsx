@@ -7,7 +7,7 @@ import { min as d3min, max as d3max } from 'd3-array';
 
 import { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { deepValue, binData } from '@/utils';
-import { defaultChartClassNames } from '@/utils';
+import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { twMerge } from 'tailwind-merge';
 
@@ -435,7 +435,7 @@ const WaffleChart = <TData = any,>({
       data-testid={id}
       style={style}
       id={id}
-      className={twMerge(defaultChartClassNames, className)}
+      className={chartClassName(className)}
     />
   );
 };

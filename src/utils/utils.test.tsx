@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 import convertToRanks from './convertToRanks';
-import { deepValue } from '.';
+import { chartClassName, defaultChartClassNames, deepValue } from '.';
 import mergeTailwindClasses from './mergeTailwindClasses';
+import { twMerge } from 'tailwind-merge';
 
 describe('mergeTailwindClasses', () => {
   it('should merge tailwind classes', () => {
@@ -41,6 +42,27 @@ describe('mergeTailwindClasses', () => {
   it(`Stroke-width and stroke should be treated separately`, () => {
     const classes = mergeTailwindClasses('stroke-2', 'stroke-red-500');
     expect(classes).toBe('stroke-2 stroke-red-500');
+  });
+});
+
+describe('chartClassName', () => {
+  it('matches twMerge(defaultChartClassNames, ...classes) byte-for-byte', () => {
+    expect(chartClassName()).toBe(twMerge(defaultChartClassNames));
+    expect(chartClassName(undefined)).toBe(twMerge(defaultChartClassNames, undefined));
+    expect(chartClassName('')).toBe(twMerge(defaultChartClassNames, ''));
+    expect(chartClassName('text-red-500')).toBe(
+      twMerge(defaultChartClassNames, 'text-red-500')
+    );
+    expect(chartClassName('h-12', undefined, 'text-red-500')).toBe(
+      twMerge(defaultChartClassNames, 'h-12', undefined, 'text-red-500')
+    );
+  });
+
+  it('lets a later class win over a conflicting default (e.g. h-12 vs h-64)', () => {
+    const merged = chartClassName('h-12');
+    expect(merged).toBe(twMerge(defaultChartClassNames, 'h-12'));
+    expect(merged.split(/\s+/)).toContain('h-12');
+    expect(merged.split(/\s+/)).not.toContain('h-64');
   });
 });
 

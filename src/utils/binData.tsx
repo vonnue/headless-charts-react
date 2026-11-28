@@ -154,7 +154,7 @@ export function binData(
 
 /**
  * 1D binning: bins a single continuous field and returns count/sum/mean per bin.
- * Used by ColumnChart and BarChart for histogram mode.
+ * Used by BarChart for histogram mode.
  */
 export function bin1D(
   data: any[],
@@ -189,7 +189,7 @@ export function bin1D(
 
 /**
  * Bins a grouping field and computes box-plot statistics (min, Q1, median, Q3, max)
- * from a value field per bin. Used by BoxPlotV and BoxPlotH.
+ * from a value field per bin. Used by BoxPlot.
  */
 export function binDataStats(
   data: any[],

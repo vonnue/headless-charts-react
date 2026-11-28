@@ -288,17 +288,6 @@ const ScatterPlot = <TData = any,>({
           }
         : DEFAULT_MARGIN);
 
-    // Tooltips
-    // const tooltipDiv =
-    //   tooltip && select('#tooltip').node()
-    //     ? select('#tooltip')
-    //     : select('body')
-    //         .append('div')
-    //         .attr('id', `tooltip-${id}`)
-    //         .style('position', 'absolute')
-    //         .style('opacity', '0')
-    //         .attr('class', twMerge(tooltip?.className));
-
     svg
       .append('clipPath')
       .attr('id', `${id}-plot-clip`)
@@ -561,36 +550,6 @@ const ScatterPlot = <TData = any,>({
           .attr('stroke-dasharray', `${l},${l}`);
       }
     }
-
-    // function onMouseMove(event: MouseEvent) {
-    //   const [bX, bY] = pointer(event, select('body'));
-    //   tooltipDiv.style('left', `${bX + 10}px`);
-    //   tooltipDiv.style('top', `${bY + 10}px`);
-    // }
-
-    // function onMouseOverG(event: MouseEvent, row: any) {
-    //   tooltip && tooltipDiv.style('opacity', 1);
-
-    //   const [bX, bY] = pointer(event, select('body'));
-    //   tooltipDiv.style('left', `${bX + 10}px`);
-    //   tooltipDiv.style('top', `${bY + 10}px`);
-    //   tooltipDiv.html(
-    //     tooltip?.html
-    //       ? tooltip.html(row)
-    //       : tooltip?.keys
-    //       ? tooltip.keys.map((key) => `${key}: ${row[key] || ''}`).join('<br/>')
-    //       : Object.entries(row)
-    //           .map(([key, value]) => `${key}: ${value}`)
-    //           .join('<br/>')
-    //   );
-    // }
-
-    // function onMouseLeave() {
-    //   tooltipDiv.style('opacity', '0');
-    //   tooltipDiv.style('left', `-1000px`);
-    // }
-
-    //Add styles from style prop
 
     if (zooming?.enabled) {
       const zoomed = ({ transform }: any) => {

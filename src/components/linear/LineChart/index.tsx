@@ -21,7 +21,7 @@ import { useCallback, useEffect, useRef, useMemo } from 'react';
 import { createTimeScale, makeDateParser } from '@/utils/timeScale';
 import { AxisConfig, ChartProps, SeriesAxisConfig, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
-import { pinnedEnd, pinnedStart, resolveBound } from '@/utils/domain';
+import { isFiniteNumber, pinnedEnd, pinnedStart, resolveBound } from '@/utils/domain';
 import { easeLinear } from 'd3';
 import { twMerge } from 'tailwind-merge';
 import { zoom } from 'd3-zoom';
@@ -263,21 +263,21 @@ const LineChart = <TData = any,>({
     const setDefaultXDomain = (xFunction: any) => {
       x.scalingFunction === 'time'
         ? xFunction.domain([
-            Number.isFinite(x.start)
+            isFiniteNumber(x.start)
               ? x.start
               : min(data.map((d) => toDateTime(d))),
-            Number.isFinite(x.end)
+            isFiniteNumber(x.end)
               ? x.end
               : max(data.map((d) => toDateTime(d))),
           ])
         : xFunction.domain([
-            Number.isFinite(x.start)
+            isFiniteNumber(x.start)
               ? x.start
               : !x.convert
               ? min(data.map((d: any) => d[x.key]))
               : // @ts-ignore
                 min(data.map((d: any) => x.convert(d))),
-            Number.isFinite(x.end)
+            isFiniteNumber(x.end)
               ? x.end
               : x.convert
               ? // @ts-ignore
@@ -468,7 +468,7 @@ const LineChart = <TData = any,>({
       allLeftY.map((column) => {
         const seriesData = data.filter(
           (d: any) =>
-            Number.isFinite(d[column.key]) || column.unknown === 'zero'
+            isFiniteNumber(d[column.key]) || column.unknown === 'zero'
         );
 
         const columnG = leftG.append('g').attr('class', 'group');
@@ -580,7 +580,7 @@ const LineChart = <TData = any,>({
 
         const seriesData = data.filter(
           (d: any) =>
-            Number.isFinite(d[column.key]) || column.unknown === 'zero'
+            isFiniteNumber(d[column.key]) || column.unknown === 'zero'
         );
         const seriesPath = columnG
           .append('path')
@@ -811,7 +811,7 @@ const LineChart = <TData = any,>({
 
         dataLeft.map(
           (yValue) =>
-            Number.isFinite(yValue) &&
+            isFiniteNumber(yValue) &&
             drawHLine({
               x: xValue(dataClosest),
               // @ts-ignore
@@ -821,7 +821,7 @@ const LineChart = <TData = any,>({
         );
         dataRight.map(
           (yValue) =>
-            Number.isFinite(yValue) &&
+            isFiniteNumber(yValue) &&
             drawHLine({
               x: xValue(dataClosest),
               // @ts-ignore

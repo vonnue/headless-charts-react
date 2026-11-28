@@ -564,7 +564,7 @@ const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typesc
 
     const n = records.length;
     const opacity =
-      typeof line?.opacity === 'number' && Number.isFinite(line.opacity)
+      isFiniteNumber(line?.opacity)
         ? line.opacity
         : Math.min(1, Math.max(0.1, 50 / Math.max(1, n)));
 

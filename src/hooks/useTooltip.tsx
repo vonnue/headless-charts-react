@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useRef } from 'react';
+import useIsomorphicLayoutEffect from './useIsomorphicLayoutEffect';
 import { deepValue, mergeTailwindClasses } from '@/utils';
 import { Selection, pointer, select } from 'd3-selection';
 import { TooltipConfig } from '@/types';
@@ -55,12 +56,6 @@ export interface UseTooltipResult {
   onMouseMove: (event?: unknown, d?: unknown) => void;
   onMouseLeave: () => void;
 }
-
-// useLayoutEffect in the browser so the config is current before any event
-// can fire after a commit; useEffect on the server, where React 18 warns about
-// useLayoutEffect.
-const useIsomorphicLayoutEffect =
-  typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
  * `el` if it can serve as this hook's tooltip: a div that is not inside the

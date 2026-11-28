@@ -24,6 +24,7 @@ import {
 } from '@/types';
 import { useCallback, useEffect, useRef } from 'react';
 import { defaultChartClassNames } from '@/utils';
+import { isFiniteNumber } from '@/utils/domain';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { transition } from 'd3-transition';
 import { twMerge } from 'tailwind-merge';
@@ -150,10 +151,10 @@ const RangePlot = <TData = any,>({
 
     const xFn = scaleLinear()
       .domain([
-        Number.isFinite(x.start)
+        isFiniteNumber(x.start)
           ? x.start
           : min(data.map((d: any) => d[x.fromKey])),
-        Number.isFinite(x.end) ? x.end : max(data.map((d: any) => d[x.toKey])),
+        isFiniteNumber(x.end) ? x.end : max(data.map((d: any) => d[x.toKey])),
       ])
       .range([(margin.left ?? 0), width - (padding.right || 0) - (margin.right ?? 0)]);
 

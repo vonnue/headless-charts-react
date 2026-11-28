@@ -83,7 +83,7 @@ const pctFormat = format('.1~%');
 
 /** Default percent text: `'n/a'` for null, otherwise one-decimal percent. */
 export const formatPercent = (pct: number | null): string =>
-  pct === null || !Number.isFinite(pct) ? 'n/a' : pctFormat(pct);
+  !isFiniteNumber(pct) ? 'n/a' : pctFormat(pct);
 
 export interface StageGeometry {
   /** Polygon points in px, clockwise from the near-left corner. */

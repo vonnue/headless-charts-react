@@ -3,12 +3,11 @@ import {
   MutableRefObject,
   RefObject,
   SetStateAction,
-  useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import measureSvg from '@/utils/measureSvg';
+import useIsomorphicLayoutEffect from './useIsomorphicLayoutEffect';
 
 export interface ChartSize {
   width: number;
@@ -17,11 +16,6 @@ export interface ChartSize {
 
 /** Size changes smaller than this (in px) are ignored, so sub-pixel layout jitter cannot redraw. */
 export const SIZE_EPSILON = 1;
-
-// useLayoutEffect warns during server rendering on React 18; neither effect
-// runs on the server, so the server render touches no `window`.
-const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 const sameSize = (a: ChartSize | null, b: ChartSize) =>
   a !== null &&

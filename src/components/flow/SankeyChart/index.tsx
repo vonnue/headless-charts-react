@@ -9,6 +9,7 @@ import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import { ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import {
@@ -165,7 +166,7 @@ const percentFormat = d3Format('.1~%');
 
 /** A ratio as `'.1~%'`, or `'n/a'` when null or not finite. */
 const formatShare = (v: number | null): string =>
-  v === null || !Number.isFinite(v) ? 'n/a' : percentFormat(v);
+  !isFiniteNumber(v) ? 'n/a' : percentFormat(v);
 
 /** Formats `v` with `fmt`, never printing NaN/Infinity. */
 const safe = (fmt: (v: number) => string, v: number) =>
@@ -204,7 +205,7 @@ const checkedSetting = (
   fallback: number
 ): number => {
   if (value === undefined) return fallback;
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 0)
+  if (isFiniteNumber(value) && value >= 0)
     return value;
   warnOnceInDev(
     `SankeyChart#${id}:${name}`,

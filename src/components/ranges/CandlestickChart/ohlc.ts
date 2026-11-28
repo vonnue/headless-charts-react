@@ -1,5 +1,6 @@
 import type { AxisConfig } from '@/types';
 import deepValue from '@/utils/deepValue';
+import { isFiniteNumber } from '@/utils/domain';
 import { isUtcTime, makeDateAccessor } from '@/utils/timeScale';
 
 /**
@@ -60,7 +61,7 @@ export interface PreparedCandles<TData> {
 
 const readNumber = (row: unknown, key: string): number | undefined => {
   const v = deepValue(row, key);
-  return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+  return isFiniteNumber(v) ? v : undefined;
 };
 
 export interface PrepareOptions<TData> {

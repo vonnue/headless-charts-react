@@ -10,6 +10,7 @@ import {
 import { useEffect, useMemo } from 'react';
 
 import type { AxisConfig } from '@/types';
+import { isFiniteNumber } from '@/utils/domain';
 import { isDevEnvironment, warnOnceInDev } from '@/utils/devEnvironment';
 
 /**
@@ -52,9 +53,7 @@ export const makeDateParser = (
     : (isUtcTime(x) ? utcParse : timeParse)(x.time?.format || DEFAULT_TIME_FORMAT);
   return (value: unknown): Date | null => {
     if (value instanceof Date) return isValidDate(value) ? value : null;
-    if (typeof value === 'number') {
-      return Number.isFinite(value) ? new Date(value) : null;
-    }
+    if (isFiniteNumber(value)) return new Date(value);
     if (typeof value === 'string') {
       const parsed = parseString(value);
       return isValidDate(parsed) ? parsed : null;
@@ -110,8 +109,8 @@ export const createTimeXScale = <TData,>(
   range: [number, number]
 ): ScaleTime<number, number> => {
   const dates = data.map(toDate).filter(isValidDate);
-  const start = Number.isFinite(x.start) ? (x.start as number) : (min(dates) ?? NaN);
-  const end = Number.isFinite(x.end) ? (x.end as number) : (max(dates) ?? NaN);
+  const start = isFiniteNumber(x.start) ? x.start : (min(dates) ?? NaN);
+  const end = isFiniteNumber(x.end) ? x.end : (max(dates) ?? NaN);
   return createTimeScale(x).domain([start, end]).range(range);
 };
 
@@ -139,7 +138,7 @@ export const medianCadenceMs = (dates: (Date | null | undefined)[]): number => {
 
 /** `x.time.barWidth` if it is a usable width (finite and > 0), else undefined. */
 export const validBarWidth = (barWidth: unknown): number | undefined =>
-  typeof barWidth === 'number' && Number.isFinite(barWidth) && barWidth > 0
+  isFiniteNumber(barWidth) && barWidth > 0
     ? barWidth
     : undefined;
 
@@ -158,8 +157,8 @@ export const padTimeDomain = (
   const [r0, r1] = scale.range();
   const rangePx = Math.abs(r1 - r0);
   const [t0, t1] = scale.domain().map(Number);
-  const padStart = !Number.isFinite(x.start);
-  const padEnd = !Number.isFinite(x.end);
+  const padStart = !isFiniteNumber(x.start);
+  const padEnd = !isFiniteNumber(x.end);
   const sides = Number(padStart) + Number(padEnd);
   const inset = Math.max(0, Math.min(insetPx, rangePx / 2 - 0.5));
   const spanPx = rangePx - sides * inset;
@@ -223,7 +222,7 @@ export const createTimeBarLayout = <TData,>(
   // room there either, or the width no longer matches the tick spacing
   // (review-2 N2).
   const padSlots =
-    (Number.isFinite(x.start) ? 0 : 0.5) + (Number.isFinite(x.end) ? 0 : 0.5);
+    (isFiniteNumber(x.start) ? 0 : 0.5) + (isFiniteNumber(x.end) ? 0 : 0.5);
   const slotPx =
     Number.isFinite(steps) && steps > 0 && steps + padSlots > 0
       ? rangePx / (steps + padSlots)

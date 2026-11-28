@@ -4,6 +4,7 @@
  * self-loops, no orphans, and a cycle check. Problems are returned as
  * warnings (key + message) for the component to log once in development.
  */
+import { isFiniteNumber } from '@/utils/domain';
 import { findCycle } from './layout';
 
 export interface PreparedLink<TLink = unknown> {
@@ -122,7 +123,7 @@ export const prepareGraph = <TNode, TLink>(
     }
     const value = r[cfg.valueKey];
     if (value === 0) continue; // a zero flow is valid data: excluded silently
-    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    if (!isFiniteNumber(value) || value < 0) {
       invalidValues++;
       continue;
     }

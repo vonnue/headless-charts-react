@@ -11,6 +11,7 @@ import useTooltip from '@/hooks/useTooltip';
 import useChartSize from '@/hooks/useChartSize';
 import type { AxisConfig, ChartProps, TooltipConfig } from '@/types';
 import { defaultChartClassNames } from '@/utils';
+import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import {
@@ -105,9 +106,6 @@ const FADE_MS = 150;
 const curves = { line: curveLinear, step: curveStep, rounded: curveCatmullRom };
 
 const defaultValueFormat = d3Format(',~f');
-
-const isFiniteNum = (v: unknown): v is number =>
-  typeof v === 'number' && Number.isFinite(v);
 
 const option = <T extends object>(opt: boolean | T | undefined): T | null =>
   opt === true ? ({} as T) : opt ? opt : null;
@@ -252,7 +250,7 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
     // x: time, numeric linear, or point (input order).
     const rawX = (d: Row) => d?.[x.key];
     const isTime = x.scalingFunction === 'time';
-    const isNumeric = !isTime && input.every((d) => isFiniteNum(rawX(d)));
+    const isNumeric = !isTime && input.every((d) => isFiniteNumber(rawX(d)));
     type Parsed = { row: Row; x: Date | number | string };
     let rows: Parsed[];
     if (isTime) {
@@ -275,8 +273,8 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
     let xPos: (v: Date | number | string) => number;
     if (isTime || isNumeric) {
       const nums = rows.map((r) => +r.x);
-      const lo = isFiniteNum(x.start) ? x.start : Math.min(...nums);
-      const hi = isFiniteNum(x.end) ? x.end : Math.max(...nums);
+      const lo = isFiniteNumber(x.start) ? x.start : Math.min(...nums);
+      const hi = isFiniteNumber(x.end) ? x.end : Math.max(...nums);
       const scale = isTime
         ? createTimeScale(x).domain([lo, hi]).range([0, innerWidth])
         : scaleLinear().domain([lo, hi]).range([0, innerWidth]);
@@ -292,14 +290,14 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
     const pointsBySeries: Point[][] = series.map((s) =>
       rows.flatMap((r, index) => {
         const v = r.row?.[s.key];
-        return isFiniteNum(v) ? [{ index, px: xPos(r.x), value: v }] : [];
+        return isFiniteNumber(v) ? [{ index, px: xPos(r.x), value: v }] : [];
       })
     );
 
     // Shared y domain: exact min..max, pins honoured, flat → v ± 1.
     const all = pointsBySeries.flat().map((p) => p.value);
-    let pinStart = isFiniteNum(domain?.start) ? domain!.start : undefined;
-    let pinEnd = isFiniteNum(domain?.end) ? domain!.end : undefined;
+    let pinStart = isFiniteNumber(domain?.start) ? domain!.start : undefined;
+    let pinEnd = isFiniteNumber(domain?.end) ? domain!.end : undefined;
     if (pinStart !== undefined && pinEnd !== undefined && pinStart > pinEnd) {
       warnOnceInDev(
         `SparklineChart#${id}:domain:${pinStart}:${pinEnd}`,
@@ -321,8 +319,8 @@ const SparklineChart = <TData = any,>({ // eslint-disable-line @typescript-eslin
       .padding(padding?.bar ?? DEFAULT_ROW_PADDING);
     const bh = band.bandwidth();
 
-    const duration = isFiniteNum(drawing?.duration) && drawing.duration > 0 ? drawing.duration : 0;
-    const delayStep = isFiniteNum(drawing?.delay) && drawing.delay > 0 ? drawing.delay : 0;
+    const duration = isFiniteNumber(drawing?.duration) && drawing.duration > 0 ? drawing.duration : 0;
+    const delayStep = isFiniteNumber(drawing?.delay) && drawing.delay > 0 ? drawing.delay : 0;
 
     const markerOpts = {
       last: option(markers?.last),

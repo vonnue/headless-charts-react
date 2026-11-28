@@ -18,6 +18,7 @@ import {
   TooltipConfig,
 } from '@/types';
 import { timeFormat, utcFormat } from 'd3-time-format';
+import { isFiniteNumber } from '@/utils/domain';
 import { createTimeScale, isUtcTime, makeDateParser } from '@/utils/timeScale';
 import useTooltip from '@/hooks/useTooltip';
 import { area } from 'd3-shape';
@@ -286,21 +287,21 @@ const AreaChart = <TData = any,>({
     const setDefaultXDomain = (xFunction: any) => {
       x.scalingFunction === 'time'
         ? xFunction.domain([
-            Number.isFinite(x.start)
+            isFiniteNumber(x.start)
               ? x.start
               : min(data.map((d) => toDateTime(d))),
-            Number.isFinite(x.end)
+            isFiniteNumber(x.end)
               ? x.end
               : max(data.map((d) => toDateTime(d))),
           ])
         : xFunction.domain([
-            Number.isFinite(x.start)
+            isFiniteNumber(x.start)
               ? x.start
               : !x.convert
               ? min(data.map((d: any) => d[x.key]))
               : // @ts-ignore
                 min(data.map((d: any) => x.convert(d))),
-            Number.isFinite(x.end)
+            isFiniteNumber(x.end)
               ? x.end
               : x.convert
               ? // @ts-ignore

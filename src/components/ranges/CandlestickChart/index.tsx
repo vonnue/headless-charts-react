@@ -129,7 +129,7 @@ const pctFormat = d3format('+.2~%');
 
 /** Formats a number, `'n/a'` for non-finite values (never NaN / Infinity). */
 const safe = (fmt: (v: number) => string, v: number | null | undefined) =>
-  typeof v === 'number' && Number.isFinite(v) ? fmt(v) : 'n/a';
+  isFiniteNumber(v) ? fmt(v) : 'n/a';
 
 const makeDefaultHtml =
   (formatDate: (d: Date) => string, priceFmt: (v: number) => string) =>

@@ -520,7 +520,7 @@ export const percentOf = (d: HierarchyDatum<unknown, 'either'>, kind: HierarchyP
 const pctFormat = format('.1~%');
 /** Default percent text: `'n/a'` for null, else one decimal, trailing zeros trimmed. */
 export const formatPercent = (pct: number | null): string =>
-  pct === null || !Number.isFinite(pct) ? 'n/a' : pctFormat(pct);
+  !isFiniteNumber(pct) ? 'n/a' : pctFormat(pct);
 
 /** `true` → `{}`, object → itself, anything else → `null` (off). */
 export const labelOption = <T extends object>(

@@ -16,8 +16,8 @@ import { isDevEnvironment, warnOnceInDev } from '@/utils/devEnvironment';
 /**
  * Shared time-axis helpers for charts whose x axis is normally a category
  * (`scaleBand`) axis but can switch to `scalingFunction: 'time'` (#7):
- * ColumnChart, ColumnChartStacked, LollipopVChart and BoxPlotV. AreaChart and
- * LineChart use the parsing / UTC helpers (#25).
+ * BarChart (with `orientation` and `stacking`), LollipopChart and BoxPlot.
+ * AreaChart and LineChart use the parsing / UTC helpers (#25).
  */
 
 export const DEFAULT_TIME_FORMAT = '%Y-%m-%d';

@@ -425,6 +425,22 @@ describe('SparklineChart', () => {
     expect(hasNaNAttr(screen.getByTestId('sparkline-chart'))).toBe(false);
   });
 
+  it('14b: all non-finite y values keep the empty-data NaN fallback (no NaN attributes)', () => {
+    render(
+      <SparklineChart
+        id='s14b'
+        data={rowsOf({ a: [NaN, null, 'x'] })}
+        x={X}
+        y={[{ key: 'a' }]}
+        markers={{ last: true }}
+        style={STYLE}
+      />
+    );
+    expect(groups()).toHaveLength(1);
+    expect(lineOf('a')).toBeNull();
+    expect(hasNaNAttr(screen.getByTestId('sparkline-chart'))).toBe(false);
+  });
+
   it("15: curve 'step' and 'rounded' change the path; default is straight segments", () => {
     const data = rowsOf({ a: [1, 3, 2, 4], b: [1, 3, 2, 4], c: [1, 3, 2, 4] });
     render(

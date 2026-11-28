@@ -1,4 +1,4 @@
-import { max, min } from 'd3-array';
+import { extent } from 'd3-array';
 import { scaleTime, scaleUtc, type ScaleTime } from 'd3-scale';
 import {
   isoParse,
@@ -109,8 +109,9 @@ export const createTimeXScale = <TData,>(
   range: [number, number]
 ): ScaleTime<number, number> => {
   const dates = data.map(toDate).filter(isValidDate);
-  const start = isFiniteNumber(x.start) ? x.start : (min(dates) ?? NaN);
-  const end = isFiniteNumber(x.end) ? x.end : (max(dates) ?? NaN);
+  const [dataStart, dataEnd] = extent(dates);
+  const start = isFiniteNumber(x.start) ? x.start : (dataStart ?? NaN);
+  const end = isFiniteNumber(x.end) ? x.end : (dataEnd ?? NaN);
   return createTimeScale(x).domain([start, end]).range(range);
 };
 

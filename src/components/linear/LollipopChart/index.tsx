@@ -6,7 +6,7 @@ import {
   useRef,
   type CSSProperties,
 } from 'react';
-import { max, min } from 'd3-array';
+import { extent } from 'd3-array';
 import { scaleBand, scaleLinear, type ScaleTime } from 'd3-scale';
 import { select } from 'd3-selection';
 import 'd3-transition';
@@ -359,11 +359,7 @@ export const LollipopRenderer = <TData,>(
       stemPos = (d) => bandStart(d) + bandSize / 2;
     }
 
-    const dataMin = min(rows, (d) => {
-      const v = num(d, valueKey);
-      return Number.isFinite(v) ? v : undefined;
-    });
-    const dataMax = max(rows, (d) => {
+    const [dataMin, dataMax] = extent(rows, (d) => {
       const v = num(d, valueKey);
       return Number.isFinite(v) ? v : undefined;
     });

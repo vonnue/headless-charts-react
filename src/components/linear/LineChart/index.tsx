@@ -13,7 +13,7 @@ import {
   symbolTriangle,
   symbolWye,
 } from 'd3-shape';
-import { max, min, minIndex } from 'd3-array';
+import { extent as d3Extent, max, min, minIndex } from 'd3-array';
 import { pointer, select, selectAll } from 'd3-selection';
 import { scaleLinear } from 'd3';
 import { useCallback, useEffect, useRef, useMemo } from 'react';
@@ -262,29 +262,17 @@ const LineChart = <TData = any,>({
      * @param {scaleLinear} xFunction
      */
     const setDefaultXDomain = (xFunction: any) => {
-      x.scalingFunction === 'time'
-        ? xFunction.domain([
-            isFiniteNumber(x.start)
-              ? x.start
-              : min(data.map((d) => toDateTime(d))),
-            isFiniteNumber(x.end)
-              ? x.end
-              : max(data.map((d) => toDateTime(d))),
-          ])
-        : xFunction.domain([
-            isFiniteNumber(x.start)
-              ? x.start
-              : !x.convert
-              ? min(data.map((d: any) => d[x.key]))
-              : // @ts-ignore
-                min(data.map((d: any) => x.convert(d))),
-            isFiniteNumber(x.end)
-              ? x.end
-              : x.convert
-              ? // @ts-ignore
-                max(data.map((d) => x.convert(d)))
-              : max(data.map((d: any) => d[x.key])),
-          ]);
+      const [dataStart, dataEnd] =
+        x.scalingFunction === 'time'
+          ? d3Extent(data, (d) => toDateTime(d))
+          : d3Extent(data, (d: any) =>
+              // @ts-ignore
+              x.convert ? x.convert(d) : d[x.key]
+            );
+      xFunction.domain([
+        isFiniteNumber(x.start) ? x.start : dataStart,
+        isFiniteNumber(x.end) ? x.end : dataEnd,
+      ]);
     };
 
     const allLeftY = y.filter((column) => column.axis?.location !== 'right'),
@@ -312,13 +300,16 @@ const LineChart = <TData = any,>({
 
     const { duration } = resolveDrawing(drawing);
 
+    const [leftDataMin, leftDataMax] = d3Extent(
+        allLeftY.flatMap((column) => data.map((d: any) => d[column.key]))
+      );
     const minLeftYs = resolveBound(
         pinnedStart(allLeftY.map((column) => column.start)),
-        min(allLeftY.map((column) => min(data.map((d: any) => d[column.key]))))
+        leftDataMin
       ),
       maxLeftYs = resolveBound(
         pinnedEnd(allLeftY.map((column) => column.end)),
-        max(allLeftY.map((column) => max(data.map((d: any) => d[column.key]))))
+        leftDataMax
       ),
       minTicksLeft =
         allLeftY.length > 0 &&
@@ -343,13 +334,16 @@ const LineChart = <TData = any,>({
 
     // Same rule as the left axis: a finite start/end on any right-axis series
     // pins that end of the right axis (narrowing or widening it).
+    const [rightDataMin, rightDataMax] = d3Extent(
+        allRightY.flatMap((column) => data.map((d: any) => d[column.key]))
+      );
     const minRightYs = resolveBound(
         pinnedStart(allRightY.map((column) => column.start)),
-        min(allRightY.map((column) => min(data.map((d: any) => d[column.key]))))
+        rightDataMin
       ),
       maxRightYs = resolveBound(
         pinnedEnd(allRightY.map((column) => column.end)),
-        max(allRightY.map((column) => max(data.map((d: any) => d[column.key]))))
+        rightDataMax
       );
 
     const yRightFn =

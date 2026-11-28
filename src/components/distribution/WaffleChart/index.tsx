@@ -10,6 +10,7 @@ import { deepValue, binData } from '@/utils';
 import { chartClassName } from '@/utils';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import { twMerge } from 'tailwind-merge';
 
 interface DrawingOptions {
@@ -153,9 +154,17 @@ const WaffleChart = <TData = any,>({
       const datum = d.data;
       if (!datum) return '';
       if (isBinned) {
-        return `${x.key}: ${deepValue(datum, x.key)}<br/>${y.key}: ${deepValue(datum, y.key)}<br/>count: ${deepValue(datum, 'count')}`;
+        return tooltipRows([
+          [x.key, deepValue(datum, x.key)],
+          [y.key, deepValue(datum, y.key)],
+          ['count', deepValue(datum, 'count')],
+        ]);
       }
-      return `${x.key}: ${deepValue(datum, x.key)}<br/>${y.key}: ${deepValue(datum, y.key)}<br/>${color.key}: ${deepValue(datum, color.key)}`;
+      return tooltipRows([
+        [x.key, deepValue(datum, x.key)],
+        [y.key, deepValue(datum, y.key)],
+        [color.key, deepValue(datum, color.key)],
+      ]);
     },
   });
 

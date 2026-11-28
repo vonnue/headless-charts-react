@@ -20,6 +20,7 @@ import {
 import { timeFormat, utcFormat } from 'd3-time-format';
 import { isFiniteNumber } from '@/utils/domain';
 import { createTimeScale, isUtcTime, makeDateParser } from '@/utils/timeScale';
+import { tooltipRows } from '@/utils/tooltipRows';
 import useTooltip from '@/hooks/useTooltip';
 import { area } from 'd3-shape';
 import { chartClassName } from '@/utils';
@@ -233,9 +234,10 @@ const AreaChart = <TData = any,>({
         x.scalingFunction === 'time'
           ? formatDate(parseDate(d[x.key]) as Date)
           : d[x.key];
-      return `${xValue}<br/>${y
-        .map((column) => `${column.key}: ${d[column.key]}`)
-        .join('<br/>')}`;
+      return tooltipRows([
+        `${xValue}`,
+        ...y.map((column) => [column.key, d[column.key]] as const),
+      ]);
     },
   });
 

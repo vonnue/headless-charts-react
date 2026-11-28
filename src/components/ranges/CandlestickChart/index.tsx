@@ -22,6 +22,7 @@ import {
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import {
   Candle,
   CandleDatum,
@@ -139,11 +140,11 @@ const makeDefaultHtml =
     const f = (v: number) => safe(priceFmt, v);
     const sign = d.change > 0 ? '+' : '';
     const pct = d.changePct === null ? 'n/a' : safe(pctFormat, d.changePct);
-    return (
-      `${formatDate(d.date)}<br/>` +
-      `O ${f(d.open)}&nbsp; H ${f(d.high)}&nbsp; L ${f(d.low)}&nbsp; C ${f(d.close)}<br/>` +
-      `chg ${sign}${f(d.change)} (${pct})`
-    );
+    return tooltipRows([
+      formatDate(d.date),
+      `O ${f(d.open)}&nbsp; H ${f(d.high)}&nbsp; L ${f(d.low)}&nbsp; C ${f(d.close)}`,
+      `chg ${sign}${f(d.change)} (${pct})`,
+    ]);
   };
 
 /* catalog:start */

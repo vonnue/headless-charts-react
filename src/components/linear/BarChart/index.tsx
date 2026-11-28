@@ -47,6 +47,7 @@ import {
   warnIfBarWidthCapped,
 } from '@/utils/timeScale';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 
 /** A value series: one bar (or segment) per row. */
 export interface BarSeriesConfig<TData = any> extends AxisConfig<TData> {
@@ -501,12 +502,15 @@ export const BarRenderer = <TData,>(
       const shares = shareLayout
         ? stackSegments(layout as Exclude<Layout, 'grouped'>, [row], keys, diverging)
         : null;
-      return `${categoryValue} <br/> ${keys
-        .map((key, i) => {
+      return `${categoryValue} <br/> ${tooltipRows(
+        keys.map((key, i) => {
           const share = shares?.[i][0]?.share;
-          return `${key}: ${row[key]}${share === undefined ? '' : ` (${PERCENT(share)})`}`;
+          return [
+            key,
+            `${row[key]}${share === undefined ? '' : ` (${PERCENT(share)})`}`,
+          ] as const;
         })
-        .join('<br/>')}`;
+      )}`;
     },
   });
 

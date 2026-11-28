@@ -13,6 +13,7 @@ import { isFiniteNumber } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import {
   LayoutLink,
   LayoutNode,
@@ -187,15 +188,17 @@ const defaultSankeyTooltipHtml =
     const d = datum as SankeyNodeDatum | SankeyLinkDatum | null;
     if (!d) return '';
     if (d.kind === 'node') {
-      const lines = [d.label];
-      if (d.inValue > 0) lines.push(`in: ${safe(fmt, d.inValue)}`);
-      if (d.outValue > 0) lines.push(`out: ${safe(fmt, d.outValue)}`);
-      return lines.join('<br/>');
+      return tooltipRows([
+        d.label,
+        d.inValue > 0 ? ['in', safe(fmt, d.inValue)] : undefined,
+        d.outValue > 0 ? ['out', safe(fmt, d.outValue)] : undefined,
+      ]);
     }
-    return `${d.source.label} → ${d.target.label}<br/>${safe(
-      fmt,
-      d.value
-    )}<br/>${formatShare(d.ofSource)} of ${d.source.label} out`;
+    return tooltipRows([
+      `${d.source.label} → ${d.target.label}`,
+      safe(fmt, d.value),
+      `${formatShare(d.ofSource)} of ${d.source.label} out`,
+    ]);
   };
 
 /** A setting that must be a finite number ≥ 0; otherwise the default, with a warning. */

@@ -15,6 +15,7 @@ import { isFiniteNumber, resolveBound } from '@/utils/domain';
 import { warnOnceInDev } from '@/utils/devEnvironment';
 import { interruptTransitions } from '@/utils/interruptTransitions';
 import { resolveDrawing } from '@/utils/drawing';
+import { tooltipRows } from '@/utils/tooltipRows';
 import {
   BandwidthRule,
   DensityPoint,
@@ -151,9 +152,13 @@ const defaultTooltipHtml =
   (datum: unknown): string => {
     const d = datum as ViolinDatum;
     const f = (v: number) => fmtStat(fmt, v);
-    return `${d.category}<br/>n: ${d.n}<br/>median: ${f(d.median)}<br/>IQR: ${f(d.q1)}–${f(
-      d.q3
-    )}<br/>range: ${f(d.min)}–${f(d.max)}`;
+    return tooltipRows([
+      d.category,
+      ['n', d.n],
+      ['median', f(d.median)],
+      ['IQR', `${f(d.q1)}–${f(d.q3)}`],
+      ['range', `${f(d.min)}–${f(d.max)}`],
+    ]);
   };
 
 interface Group {

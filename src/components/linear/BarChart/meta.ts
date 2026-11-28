@@ -68,6 +68,7 @@ const meta: ChartMeta = {
     { name: 'LollipopChart', when: 'bars look heavy and the value point is the focus' },
     { name: 'SpineChart', when: 'two opposing measures per category' },
     { name: 'LineChart', when: 'the axis is continuous time with many points' },
+    { name: 'BoxPlot', when: 'groups should be compared by summary statistics rather than the full distribution' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],
   example: `<BarChart

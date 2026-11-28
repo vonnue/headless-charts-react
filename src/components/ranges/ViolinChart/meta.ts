@@ -45,14 +45,15 @@ const meta: ChartMeta = {
     'Only the median and quartiles matter, or the audience will not read densities — use BoxPlot',
     'The five-number summary is already computed and there are no raw samples — use BoxPlot',
     'Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlot if a summary is enough',
-    "Only one group's distribution is shown — use ColumnChart with `x.bin`",
+    "Only one group's distribution is shown — use BarChart with `x.bin`",
     'Densities are already precomputed — use AreaChart; ViolinChart always estimates from raw rows',
     'Colour would encode magnitude — colour names the group; density is width only',
   ],
   alternatives: [
-    { name: 'BoxPlot', when: 'only the five-number summary matters' },
+    { name: 'BoxPlot', when: 'only the five-number summary matters, with orientation="horizontal" for long labels' },
     { name: 'BarChart', when: "one group's distribution as a histogram — set `x.bin`" },
     { name: 'ScatterPlot', when: 'very small samples per group, or every point should stay visible' },
+    { name: 'AreaChart', when: 'densities are already precomputed' },
   ],
   requiredProps: ['id', 'data', 'category', 'value'],
   example: `<ViolinChart

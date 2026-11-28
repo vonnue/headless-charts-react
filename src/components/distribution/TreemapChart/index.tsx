@@ -495,7 +495,7 @@ const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-esl
  *   `classNameMap` as group identity only
  * - Volume moves between categories rather than a static nested split — use
  *   SankeyChart
- * - A radial hierarchy is preferred — wait for SunburstChart; do not stretch
+ * - A radial hierarchy is preferred — use SunburstChart; do not stretch
  *   PizzaChart (`sunburst-style profile`) into that role
  *
  * Also called: treemap, squarified treemap, rectangular tree map.
@@ -520,6 +520,9 @@ const TreemapChartImpl = <TData = any,>({ // eslint-disable-line @typescript-esl
  * @see BarChart — a flat ranked comparison of the leaves with no nesting
  * @see SankeyChart — volume moves between categories rather than a static
  *   nested split
+ * @see AreaChart — composition changes over time
+ * @see SunburstChart — a radial hierarchy is preferred
+ * @see PizzaChart — a single-entity radial profile, not a hierarchy
  */
 /* catalog:end */
 function TreemapChart<TData = any>(

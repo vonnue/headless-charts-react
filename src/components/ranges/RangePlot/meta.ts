@@ -42,6 +42,7 @@ const meta: ChartMeta = {
     { name: 'CometPlot', when: 'the direction of movement between the two values matters' },
     { name: 'BoxPlot', when: 'the interval is a quartile summary' },
     { name: 'LollipopChart', when: 'there is a single value per category' },
+    { name: 'TimeLineChart', when: 'the endpoints are times rather than numbers' },
   ],
   requiredProps: ['id', 'data', 'x', 'y', 'shape'],
   example: `<RangePlot

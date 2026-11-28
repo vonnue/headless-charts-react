@@ -34,6 +34,7 @@ const meta: ChartMeta = {
     { name: 'BulletChart', when: 'there is a target and threshold to show' },
     { name: 'RingGauge', when: 'several metrics each with their own target' },
     { name: 'SpeedometerChart', when: 'a dial metaphor with coloured regions suits better' },
+    { name: 'LineChart', when: 'history or trend matters' },
   ],
   requiredProps: ['id', 'data', 'label'],
   example: `<LinearGauge

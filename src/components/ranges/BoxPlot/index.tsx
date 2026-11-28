@@ -719,9 +719,9 @@ export const BoxPlotRenderer = <TData,>(
  * - Every underlying point should be visible — use ScatterPlot
  * - The interval is a plain min–max rather than a statistical summary — use
  *   RangePlot
- * - The audience will not read quartiles; a histogram via ColumnChart with
+ * - The audience will not read quartiles; a histogram via BarChart with
  *   `x.bin` is more intuitive
- * - Only the central value matters — use ColumnChart
+ * - Only the central value matters — use BarChart
  *
  * **Specialised types**
  * - Horizontal box plot — Set `orientation="horizontal"`; groups go on `y`
@@ -827,6 +827,8 @@ export const BoxPlotRenderer = <TData,>(
  * @see RangePlot — showing a plain min–max interval rather than quartiles
  * @see ScatterPlot — individual records should stay visible
  * @see BarChart — a histogram of one group is enough — set `x.bin`
+ * @see ViolinChart — the full density, not just the five-number summary,
+ *   matters
  */
 /* catalog:end */
 const BoxPlot = <TData = any,>(props: BoxPlotProps<TData>) => ( // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

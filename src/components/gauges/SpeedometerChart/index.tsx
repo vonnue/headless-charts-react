@@ -72,6 +72,8 @@ const DEFAULT_MARGIN = { top: 0, bottom: 20, left: 40, right: 40 };
  *   space
  * @see LinearGauge — a plain value on a scale, no bands
  * @see RingGauge — several metrics each against their own target
+ * @see RadarChart — several metrics need comparing
+ * @see LineChart — the trend over time is the real question
  */
 /* catalog:end */
 const SpeedometerChart = <TData = any,>({

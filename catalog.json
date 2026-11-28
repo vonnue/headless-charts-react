@@ -485,6 +485,10 @@
         {
           "name": "LineChart",
           "when": "the axis is continuous time with many points"
+        },
+        {
+          "name": "BoxPlot",
+          "when": "groups should be compared by summary statistics rather than the full distribution"
         }
       ],
       "requiredProps": [
@@ -809,9 +813,9 @@
         "Gaps in the data should break the line — missing keys are skipped rather than zeroed"
       ],
       "avoidWhen": [
-        "The x axis is categorical with no inherent order — use ColumnChart or BarChart, since a line implies continuity that is not there",
+        "The x axis is categorical with no inherent order — use BarChart, since a line implies continuity that is not there",
         "The split of a total matters as much as the trend — use AreaChart",
-        "There are only two or three points per series — use ColumnChart, where individual values are easier to read",
+        "There are only two or three points per series — use BarChart, where individual values are easier to read",
         "The data is discrete events or durations rather than a measured value — use TimeLineChart"
       ],
       "alternatives": [
@@ -996,7 +1000,7 @@
         "Category labels are long or there are many categories — set `orientation=\"horizontal\"`"
       ],
       "avoidWhen": [
-        "Several measures need comparing per category — a lollipop carries one value; use BarChart or ColumnChart",
+        "Several measures need comparing per category — a lollipop carries one value; use BarChart",
         "The magnitude should read as accumulated quantity — bars encode that better",
         "The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: \"time\"`)",
         "Values cluster far from zero and only their differences matter — a zero-based stem hides them; use RangePlot/ScatterPlot or pin `start`"
@@ -1013,6 +1017,10 @@
         {
           "name": "ScatterPlot",
           "when": "both axes are numeric rather than one being categorical"
+        },
+        {
+          "name": "LineChart",
+          "when": "the axis is dense continuous time and the trend matters more than individual values"
         }
       ],
       "requiredProps": [
@@ -1072,7 +1080,7 @@
             "Category labels are dates rather than names"
           ],
           "avoidWhen": [
-            "Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled ColumnChart overlaps the same way)",
+            "Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled BarChart overlaps the same way)",
             "The axis is continuous time with many points and the trend matters more than individual values — use LineChart"
           ],
           "example": "<LollipopChart\n  id=\"weekly-readings\"\n  className=\"w-full h-64\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true, utc: true } }}\n  y={{ key: 'reading', start: 0 }}\n/>"
@@ -1174,7 +1182,7 @@
         "x",
         "y"
       ],
-      "example": "<SparklineChart\n  id=\"kpis\"\n  className=\"w-64 h-48\"\n  data={rows}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}\n  y={[\n    { key: 'revenue', label: 'Revenue', className: 'text-blue-500' },\n    { key: 'users', label: 'Users', className: 'text-emerald-500' },\n  ]}\n  margin={{ left: 64, right: 40, top: 4, bottom: 4 }}\n  markers={{ last: true, min: { className: 'text-red-500' }, max: { className: 'text-blue-700' } }}\n  labels={{ name: true, last: true }}\n/>",
+      "example": "<SparklineChart\n  id=\"kpis\"\n  className=\"w-64 h-48\"\n  data={data}\n  x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}\n  y={[\n    { key: 'revenue', label: 'Revenue', className: 'text-blue-500' },\n    { key: 'users', label: 'Users', className: 'text-emerald-500' },\n  ]}\n  margin={{ left: 64, right: 40, top: 4, bottom: 4 }}\n  markers={{ last: true, min: { className: 'text-red-500' }, max: { className: 'text-blue-700' } }}\n  labels={{ name: true, last: true }}\n/>",
       "storybook": "Linear/SparklineChart/Intro",
       "variants": [
         {
@@ -1353,7 +1361,7 @@
       ],
       "avoidWhen": [
         "A continuous quantity is being tracked over time — use LineChart or AreaChart",
-        "Only counts per period matter, not individual events — aggregate and use ColumnChart",
+        "Only counts per period matter, not individual events — aggregate and use BarChart",
         "There is no time dimension at all — this chart has no meaning without one"
       ],
       "alternatives": [
@@ -1368,6 +1376,10 @@
         {
           "name": "RangePlot",
           "when": "intervals are numeric ranges rather than moments in time"
+        },
+        {
+          "name": "AreaChart",
+          "when": "a continuous quantity is being tracked over time"
         }
       ],
       "requiredProps": [
@@ -1481,7 +1493,7 @@
       "avoidWhen": [
         "A few entities on one shared scale — use RadarChart",
         "Only two measures — use ScatterPlot",
-        "One measure's distribution per group — use BoxPlot (or ViolinChart once exported)",
+        "One measure's distribution per group — use BoxPlot or ViolinChart",
         "Colour is wanted to encode a value — the axes already encode values; colour names categories only",
         "The audience needs exact values — use a table"
       ],
@@ -1497,6 +1509,10 @@
         {
           "name": "BoxPlot",
           "when": "one measure's distribution per group"
+        },
+        {
+          "name": "ViolinChart",
+          "when": "one measure's distribution per group, as a density"
         }
       ],
       "requiredProps": [
@@ -1593,7 +1609,7 @@
         "A seating or parliament metaphor fits — set `startAngle`/`endAngle` for a semicircle"
       ],
       "avoidWhen": [
-        "Slices need precise comparison — angles are read far less accurately than lengths; use BarChart or ColumnChart",
+        "Slices need precise comparison — angles are read far less accurately than lengths; use BarChart",
         "The values do not sum to a meaningful whole, e.g. independent metrics or averages",
         "Composition must be compared across categories or over time — use BarChart with `stacking` or AreaChart",
         "Any value is negative — a slice cannot represent it"
@@ -1610,6 +1626,10 @@
         {
           "name": "WaffleChart",
           "when": "part-to-whole shown as countable cells rather than angles"
+        },
+        {
+          "name": "AreaChart",
+          "when": "composition compared over time"
         }
       ],
       "requiredProps": [
@@ -1738,7 +1758,7 @@
         "Point density matters more than individual records — set `x.bin` or `y.bin` for a binned heatmap"
       ],
       "avoidWhen": [
-        "One axis is categorical rather than numeric — use ColumnChart or a lollipop chart",
+        "One axis is categorical rather than numeric — use BarChart or LollipopChart",
         "There are only a handful of records — a table or bar chart communicates more directly",
         "Overplotting hides the pattern — switch to the binned heatmap mode or use WaffleChart",
         "The x axis is time and the sequence is the point — use LineChart",
@@ -1760,6 +1780,14 @@
         {
           "name": "ParallelCoordinatesChart",
           "when": "more than two or three numeric dimensions need comparing at once"
+        },
+        {
+          "name": "BarChart",
+          "when": "one axis is categorical rather than numeric"
+        },
+        {
+          "name": "LollipopChart",
+          "when": "one axis is categorical and the value point should stand out"
         }
       ],
       "requiredProps": [
@@ -1924,6 +1952,18 @@
         {
           "name": "PieChart",
           "when": "a flat part-to-whole with few slices"
+        },
+        {
+          "name": "TreemapChart",
+          "when": "sizes of many leaves must be compared precisely — area reads better than angle"
+        },
+        {
+          "name": "PizzaChart",
+          "when": "one entity's metrics on a radial profile, not a hierarchy"
+        },
+        {
+          "name": "AreaChart",
+          "when": "composition changes over time"
         }
       ],
       "requiredProps": [
@@ -2043,7 +2083,7 @@
         "Composition changes over time — use AreaChart or BarChart with `stacking`",
         "Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only",
         "Volume moves between categories rather than a static nested split — use SankeyChart",
-        "A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role"
+        "A radial hierarchy is preferred — use SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role"
       ],
       "alternatives": [
         {
@@ -2061,6 +2101,18 @@
         {
           "name": "SankeyChart",
           "when": "volume moves between categories rather than a static nested split"
+        },
+        {
+          "name": "AreaChart",
+          "when": "composition changes over time"
+        },
+        {
+          "name": "SunburstChart",
+          "when": "a radial hierarchy is preferred"
+        },
+        {
+          "name": "PizzaChart",
+          "when": "a single-entity radial profile, not a hierarchy"
         }
       ],
       "requiredProps": [
@@ -2149,7 +2201,7 @@
       "avoidWhen": [
         "Precise values must be read off — colour is the least precise encoding; use a table or BarChart",
         "One axis is continuous and unbinned — use ScatterPlot",
-        "There are only a few categories, where a grid is overkill — use ColumnChart",
+        "There are only a few categories, where a grid is overkill — use BarChart",
         "The grid would be mostly empty — sparse heatmaps read as noise"
       ],
       "alternatives": [
@@ -2164,6 +2216,10 @@
         {
           "name": "PieChart",
           "when": "showing part-to-whole for a single set of categories"
+        },
+        {
+          "name": "LineChart",
+          "when": "only the trend matters, with no cyclical structure"
         }
       ],
       "requiredProps": [
@@ -2290,8 +2346,8 @@
       "avoidWhen": [
         "Every underlying point should be visible — use ScatterPlot",
         "The interval is a plain min–max rather than a statistical summary — use RangePlot",
-        "The audience will not read quartiles; a histogram via ColumnChart with `x.bin` is more intuitive",
-        "Only the central value matters — use ColumnChart"
+        "The audience will not read quartiles; a histogram via BarChart with `x.bin` is more intuitive",
+        "Only the central value matters — use BarChart"
       ],
       "alternatives": [
         {
@@ -2305,6 +2361,10 @@
         {
           "name": "BarChart",
           "when": "a histogram of one group is enough — set `x.bin`"
+        },
+        {
+          "name": "ViolinChart",
+          "when": "the full density, not just the five-number summary, matters"
         }
       ],
       "requiredProps": [
@@ -2605,6 +2665,10 @@
         {
           "name": "SpineChart",
           "when": "contrasting two independent measures rather than a movement"
+        },
+        {
+          "name": "BoxPlot",
+          "when": "the interval is a quartile summary"
         }
       ],
       "requiredProps": [
@@ -2692,6 +2756,10 @@
         {
           "name": "LollipopChart",
           "when": "there is a single value per category"
+        },
+        {
+          "name": "TimeLineChart",
+          "when": "the endpoints are times rather than numbers"
         }
       ],
       "requiredProps": [
@@ -2768,14 +2836,14 @@
         "Only the median and quartiles matter, or the audience will not read densities — use BoxPlot",
         "The five-number summary is already computed and there are no raw samples — use BoxPlot",
         "Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlot if a summary is enough",
-        "Only one group's distribution is shown — use ColumnChart with `x.bin`",
+        "Only one group's distribution is shown — use BarChart with `x.bin`",
         "Densities are already precomputed — use AreaChart; ViolinChart always estimates from raw rows",
         "Colour would encode magnitude — colour names the group; density is width only"
       ],
       "alternatives": [
         {
           "name": "BoxPlot",
-          "when": "only the five-number summary matters"
+          "when": "only the five-number summary matters, with orientation=\"horizontal\" for long labels"
         },
         {
           "name": "BarChart",
@@ -2784,6 +2852,10 @@
         {
           "name": "ScatterPlot",
           "when": "very small samples per group, or every point should stay visible"
+        },
+        {
+          "name": "AreaChart",
+          "when": "densities are already precomputed"
         }
       ],
       "requiredProps": [
@@ -2917,6 +2989,10 @@
         {
           "name": "SpeedometerChart",
           "when": "a dial metaphor suits the audience better"
+        },
+        {
+          "name": "LineChart",
+          "when": "the value changes over time and the history matters"
         }
       ],
       "requiredProps": [
@@ -3005,6 +3081,10 @@
         {
           "name": "SpeedometerChart",
           "when": "a dial metaphor with coloured regions suits better"
+        },
+        {
+          "name": "LineChart",
+          "when": "history or trend matters"
         }
       ],
       "requiredProps": [
@@ -3079,7 +3159,7 @@
         "Several entities need comparing — a pizza shows one; use RadarChart, which overlays many",
         "The metrics are parts of one whole — use PieChart, where angle encodes share",
         "A true hierarchical sunburst is needed — PizzaChart is a flat profile; use SunburstChart",
-        "Precise values matter — radius is read poorly; use ColumnChart",
+        "Precise values matter — radius is read poorly; use BarChart",
         "Each metric has its own target rather than a shared max — use RingGauge"
       ],
       "alternatives": [
@@ -3098,6 +3178,10 @@
         {
           "name": "SunburstChart",
           "when": "a hierarchical part-to-whole, not a single-entity profile"
+        },
+        {
+          "name": "BarChart",
+          "when": "values must be read precisely"
         }
       ],
       "requiredProps": [
@@ -3187,7 +3271,7 @@
         "Metrics have a natural cyclical or grouped order that makes the shape meaningful"
       ],
       "avoidWhen": [
-        "Metrics use different units or ranges — one shared radial scale would misrepresent them; use ColumnChart grouped",
+        "Metrics use different units or ranges — one shared radial scale would misrepresent them; use a grouped BarChart",
         "More than about five entities need overlaying — the polygons become unreadable",
         "Many records, or more than about eight dimensions, need comparing — use ParallelCoordinatesChart",
         "Precise values must be compared — radial position is read poorly; use BarChart",
@@ -3292,7 +3376,7 @@
       "avoidWhen": [
         "Metrics share one scale and their shape should be compared — use RadarChart",
         "There is only one metric — use BulletChart or LinearGauge",
-        "Absolute values must be compared across metrics — arc lengths at different radii are not comparable; use ColumnChart",
+        "Absolute values must be compared across metrics — arc lengths at different radii are not comparable; use BarChart",
         "Metrics have no target, only a raw value — use PizzaChart"
       ],
       "alternatives": [
@@ -3307,6 +3391,14 @@
         {
           "name": "PizzaChart",
           "when": "metrics have a shared maximum rather than individual targets"
+        },
+        {
+          "name": "LinearGauge",
+          "when": "there is only one metric"
+        },
+        {
+          "name": "BarChart",
+          "when": "absolute values must be compared across metrics"
         }
       ],
       "requiredProps": [
@@ -3395,6 +3487,14 @@
         {
           "name": "RingGauge",
           "when": "several metrics each against their own target"
+        },
+        {
+          "name": "RadarChart",
+          "when": "several metrics need comparing"
+        },
+        {
+          "name": "LineChart",
+          "when": "the trend over time is the real question"
         }
       ],
       "requiredProps": [
@@ -3609,6 +3709,10 @@
         {
           "name": "SankeyChart",
           "when": "how much volume flows between layered stages"
+        },
+        {
+          "name": "BarChart",
+          "when": "node values are the question, not the links"
         }
       ],
       "requiredProps": [

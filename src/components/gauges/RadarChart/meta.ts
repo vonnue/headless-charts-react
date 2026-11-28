@@ -28,7 +28,7 @@ const meta: ChartMeta = {
     'Metrics have a natural cyclical or grouped order that makes the shape meaningful',
   ],
   avoidWhen: [
-    'Metrics use different units or ranges — one shared radial scale would misrepresent them; use ColumnChart grouped',
+    'Metrics use different units or ranges — one shared radial scale would misrepresent them; use a grouped BarChart',
     'More than about five entities need overlaying — the polygons become unreadable',
     'Many records, or more than about eight dimensions, need comparing — use ParallelCoordinatesChart',
     'Precise values must be compared — radial position is read poorly; use BarChart',

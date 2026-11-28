@@ -41,13 +41,14 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Precise values must be read off — colour is the least precise encoding; use a table or BarChart',
     'One axis is continuous and unbinned — use ScatterPlot',
-    'There are only a few categories, where a grid is overkill — use ColumnChart',
+    'There are only a few categories, where a grid is overkill — use BarChart',
     'The grid would be mostly empty — sparse heatmaps read as noise',
   ],
   alternatives: [
     { name: 'ScatterPlot', when: 'axes are continuous measures rather than categories' },
     { name: 'BarChart', when: 'only one categorical dimension is involved' },
     { name: 'PieChart', when: 'showing part-to-whole for a single set of categories' },
+    { name: 'LineChart', when: 'only the trend matters, with no cyclical structure' },
   ],
   requiredProps: ['id', 'data', 'x', 'y', 'color'],
   example: `<WaffleChart

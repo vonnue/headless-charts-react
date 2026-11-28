@@ -101,6 +101,7 @@ const DEFAULT_ZOOMING = { enabled: false };
  * @see LineChart — more than two points in the sequence
  * @see SpineChart — contrasting two independent measures rather than a
  *   movement
+ * @see BoxPlot — the interval is a quartile summary
  */
 /* catalog:end */
 const RangePlot = <TData = any,>({

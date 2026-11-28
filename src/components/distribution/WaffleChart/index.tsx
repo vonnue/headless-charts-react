@@ -71,8 +71,7 @@ const DEFAULT_MARGIN = { left: 40, right: 40, top: 40, bottom: 40 };
  * - Precise values must be read off — colour is the least precise encoding;
  *   use a table or BarChart
  * - One axis is continuous and unbinned — use ScatterPlot
- * - There are only a few categories, where a grid is overkill — use
- *   ColumnChart
+ * - There are only a few categories, where a grid is overkill — use BarChart
  * - The grid would be mostly empty — sparse heatmaps read as noise
  *
  * **Specialised types**
@@ -125,6 +124,7 @@ const DEFAULT_MARGIN = { left: 40, right: 40, top: 40, bottom: 40 };
  * @see ScatterPlot — axes are continuous measures rather than categories
  * @see BarChart — only one categorical dimension is involved
  * @see PieChart — showing part-to-whole for a single set of categories
+ * @see LineChart — only the trend matters, with no cyclical structure
  */
 /* catalog:end */
 const WaffleChart = <TData = any,>({

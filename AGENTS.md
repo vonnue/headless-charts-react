@@ -795,6 +795,7 @@ Stacked columns on a real date axis, spaced by elapsed time.
 - [`LollipopChart`](#lollipopchart) — bars look heavy and the value point is the focus
 - [`SpineChart`](#spinechart) — two opposing measures per category
 - [`LineChart`](#linechart) — the axis is continuous time with many points
+- [`BoxPlot`](#boxplot) — groups should be compared by summary statistics rather than the full distribution
 
 ### LineChart
 
@@ -813,9 +814,9 @@ Plots one or more numeric series against a shared ordered or time axis to show h
 
 **Do not use when**
 
-- The x axis is categorical with no inherent order — use ColumnChart or BarChart, since a line implies continuity that is not there
+- The x axis is categorical with no inherent order — use BarChart, since a line implies continuity that is not there
 - The split of a total matters as much as the trend — use AreaChart
-- There are only two or three points per series — use ColumnChart, where individual values are easier to read
+- There are only two or three points per series — use BarChart, where individual values are easier to read
 - The data is discrete events or durations rather than a measured value — use TimeLineChart
 
 **Data**
@@ -1003,7 +1004,7 @@ Prefer `<LollipopChart>` with the prop set in new code. `LollipopHChart` and `Lo
 
 **Do not use when**
 
-- Several measures need comparing per category — a lollipop carries one value; use BarChart or ColumnChart
+- Several measures need comparing per category — a lollipop carries one value; use BarChart
 - The magnitude should read as accumulated quantity — bars encode that better
 - The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: "time"`)
 - Values cluster far from zero and only their differences matter — a zero-based stem hides them; use RangePlot/ScatterPlot or pin `start`
@@ -1077,7 +1078,7 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
 
 **Do not use when**
 
-- Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled ColumnChart overlaps the same way)
+- Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled BarChart overlaps the same way)
 - The axis is continuous time with many points and the trend matters more than individual values — use LineChart
 
 ```tsx
@@ -1101,6 +1102,7 @@ A vertical lollipop chart whose x axis parses real dates and positions each stem
 - [`BarChart`](#barchart) — multiple measures per category, or magnitude should read as area
 - [`RangePlot`](#rangeplot) — each category has an interval rather than a single value
 - [`ScatterPlot`](#scatterplot) — both axes are numeric rather than one being categorical
+- [`LineChart`](#linechart) — the axis is dense continuous time and the trend matters more than individual values
 
 ### SparklineChart
 
@@ -1140,7 +1142,7 @@ One small axis-free line per series, stacked as equal-height rows on one shared 
 <SparklineChart
   id="kpis"
   className="w-64 h-48"
-  data={rows}
+  data={data}
   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
   y={[
     { key: 'revenue', label: 'Revenue', className: 'text-blue-500' },
@@ -1240,7 +1242,7 @@ Places discrete events and durations on a shared time axis, one lane per categor
 **Do not use when**
 
 - A continuous quantity is being tracked over time — use LineChart or AreaChart
-- Only counts per period matter, not individual events — aggregate and use ColumnChart
+- Only counts per period matter, not individual events — aggregate and use BarChart
 - There is no time dimension at all — this chart has no meaning without one
 
 **Data**
@@ -1317,6 +1319,7 @@ Draws each row’s work as a horizontal bar spanning its start and end dates, on
 - [`LineChart`](#linechart) — tracking a measured value over time rather than discrete events
 - [`BarChart`](#barchart) — event counts per period are enough
 - [`RangePlot`](#rangeplot) — intervals are numeric ranges rather than moments in time
+- [`AreaChart`](#areachart) — a continuous quantity is being tracked over time
 
 ### ParallelCoordinatesChart
 
@@ -1336,7 +1339,7 @@ One axis per measure, each with its own scale, and one line per record across th
 
 - A few entities on one shared scale — use RadarChart
 - Only two measures — use ScatterPlot
-- One measure's distribution per group — use BoxPlot (or ViolinChart once exported)
+- One measure's distribution per group — use BoxPlot or ViolinChart
 - Colour is wanted to encode a value — the axes already encode values; colour names categories only
 - The audience needs exact values — use a table
 
@@ -1390,6 +1393,7 @@ const [selected, setSelected] = React.useState<number[]>([]);
 - [`RadarChart`](#radarchart) — a few entities compared on one shared scale
 - [`ScatterPlot`](#scatterplot) — only two measures are being related
 - [`BoxPlot`](#boxplot) — one measure's distribution per group
+- [`ViolinChart`](#violinchart) — one measure's distribution per group, as a density
 
 ### PieChart
 
@@ -1408,7 +1412,7 @@ Divides a circle into slices sized by value, showing how much each category cont
 
 **Do not use when**
 
-- Slices need precise comparison — angles are read far less accurately than lengths; use BarChart or ColumnChart
+- Slices need precise comparison — angles are read far less accurately than lengths; use BarChart
 - The values do not sum to a meaningful whole, e.g. independent metrics or averages
 - Composition must be compared across categories or over time — use BarChart with `stacking` or AreaChart
 - Any value is negative — a slice cannot represent it
@@ -1507,6 +1511,7 @@ A pie swept through 180° rather than 360°, echoing a parliamentary seating pla
 - [`BarChart`](#barchart) — composition compared across several categories or periods (`stacking`)
 - [`BarChart`](#barchart) — slices need precise comparison
 - [`WaffleChart`](#wafflechart) — part-to-whole shown as countable cells rather than angles
+- [`AreaChart`](#areachart) — composition compared over time
 
 ### ScatterPlot
 
@@ -1526,7 +1531,7 @@ One point per record positioned by two measures, revealing correlation, clusters
 
 **Do not use when**
 
-- One axis is categorical rather than numeric — use ColumnChart or a lollipop chart
+- One axis is categorical rather than numeric — use BarChart or LollipopChart
 - There are only a handful of records — a table or bar chart communicates more directly
 - Overplotting hides the pattern — switch to the binned heatmap mode or use WaffleChart
 - The x axis is time and the sequence is the point — use LineChart
@@ -1657,6 +1662,8 @@ Bins points into a grid and colours each cell by how many fell into it, revealin
 - [`LineChart`](#linechart) — x is time and the sequence matters
 - [`BoxPlot`](#boxplot) — comparing the spread of a measure across groups rather than two measures
 - [`ParallelCoordinatesChart`](#parallelcoordinateschart) — more than two or three numeric dimensions need comparing at once
+- [`BarChart`](#barchart) — one axis is categorical rather than numeric
+- [`LollipopChart`](#lollipopchart) — one axis is categorical and the value point should stand out
 
 ### SunburstChart
 
@@ -1720,6 +1727,9 @@ Concentric rings for a hierarchical part-to-whole: each depth is a ring and each
 **Consider instead**
 
 - [`PieChart`](#piechart) — a flat part-to-whole with few slices
+- [`TreemapChart`](#treemapchart) — sizes of many leaves must be compared precisely — area reads better than angle
+- [`PizzaChart`](#pizzachart) — one entity's metrics on a radial profile, not a hierarchy
+- [`AreaChart`](#areachart) — composition changes over time
 
 ### TreemapChart
 
@@ -1744,7 +1754,7 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 - Composition changes over time — use AreaChart or BarChart with `stacking`
 - Colour is used to encode magnitude — area already encodes value; keep `classNameMap` as group identity only
 - Volume moves between categories rather than a static nested split — use SankeyChart
-- A radial hierarchy is preferred — wait for SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role
+- A radial hierarchy is preferred — use SunburstChart; do not stretch PizzaChart (`sunburst-style profile`) into that role
 
 **Data**
 
@@ -1787,6 +1797,9 @@ Nested rectangles whose area encodes value, showing a hierarchical part-to-whole
 - [`WaffleChart`](#wafflechart) — cells should be countable units
 - [`BarChart`](#barchart) — a flat ranked comparison of the leaves with no nesting
 - [`SankeyChart`](#sankeychart) — volume moves between categories rather than a static nested split
+- [`AreaChart`](#areachart) — composition changes over time
+- [`SunburstChart`](#sunburstchart) — a radial hierarchy is preferred
+- [`PizzaChart`](#pizzachart) — a single-entity radial profile, not a hierarchy
 
 ### WaffleChart
 
@@ -1807,7 +1820,7 @@ A grid of cells indexed by two categorical axes, with a third value encoded as c
 
 - Precise values must be read off — colour is the least precise encoding; use a table or BarChart
 - One axis is continuous and unbinned — use ScatterPlot
-- There are only a few categories, where a grid is overkill — use ColumnChart
+- There are only a few categories, where a grid is overkill — use BarChart
 - The grid would be mostly empty — sparse heatmaps read as noise
 
 **Data**
@@ -1902,6 +1915,7 @@ Groups raw continuous values into ranges on both axes and colours each cell by h
 - [`ScatterPlot`](#scatterplot) — axes are continuous measures rather than categories
 - [`BarChart`](#barchart) — only one categorical dimension is involved
 - [`PieChart`](#piechart) — showing part-to-whole for a single set of categories
+- [`LineChart`](#linechart) — only the trend matters, with no cyclical structure
 
 ### BoxPlot
 
@@ -1930,8 +1944,8 @@ Prefer `<BoxPlot>` with the prop set in new code. `BoxPlotH` and `BoxPlotV` are 
 
 - Every underlying point should be visible — use ScatterPlot
 - The interval is a plain min–max rather than a statistical summary — use RangePlot
-- The audience will not read quartiles; a histogram via ColumnChart with `x.bin` is more intuitive
-- Only the central value matters — use ColumnChart
+- The audience will not read quartiles; a histogram via BarChart with `x.bin` is more intuitive
+- Only the central value matters — use BarChart
 
 **Data**
 
@@ -2074,6 +2088,7 @@ A vertical box plot whose x axis parses real dates and spaces boxes proportional
 - [`RangePlot`](#rangeplot) — showing a plain min–max interval rather than quartiles
 - [`ScatterPlot`](#scatterplot) — individual records should stay visible
 - [`BarChart`](#barchart) — a histogram of one group is enough — set `x.bin`
+- [`ViolinChart`](#violinchart) — the full density, not just the five-number summary, matters
 
 ### CandlestickChart
 
@@ -2222,6 +2237,7 @@ A tapered mark per category running from one value to another, where the widenin
 - [`RangePlot`](#rangeplot) — the interval has no direction
 - [`LineChart`](#linechart) — more than two points in the sequence
 - [`SpineChart`](#spinechart) — contrasting two independent measures rather than a movement
+- [`BoxPlot`](#boxplot) — the interval is a quartile summary
 
 ### RangePlot
 
@@ -2278,6 +2294,7 @@ A dumbbell per category: two endpoints joined by a bar, showing the interval bet
 - [`CometPlot`](#cometplot) — the direction of movement between the two values matters
 - [`BoxPlot`](#boxplot) — the interval is a quartile summary
 - [`LollipopChart`](#lollipopchart) — there is a single value per category
+- [`TimeLineChart`](#timelinechart) — the endpoints are times rather than numbers
 
 ### ViolinChart
 
@@ -2297,7 +2314,7 @@ Mirrored kernel-density shapes, one per group, showing the full distribution of 
 - Only the median and quartiles matter, or the audience will not read densities — use BoxPlot
 - The five-number summary is already computed and there are no raw samples — use BoxPlot
 - Groups have very few samples (well under 20) — use ScatterPlot, or BoxPlot if a summary is enough
-- Only one group's distribution is shown — use ColumnChart with `x.bin`
+- Only one group's distribution is shown — use BarChart with `x.bin`
 - Densities are already precomputed — use AreaChart; ViolinChart always estimates from raw rows
 - Colour would encode magnitude — colour names the group; density is width only
 
@@ -2367,9 +2384,10 @@ A half violin with the raw samples jittered on the empty side, showing density a
 
 **Consider instead**
 
-- [`BoxPlot`](#boxplot) — only the five-number summary matters
+- [`BoxPlot`](#boxplot) — only the five-number summary matters, with orientation="horizontal" for long labels
 - [`BarChart`](#barchart) — one group's distribution as a histogram — set `x.bin`
 - [`ScatterPlot`](#scatterplot) — very small samples per group, or every point should stay visible
+- [`AreaChart`](#areachart) — densities are already precomputed
 
 ### BulletChart
 
@@ -2431,6 +2449,7 @@ A compact linear gauge showing one measure against a base, a target, a threshold
 - [`LinearGauge`](#lineargauge) — there is no target or threshold, just a value on a scale
 - [`RingGauge`](#ringgauge) — several metrics each against their own target
 - [`SpeedometerChart`](#speedometerchart) — a dial metaphor suits the audience better
+- [`LineChart`](#linechart) — the value changes over time and the history matters
 
 ### LinearGauge
 
@@ -2485,6 +2504,7 @@ A single value drawn as a filled bar on a linear scale, with an optional error b
 - [`BulletChart`](#bulletchart) — there is a target and threshold to show
 - [`RingGauge`](#ringgauge) — several metrics each with their own target
 - [`SpeedometerChart`](#speedometerchart) — a dial metaphor with coloured regions suits better
+- [`LineChart`](#linechart) — history or trend matters
 
 ### PizzaChart
 
@@ -2505,7 +2525,7 @@ Equal-angle radial slices, one per metric, each extending from the centre in pro
 - Several entities need comparing — a pizza shows one; use RadarChart, which overlays many
 - The metrics are parts of one whole — use PieChart, where angle encodes share
 - A true hierarchical sunburst is needed — PizzaChart is a flat profile; use SunburstChart
-- Precise values matter — radius is read poorly; use ColumnChart
+- Precise values matter — radius is read poorly; use BarChart
 - Each metric has its own target rather than a shared max — use RingGauge
 
 **Data**
@@ -2546,6 +2566,7 @@ Equal-angle radial slices, one per metric, each extending from the centre in pro
 - [`RingGauge`](#ringgauge) — each metric has its own target
 - [`PieChart`](#piechart) — the values are parts of one whole
 - [`SunburstChart`](#sunburstchart) — a hierarchical part-to-whole, not a single-entity profile
+- [`BarChart`](#barchart) — values must be read precisely
 
 ### RadarChart
 
@@ -2563,7 +2584,7 @@ Plots several metrics on spokes radiating from a centre and joins them into a po
 
 **Do not use when**
 
-- Metrics use different units or ranges — one shared radial scale would misrepresent them; use ColumnChart grouped
+- Metrics use different units or ranges — one shared radial scale would misrepresent them; use a grouped BarChart
 - More than about five entities need overlaying — the polygons become unreadable
 - Many records, or more than about eight dimensions, need comparing — use ParallelCoordinatesChart
 - Precise values must be compared — radial position is read poorly; use BarChart
@@ -2631,7 +2652,7 @@ Concentric arcs, one per metric, each filled to its own target — the Apple Wat
 
 - Metrics share one scale and their shape should be compared — use RadarChart
 - There is only one metric — use BulletChart or LinearGauge
-- Absolute values must be compared across metrics — arc lengths at different radii are not comparable; use ColumnChart
+- Absolute values must be compared across metrics — arc lengths at different radii are not comparable; use BarChart
 - Metrics have no target, only a raw value — use PizzaChart
 
 **Data**
@@ -2670,6 +2691,8 @@ Concentric arcs, one per metric, each filled to its own target — the Apple Wat
 - [`BulletChart`](#bulletchart) — a single metric, with qualitative bands
 - [`RadarChart`](#radarchart) — metrics share one scale and profile shape matters
 - [`PizzaChart`](#pizzachart) — metrics have a shared maximum rather than individual targets
+- [`LinearGauge`](#lineargauge) — there is only one metric
+- [`BarChart`](#barchart) — absolute values must be compared across metrics
 
 ### SpeedometerChart
 
@@ -2724,6 +2747,8 @@ A dial with a needle showing one value against a scale that can be split into co
 - [`BulletChart`](#bulletchart) — the same information is needed in a fraction of the space
 - [`LinearGauge`](#lineargauge) — a plain value on a scale, no bands
 - [`RingGauge`](#ringgauge) — several metrics each against their own target
+- [`RadarChart`](#radarchart) — several metrics need comparing
+- [`LineChart`](#linechart) — the trend over time is the real question
 
 ### FunnelChart
 
@@ -2849,6 +2874,7 @@ Draws nodes and the edges between them, laid out by force simulation or pinned t
 - [`ScatterPlot`](#scatterplot) — entities have two measures and no meaningful links
 - [`WaffleChart`](#wafflechart) — the relationships form a matrix better read as a heatmap
 - [`SankeyChart`](#sankeychart) — how much volume flows between layered stages
+- [`BarChart`](#barchart) — node values are the question, not the links
 
 ### SankeyChart
 

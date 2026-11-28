@@ -60,6 +60,7 @@ const meta: ChartMeta = {
     { name: 'ScatterPlot', when: 'entities have two measures and no meaningful links' },
     { name: 'WaffleChart', when: 'the relationships form a matrix better read as a heatmap' },
     { name: 'SankeyChart', when: 'how much volume flows between layered stages' },
+    { name: 'BarChart', when: 'node values are the question, not the links' },
   ],
   requiredProps: ['id', 'nodes', 'edges', 'nodeDef', 'edgeDef'],
   example: `<Network

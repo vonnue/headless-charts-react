@@ -161,7 +161,7 @@ interface Point {
  * <SparklineChart
  *   id="kpis"
  *   className="w-64 h-48"
- *   data={rows}
+ *   data={data}
  *   x={{ key: 'date', scalingFunction: 'time', time: { isISO: true } }}
  *   y={[
  *     { key: 'revenue', label: 'Revenue', className: 'text-blue-500' },

@@ -38,7 +38,7 @@ const meta: ChartMeta = {
     'A seating or parliament metaphor fits — set `startAngle`/`endAngle` for a semicircle',
   ],
   avoidWhen: [
-    'Slices need precise comparison — angles are read far less accurately than lengths; use BarChart or ColumnChart',
+    'Slices need precise comparison — angles are read far less accurately than lengths; use BarChart',
     'The values do not sum to a meaningful whole, e.g. independent metrics or averages',
     'Composition must be compared across categories or over time — use BarChart with `stacking` or AreaChart',
     'Any value is negative — a slice cannot represent it',
@@ -47,6 +47,7 @@ const meta: ChartMeta = {
     { name: 'BarChart', when: 'composition compared across several categories or periods (`stacking`)' },
     { name: 'BarChart', when: 'slices need precise comparison' },
     { name: 'WaffleChart', when: 'part-to-whole shown as countable cells rather than angles' },
+    { name: 'AreaChart', when: 'composition compared over time' },
   ],
   requiredProps: ['id', 'data', 'nameKey', 'valueKey'],
   example: `<PieChart

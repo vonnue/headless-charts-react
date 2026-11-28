@@ -1439,6 +1439,8 @@ export const BarRenderer = <TData,>(
  * @see LollipopChart — bars look heavy and the value point is the focus
  * @see SpineChart — two opposing measures per category
  * @see LineChart — the axis is continuous time with many points
+ * @see BoxPlot — groups should be compared by summary statistics rather
+ *   than the full distribution
  */
 /* catalog:end */
 const BarChart = <TData = any,>(props: BarChartProps<TData>) => (

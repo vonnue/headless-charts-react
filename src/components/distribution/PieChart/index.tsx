@@ -98,7 +98,7 @@ const DEFAULT_SUBTITLE = {
  *
  * **Avoid when**
  * - Slices need precise comparison — angles are read far less accurately
- *   than lengths; use BarChart or ColumnChart
+ *   than lengths; use BarChart
  * - The values do not sum to a meaningful whole, e.g. independent metrics or
  *   averages
  * - Composition must be compared across categories or over time — use
@@ -159,6 +159,7 @@ const DEFAULT_SUBTITLE = {
  * @see BarChart — slices need precise comparison
  * @see WaffleChart — part-to-whole shown as countable cells rather than
  *   angles
+ * @see AreaChart — composition compared over time
  */
 /* catalog:end */
 const PieChart = <TData = any,>({

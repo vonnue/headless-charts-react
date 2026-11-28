@@ -41,7 +41,7 @@ const meta: ChartMeta = {
     'Point density matters more than individual records — set `x.bin` or `y.bin` for a binned heatmap',
   ],
   avoidWhen: [
-    'One axis is categorical rather than numeric — use ColumnChart or a lollipop chart',
+    'One axis is categorical rather than numeric — use BarChart or LollipopChart',
     'There are only a handful of records — a table or bar chart communicates more directly',
     'Overplotting hides the pattern — switch to the binned heatmap mode or use WaffleChart',
     'The x axis is time and the sequence is the point — use LineChart',
@@ -55,6 +55,8 @@ const meta: ChartMeta = {
       name: 'ParallelCoordinatesChart',
       when: 'more than two or three numeric dimensions need comparing at once',
     },
+    { name: 'BarChart', when: 'one axis is categorical rather than numeric' },
+    { name: 'LollipopChart', when: 'one axis is categorical and the value point should stand out' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],
   example: `<ScatterPlot

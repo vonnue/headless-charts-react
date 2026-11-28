@@ -54,7 +54,7 @@ const DEFAULT_MARGIN = { top: 20, right: 20, bottom: 20, left: 20 };
  * - A continuous quantity is being tracked over time — use LineChart or
  *   AreaChart
  * - Only counts per period matter, not individual events — aggregate and use
- *   ColumnChart
+ *   BarChart
  * - There is no time dimension at all — this chart has no meaning without
  *   one
  *
@@ -104,6 +104,7 @@ const DEFAULT_MARGIN = { top: 20, right: 20, bottom: 20, left: 20 };
  * @see BarChart — event counts per period are enough
  * @see RangePlot — intervals are numeric ranges rather than moments in
  *   time
+ * @see AreaChart — a continuous quantity is being tracked over time
  */
 /* catalog:end */
 const TimeLineChart = <TData = any,>({

@@ -40,6 +40,7 @@ const meta: ChartMeta = {
     { name: 'RangePlot', when: 'the interval has no direction' },
     { name: 'LineChart', when: 'more than two points in the sequence' },
     { name: 'SpineChart', when: 'contrasting two independent measures rather than a movement' },
+    { name: 'BoxPlot', when: 'the interval is a quartile summary' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],
   example: `<CometPlot

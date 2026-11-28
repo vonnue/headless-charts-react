@@ -793,6 +793,11 @@ const SunburstChartImpl = <TData = any,>({ // eslint-disable-line @typescript-es
  * ```
  *
  * @see PieChart — a flat part-to-whole with few slices
+ * @see TreemapChart — sizes of many leaves must be compared precisely —
+ *   area reads better than angle
+ * @see PizzaChart — one entity's metrics on a radial profile, not a
+ *   hierarchy
+ * @see AreaChart — composition changes over time
  */
 /* catalog:end */
 function SunburstChart<TData = any>(

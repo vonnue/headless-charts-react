@@ -40,6 +40,8 @@ const meta: ChartMeta = {
     { name: 'BulletChart', when: 'the same information is needed in a fraction of the space' },
     { name: 'LinearGauge', when: 'a plain value on a scale, no bands' },
     { name: 'RingGauge', when: 'several metrics each against their own target' },
+    { name: 'RadarChart', when: 'several metrics need comparing' },
+    { name: 'LineChart', when: 'the trend over time is the real question' },
   ],
   requiredProps: ['id', 'data'],
   example: `<SpeedometerChart

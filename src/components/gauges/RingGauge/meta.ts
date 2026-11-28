@@ -25,13 +25,15 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Metrics share one scale and their shape should be compared — use RadarChart',
     'There is only one metric — use BulletChart or LinearGauge',
-    'Absolute values must be compared across metrics — arc lengths at different radii are not comparable; use ColumnChart',
+    'Absolute values must be compared across metrics — arc lengths at different radii are not comparable; use BarChart',
     'Metrics have no target, only a raw value — use PizzaChart',
   ],
   alternatives: [
     { name: 'BulletChart', when: 'a single metric, with qualitative bands' },
     { name: 'RadarChart', when: 'metrics share one scale and profile shape matters' },
     { name: 'PizzaChart', when: 'metrics have a shared maximum rather than individual targets' },
+    { name: 'LinearGauge', when: 'there is only one metric' },
+    { name: 'BarChart', when: 'absolute values must be compared across metrics' },
   ],
   requiredProps: ['id', 'data', 'labelKey', 'dataKey', 'targetKey'],
   example: `<RingGauge

@@ -66,7 +66,7 @@ const DEFAULT_STYLE = {};
  *   RadarChart
  * - There is only one metric — use BulletChart or LinearGauge
  * - Absolute values must be compared across metrics — arc lengths at
- *   different radii are not comparable; use ColumnChart
+ *   different radii are not comparable; use BarChart
  * - Metrics have no target, only a raw value — use PizzaChart
  *
  * Also called: activity rings, radial progress chart, concentric gauge, donut gauge.
@@ -89,6 +89,8 @@ const DEFAULT_STYLE = {};
  * @see RadarChart — metrics share one scale and profile shape matters
  * @see PizzaChart — metrics have a shared maximum rather than individual
  *   targets
+ * @see LinearGauge — there is only one metric
+ * @see BarChart — absolute values must be compared across metrics
  */
 /* catalog:end */
 const RingGauge = <TData = any,>({

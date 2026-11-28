@@ -70,6 +70,7 @@ const DEFAULT_STYLE = {};
  * @see RingGauge — several metrics each with their own target
  * @see SpeedometerChart — a dial metaphor with coloured regions suits
  *   better
+ * @see LineChart — history or trend matters
  */
 /* catalog:end */
 const LinearGauge = <TData = any,>({

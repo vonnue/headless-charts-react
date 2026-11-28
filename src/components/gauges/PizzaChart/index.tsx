@@ -49,7 +49,7 @@ const DEFAULT_METRICS: PizzaChartProps['metrics'] = [];
  *   share
  * - A true hierarchical sunburst is needed — PizzaChart is a flat profile;
  *   use SunburstChart
- * - Precise values matter — radius is read poorly; use ColumnChart
+ * - Precise values matter — radius is read poorly; use BarChart
  * - Each metric has its own target rather than a shared max — use RingGauge
  *
  * Also called: radial bar chart, polar bar chart, sunburst-style profile.
@@ -77,6 +77,7 @@ const DEFAULT_METRICS: PizzaChartProps['metrics'] = [];
  * @see PieChart — the values are parts of one whole
  * @see SunburstChart — a hierarchical part-to-whole, not a single-entity
  *   profile
+ * @see BarChart — values must be read precisely
  */
 /* catalog:end */
 const PizzaChart = <TData = any,>({

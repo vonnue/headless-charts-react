@@ -45,13 +45,14 @@ const meta: ChartMeta = {
   ],
   avoidWhen: [
     'A continuous quantity is being tracked over time — use LineChart or AreaChart',
-    'Only counts per period matter, not individual events — aggregate and use ColumnChart',
+    'Only counts per period matter, not individual events — aggregate and use BarChart',
     'There is no time dimension at all — this chart has no meaning without one',
   ],
   alternatives: [
     { name: 'LineChart', when: 'tracking a measured value over time rather than discrete events' },
     { name: 'BarChart', when: 'event counts per period are enough' },
     { name: 'RangePlot', when: 'intervals are numeric ranges rather than moments in time' },
+    { name: 'AreaChart', when: 'a continuous quantity is being tracked over time' },
   ],
   requiredProps: ['id', 'data', 'events'],
   example: `<TimeLineChart

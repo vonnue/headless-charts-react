@@ -233,8 +233,7 @@ const tooltipHtml = (
  * **Avoid when**
  * - A few entities on one shared scale — use RadarChart
  * - Only two measures — use ScatterPlot
- * - One measure's distribution per group — use BoxPlot (or ViolinChart once
- *   exported)
+ * - One measure's distribution per group — use BoxPlot or ViolinChart
  * - Colour is wanted to encode a value — the axes already encode values;
  *   colour names categories only
  * - The audience needs exact values — use a table
@@ -268,6 +267,7 @@ const tooltipHtml = (
  * @see RadarChart — a few entities compared on one shared scale
  * @see ScatterPlot — only two measures are being related
  * @see BoxPlot — one measure's distribution per group
+ * @see ViolinChart — one measure's distribution per group, as a density
  */
 /* catalog:end */
 const ParallelCoordinatesChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

@@ -83,10 +83,10 @@ const DEFAULT_STYLE = {};
  *   than zeroed
  *
  * **Avoid when**
- * - The x axis is categorical with no inherent order — use ColumnChart or
- *   BarChart, since a line implies continuity that is not there
+ * - The x axis is categorical with no inherent order — use BarChart, since a
+ *   line implies continuity that is not there
  * - The split of a total matters as much as the trend — use AreaChart
- * - There are only two or three points per series — use ColumnChart, where
+ * - There are only two or three points per series — use BarChart, where
  *   individual values are easier to read
  * - The data is discrete events or durations rather than a measured value —
  *   use TimeLineChart

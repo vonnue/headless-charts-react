@@ -73,13 +73,14 @@ const meta: ChartMeta = {
   avoidWhen: [
     'Every underlying point should be visible — use ScatterPlot',
     'The interval is a plain min–max rather than a statistical summary — use RangePlot',
-    'The audience will not read quartiles; a histogram via ColumnChart with `x.bin` is more intuitive',
-    'Only the central value matters — use ColumnChart',
+    'The audience will not read quartiles; a histogram via BarChart with `x.bin` is more intuitive',
+    'Only the central value matters — use BarChart',
   ],
   alternatives: [
     { name: 'RangePlot', when: 'showing a plain min–max interval rather than quartiles' },
     { name: 'ScatterPlot', when: 'individual records should stay visible' },
     { name: 'BarChart', when: 'a histogram of one group is enough — set `x.bin`' },
+    { name: 'ViolinChart', when: 'the full density, not just the five-number summary, matters' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],
   example: `<BoxPlot

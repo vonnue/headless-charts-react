@@ -635,7 +635,7 @@ export const LollipopRenderer = <TData,>(
  *
  * **Avoid when**
  * - Several measures need comparing per category — a lollipop carries one
- *   value; use BarChart or ColumnChart
+ *   value; use BarChart
  * - The magnitude should read as accumulated quantity — bars encode that
  *   better
  * - The axis is dense continuous time and the trend matters more than
@@ -705,6 +705,8 @@ export const LollipopRenderer = <TData,>(
  *   value
  * @see ScatterPlot — both axes are numeric rather than one being
  *   categorical
+ * @see LineChart — the axis is dense continuous time and the trend
+ *   matters more than individual values
  */
 /* catalog:end */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

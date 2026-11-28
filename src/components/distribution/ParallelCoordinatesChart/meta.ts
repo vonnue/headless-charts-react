@@ -57,7 +57,7 @@ const meta: ChartMeta = {
   avoidWhen: [
     'A few entities on one shared scale — use RadarChart',
     'Only two measures — use ScatterPlot',
-    "One measure's distribution per group — use BoxPlot (or ViolinChart once exported)",
+    "One measure's distribution per group — use BoxPlot or ViolinChart",
     'Colour is wanted to encode a value — the axes already encode values; colour names categories only',
     'The audience needs exact values — use a table',
   ],
@@ -65,6 +65,7 @@ const meta: ChartMeta = {
     { name: 'RadarChart', when: 'a few entities compared on one shared scale' },
     { name: 'ScatterPlot', when: 'only two measures are being related' },
     { name: 'BoxPlot', when: "one measure's distribution per group" },
+    { name: 'ViolinChart', when: "one measure's distribution per group, as a density" },
   ],
   requiredProps: ['id', 'data', 'dimensions'],
   example: `const [selected, setSelected] = React.useState<number[]>([]);

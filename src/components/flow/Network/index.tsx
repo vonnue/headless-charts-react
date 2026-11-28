@@ -512,6 +512,7 @@ const attachZoom = (
  * @see WaffleChart — the relationships form a matrix better read as a
  *   heatmap
  * @see SankeyChart — how much volume flows between layered stages
+ * @see BarChart — node values are the question, not the links
  */
 /* catalog:end */
 const Network = <TData = any,>({

@@ -41,7 +41,7 @@ const DEFAULT_MARGIN = { top: 20, bottom: 20, left: 20, right: 20 };
  *
  * **Avoid when**
  * - Metrics use different units or ranges — one shared radial scale would
- *   misrepresent them; use ColumnChart grouped
+ *   misrepresent them; use a grouped BarChart
  * - More than about five entities need overlaying — the polygons become
  *   unreadable
  * - Many records, or more than about eight dimensions, need comparing — use

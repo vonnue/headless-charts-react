@@ -63,7 +63,7 @@ const meta: ChartMeta = {
     'Category labels are long or there are many categories — set `orientation="horizontal"`',
   ],
   avoidWhen: [
-    'Several measures need comparing per category — a lollipop carries one value; use BarChart or ColumnChart',
+    'Several measures need comparing per category — a lollipop carries one value; use BarChart',
     'The magnitude should read as accumulated quantity — bars encode that better',
     'The axis is dense continuous time and the trend matters more than individual values — use LineChart; for a modest number of dated values use the time-scaled variant (`x.scalingFunction: "time"`)',
     'Values cluster far from zero and only their differences matter — a zero-based stem hides them; use RangePlot/ScatterPlot or pin `start`',
@@ -72,6 +72,7 @@ const meta: ChartMeta = {
     { name: 'BarChart', when: 'multiple measures per category, or magnitude should read as area' },
     { name: 'RangePlot', when: 'each category has an interval rather than a single value' },
     { name: 'ScatterPlot', when: 'both axes are numeric rather than one being categorical' },
+    { name: 'LineChart', when: 'the axis is dense continuous time and the trend matters more than individual values' },
   ],
   requiredProps: ['id', 'data', 'x', 'y'],
   example: `<LollipopChart
@@ -138,7 +139,7 @@ const meta: ChartMeta = {
         'Category labels are dates rather than names',
       ],
       avoidWhen: [
-        'Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled ColumnChart overlaps the same way)',
+        'Multiple rows can share the exact same date — their stems are drawn at the same x and overlap; aggregate to one row per date first (a time-scaled BarChart overlaps the same way)',
         'The axis is continuous time with many points and the trend matters more than individual values — use LineChart',
       ],
       example: `<LollipopChart

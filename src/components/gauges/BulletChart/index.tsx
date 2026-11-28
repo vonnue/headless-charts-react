@@ -83,6 +83,7 @@ const defaultClassNames: BulletChartClassNames = {
  *   scale
  * @see RingGauge — several metrics each against their own target
  * @see SpeedometerChart — a dial metaphor suits the audience better
+ * @see LineChart — the value changes over time and the history matters
  */
 /* catalog:end */
 const BulletChart = <TData = any,>({

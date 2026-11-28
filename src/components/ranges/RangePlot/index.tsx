@@ -91,6 +91,7 @@ const DEFAULT_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
  *   matters
  * @see BoxPlot — the interval is a quartile summary
  * @see LollipopChart — there is a single value per category
+ * @see TimeLineChart — the endpoints are times rather than numbers
  */
 /* catalog:end */
 const RangePlot = <TData = any,>({

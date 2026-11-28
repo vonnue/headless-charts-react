@@ -186,7 +186,7 @@ interface Group {
  *   — use BoxPlot
  * - Groups have very few samples (well under 20) — use ScatterPlot, or
  *   BoxPlot if a summary is enough
- * - Only one group's distribution is shown — use ColumnChart with `x.bin`
+ * - Only one group's distribution is shown — use BarChart with `x.bin`
  * - Densities are already precomputed — use AreaChart; ViolinChart always
  *   estimates from raw rows
  * - Colour would encode magnitude — colour names the group; density is width
@@ -226,10 +226,12 @@ interface Group {
  * />
  * ```
  *
- * @see BoxPlot — only the five-number summary matters
+ * @see BoxPlot — only the five-number summary matters, with
+ *   orientation="horizontal" for long labels
  * @see BarChart — one group's distribution as a histogram — set `x.bin`
  * @see ScatterPlot — very small samples per group, or every point should
  *   stay visible
+ * @see AreaChart — densities are already precomputed
  */
 /* catalog:end */
 const ViolinChart = <TData = any,>({ // eslint-disable-line @typescript-eslint/no-explicit-any -- matches ChartProps<TData = any>

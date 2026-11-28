@@ -114,8 +114,8 @@ const sortedBands = (labels: string[]) =>
  *   `y.bin` for a binned heatmap
  *
  * **Avoid when**
- * - One axis is categorical rather than numeric — use ColumnChart or a
- *   lollipop chart
+ * - One axis is categorical rather than numeric — use BarChart or
+ *   LollipopChart
  * - There are only a handful of records — a table or bar chart communicates
  *   more directly
  * - Overplotting hides the pattern — switch to the binned heatmap mode or
@@ -197,6 +197,9 @@ const sortedBands = (labels: string[]) =>
  *   than two measures
  * @see ParallelCoordinatesChart — more than two or three numeric
  *   dimensions need comparing at once
+ * @see BarChart — one axis is categorical rather than numeric
+ * @see LollipopChart — one axis is categorical and the value point should
+ *   stand out
  */
 /* catalog:end */
 const ScatterPlot = <TData = any,>({

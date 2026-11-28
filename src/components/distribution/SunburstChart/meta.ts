@@ -58,7 +58,12 @@ const meta: ChartMeta = {
     "One entity’s metrics on a radial profile — use PizzaChart; do not stretch it into a sunburst",
     'Composition changes over time — use AreaChart',
   ],
-  alternatives: [{ name: 'PieChart', when: 'a flat part-to-whole with few slices' }],
+  alternatives: [
+    { name: 'PieChart', when: 'a flat part-to-whole with few slices' },
+    { name: 'TreemapChart', when: 'sizes of many leaves must be compared precisely — area reads better than angle' },
+    { name: 'PizzaChart', when: "one entity's metrics on a radial profile, not a hierarchy" },
+    { name: 'AreaChart', when: 'composition changes over time' },
+  ],
   requiredProps: ['id', 'data', 'value'],
   example: `<SunburstChart
   id="files"

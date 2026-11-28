@@ -28,6 +28,13 @@ const storybookTestOptions = {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Explicit alias so files excluded from tsconfig (stories) still resolve `@/`.
+  // vite-tsconfig-paths only applies `paths` to files the tsconfig includes.
+  resolve: {
+    alias: {
+      '@': path.resolve(dirname, 'src'),
+    },
+  },
   plugins: [
     tsconfigPaths(),
     react(),
